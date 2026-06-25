@@ -83,3 +83,21 @@ checks that can't be scripted.
 - Native git hooks (no husky dependency): `.husky/` scripts + `core.hooksPath`, installed via the root `prepare` script so they activate on clone.
 - Shared config lives in `@axona/config`: ESLint base (`./eslint`) + Prettier (`./prettier`); each workspace extends it; the default Tailwind/eslint palettes are not relaxed.
 - Remote branch protection on `main` (GitHub settings) is the server-side complement to the local pre-push guard — configure it in the repo settings.
+
+---
+
+## FND.5 — Prisma schema: Core/tenancy (§3.1)
+
+**Automated**
+- `pnpm verify:fnd-5` — Org/User/Module + Role/ModuleGroup enums with correct fields; User has `orgId` relation + `@@index([orgId])`; Module has no `orgId`; `prisma validate` passes; `prisma generate` succeeds.
+- `pnpm typecheck` — `tsc --noEmit` clean.
+
+**Manual**
+- [ ] `pnpm --filter @axona/db exec prisma format` is a no-op (schema already canonical).
+- [ ] `prisma validate` → "schema is valid"; `prisma generate` → "Generated Prisma Client".
+- [ ] Tenancy invariant: every tenant-owned model carries `orgId` + index. Here only `User` is tenant-owned; `Org` is the tenant root; `Module` is a global catalog (intentionally no `orgId`). Subsequent schema stories (FND.6–FND.10) must keep `orgId` + `@@index([orgId])` on every tenant-owned model.
+- [ ] **No migration run** — first migration + org-scoped client helpers are FND.11.
+
+**Notes**
+- Generator enables `previewFeatures = ["postgresqlExtensions"]` so the `extensions = [pgvector]` datasource line validates.
+- With pnpm, the generated client lands in the virtual store (`node_modules/.pnpm/@prisma+client@*/node_modules/.prisma/client`), not `node_modules/.prisma/client` — `verify` shells out to `prisma generate` rather than path-checking, so it's version-agnostic.
