@@ -1,0 +1,49 @@
+/**
+ * Axona design tokens — v2. SINGLE SOURCE OF TRUTH.
+ *
+ * Authored here in @axona/config (the tokens home), consumed by apps/web, and
+ * mapped 1:1 into the Tailwind theme via ../src/tailwind.ts. No raw hex may
+ * appear anywhere else in the app — reference these CSS variables instead.
+ * Source: build-spec §10 / design.md.
+ */
+:root {
+  /* Type — the actual faces are self-hosted via next/font, which sets
+     --font-archivo / --font-jetbrains-mono on <html>. These semantic vars
+     point at them, with named fallbacks if next/font hasn't loaded. */
+  --font-sans: var(--font-archivo, "Archivo"), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono, "JetBrains Mono"), ui-monospace, monospace;
+
+  /* Surfaces */
+  --paper: #ffffff;
+  --panel: #f4f3ef;
+  --panel-2: #eceae3;
+  --skeleton: #e6e4dc;
+
+  /* Ink */
+  --ink: #1b1b1f;
+  --ink-strong: #0a0a0a;
+  --ink-muted: #55555f;
+  --ink-faint: #8a8a93;
+
+  /* Hairlines */
+  --line: #e7e5df;
+  --line-strong: #cfccc3;
+  --line-panel: #d8d5cc;
+
+  /* Signal — the single lime accent */
+  --accent: #c6f24f;
+  --accent-ink: #1b2a00;
+
+  /* Functional green — live/approved (no invented reds; critical = ink) */
+  --success: #1f9e6f;
+  --success-tint: #e3f3ec;
+
+  /* On-dark (TraceConsole) */
+  --on-dark-mut: #b9b9c0;
+  --on-dark-faint: #6a6a73;
+
+  /* Radii */
+  --r-pill: 999px;
+  --r-btn: 8px;
+  --r-card: 14px;
+}

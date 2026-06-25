@@ -12,7 +12,8 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "verify": "turbo run verify",
-    "verify:fnd-1": "tsx src/scripts/verify-fnd-1.ts"
+    "verify:fnd-1": "tsx src/scripts/verify-fnd-1.ts",
+    "verify:fnd-2": "tsx src/scripts/verify-fnd-2.ts"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",

@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./styles/tokens.css": "./styles/tokens.css",
     "./tsconfig/base.json": "./tsconfig/base.json"
   },
   "scripts": {
