@@ -1,0 +1,17 @@
+{
+  "name": "@axona/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tsconfig/base.json": "./tsconfig/base.json"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "echo \"@axona/config lint: configured in FND.4\""
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}

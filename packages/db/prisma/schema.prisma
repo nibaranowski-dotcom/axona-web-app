@@ -1,0 +1,19 @@
+// Axona data model.
+// Scaffolded in FND.1. Models land per build-spec §3:
+//   FND.5  Core / tenancy (Org, User, Role, Module, ModuleGroup)
+//   FND.6  Agents / Chats / Workflows / Runs
+//   FND.7  Projects / Files / MatrixColumn (+ pgvector embedding)
+//   FND.8  Machines + MachineSignal (time-series)
+//   FND.9  Value-chain entities
+//   FND.10 Robotics + back-office entities
+// Org-scoped client + query helpers: FND.11.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
+}

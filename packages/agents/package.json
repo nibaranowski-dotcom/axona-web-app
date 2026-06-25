@@ -1,0 +1,20 @@
+{
+  "name": "@axona/agents",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "echo \"@axona/agents lint: configured in FND.4\""
+  },
+  "dependencies": {
+    "@axona/db": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}
