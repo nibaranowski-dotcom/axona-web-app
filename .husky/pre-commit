@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# Lint + format only the staged files (fast). Config: root package.json lint-staged.
+pnpm lint-staged

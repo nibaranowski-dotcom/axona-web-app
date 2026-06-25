@@ -31,14 +31,28 @@ const TOKENS_REL = "packages/config/styles/tokens.css";
 const tokens = read(TOKENS_REL);
 
 const requiredVars = [
-  "font-sans", "font-mono",
-  "paper", "panel", "panel-2", "skeleton",
-  "ink", "ink-strong", "ink-muted", "ink-faint",
-  "line", "line-strong", "line-panel",
-  "accent", "accent-ink",
-  "success", "success-tint",
-  "on-dark-mut", "on-dark-faint",
-  "r-pill", "r-btn", "r-card",
+  "font-sans",
+  "font-mono",
+  "paper",
+  "panel",
+  "panel-2",
+  "skeleton",
+  "ink",
+  "ink-strong",
+  "ink-muted",
+  "ink-faint",
+  "line",
+  "line-strong",
+  "line-panel",
+  "accent",
+  "accent-ink",
+  "success",
+  "success-tint",
+  "on-dark-mut",
+  "on-dark-faint",
+  "r-pill",
+  "r-btn",
+  "r-card",
 ];
 for (const v of requiredVars) {
   if (!new RegExp(`--${v.replace(/[-]/g, "\\-")}\\s*:`).test(tokens)) {
@@ -63,11 +77,23 @@ for (const [name, hex] of valueChecks) {
 // ---- 2. tokens.css holds only allowed hex -----------------------------------
 const allowedHex = new Set(
   [
-    "#ffffff", "#f4f3ef", "#eceae3", "#e6e4dc",
-    "#1b1b1f", "#0a0a0a", "#55555f", "#8a8a93",
-    "#e7e5df", "#cfccc3", "#d8d5cc",
-    "#c6f24f", "#1b2a00", "#1f9e6f", "#e3f3ec",
-    "#b9b9c0", "#6a6a73",
+    "#ffffff",
+    "#f4f3ef",
+    "#eceae3",
+    "#e6e4dc",
+    "#1b1b1f",
+    "#0a0a0a",
+    "#55555f",
+    "#8a8a93",
+    "#e7e5df",
+    "#cfccc3",
+    "#d8d5cc",
+    "#c6f24f",
+    "#1b2a00",
+    "#1f9e6f",
+    "#e3f3ec",
+    "#b9b9c0",
+    "#6a6a73",
   ].map((h) => h.toLowerCase()),
 );
 const hexRe = /#[0-9a-fA-F]{3,8}\b/g;
@@ -107,10 +133,18 @@ if (!/--font-mono\s*:\s*var\(--font-jetbrains-mono/.test(tokens)) {
 // ---- 4. Tailwind theme maps tokens 1:1 --------------------------------------
 const twMap = read("packages/config/src/tailwind.ts");
 for (const needle of [
-  "var(--paper)", "var(--panel-2)", "var(--ink-muted)", "var(--line-strong)",
-  "var(--accent)", "var(--accent-ink)", "var(--success-tint)",
-  "var(--font-sans)", "var(--font-mono)",
-  "var(--r-pill)", "var(--r-btn)", "var(--r-card)",
+  "var(--paper)",
+  "var(--panel-2)",
+  "var(--ink-muted)",
+  "var(--line-strong)",
+  "var(--accent)",
+  "var(--accent-ink)",
+  "var(--success-tint)",
+  "var(--font-sans)",
+  "var(--font-mono)",
+  "var(--r-pill)",
+  "var(--r-btn)",
+  "var(--r-card)",
 ]) {
   if (!twMap.includes(needle)) fail(`tailwind.ts missing mapping ${needle}`);
 }
@@ -126,7 +160,11 @@ for (const needle of [
 
 // ---- 5. globals.css ---------------------------------------------------------
 const globals = read("apps/web/app/globals.css");
-for (const needle of ["@tailwind base", ".bg-dotted-grid", "var(--line-strong)"]) {
+for (const needle of [
+  "@tailwind base",
+  ".bg-dotted-grid",
+  "var(--line-strong)",
+]) {
   if (!globals.includes(needle)) fail(`globals.css missing: ${needle}`);
 }
 
@@ -139,7 +177,8 @@ function walk(dir: string, out: string[]): void {
   const abs = join(root, dir);
   if (!existsSync(abs)) return;
   for (const entry of readdirSync(abs)) {
-    if (entry === "node_modules" || entry === ".next" || entry === ".turbo") continue;
+    if (entry === "node_modules" || entry === ".next" || entry === ".turbo")
+      continue;
     const childRel = join(dir, entry);
     const childAbs = join(root, childRel);
     if (statSync(childAbs).isDirectory()) walk(childRel, out);

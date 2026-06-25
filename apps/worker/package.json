@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
-    "lint": "echo \"@axona/worker lint: configured in FND.4\""
+    "lint": "eslint src"
   },
   "dependencies": {
     "@axona/agents": "workspace:*",

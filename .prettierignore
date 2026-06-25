@@ -1,0 +1,10 @@
+node_modules
+.next
+dist
+.turbo
+pnpm-lock.yaml
+*.tsbuildinfo
+
+# Prose/content is hand-managed — don't let Prettier reflow it.
+**/*.md
+specs

@@ -47,4 +47,6 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-console.log(`FND.1 verify OK — ${requiredPaths.length} scaffold paths present.`);
+console.log(
+  `FND.1 verify OK — ${requiredPaths.length} scaffold paths present.`,
+);

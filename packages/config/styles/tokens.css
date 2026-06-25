@@ -11,7 +11,8 @@
      --font-archivo / --font-jetbrains-mono on <html>. These semantic vars
      point at them, with named fallbacks if next/font hasn't loaded. */
   --font-sans: var(--font-archivo, "Archivo"), system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains-mono, "JetBrains Mono"), ui-monospace, monospace;
+  --font-mono:
+    var(--font-jetbrains-mono, "JetBrains Mono"), ui-monospace, monospace;
 
   /* Surfaces */
   --paper: #ffffff;

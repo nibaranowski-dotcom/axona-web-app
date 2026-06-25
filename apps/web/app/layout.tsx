@@ -10,10 +10,7 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${archivo.variable} ${jetbrainsMono.variable}`}
-    >
+    <html lang="en" className={`${archivo.variable} ${jetbrainsMono.variable}`}>
       <body>{children}</body>
     </html>
   );

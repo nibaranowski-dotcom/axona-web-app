@@ -6,11 +6,13 @@
   "exports": {
     ".": "./src/index.ts",
     "./styles/tokens.css": "./styles/tokens.css",
+    "./eslint": "./eslint/base.cjs",
+    "./prettier": "./prettier.config.cjs",
     "./tsconfig/base.json": "./tsconfig/base.json"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "echo \"@axona/config lint: configured in FND.4\""
+    "lint": "eslint src"
   },
   "devDependencies": {
     "typescript": "^5.5.4"

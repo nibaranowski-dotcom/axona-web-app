@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+# Local guard: block direct pushes to main, then run the full gate.
+# Remote branch protection is configured separately on GitHub.
+# Override for maintained foundation pushes: AXONA_ALLOW_MAIN_PUSH=1 git push
+branch="$(git symbolic-ref --short HEAD 2>/dev/null)"
+if [ "$branch" = "main" ] && [ "${AXONA_ALLOW_MAIN_PUSH:-0}" != "1" ]; then
+  echo "pre-push blocked: direct push to main."
+  echo "  -> use a feature branch + PR, or: AXONA_ALLOW_MAIN_PUSH=1 git push"
+  exit 1
+fi
+
+echo "pre-push: typecheck + verify scripts…"
+pnpm typecheck && pnpm verify:all
