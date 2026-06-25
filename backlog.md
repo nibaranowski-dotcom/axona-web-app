@@ -53,6 +53,41 @@ billing the tenant for seats/usage. They are different surfaces and must not be 
 
 ---
 
+## Architecture: four layers over one spine (see `specs/architecture-learnings.md`)
+
+The product is four layers over one spine. Only **L2 compounds** — it is the moat; the rest are
+competitive necessities buildable by anyone with engineers. Resourcing and care follow that asymmetry.
+
+| Layer | What it is | In this backlog |
+|---|---|---|
+| **L4 — Vertical editions** | Humanoid · Mobility · Healthcare packaging | GTM surface, post-MVP |
+| **L3 — Domain apps** | Procurement, Quality, Maintenance, Delivery, … (the 24 modules) | **E5–E8** |
+| **L2 — Intelligence spine** | Specialized models · operational memory · agent runtime · learning loop | **E3 + E13 (THE MOAT)** |
+| **L1 — Foundation** | Connectors · ontology · per-unit genealogy · immutable event log · data plane | **E0 + E12** |
+
+**Two build sequences, reconciled.** E0–E11 are screen-first (spec §9) so the prototype/demo is
+coherent fast. The *moat* sequence (learnings §11) is capture → memory → runtime+guardrails →
+procurement wedge → **close the learning loop**. The reconciliation, and the single most important
+engineering instruction in this repo:
+
+> **Build the load-bearing capture in its correct shape from day one — even while the learning loop
+> is stubbed.** Per-unit genealogy must be captured *as-built* (not reconstructed), telemetry is a
+> first-class typed input (not an afterthought), and every agent action logs *model · confidence ·
+> approver* into an immutable event log. Capture fidelity at L1 caps model quality at L2; retrofitting
+> it later is the top risk (§12) and silently kills the moat. So `MFG.1` (genealogy), `FLEET.1`/`MACH.1`
+> (telemetry), `AUDIT.1` (event log), and `ART.5` (trace) are **moat-load-bearing** — hold them to a
+> higher bar than their P-level implies, and shape them per E12/E13/E14 even before those epics land.
+
+**Feeds-the-loop test.** Score every new story on whether it feeds `data → memory → models → better
+proposals → outcomes → data`. If it doesn't touch the loop, it's table stakes, not moat — fine to
+build, but don't let it crowd out spine work.
+
+**Wedge.** Procurement (`PROC.*`) is the first domain co-pilot — warmest access, most painful job
+(long-lead sourcing + BOM churn + genealogy). Treat it as the proving ground for the spine, not just
+another module.
+
+---
+
 ## Epic map & build order
 
 | Epic | Track | Theme | Spec ref |
@@ -69,6 +104,9 @@ billing the tenant for seats/usage. They are different surfaces and must not be 
 | E9 | Platform | Org settings, member/role admin, user settings | gap |
 | E10 | Platform | Billing & subscription (Stripe, seats, entitlements) | gap |
 | E11 | Platform | Notifications & transactional email | gap |
+| E12 | Moat · L1 | Foundation & ontology — connectors, ontology, genealogy, immutable event log | learnings §3–4 |
+| E13 | Moat · L2 | Intelligence spine — operational memory, confidence, trust ladder, learning loop, SLMs | learnings §5–7 |
+| E14 | Moat · Gov | Governance, per-tenant isolation, VPC/own-your-model deployment | learnings §8 |
 
 ---
 
@@ -245,10 +283,60 @@ billing the tenant for seats/usage. They are different surfaces and must not be 
 | 112 | NOTIF.3 | Per-channel routing (in-app / email) honoring user preferences | P1 | S | 2 | NOTIF.2, EMAIL.1, SET.4 | todo |
 | 113 | EMAIL.2 | Scheduled digest email (daily/weekly cross-module summary) | P2 | S | 2 | NOTIF.1, EMAIL.1 | todo |
 
+## E12 — Foundation & Ontology (L1) · Track: Moat · L1
+
+> Capture-fidelity layer. The prototype (E0) uses Prisma models directly; this epic hardens them into
+> the robotics-native substrate — ontology + as-built genealogy + immutable event log — that L2 learns
+> from. These are **moat-load-bearing**; build E0's `MFG.1`/`FLEET.1`/`MACH.1`/`AUDIT.1` already shaped
+> toward them.
+
+| Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
+|---|---|---|---|---|---|---|---|
+| 114 | ONT.1 | Ontology objects + immutable event log (Unit·Part·Serial·Firmware·BOM·PO/RFQ·Supplier·WorkOrder·Machine/fixture·Human·Agent) over Postgres+pgvector | P0 | L | 6 | FND.11 | todo |
+| 115 | ONT.2 | Per-unit genealogy spine captured **as-built** (Unit→Parts/Serials/Firmware), not reconstructed; capture-fidelity guarantees | P0 | L | 5 | ONT.1, MFG.1 | todo |
+| 116 | CONN.1 | Connector framework — pluggable ingest from ERP/PLM/MES, email, chat, machine telemetry | P1 | L | 6 | ONT.1 | todo |
+| 117 | CONN.2 | Normalize step — entity resolution + dedupe + diff-against-last-state → event log | P1 | L | 5 | CONN.1, ONT.1 | todo |
+| 118 | TEL.1 | Telemetry as first-class labeled input (fleet + plant) wired into event log + memory | P1 | M | 4 | ONT.1, FLEET.1, MACH.1 | todo |
+
+## E13 — Intelligence Spine (L2 · THE MOAT) · Track: Moat · L2
+
+> Research-grade portfolio (learnings §7), not a single "agent feature." Each line carries its own eval
+> metric. `ART.*` (E3) is the runtime; this epic is the memory, confidence, trust, and learning loop
+> that make it compound. LOOP/SLM are post-wedge bets — defensibility begins when LOOP.\* closes.
+
+| Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
+|---|---|---|---|---|---|---|---|
+| 119 | MEM.1 | Operational memory store — structured graph + vector over decisions/exceptions/approvals/genealogy/telemetry (**not** RAG-over-PDFs) | P0 | L | 6 | ONT.1 | todo |
+| 120 | MEM.2 | Context assembly + retrieval for operational decisions; feeds AgentRuntime context | P0 | L | 5 | MEM.1, ART.1 | todo |
+| 121 | CONF.1 | Calibrated **confidence** as a first-class field on every proposal — logged, surfaced, gates autonomy | P0 | M | 4 | ART.1, AUDIT.1 | todo |
+| 122 | TRUST.1 | Progressive-trust / autonomy ladder — per-agent scope widening, measured + surfaced as a product surface | P1 | L | 5 | CONF.1, RBAC.4 | todo |
+| 123 | LOOP.1 | Outcome capture + reward modeling from **physical** outcomes (on-time / line-halt / pass-test) | P1 | L | 5 | ONT.1, MEM.1 | todo |
+| 124 | LOOP.2 | Continuous-learning loop — production-trace → train/distill → serve (online RL / self-distillation) | P2 | XL | 8 | LOOP.1, SLM.1 | todo |
+| 125 | LOOP.3 | Reward-hack detection + eval harness (so the loop doesn't game itself) | P1 | L | 5 | LOOP.1 | todo |
+| 126 | SLM.1 | Specialized small models (BOM diff, supply-risk, genealogy QA) + frontier fallback router; VPC-deployable | P2 | XL | 8 | MEM.2, ONT.2 | todo |
+
+## E14 — Governance, Isolation & Deployment · Track: Moat · Gov
+
+> Trust + deployment posture are **sales unlocks**, not compliance overhead (learnings §8). "Own your
+> model" + VPC is a reason to choose Axona, especially in regulated verticals.
+
+| Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
+|---|---|---|---|---|---|---|---|
+| 127 | GUARD.1 | `guardrails.config` as enforced data — never auto-place an order · never claim stock without a source · never invent a supplier or lead time | P0 | M | 4 | WF.3, RBAC.4 | todo |
+| 128 | AUDIT.3 | Extend audit — every agent action records **model · confidence · approver** (makes propose→approve→audit literal) | P0 | S | 2 | AUDIT.1, CONF.1 | todo |
+| 129 | ISO.1 | Per-tenant isolation of **data and models** — no cross-tenant leak; protects the config-not-rebuild transfer story | P0 | M | 4 | RBAC.2, MEM.1 | todo |
+| 130 | DEPLOY.1 | VPC / on-prem deployment posture + own-your-model SLM packaging | P2 | L | 6 | ISO.1, SLM.1 | todo |
+| 131 | PRIM.1 | Reusable-primitives inventory + recomposition-rate tracking (agents · memory · ontology · integrations · interfaces · SOPs) | P2 | M | 3 | ONT.1, MEM.1 | todo |
+
 ---
 
 ## Totals & sequencing notes
-- **113 stories** across 12 epics. P0 = MVP spine; P1 = complete the set; P2 = harden/monetize.
+- **131 stories** across 15 epics. P0 = MVP spine; P1 = complete the set; P2 = harden/monetize/research.
+- **Moat layer (E12–E14)** is the part that keeps Axona *product, not services*. Build it in the
+  learnings §11 order — L1 capture → memory → runtime+guardrails → procurement wedge → **close the loop**
+  — and remember a plan that stops at "we shipped a procurement co-pilot" has built a feature, not the
+  moat. Protect the runway to `LOOP.*`.
+- **113 original stories** across 12 epics. P0 = MVP spine; P1 = complete the set; P2 = harden/monetize.
 - Foundation (E0) and the agent runtime (E3) gate almost everything — build them first, exactly per
   spec §9 milestones (DB+seed → shell+Mission Control+Search → AgentRuntime+Agents+chat → Command
   Center → Projects/matrix → Workflows+engine → Machines → value-chain → robotics → back-office →

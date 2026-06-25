@@ -39,6 +39,31 @@ across modules. Agents **draft/monitor/act; humans approve** (money/safety/contr
 machine). Per-role **guardrails** + full **audit trace**. Per-unit genealogy + traces = the proprietary
 data/label substrate that compounds. (See `../memory/research.md`, `../company/technical-moat-for-julia.md`.)
 
+## Architecture spine & moat invariants (from `specs/architecture-learnings.md`)
+Four layers over one spine: **L1 Foundation** (connectors · ontology · genealogy · immutable event log)
+→ **L2 Intelligence spine** (operational memory · specialized models · agent runtime · learning loop) →
+**L3 Domain apps** (the 24 modules) → **L4 Vertical editions**. **Only L2 compounds — it is the moat;**
+L1/L3/L4 are competitive necessities. Build/care follows that asymmetry.
+
+Non-negotiable engineering invariants (apply to every story, regardless of P-level):
+- **Capture fidelity caps the moat.** Per-unit genealogy is captured **as-built** (parts·serials·firmware),
+  never reconstructed. Telemetry (fleet + plant) is a **first-class typed input**, not an afterthought.
+  Shape these correctly from day one even while the learning loop is stubbed — retrofitting is the top risk.
+- **Memory ≠ RAG-over-PDFs.** Operational memory is a structured graph + vector over
+  decisions/exceptions/approvals/genealogy/telemetry. Don't conflate it with file search.
+- **Propose → approve → audit is the product.** Every agent action logs **inputs · output · model ·
+  confidence · approver** to an **immutable event log**. `confidence` is a real calibrated field that
+  gates autonomy — not decoration. Autonomy is earned via a progressive-trust ladder (a designed,
+  measured surface, not implicit).
+- **`guardrails.config` is enforced data**, not a marketing line: never auto-place an order · never claim
+  stock without a source · never invent a supplier or lead time.
+- **Per-tenant isolation of data *and* models.** One tenant's data/models never leak into another's;
+  this also protects the "config, not rebuild" transfer story. VPC / own-your-model is a GTM unlock.
+- **Feeds-the-loop test.** Score work on whether it feeds `data → memory → models → better proposals →
+  outcomes → data`. If it doesn't touch the loop, it's table stakes, not moat.
+- **Wedge = Procurement.** First domain co-pilot and the spine's proving ground (long-lead sourcing +
+  BOM churn + genealogy). Moat-load-bearing stories: `MFG.1`, `FLEET.1`/`MACH.1`, `AUDIT.1`, `ART.5`.
+
 ## Integrity / never (inherited from ../CLAUDE.md)
 - The cross-module seed narrative names **BMW / Kawasaki** — these are **fictional sample data**. Inside
   the app, sample data is fine and labeled; **anything leaving the app** (decks, screenshots, marketing)

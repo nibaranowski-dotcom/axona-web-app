@@ -13,7 +13,8 @@
     "typecheck": "turbo run typecheck",
     "verify": "turbo run verify",
     "verify:fnd-1": "tsx src/scripts/verify-fnd-1.ts",
-    "verify:fnd-2": "tsx src/scripts/verify-fnd-2.ts"
+    "verify:fnd-2": "tsx src/scripts/verify-fnd-2.ts",
+    "verify:fnd-3": "tsx src/scripts/verify-fnd-3.ts"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",
