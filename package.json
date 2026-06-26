@@ -23,7 +23,8 @@
     "verify:fnd-7": "tsx src/scripts/verify-fnd-7.ts",
     "verify:fnd-8": "tsx src/scripts/verify-fnd-8.ts",
     "verify:fnd-9": "tsx src/scripts/verify-fnd-9.ts",
-    "verify:all": "pnpm verify:fnd-1 && pnpm verify:fnd-2 && pnpm verify:fnd-3 && pnpm verify:fnd-4 && pnpm verify:fnd-5 && pnpm verify:fnd-6 && pnpm verify:fnd-7 && pnpm verify:fnd-8 && pnpm verify:fnd-9",
+    "verify:fnd-10": "tsx src/scripts/verify-fnd-10.ts",
+    "verify:all": "pnpm verify:fnd-1 && pnpm verify:fnd-2 && pnpm verify:fnd-3 && pnpm verify:fnd-4 && pnpm verify:fnd-5 && pnpm verify:fnd-6 && pnpm verify:fnd-7 && pnpm verify:fnd-8 && pnpm verify:fnd-9 && pnpm verify:fnd-10",
     "prepare": "git config core.hooksPath .husky || true"
   },
   "lint-staged": {

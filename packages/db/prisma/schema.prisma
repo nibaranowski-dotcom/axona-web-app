@@ -485,3 +485,237 @@ enum DeliveryStage {
   COMMISSION
   ACTIVE
 }
+
+// ─── Robotics + back office (§3.6) ─────────────────────────────────────────
+// All tenant-owned -> scalar orgId + @@index([orgId]). Cross-entity FKs stay
+// scalar + indexed (formal @relation + FK constraints come in the FND.11 pass).
+// REUSES the Severity enum defined in §3.5 (WorkOrderField/SafetyIncident/CVE).
+
+model Robot {
+  id        String @id @default(cuid())
+  orgId     String
+  /// Links a deployed unit back to its as-built genealogy (parts·serials·
+  /// firmware) — the ONT.2 genealogy graph keys on this serial.
+  serial    String
+  model     String
+  customer  String
+  site      String
+  uptimePct Float
+  firmware  String
+  status    String
+  lat       Float?
+  lng       Float?
+
+  @@index([orgId])
+}
+
+/// First-class fleet telemetry time-series (TEL.1) feeding operational memory
+/// (MEM.1). Plain table for the prototype; Timescale/hypertable + event-log
+/// wiring is TEL.1. Composite @@index([robotId, ts]) for time-windowed reads.
+model TelemetryPoint {
+  id      String   @id @default(cuid())
+  orgId   String
+  robotId String
+  ts      DateTime
+  metric  String
+  value   Float
+
+  @@index([orgId])
+  @@index([robotId, ts])
+}
+
+model WorkOrderField {
+  id          String    @id @default(cuid())
+  orgId       String
+  code        String
+  robotSerial String
+  site        String
+  issue       String
+  slaDueAt    DateTime?
+  techId      String?
+  status      String
+  severity    Severity
+
+  @@index([orgId])
+  @@index([techId])
+  @@index([slaDueAt])
+}
+
+model Technician {
+  id       String @id @default(cuid())
+  orgId    String
+  name     String
+  initials String
+  site     String
+  status   String
+  certs    Json // cert matrix: {certKey: {state, expiresAt}}
+
+  @@index([orgId])
+}
+
+model ECO {
+  id         String @id @default(cuid())
+  orgId      String
+  code       String
+  title      String
+  changeType String
+  affected   String
+  /// Gated change-control state (DRAFT/REVIEW/APPROVED/RELEASED). The release
+  /// approval state machine is RBAC.4; the model·confidence·approver record is
+  /// AUDIT.3 — keep this as a plain status here.
+  stage      String
+
+  @@index([orgId])
+}
+
+model FirmwareRelease {
+  id      String @id @default(cuid())
+  orgId   String
+  version String
+  note    String
+  state   String
+
+  @@index([orgId])
+}
+
+model CompatCell {
+  id        String @id @default(cuid())
+  orgId     String
+  hwRev     String
+  fwVersion String
+  state     String // cert/compatible/in-test/na
+
+  @@index([orgId])
+  @@index([hwRev, fwVersion])
+}
+
+/// Autonomy telemetry (autonomy-rate / takeovers per site) feeding operational
+/// memory (MEM.1). Plain table for the prototype.
+model AutonomyMetric {
+  id             String   @id @default(cuid())
+  orgId          String
+  site           String
+  ts             DateTime
+  autonomyRate   Float
+  takeoversPer1k Float
+  policyVersion  String
+
+  @@index([orgId])
+  @@index([site, ts])
+}
+
+model SafetyIncident {
+  id          String   @id @default(cuid())
+  orgId       String
+  code        String
+  type        String
+  robotSerial String
+  site        String
+  severity    Severity
+  status      String
+
+  @@index([orgId])
+}
+
+model PolicyVersion {
+  id      String @id @default(cuid())
+  orgId   String
+  version String
+  note    String
+  /// Gated rollback/promotion state (current/canary/standby). Policy rollback is
+  /// a gated action: approval state machine = RBAC.4; model·confidence·approver
+  /// record = AUDIT.3 — keep this as a plain state here.
+  state   String
+
+  @@index([orgId])
+}
+
+model LedgerEntry {
+  id      String @id @default(cuid())
+  orgId   String
+  period  String
+  account String
+  amount  Float
+  kind    String
+
+  @@index([orgId])
+}
+
+model Invoice {
+  id      String    @id @default(cuid())
+  orgId   String
+  code    String
+  account String
+  source  String
+  amount  Float
+  terms   String
+  dueDate DateTime?
+  status  String
+
+  @@index([orgId])
+}
+
+model UnitEconomic {
+  id        String @id @default(cuid())
+  orgId     String
+  product   String
+  asp       Float
+  cogs      Float
+  marginPct Float
+  trend     String
+
+  @@index([orgId])
+}
+
+model Requisition {
+  id     String @id @default(cuid())
+  orgId  String
+  role   String
+  filled Int
+  target Int
+
+  @@index([orgId])
+}
+
+model CVE {
+  id            String   @id @default(cuid())
+  orgId         String
+  code          String
+  severity      Severity
+  affectedUnits Int
+  status        String
+
+  @@index([orgId])
+}
+
+model Obligation {
+  id         String @id @default(cuid())
+  orgId      String
+  account    String
+  obligation String
+  actual     String
+  state      String // SLA tracked vs live ops
+
+  @@index([orgId])
+}
+
+model ExportLicense {
+  id          String @id @default(cuid())
+  orgId       String
+  destination String
+  code        String
+  state       String
+
+  @@index([orgId])
+}
+
+model LegalMatter {
+  id       String @id @default(cuid())
+  orgId    String
+  type     String
+  title    String
+  linkedTo String
+  status   String
+
+  @@index([orgId])
+}
