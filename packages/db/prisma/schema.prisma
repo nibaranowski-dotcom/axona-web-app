@@ -71,3 +71,116 @@ enum ModuleGroup {
   ROBOTICS
   BACK_OFFICE
 }
+
+// ─── Agents / chats / workflows / runs (§3.2) ──────────────────────────────
+// Tenancy: Agent/Chat/Workflow are tenant-owned -> orgId + @@index([orgId]).
+// AgentRun/Message/WorkflowRun inherit tenancy through their parent FK (indexed).
+
+model Agent {
+  id          String     @id @default(cuid())
+  orgId       String
+  moduleKey   String // owning module, or "core"
+  name        String // "Sourcing agent"
+  code        String // "proc-04"
+  role        String // "SOURCING"
+  description String // one-liner: what it does
+  state       AgentState @default(LIVE)
+  runs        AgentRun[]
+
+  @@index([orgId])
+}
+
+enum AgentState {
+  LIVE
+  WORKING
+  CRITICAL
+  OFFLINE
+}
+
+model Chat {
+  id        String    @id @default(cuid())
+  orgId     String
+  agentId   String?
+  userId    String
+  scope     String
+  createdAt DateTime  @default(now())
+  messages  Message[]
+
+  @@index([orgId])
+  @@index([agentId])
+  @@index([userId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id])
+  role      MsgRole
+  text      String
+  citations Json?
+  createdAt DateTime @default(now())
+
+  @@index([chatId])
+}
+
+enum MsgRole {
+  USER
+  AGENT
+  SYSTEM
+}
+
+model Workflow {
+  id          String         @id @default(cuid())
+  orgId       String
+  moduleKey   String
+  name        String
+  description String
+  status      WorkflowStatus @default(DRAFT)
+  trigger     Json // event spec
+  steps       Json // ordered nodes: agent steps, decision gates, output
+  runs        WorkflowRun[]
+
+  @@index([orgId])
+}
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+}
+
+model WorkflowRun {
+  id         String    @id @default(cuid())
+  workflowId String
+  workflow   Workflow  @relation(fields: [workflowId], references: [id])
+  status     RunStatus
+  /// Freeform run trace (scan/correlate/draft/policy-check/result). The
+  /// immutable event log + calibrated `confidence` + `approver` columns land in
+  /// ONT.1 / CONF.1 / AUDIT.3 — do not add those columns here yet.
+  trace      Json
+  startedAt  DateTime  @default(now())
+  endedAt    DateTime?
+
+  @@index([workflowId])
+}
+
+enum RunStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+model AgentRun {
+  id        String    @id @default(cuid())
+  agentId   String
+  agent     Agent     @relation(fields: [agentId], references: [id])
+  input     Json
+  /// Freeform run trace (scan/correlate/draft/policy-check/result). The
+  /// immutable event log + calibrated `confidence` + `approver` columns land in
+  /// ONT.1 / CONF.1 / AUDIT.3 — do not add those columns here yet.
+  trace     Json
+  status    RunStatus
+  createdAt DateTime  @default(now())
+
+  @@index([agentId])
+}

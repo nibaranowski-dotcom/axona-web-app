@@ -101,3 +101,30 @@ checks that can't be scripted.
 **Notes**
 - Generator enables `previewFeatures = ["postgresqlExtensions"]` so the `extensions = [pgvector]` datasource line validates.
 - With pnpm, the generated client lands in the virtual store (`node_modules/.pnpm/@prisma+client@*/node_modules/.prisma/client`), not `node_modules/.prisma/client` — `verify` shells out to `prisma generate` rather than path-checking, so it's version-agnostic.
+
+---
+
+## FND.6 — Prisma schema: Agents/Chats/Workflows/Runs (§3.2)
+
+**Automated**
+- `pnpm verify:fnd-6` — Agent/Chat/Message/Workflow/WorkflowRun/AgentRun + AgentState/MsgRole/WorkflowStatus/RunStatus enums; orgId + @@index on tenant-owned models; FK indexes on children; `trace` Json with /// pointer to ONT.1/CONF.1/AUDIT.3; no `confidence`/`approver` columns; `prisma validate`/`generate` clean.
+- `pnpm typecheck` — `tsc --noEmit` clean.
+
+**Manual**
+- [ ] `prisma format` no-op; `validate` valid; `generate` ok.
+- [ ] Tenancy: Agent/Chat/Workflow carry `orgId` + `@@index([orgId])`. AgentRun/Message/WorkflowRun have **no** `orgId` — they inherit tenancy via an indexed FK to their parent (per §3.2). Org-scoped reads of runs go through the parent (enforced in FND.11).
+- [ ] `trace` is freeform `Json` on AgentRun/WorkflowRun with a `///` pointer; the immutable event log + calibrated `confidence` + `approver` are deferred to ONT.1 / CONF.1 / AUDIT.3 — **not** added here.
+- [ ] No migration run (FND.11).
+
+**Notes**
+- **Design choice (flagged):** `orgId` on Agent/Chat/Workflow is a scalar + index, *not* a formal `@relation` to `Org` — this matches §3.2 verbatim and leaves the approved §3.1 `Org` model untouched. The parent/child arrays the spec defines (`Agent.runs`, `Chat.messages`, `Workflow.runs`) DO use real `@relation`s, since Prisma requires them. If we later want DB-level FK integrity from these models to `Org`, that's a deliberate follow-up (adds back-relations to `Org`).
+- `Chat.agentId`/`Chat.userId` are indexed scalar FKs (no formal relation), matching §3.2.
+
+---
+
+## FND.11 deferred decisions
+
+Tracked decisions to execute at FND.11 (first migration + org-scoped client helpers). Recorded so they aren't lost while earlier schema stories match the build-spec verbatim.
+
+- **Formal `orgId` relations + FK constraints (one consistent pass).** Schema stories FND.5–FND.10 model `orgId` as a **scalar + `@@index([orgId])`** (matching §3.2/§3.3+ verbatim); they deliberately do **not** add `@relation` to `Org` or `Org` back-relations. At FND.11, do ONE pass across **every tenant-owned model** adding the formal `orgId Org @relation(fields:[orgId], references:[id])` + the matching `Org` back-relation arrays + DB-level FK constraints. Keep it consistent — no piecemeal additions before then.
+- **Per-tenant isolation (ISO.1) in the query helpers.** The org-scoped client built at FND.11 must enforce `orgId` on every query (and reach child rows — AgentRun/Message/WorkflowRun/File/MatrixColumn — through their indexed parent FK), so tenancy is guaranteed in code, not just by convention.
