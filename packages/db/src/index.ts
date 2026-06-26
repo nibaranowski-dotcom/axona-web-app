@@ -11,7 +11,7 @@ export type { PageArgs } from "./pagination";
 
 // Unified search (SRCH.1) — FTS now, semantic dormant until FILE.2.
 export { reindex } from "./search/reindex";
-export { search, semanticSearch } from "./search/query";
+export { search, semanticSearch, countByType } from "./search/query";
 export type { SearchHit, SearchResult, SearchScope } from "./search/query";
 
 // Re-export Prisma's generated types/enums so consumers import from one place.

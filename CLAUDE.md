@@ -21,6 +21,12 @@ Archivo (UI/display) + JetBrains Mono (data/labels) · paper `#ffffff`, panel `#
 single accent **lime `#c6f24f`** · functional green `#1f9e6f` for live/approved (no invented reds —
 critical states use ink) · hairlines over shadows · dotted-grid motif · **no emoji**. Tokens: `design.md`.
 
+**Canonical design system = DS.1 (imported via the `claude_design` MCP → `Design System.dc.html`).** The
+implemented tokens + primitives in `design/` are the visual source of truth; `design.md` is reconciled to
+match it (brand invariants above still win on any conflict). **Every screen must match DS.1 1:1** — visual
+fidelity is part of the definition of done, checked per story, not a later pass. `FND.14`/`FND.15`
+(data + agent primitives) build on DS.1's components, not parallel to them.
+
 ## Stack (from build spec §2 — pin/verify at scaffold)
 Monorepo (pnpm + Turborepo) · TypeScript · Next.js (App Router) + React · Tailwind + CSS-var tokens ·
 TanStack Query + Zustand · Prisma + PostgreSQL (multi-tenant by `orgId`) · BullMQ (Redis) agents/workflows ·
@@ -89,6 +95,11 @@ story (e.g. FND.2), its requirements, and ends with "stop after <story> and show
 Work the backlog (`backlog.md`) in order; when he says "next" (or a StoryID), emit the next block. He'll
 review each story in Claude Code, then return to ask for the next. Backlog rows are also CPRD-triggerable
 if he wants a full PRD first.
+
+**One story → commit → next (hard rule).** Never hand over a new build block while the previous story is
+uncommitted — that entangles two stories in one working tree. Every block must open with the approve +
+commit + push of the prior story *before* the next build line. If the tree ever carries two stories,
+split into two clean commits (one per story), never a single combined `git add -A`.
 
 **PRD depth — hybrid (Nicolas's call).** Not every story needs a full CPRD. Choose per story and tell
 him which mode the block is:

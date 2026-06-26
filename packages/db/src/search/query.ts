@@ -65,6 +65,44 @@ export async function search(
 }
 
 /**
+ * Per-type total match counts for a query, IGNORING scope + limit, so scope tabs
+ * (All (n) / Agents (n) / Modules (n) …) show live totals. Same org scoping +
+ * parameterized tsquery as `search`. Returns every SearchType (0 when none) plus
+ * an `ALL` grand total.
+ */
+export async function countByType(
+  orgId: string,
+  q: string,
+): Promise<Record<string, number>> {
+  const perType: Record<string, number> = {
+    MODULE: 0,
+    AGENT: 0,
+    WORKFLOW: 0,
+    PROJECT: 0,
+    FILE: 0,
+    CHAT: 0,
+  };
+  const term = q.trim();
+  if (!term) return { ALL: 0, ...perType };
+
+  const tsquery = Prisma.sql`websearch_to_tsquery('english', ${term})`;
+  const rows = await prisma.$queryRaw<Array<{ type: string; n: bigint }>>`
+    SELECT "type", count(*) AS n
+    FROM "SearchDoc"
+    WHERE "tsv" @@ ${tsquery}
+      AND ("orgId" = ${orgId} OR "orgId" IS NULL)
+    GROUP BY "type";
+  `;
+  let all = 0;
+  for (const r of rows) {
+    const n = Number(r.n);
+    perType[r.type] = n;
+    all += n;
+  }
+  return { ALL: all, ...perType };
+}
+
+/**
  * Semantic (vector) search — dormant until FILE.2 populates `SearchDoc.embedding`.
  * Returns [] today; no error. The column + HNSW index already exist.
  * TODO FILE.2: embed the query, `ORDER BY embedding <=> $1`, fuse with FTS rank.
