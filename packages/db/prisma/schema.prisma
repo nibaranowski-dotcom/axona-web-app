@@ -246,3 +246,59 @@ model MatrixColumn {
 
   @@index([projectId])
 }
+
+// ─── Machines — own plant + mobile units (§3.4) ────────────────────────────
+// Tenancy: Machine is tenant-owned -> orgId + @@index([orgId]).
+// MachineSignal inherits tenancy through an indexed machineId FK.
+
+model Machine {
+  id              String          @id @default(cuid())
+  orgId           String
+  assetId         String // "CNC-02"
+  name            String
+  kind            MachineKind // FIXED | MOBILE
+  category        String // CNC, SMT, test-rig, AMR, forklift, demo-unit…
+  location        String
+  status          MachineStatus
+  utilization     Int // 0-100
+  health          String // "Healthy", "Re-cal overdue"…
+  healthLevel     HealthLevel
+  telemetryOnline Boolean
+  signals         MachineSignal[]
+
+  @@index([orgId])
+}
+
+enum MachineKind {
+  FIXED
+  MOBILE
+}
+
+enum MachineStatus {
+  RUNNING
+  IDLE
+  MAINTENANCE
+  CHARGING
+  FAULT
+}
+
+enum HealthLevel {
+  OK
+  WATCH
+  BAD
+}
+
+/// Plant-telemetry time-series. First-class typed telemetry input (TEL.1) that
+/// feeds operational memory (MEM.1). The prototype models it as a regular table;
+/// the Timescale/hypertable + immutable event-log wiring is TEL.1 — not here yet.
+/// The composite @@index([machineId, ts]) keeps time-windowed reads efficient.
+model MachineSignal {
+  id        String   @id @default(cuid())
+  machineId String
+  machine   Machine  @relation(fields: [machineId], references: [id])
+  ts        DateTime
+  metric    String
+  value     Float
+
+  @@index([machineId, ts])
+}

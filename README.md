@@ -25,6 +25,12 @@ Run `specs/screen-export-instruction.md` here (this project has the real screens
 Then hand those to the deck designer alongside the deck content + addons in `../company/deck/`.
 **Anonymize** BMW/Kawasaki → "Tier-1 auto OEM"; label every crop "sample data — illustrative." Human-gate.
 
+## Local ports
+- **Web app (this project):** http://localhost:3001 (`pnpm --filter @axona/web dev`)
+- **Marketing site:** http://localhost:3000 (`../Axona-Commercial-Website`) — pinned apart so the two never collide.
+- **Dev infra (FND.3, `docker compose up -d`):** Postgres `5432`, Redis `6379`, MinIO API `9000` + console `9001` (all configurable via `.env` / `.env.example`).
+- Avoid `5000`/`7000` — macOS AirPlay Receiver binds those.
+
 ## Relationship to the rest of the workspace
 - Company story / market / competition / moat / people → `../memory/` and `../company/`.
 - Decks that consume the screen exports → `../company/deck/`.

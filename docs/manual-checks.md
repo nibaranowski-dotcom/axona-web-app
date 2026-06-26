@@ -143,3 +143,18 @@ Tracked decisions to execute at FND.11 (first migration + org-scoped client help
 - [ ] `File.embedding Unsupported("vector")?`: **expected**, not a defect. Prisma cannot introspect/manage `Unsupported` types, so the real `vector` column + ANN index are created via **raw SQL in the FND.11 migration**. `prisma generate` exposes `embedding` as an opaque field (not selectable as a typed value) — that's by design.
 - [ ] `File.extracted` (Json) + `embedding` are the file-matrix substrate (MTX.1) and feed operational memory (MEM.1) — the `///` pointer marks where memory/extraction extend it; no memory/graph columns added now.
 - [ ] No migration run (FND.11).
+
+---
+
+## FND.8 — Prisma schema: Machines + MachineSignal time-series (§3.4)
+
+**Automated**
+- `pnpm verify:fnd-8` — Machine (+ MachineKind/MachineStatus/HealthLevel enums) + MachineSignal with correct fields; Machine has `orgId` + `@@index([orgId])`; MachineSignal has the composite `@@index([machineId, ts])` (also serves machineId-prefix FK lookups); `prisma validate`/`generate` clean.
+- `pnpm typecheck` — `tsc --noEmit` clean.
+
+**Manual**
+- [ ] `prisma format` no-op; `validate` valid; `generate` ok.
+- [ ] Tenancy: Machine carries `orgId` + index; MachineSignal inherits tenancy via indexed `machineId` (the composite index leads with `machineId`). `Machine.signals` relation array + `MachineSignal.machine` relation present.
+- [ ] Time-series: composite `@@index([machineId, ts])` makes per-machine time-windowed reads efficient.
+- [ ] Moat: MachineSignal is first-class typed telemetry (TEL.1) feeding operational memory (MEM.1) — modeled here as a regular table; the Timescale/hypertable + immutable event-log wiring is **deferred to TEL.1** (the `///` pointer marks it). Not added now.
+- [ ] No migration run (FND.11).
