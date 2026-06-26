@@ -1,0 +1,38 @@
+/* Axona — Typography
+   Archivo for everything UI + display; JetBrains Mono for data, labels, captions.
+   Headlines are tight (heavy negative tracking, ~1.0 line-height, weight 600). */
+:root {
+  --font-sans: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Weights */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* Display / headline scale (use clamp at point of use for fluid heros) */
+  --fs-hero: 108px; /* H1 hero, line-height ~.92, tracking -.045em */
+  --fs-h2: 52px; /* section headline, tracking -.035em */
+  --fs-h3: 24px; /* card / sub headline */
+  --fs-h4: 19px;
+  --fs-lead: 21px; /* hero sub / lead paragraph */
+  --fs-body: 16px;
+  --fs-body-sm: 14px;
+  --fs-meta: 13px;
+
+  /* Mono / label scale */
+  --fs-mono: 11px; /* eyebrows + value chips */
+  --fs-mono-sm: 10px; /* captions inside mock UI */
+
+  /* Tracking */
+  --track-hero: -0.045em;
+  --track-head: -0.035em;
+  --track-tight: -0.02em;
+  --track-mono: 0.06em; /* uppercased mono labels */
+
+  /* Line heights */
+  --lh-hero: 0.92;
+  --lh-head: 1.02;
+  --lh-body: 1.5;
+}

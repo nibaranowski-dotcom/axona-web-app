@@ -61,9 +61,10 @@ for (const v of requiredVars) {
 }
 
 // brand value spot-checks
+// Values are the DS.1 reconciled token set (supersedes the FND.2 starter).
 const valueChecks: Array<[string, string]> = [
   ["accent", "#c6f24f"],
-  ["accent-ink", "#1b2a00"],
+  ["accent-ink", "#0a0a0a"],
   ["success", "#1f9e6f"],
   ["paper", "#ffffff"],
   ["ink-strong", "#0a0a0a"],
@@ -75,25 +76,36 @@ for (const [name, hex] of valueChecks) {
 }
 
 // ---- 2. tokens.css holds only allowed hex -----------------------------------
+// DS.1 token hex set (every hex literal allowed in tokens.css).
 const allowedHex = new Set(
   [
+    // surfaces / ink
     "#ffffff",
     "#f4f3ef",
-    "#eceae3",
-    "#e6e4dc",
-    "#1b1b1f",
+    "#f7f2eb",
+    "#111111",
     "#0a0a0a",
-    "#55555f",
-    "#8a8a93",
-    "#e7e5df",
-    "#cfccc3",
-    "#d8d5cc",
+    "#6b6b63",
+    "#9a9a90",
+    "#8a8a82",
+    "#a7a79d",
+    // hairlines
+    "#ededed",
+    "#eeeeee",
+    "#e7e7e1",
+    "#e2e2e2",
+    "#1d1d1d",
+    // accent + status + skeleton
     "#c6f24f",
-    "#1b2a00",
+    "#bce83f",
     "#1f9e6f",
-    "#e3f3ec",
-    "#b9b9c0",
-    "#6a6a73",
+    "#e9f7f0",
+    "#f0f0ec",
+    // motif + dark launchpad
+    "#d9d8d2",
+    "#101013",
+    "#1a1a1e",
+    "#0c0c0e",
   ].map((h) => h.toLowerCase()),
 );
 const hexRe = /#[0-9a-fA-F]{3,8}\b/g;
@@ -163,7 +175,7 @@ const globals = read("apps/web/app/globals.css");
 for (const needle of [
   "@tailwind base",
   ".bg-dotted-grid",
-  "var(--line-strong)",
+  "var(--dotgrid)", // DS.1 dotted-grid motif token
 ]) {
   if (!globals.includes(needle)) fail(`globals.css missing: ${needle}`);
 }

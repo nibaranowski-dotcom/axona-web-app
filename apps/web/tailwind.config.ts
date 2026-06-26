@@ -1,5 +1,10 @@
 import type { Config } from "tailwindcss";
-import { axonaBorderRadius, axonaColors, axonaFontFamily } from "@axona/config";
+import {
+  axonaBorderRadius,
+  axonaColors,
+  axonaFontFamily,
+  axonaTransitionTimingFunction,
+} from "@axona/config";
 
 const config: Config = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
@@ -9,6 +14,7 @@ const config: Config = {
     extend: {
       fontFamily: axonaFontFamily,
       borderRadius: axonaBorderRadius,
+      transitionTimingFunction: axonaTransitionTimingFunction,
     },
   },
   plugins: [],

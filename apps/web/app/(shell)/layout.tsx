@@ -14,7 +14,9 @@ export default async function ShellLayout({
   return (
     <div className="grid h-dvh grid-cols-[auto_1fr_auto] bg-paper text-ink">
       <Sidebar groups={groups} />
-      <main className="min-w-0 overflow-y-auto">{children}</main>
+      <main aria-label="Main content" className="min-w-0 overflow-y-auto">
+        {children}
+      </main>
       <AgentPane />
     </div>
   );

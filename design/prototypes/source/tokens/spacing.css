@@ -1,0 +1,22 @@
+/* Axona — Spacing & layout
+   Base unit 4px. Section rhythm is generous (72–90px vertical). */
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-18: 72px;
+  --space-22: 88px;
+
+  /* Layout */
+  --maxw: 1180px; /* content container */
+  --page-pad: 28px; /* container horizontal padding */
+  --section-y: 88px; /* vertical section rhythm */
+  --gap-card: 16px; /* gap between cards in a grid */
+}

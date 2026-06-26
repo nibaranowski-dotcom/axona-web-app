@@ -17,7 +17,7 @@ export function AgentRail() {
         aria-label="Expand agent pane"
         className="flex flex-col items-center gap-2 rounded-btn p-2 text-ink-muted hover:bg-panel-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
-        <AgentGlyph tone="live" size={22} />
+        <AgentGlyph tone="ink" status="live" size={22} />
         <span aria-hidden className="font-mono text-[10px] text-ink-faint">
           ‹
         </span>

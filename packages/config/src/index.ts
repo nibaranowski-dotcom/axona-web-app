@@ -7,4 +7,9 @@
  */
 export const CONFIG_PACKAGE = "@axona/config" as const;
 
-export { axonaColors, axonaFontFamily, axonaBorderRadius } from "./tailwind";
+export {
+  axonaColors,
+  axonaFontFamily,
+  axonaBorderRadius,
+  axonaTransitionTimingFunction,
+} from "./tailwind";

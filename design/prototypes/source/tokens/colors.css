@@ -1,0 +1,44 @@
+/* Axona — Color system
+   Aesthetic: near-white paper, warm-grey product panels, near-black ink,
+   a single lime accent, and a functional green for live/positive status. */
+:root {
+  /* — Base neutrals (warm grey ramp) — */
+  --paper: #ffffff; /* page background */
+  --panel: #f4f3ef; /* warm-grey card / product panel surface */
+  --panel-2: #f7f2eb; /* alt zebra row */
+  --ink: #111111; /* primary text */
+  --ink-strong: #0a0a0a; /* near-black UI, footer, announcement bar */
+  --ink-muted: #6b6b63; /* secondary text */
+  --ink-faint: #9a9a90; /* tertiary / disabled text */
+  --mono-faint: #8a8a82; /* mono eyebrow labels */
+  --mono-ghost: #a7a79d; /* mono on panels / captions */
+  --on-dark: #ffffff; /* text on ink-strong surfaces */
+  --on-dark-mut: rgba(255, 255, 255, 0.7);
+  --on-dark-faint: rgba(255, 255, 255, 0.4);
+
+  /* — Borders / hairlines — */
+  --line: #ededed; /* default hairline */
+  --line-soft: #eeeeee;
+  --line-panel: #e7e7e1; /* border on warm-grey surfaces */
+  --line-strong: #e2e2e2; /* chip / input border */
+  --line-dark: #1d1d1d; /* divider on dark footer */
+
+  /* — Accent (lime) — */
+  --accent: #c6f24f; /* primary action, highlight, selection */
+  --accent-hover: #bce83f;
+  --accent-ink: #0a0a0a; /* text/icon on accent */
+
+  /* — Functional status — */
+  --success: #1f9e6f; /* live / approved / positive */
+  --success-tint: #e9f7f0;
+
+  /* — Skeleton / placeholder fills — */
+  --skeleton: #f0f0ec;
+
+  /* — Selection — */
+  --selection-bg: var(--accent);
+}
+
+::selection {
+  background: var(--selection-bg);
+}

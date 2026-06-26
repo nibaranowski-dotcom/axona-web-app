@@ -28,7 +28,7 @@ async function check(
 async function run(): Promise<void> {
   console.log("\nVerifying MC.1 — Mission Control launcher\n");
 
-  const page = read(join(base, "app/(shell)/page.tsx"));
+  const page = read(join(base, "app/page.tsx")); // DS.1: launcher at root
   await check(
     "launcher page replaces placeholder",
     () => /Launcher/.test(page) && !/TODO MC\.1/.test(page),
@@ -45,10 +45,13 @@ async function run(): Promise<void> {
   await check("alerts scoped via dbForOrg", () =>
     /dbForOrg/.test(read(join(base, "lib/module-alerts.ts"))),
   );
-  await check("alert chip uses ink, not red", () => {
-    const t = read(join(base, "components/core/AppTile.tsx"));
-    return /bg-ink-strong/.test(t) && !/#?(red|f00|ff0000)/i.test(t);
-  });
+  await check(
+    "alert chip is lime accent (no red) — DS.1 dark launchpad",
+    () => {
+      const t = read(join(base, "components/core/AppTile.tsx"));
+      return /bg-accent/.test(t) && !/#?(red|f00|ff0000)/i.test(t);
+    },
+  );
   await check("search field routes to /search", () =>
     /\/search/.test(read(join(base, "components/core/Launcher.tsx"))),
   );

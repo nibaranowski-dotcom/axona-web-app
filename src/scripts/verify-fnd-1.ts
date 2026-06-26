@@ -33,8 +33,10 @@ const requiredPaths: readonly string[] = [
   "apps/web/next.config.mjs",
   "apps/web/tsconfig.json",
   "apps/web/app/layout.tsx",
-  // FND.13 moved the landing page into the (shell) route group.
-  "apps/web/app/(shell)/page.tsx",
+  // FND.13 added the shell; DS.1 moved the landing (Mission Control launchpad)
+  // to the root and module screens under the (shell) group.
+  "apps/web/app/page.tsx",
+  "apps/web/app/(shell)/layout.tsx",
   // apps/worker (BullMQ runner)
   "apps/worker/package.json",
   "apps/worker/src/index.ts",

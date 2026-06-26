@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .md-bg{
+    background-color:#101013;
+    background-image:
+      radial-gradient(1100px 560px at 50% -8%,rgba(198,242,79,.07),transparent 60%),
+      radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px),
+      linear-gradient(180deg,#1a1a1e 0%,#101013 55%,#0c0c0e 100%);
+    background-size:auto,24px 24px,auto;
+  }
+  .app{transition:transform .18s cubic-bezier(.2,.6,.2,1),background .18s,box-shadow .18s,border-color .18s}
+  .app:hover{transform:translateY(-3px);background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16);box-shadow:0 14px 30px rgba(0,0,0,.45)}
+  .mdsearch::placeholder{color:var(--on-dark-faint)}
+</style>
+</helmet>
+<!-- Axona Mission Control launcher (prototype reference, DS project "Axona v2").
+     Full-screen DARK launchpad: centered glassy ⌘K search, grouped sections
+     (mono label + count + hairline rule), tile grid repeat(auto-fill,minmax(252px,1fr)),
+     translucent tiles (rgba white .04 / border .08 / r13) with 44px line-icon square,
+     name + optional count badge (accent normal / white crit), desc in on-dark-mut.
+     Top-right: agent-actions status · clock · avatar. No sidebar.
+     NOTE: badge counts here are illustrative; the product computes them live (MC.1
+     getModuleAlerts). Full interactive source lives in the linked claude.ai/design
+     project; this is the captured fidelity reference for DS.1. -->
+<div class="md-bg" style="font-family:var(--font-sans);color:#fff;min-height:100vh">
+  <!-- top-right: 514 agent actions · 09:41 · LC avatar -->
+  <!-- centered search pill (208px, glass), ⌘K chip -->
+  <!-- sections: Core / Value chain / Robotics / Back office -->
+  <!--   each: mono uppercase label + flex hairline + count; grid of .app tiles -->
+  <!--   tile: 44px icon square (line SVG) + name (+badge) + desc -->
+  <!-- no-results: "NO APPS MATCH “q”" mono -->
+</div>
+</x-dc>
+</body>
+</html>

@@ -62,7 +62,7 @@ export function AgentPane() {
 
       <header className="flex items-center justify-between border-b border-line px-3 py-3">
         <span className="flex items-center gap-2">
-          <AgentGlyph tone="live" size={20} />
+          <AgentGlyph tone="ink" status="live" size={20} />
           <span className="text-sm font-medium text-ink-strong">
             Axona agent
           </span>

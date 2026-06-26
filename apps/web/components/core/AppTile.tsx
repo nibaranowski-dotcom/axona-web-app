@@ -1,8 +1,8 @@
 import Link from "next/link";
 
-// A launcher tile: glyph + name + one-line description, with an ink alert chip
-// (count) top-right when there are live exceptions. Critical states use ink —
-// no invented warning hues (per design.md).
+// DS.1 Mission Control launchpad tile (dark surface, from Mission Control.dc.html).
+// Translucent card on the dark launchpad: lettermark glyph square + name +
+// optional count badge (lime accent for normal counts; no invented warning hues) + desc.
 
 export function AppTile({
   href,
@@ -20,24 +20,32 @@ export function AppTile({
   return (
     <Link
       href={href}
-      className="group relative flex flex-col gap-2 rounded-card border border-line bg-paper p-4 hover:border-line-strong hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      className="group flex items-center gap-[13px] rounded-[13px] border border-[var(--md-line)] bg-[var(--md-tile)] p-4 transition-colors duration-200 ease-ease hover:border-[var(--md-line-hover)] hover:bg-[var(--md-tile-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
     >
-      {alert > 0 && (
-        <span
-          className="absolute right-3 top-3 inline-flex min-w-[20px] items-center justify-center rounded-pill bg-ink-strong px-1.5 py-0.5 font-mono text-[10px] leading-none text-paper"
-          aria-label={`${alert} ${alert === 1 ? "alert" : "alerts"}`}
-        >
-          {alert > 99 ? "99+" : alert}
-        </span>
-      )}
       <span
         aria-hidden
-        className="flex h-9 w-9 items-center justify-center rounded-btn bg-panel-2 font-mono text-xs text-ink-muted"
+        className="flex h-11 w-11 flex-none items-center justify-center rounded-[11px] border border-[var(--md-line)] bg-[var(--md-tile)] font-mono text-xs text-on-dark-mut"
       >
         {glyph}
       </span>
-      <span className="text-sm font-medium text-ink-strong">{name}</span>
-      <span className="text-xs text-ink-muted">{description}</span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-2">
+          <span className="truncate text-sm font-semibold tracking-[-0.01em] text-on-dark">
+            {name}
+          </span>
+          {alert > 0 && (
+            <span
+              className="flex-none rounded-pill bg-accent px-[6px] py-px font-mono text-[10px] font-bold text-accent-ink"
+              aria-label={`${alert} ${alert === 1 ? "alert" : "alerts"}`}
+            >
+              {alert > 99 ? "99+" : alert}
+            </span>
+          )}
+        </span>
+        <span className="mt-[3px] block truncate text-xs leading-tight text-on-dark-mut">
+          {description}
+        </span>
+      </span>
     </Link>
   );
 }

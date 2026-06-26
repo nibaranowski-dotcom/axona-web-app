@@ -15,11 +15,27 @@
 }
 
 @layer utilities {
-  /* The one background motif: a dotted grid drawn from the hairline token.
-     Reusable via `class="bg-dotted-grid"`. No raw hex — color is a token. */
+  /* The signature dotted-grid motif (DS.1 tokens). Reusable via bg-dotted-grid. */
   .bg-dotted-grid {
-    background-image: radial-gradient(var(--line-strong) 1px, transparent 1px);
-    background-size: 16px 16px;
-    background-position: -1px -1px;
+    background-image: var(--dotgrid);
+    background-size: var(--dotgrid-size);
+  }
+
+  /* Mission Control launchpad backdrop (dark): lime glow + dot grid + gradient. */
+  .bg-mission {
+    background-color: var(--md-bg);
+    background-image:
+      radial-gradient(1100px 560px at 50% -8%, var(--md-glow), transparent 60%),
+      radial-gradient(var(--md-dot) 1px, transparent 1px),
+      linear-gradient(
+        180deg,
+        var(--md-grad-top) 0%,
+        var(--md-grad-mid) 55%,
+        var(--md-grad-bot) 100%
+      );
+    background-size:
+      auto,
+      24px 24px,
+      auto;
   }
 }
