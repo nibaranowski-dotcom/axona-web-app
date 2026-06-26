@@ -89,3 +89,32 @@ story (e.g. FND.2), its requirements, and ends with "stop after <story> and show
 Work the backlog (`backlog.md`) in order; when he says "next" (or a StoryID), emit the next block. He'll
 review each story in Claude Code, then return to ask for the next. Backlog rows are also CPRD-triggerable
 if he wants a full PRD first.
+
+**PRD depth — hybrid (Nicolas's call).** Not every story needs a full CPRD. Choose per story and tell
+him which mode the block is:
+- **Condensed block** for mechanical stories — Prisma schemas, config/tooling, simple data/API CRUD.
+- **Full CPRD PRD** (Joe's complete format, written into `/specs`) for complex or moat-load-bearing
+  stories: agent runtime + workflow engine (`ART.*`, `WF.*`, `GA.1`), RBAC/approval/audit (`RBAC.*`,
+  `AUDIT.*`), search/files/extraction (`SRCH.*`, `FILE.*`, `MTX.*`), `FND.11` (org-scoped client +
+  isolation pass), the module screens that carry agents/AI outputs, auth/billing flows, and the whole
+  moat layer (E12–E14: `ONT/MEM/CONF/TRUST/LOOP/SLM/GUARD/ISO`).
+Every block — condensed or full — must still pass the 6-point completeness check before sending:
+(1) names story + spec ref, (2) carries every requirement from the backlog row + spec, (3) enforces the
+DoD (orgId scoping · RBAC where it applies · v2 tokens · verify script · manual-checks · `tsc` clean),
+(4) states real dependencies, (5) flags moat-load-bearing concerns, (6) ends with a review gate.
+
+**Condensed-block template (proven on FND.5–9 — reuse this shape):**
+1. *Approve-prior + push* (when applicable): `<StoryID-prev> approved. git add -A && commit "<StoryID> — <title>" && AXONA_ALLOW_MAIN_PUSH=1 git push.`
+2. *Build line:* `Build Story <StoryID> — <title> (<spec §ref> verbatim).`
+3. *Core requirements:* implement the spec section exactly (exact field names/types/enum values);
+   tenancy pattern (scalar `orgId` + `@@index`, FK indexes, no formal relations — deferred to FND.11);
+   `prisma validate/format` clean + `generate` succeeds; no live migration until FND.11.
+4. *Additions beyond the plain spec* — call these out explicitly and bound them:
+   - **Read-path indexes (no new columns):** e.g. `@@index([characteristic, ts])`, `@@index([stage])`.
+   - **Moat `///` pointers (no new columns):** point each at the future story that extends it
+     (genealogy→ONT.2 as-built; agent-drafted+status→RBAC.4/AUDIT.3; telemetry/SPC→MEM.1). Never add
+     the event-log/confidence/approver columns early.
+5. *Guardrails:* "no new columns," "no over-build," "no live migration" — say what NOT to do.
+6. *Verification + gate:* `verify-<story-id>.ts` + `docs/manual-checks.md` entry, `tsc --noEmit` clean,
+   then **"Stop after <StoryID> and show me <the schema/artifact> before continuing."**
+Keep it dense — opinionated, real field/index/file names, no filler.

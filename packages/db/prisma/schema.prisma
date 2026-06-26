@@ -302,3 +302,186 @@ model MachineSignal {
 
   @@index([machineId, ts])
 }
+
+// ─── Value-chain entities (§3.5) ───────────────────────────────────────────
+// All tenant-owned -> scalar orgId + @@index([orgId]). Cross-entity FKs stay
+// scalar + indexed (formal @relation + FK constraints come in the FND.11 pass).
+
+model Supplier {
+  id        String @id @default(cuid())
+  orgId     String
+  name      String
+  tier      Int
+  riskScore Float
+  onTimePct Float
+
+  @@index([orgId])
+}
+
+model Part {
+  id           String @id @default(cuid())
+  orgId        String
+  sku          String
+  name         String
+  onHand       Int
+  reorderPoint Int
+  leadDays     Int
+
+  @@index([orgId])
+}
+
+model PurchaseOrder {
+  id               String    @id @default(cuid())
+  orgId            String
+  code             String
+  supplierId       String
+  partId           String
+  qty              Int
+  value            Float
+  /// Agent-drafted PO surface — the propose→approve→audit moat. The approval
+  /// state machine (DRAFTED→AWAITING_APPROVAL→APPROVED→SENT) lives in RBAC.4;
+  /// the immutable who/model/confidence/approver record lands in AUDIT.3.
+  status           POStatus
+  draftedByAgentId String?
+  eta              DateTime?
+
+  @@index([orgId])
+  @@index([supplierId])
+  @@index([partId])
+  @@index([draftedByAgentId])
+}
+
+enum POStatus {
+  DRAFTED
+  AWAITING_APPROVAL
+  APPROVED
+  SENT
+  RECEIVED
+}
+
+model WorkOrderMfg {
+  id        String    @id @default(cuid())
+  orgId     String
+  /// As-built genealogy anchor — parts·serials·firmware captured AS BUILT, never
+  /// reconstructed (capture fidelity caps the moat). The genealogy graph over
+  /// this serial lands in ONT.2; keep capture clean here.
+  serial    String
+  product   String
+  station   String
+  status    String
+  startedAt DateTime?
+
+  @@index([orgId])
+}
+
+model NCR {
+  id       String   @id @default(cuid())
+  orgId    String
+  code     String
+  defect   String
+  linkedTo String
+  severity Severity
+  status   String
+
+  @@index([orgId])
+}
+
+enum Severity {
+  MINOR
+  MAJOR
+  CRITICAL
+}
+
+/// SPC quality telemetry (measurement vs UCL/LCL/mean). First-class quality
+/// signal feeding operational memory (MEM.1); modeled as a plain table for now.
+model SpcSample {
+  id             String   @id @default(cuid())
+  orgId          String
+  characteristic String
+  serial         String
+  value          Float
+  ucl            Float
+  lcl            Float
+  mean           Float
+  ts             DateTime
+
+  @@index([orgId])
+  @@index([characteristic, ts])
+}
+
+model Cert {
+  id      String   @id @default(cuid())
+  orgId   String
+  name    String
+  scope   String
+  validTo DateTime
+  status  String
+
+  @@index([orgId])
+}
+
+model Deal {
+  id          String      @id @default(cuid())
+  orgId       String
+  account     String
+  config      String
+  value       Float
+  stage       DealStage
+  closeDate   DateTime?
+  feasibility Feasibility
+
+  @@index([orgId])
+}
+
+enum DealStage {
+  QUALIFY
+  DEMO
+  PROPOSAL
+  NEGOTIATION
+  COMMIT
+}
+
+enum Feasibility {
+  ON_TIME
+  AT_RISK
+  NOT_CHECKED
+}
+
+model Campaign {
+  id       String @id @default(cuid())
+  orgId    String
+  name     String
+  channel  String
+  mqls     Int
+  pipeline Float
+  roi      Float
+  status   String
+
+  @@index([orgId])
+}
+
+model Delivery {
+  id            String        @id @default(cuid())
+  orgId         String
+  code          String
+  account       String
+  destination   String
+  units         String
+  stage         DeliveryStage
+  committedDate DateTime
+  etaDate       DateTime
+  riskState     String
+
+  @@index([orgId])
+  @@index([stage])
+}
+
+enum DeliveryStage {
+  ALLOC
+  CRATE
+  FREIGHT
+  CUSTOMS
+  ONSITE
+  COMMISSION
+  ACTIVE
+}
