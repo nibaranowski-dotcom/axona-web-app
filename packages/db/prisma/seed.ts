@@ -4,7 +4,7 @@
 // Idempotent: clear the demo org's tenant rows (scoped to DEMO_ORG_ID, FK-safe
 // order), then reseed through dbForOrg so every row carries the demo orgId and
 // ISO.1 is dogfooded. Org/Module/Users-bootstrap use the bare prisma client.
-import { prisma, dbForOrg } from "../src";
+import { prisma, dbForOrg, reindex } from "../src";
 import type { OrgScopedDb } from "../src";
 import { DEMO_ORG_ID, SECOND_ORG_ID } from "./seed/constants";
 import { seedModules } from "./seed/modules";
@@ -116,6 +116,9 @@ async function main(): Promise<void> {
 
   // 5. Second org (isolation contrast)
   await seedSecondOrg(dbForOrg(SECOND_ORG_ID));
+
+  // 6. Build the unified search index (SRCH.1) — globals + all tenants; idempotent.
+  await reindex();
 
   const modules = await prisma.module.count();
   console.log(

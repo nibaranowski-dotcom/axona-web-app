@@ -64,6 +64,7 @@ model Org {
   obligations      Obligation[]
   exportLicenses   ExportLicense[]
   legalMatters     LegalMatter[]
+  searchDocs       SearchDoc[]
 }
 
 model User {
@@ -799,5 +800,39 @@ model LegalMatter {
   linkedTo String
   status   String
 
+  @@index([orgId])
+}
+
+// ─── Unified search index (SRCH.1) ─────────────────────────────────────────
+
+enum SearchType {
+  MODULE
+  AGENT
+  WORKFLOW
+  PROJECT
+  FILE
+  CHAT
+}
+
+/// Unified FTS-over-objects index. One row per searchable object. `orgId` is
+/// NULL for global docs (Modules). The generated `tsv` tsvector column + its GIN
+/// index, and the `vector(1536)` embedding column + ANN index, are created via
+/// raw SQL in the `add_searchdoc_fts` migration (Prisma can't manage them) — do
+/// not let a later migration drop them. This is FTS-over-objects, NOT the
+/// operational memory moat (MEM.1), which is a separate, deeper structure.
+model SearchDoc {
+  id        String                 @id @default(cuid())
+  orgId     String?
+  org       Org?                   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  type      SearchType
+  refId     String // source row id (or module key)
+  title     String
+  subtitle  String?
+  body      String?
+  url       String // route to the object, e.g. /procurement or /agents#proc-04
+  embedding Unsupported("vector")? // dormant until FILE.2 populates embeddings
+  updatedAt DateTime               @updatedAt
+
+  @@unique([type, refId])
   @@index([orgId])
 }
