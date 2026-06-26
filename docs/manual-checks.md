@@ -128,3 +128,18 @@ Tracked decisions to execute at FND.11 (first migration + org-scoped client help
 
 - **Formal `orgId` relations + FK constraints (one consistent pass).** Schema stories FND.5–FND.10 model `orgId` as a **scalar + `@@index([orgId])`** (matching §3.2/§3.3+ verbatim); they deliberately do **not** add `@relation` to `Org` or `Org` back-relations. At FND.11, do ONE pass across **every tenant-owned model** adding the formal `orgId Org @relation(fields:[orgId], references:[id])` + the matching `Org` back-relation arrays + DB-level FK constraints. Keep it consistent — no piecemeal additions before then.
 - **Per-tenant isolation (ISO.1) in the query helpers.** The org-scoped client built at FND.11 must enforce `orgId` on every query (and reach child rows — AgentRun/Message/WorkflowRun/File/MatrixColumn — through their indexed parent FK), so tenancy is guaranteed in code, not just by convention.
+
+---
+
+## FND.7 — Prisma schema: Projects/Files/MatrixColumn + pgvector (§3.3)
+
+**Automated**
+- `pnpm verify:fnd-7` — Project/File/MatrixColumn + ProjectStatus enum with correct fields; Project has `orgId` + `@@index([orgId])`; File/MatrixColumn have indexed `projectId`; `File.extracted` is `Json`; `File.embedding` is `Unsupported("vector")?`; `File.linkedTo` is `String?`; `prisma validate`/`generate` clean.
+- `pnpm typecheck` — `tsc --noEmit` clean.
+
+**Manual**
+- [ ] `prisma format` no-op; `validate` valid; `generate` ok (no warning about the `Unsupported` column).
+- [ ] Tenancy: Project carries `orgId` + index; File/MatrixColumn inherit tenancy via indexed `projectId` (same pattern as FND.6). `Project.files` is a relation array; `File.project` relation present. `MatrixColumn.projectId` is a scalar FK + index (no formal relation — §3.3 has no `Project.matrixColumns` array; one-pass relation wiring is in the FND.11 deferred decisions).
+- [ ] `File.embedding Unsupported("vector")?`: **expected**, not a defect. Prisma cannot introspect/manage `Unsupported` types, so the real `vector` column + ANN index are created via **raw SQL in the FND.11 migration**. `prisma generate` exposes `embedding` as an opaque field (not selectable as a typed value) — that's by design.
+- [ ] `File.extracted` (Json) + `embedding` are the file-matrix substrate (MTX.1) and feed operational memory (MEM.1) — the `///` pointer marks where memory/extraction extend it; no memory/graph columns added now.
+- [ ] No migration run (FND.11).

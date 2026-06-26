@@ -184,3 +184,65 @@ model AgentRun {
 
   @@index([agentId])
 }
+
+// ─── Projects & files — Hebbia-style matrix (§3.3) ─────────────────────────
+// Tenancy: Project is tenant-owned -> orgId + @@index([orgId]).
+// File/MatrixColumn inherit tenancy through an indexed projectId FK.
+
+model Project {
+  id          String        @id @default(cuid())
+  orgId       String
+  moduleKey   String
+  name        String
+  description String
+  status      ProjectStatus
+  members     Json
+  files       File[]
+  updatedAt   DateTime      @updatedAt
+
+  @@index([orgId])
+}
+
+enum ProjectStatus {
+  ACTIVE
+  IN_REVIEW
+  BLOCKED
+  DONE
+}
+
+model File {
+  id        String                 @id @default(cuid())
+  projectId String
+  project   Project                @relation(fields: [projectId], references: [id])
+  name      String
+  ext       String
+  sizeBytes Int
+  blobKey   String
+  type      String // Change, Spec, Quote, Report, Data, Memo, Plan…
+  linkedTo  String? // e.g. "Engineering · SERVO-205"
+  /// AI-extracted column values keyed by columnId (the file-matrix substrate,
+  /// MTX.1). This + `embedding` feed operational memory (MEM.1) later — extend
+  /// there; do NOT add memory/graph columns here.
+  extracted Json
+  /// pgvector column. Prisma can't introspect Unsupported types, so the actual
+  /// `vector` column + ANN index are created via raw SQL in the FND.11 migration.
+  embedding Unsupported("vector")?
+
+  modifiedAt DateTime @updatedAt
+
+  @@index([projectId])
+}
+
+// Answers live in File.extracted[columnId].
+// projectId is a scalar FK + index (no formal relation — §3.3 has no
+// Project.matrixColumns array; matches the scalar-orgId pattern). The one-pass
+// relation/FK wiring happens at FND.11 (see "FND.11 deferred decisions").
+model MatrixColumn {
+  id        String   @id @default(cuid())
+  projectId String
+  question  String
+  createdBy String
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+}
