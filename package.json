@@ -12,7 +12,7 @@
     "lint": "turbo run lint && eslint \"src/scripts/**/*.ts\"",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "turbo run typecheck",
+    "typecheck": "turbo run typecheck && tsc --noEmit -p tsconfig.json",
     "verify": "turbo run verify",
     "verify:fnd-1": "tsx src/scripts/verify-fnd-1.ts",
     "verify:fnd-2": "tsx src/scripts/verify-fnd-2.ts",
