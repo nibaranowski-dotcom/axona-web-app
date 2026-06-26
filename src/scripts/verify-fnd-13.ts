@@ -53,8 +53,8 @@ check(
   /AUTH\.1/.test(read(join(base, "lib/session.ts"))),
 );
 check(
-  "landing leaves MC.1 TODO",
-  /MC\.1/.test(read(join(base, "app/(shell)/page.tsx"))),
+  "shell landing renders (TODO MC.1 placeholder or the Launcher after MC.1)",
+  /Launcher|TODO MC\.1/.test(read(join(base, "app/(shell)/page.tsx"))),
 );
 
 // Token hygiene across shell components (no raw hex, no emoji)
