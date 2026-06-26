@@ -24,7 +24,8 @@
     "verify:fnd-8": "tsx src/scripts/verify-fnd-8.ts",
     "verify:fnd-9": "tsx src/scripts/verify-fnd-9.ts",
     "verify:fnd-10": "tsx src/scripts/verify-fnd-10.ts",
-    "verify:all": "pnpm verify:fnd-1 && pnpm verify:fnd-2 && pnpm verify:fnd-3 && pnpm verify:fnd-4 && pnpm verify:fnd-5 && pnpm verify:fnd-6 && pnpm verify:fnd-7 && pnpm verify:fnd-8 && pnpm verify:fnd-9 && pnpm verify:fnd-10",
+    "verify:fnd-11": "tsx src/scripts/verify-fnd-11.ts",
+    "verify:all": "pnpm verify:fnd-1 && pnpm verify:fnd-2 && pnpm verify:fnd-3 && pnpm verify:fnd-4 && pnpm verify:fnd-5 && pnpm verify:fnd-6 && pnpm verify:fnd-7 && pnpm verify:fnd-8 && pnpm verify:fnd-9 && pnpm verify:fnd-10 && pnpm verify:fnd-11",
     "prepare": "git config core.hooksPath .husky || true"
   },
   "lint-staged": {
@@ -37,6 +38,7 @@
     ]
   },
   "devDependencies": {
+    "@axona/db": "workspace:*",
     "@types/node": "^20.14.10",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",

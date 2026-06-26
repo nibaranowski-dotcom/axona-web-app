@@ -61,7 +61,8 @@ if (!has(user, /orgId\s+String/)) fail("User.orgId missing");
 if (
   !has(
     user,
-    /org\s+Org\s+@relation\(fields:\s*\[orgId\],\s*references:\s*\[id\]\)/,
+    // FND.11 added `onDelete: Cascade`; match the relation regardless of trailing opts.
+    /org\s+Org\s+@relation\(fields:\s*\[orgId\],\s*references:\s*\[id\]/,
   )
 ) {
   fail("User.org relation on orgId missing");

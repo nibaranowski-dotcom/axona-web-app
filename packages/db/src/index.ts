@@ -1,8 +1,15 @@
 /**
- * @axona/db — Prisma schema, migrations, seed, and the org-scoped client.
+ * @axona/db — Prisma schema, migrations, the org-scoped client, and pagination.
  *
- * The schema is scaffolded in FND.1; models land in FND.5–FND.10. The real
- * singleton PrismaClient + org-scoped query helpers (every query filtered by
- * `orgId`) + pagination land in FND.11, replacing this placeholder export.
+ * Request paths use `dbForOrg(orgId)` (ISO.1 tenant isolation enforced by an
+ * extension); the bare `prisma` is for migrations/seed/system tasks only.
  */
+export { prisma, dbForOrg } from "./client";
+export type { OrgScopedDb } from "./client";
+export { paginateArgs, pageResult } from "./pagination";
+export type { PageArgs } from "./pagination";
+
+// Re-export Prisma's generated types/enums so consumers import from one place.
+export * from "@prisma/client";
+
 export const DB_PACKAGE = "@axona/db" as const;

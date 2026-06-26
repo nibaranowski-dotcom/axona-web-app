@@ -1,16 +1,13 @@
-// Axona data model.
-// Scaffolded in FND.1; built per build-spec §3:
-//   FND.5  Core / tenancy (Org, User, Role, Module, ModuleGroup)   <-- this file
-//   FND.6  Agents / Chats / Workflows / Runs
-//   FND.7  Projects / Files / MatrixColumn (+ pgvector embedding)
-//   FND.8  Machines + MachineSignal (time-series)
-//   FND.9  Value-chain entities
-//   FND.10 Robotics + back-office entities
-// Org-scoped client + query helpers + first migration: FND.11.
+// Axona data model (build-spec §3).
+//   §3.1 Core/tenancy (FND.5) · §3.2 Agents/Chats/Workflows/Runs (FND.6)
+//   §3.3 Projects/Files/MatrixColumn + pgvector (FND.7) · §3.4 Machines (FND.8)
+//   §3.5 Value-chain (FND.9) · §3.6 Robotics + back office (FND.10)
 //
-// Multi-tenancy invariant (CLAUDE.md): every tenant-owned model carries `orgId`
-// with a relation + @@index([orgId]). This is the basis for org-scoped queries
-// (FND.11) and per-tenant isolation (ISO.1).
+// FND.11: formal `org Org @relation(... onDelete: Cascade)` on every tenant-owned
+// model + Org back-relations + the cross-entity FKs (R3). Children that inherit
+// tenancy via a parent FK (Message/AgentRun/WorkflowRun/File/MatrixColumn/
+// MachineSignal) carry NO orgId. Module is a global catalog. Org-scoped client +
+// per-tenant isolation (ISO.1) live in packages/db/src/client.ts.
 
 generator client {
   provider        = "prisma-client-js"
@@ -25,18 +22,54 @@ datasource db {
 
 // ─── Core / tenancy (§3.1) ─────────────────────────────────────────────────
 
-/// The tenant root. Everything tenant-owned hangs off an Org via `orgId`.
+/// The tenant root. Every tenant-owned model hangs off an Org via `orgId`;
+/// onDelete: Cascade means deleting an Org offboards all its data (destructive).
 model Org {
   id        String   @id @default(cuid())
   name      String
-  users     User[]
   createdAt DateTime @default(now())
+
+  // back-relations — one array per tenant-owned model (FND.11)
+  users            User[]
+  agents           Agent[]
+  chats            Chat[]
+  workflows        Workflow[]
+  projects         Project[]
+  machines         Machine[]
+  suppliers        Supplier[]
+  parts            Part[]
+  purchaseOrders   PurchaseOrder[]
+  workOrdersMfg    WorkOrderMfg[]
+  ncrs             NCR[]
+  spcSamples       SpcSample[]
+  certs            Cert[]
+  deals            Deal[]
+  campaigns        Campaign[]
+  deliveries       Delivery[]
+  robots           Robot[]
+  telemetry        TelemetryPoint[]
+  workOrdersField  WorkOrderField[]
+  technicians      Technician[]
+  ecos             ECO[]
+  firmwareReleases FirmwareRelease[]
+  compatCells      CompatCell[]
+  autonomyMetrics  AutonomyMetric[]
+  safetyIncidents  SafetyIncident[]
+  policyVersions   PolicyVersion[]
+  ledgerEntries    LedgerEntry[]
+  invoices         Invoice[]
+  unitEconomics    UnitEconomic[]
+  requisitions     Requisition[]
+  cves             CVE[]
+  obligations      Obligation[]
+  exportLicenses   ExportLicense[]
+  legalMatters     LegalMatter[]
 }
 
 model User {
   id        String   @id @default(cuid())
   orgId     String
-  org       Org      @relation(fields: [orgId], references: [id])
+  org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
   name      String
   email     String   @unique
   role      Role
@@ -79,6 +112,7 @@ enum ModuleGroup {
 model Agent {
   id          String     @id @default(cuid())
   orgId       String
+  org         Org        @relation(fields: [orgId], references: [id], onDelete: Cascade)
   moduleKey   String // owning module, or "core"
   name        String // "Sourcing agent"
   code        String // "proc-04"
@@ -86,6 +120,8 @@ model Agent {
   description String // one-liner: what it does
   state       AgentState @default(LIVE)
   runs        AgentRun[]
+
+  draftedPurchaseOrders PurchaseOrder[] // POs this agent drafted (PurchaseOrder.draftedByAgentId)
 
   @@index([orgId])
 }
@@ -100,6 +136,7 @@ enum AgentState {
 model Chat {
   id        String    @id @default(cuid())
   orgId     String
+  org       Org       @relation(fields: [orgId], references: [id], onDelete: Cascade)
   agentId   String?
   userId    String
   scope     String
@@ -132,6 +169,7 @@ enum MsgRole {
 model Workflow {
   id          String         @id @default(cuid())
   orgId       String
+  org         Org            @relation(fields: [orgId], references: [id], onDelete: Cascade)
   moduleKey   String
   name        String
   description String
@@ -192,6 +230,7 @@ model AgentRun {
 model Project {
   id          String        @id @default(cuid())
   orgId       String
+  org         Org           @relation(fields: [orgId], references: [id], onDelete: Cascade)
   moduleKey   String
   name        String
   description String
@@ -224,8 +263,9 @@ model File {
   /// MTX.1). This + `embedding` feed operational memory (MEM.1) later — extend
   /// there; do NOT add memory/graph columns here.
   extracted Json
-  /// pgvector column. Prisma can't introspect Unsupported types, so the actual
-  /// `vector` column + ANN index are created via raw SQL in the FND.11 migration.
+  /// pgvector column. Prisma can't introspect Unsupported types, so the real
+  /// vector(1536) column + HNSW ANN index are created via raw SQL in the FND.11
+  /// `enable_pgvector_ann` migration (dimension recorded in docs/manual-checks).
   embedding Unsupported("vector")?
 
   modifiedAt DateTime @updatedAt
@@ -235,8 +275,8 @@ model File {
 
 // Answers live in File.extracted[columnId].
 // projectId is a scalar FK + index (no formal relation — §3.3 has no
-// Project.matrixColumns array; matches the scalar-orgId pattern). The one-pass
-// relation/FK wiring happens at FND.11 (see "FND.11 deferred decisions").
+// Project.matrixColumns array). Left scalar intentionally (genealogy/graph FKs
+// are out of FND.11 scope; revisit only when a story needs the relation).
 model MatrixColumn {
   id        String   @id @default(cuid())
   projectId String
@@ -254,6 +294,7 @@ model MatrixColumn {
 model Machine {
   id              String          @id @default(cuid())
   orgId           String
+  org             Org             @relation(fields: [orgId], references: [id], onDelete: Cascade)
   assetId         String // "CNC-02"
   name            String
   kind            MachineKind // FIXED | MOBILE
@@ -304,16 +345,18 @@ model MachineSignal {
 }
 
 // ─── Value-chain entities (§3.5) ───────────────────────────────────────────
-// All tenant-owned -> scalar orgId + @@index([orgId]). Cross-entity FKs stay
-// scalar + indexed (formal @relation + FK constraints come in the FND.11 pass).
+// All tenant-owned -> orgId + @@index([orgId]) + formal org relation (FND.11).
 
 model Supplier {
   id        String @id @default(cuid())
   orgId     String
+  org       Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
   name      String
   tier      Int
   riskScore Float
   onTimePct Float
+
+  purchaseOrders PurchaseOrder[]
 
   @@index([orgId])
 }
@@ -321,11 +364,14 @@ model Supplier {
 model Part {
   id           String @id @default(cuid())
   orgId        String
+  org          Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
   sku          String
   name         String
   onHand       Int
   reorderPoint Int
   leadDays     Int
+
+  purchaseOrders PurchaseOrder[]
 
   @@index([orgId])
 }
@@ -333,9 +379,12 @@ model Part {
 model PurchaseOrder {
   id               String    @id @default(cuid())
   orgId            String
+  org              Org       @relation(fields: [orgId], references: [id], onDelete: Cascade)
   code             String
   supplierId       String
+  supplier         Supplier  @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   partId           String
+  part             Part      @relation(fields: [partId], references: [id], onDelete: Restrict)
   qty              Int
   value            Float
   /// Agent-drafted PO surface — the propose→approve→audit moat. The approval
@@ -343,6 +392,7 @@ model PurchaseOrder {
   /// the immutable who/model/confidence/approver record lands in AUDIT.3.
   status           POStatus
   draftedByAgentId String?
+  draftedByAgent   Agent?    @relation(fields: [draftedByAgentId], references: [id], onDelete: SetNull)
   eta              DateTime?
 
   @@index([orgId])
@@ -362,6 +412,7 @@ enum POStatus {
 model WorkOrderMfg {
   id        String    @id @default(cuid())
   orgId     String
+  org       Org       @relation(fields: [orgId], references: [id], onDelete: Cascade)
   /// As-built genealogy anchor — parts·serials·firmware captured AS BUILT, never
   /// reconstructed (capture fidelity caps the moat). The genealogy graph over
   /// this serial lands in ONT.2; keep capture clean here.
@@ -377,8 +428,11 @@ model WorkOrderMfg {
 model NCR {
   id       String   @id @default(cuid())
   orgId    String
+  org      Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
   code     String
   defect   String
+  /// String reference into the genealogy/quality graph (e.g. "lot 88421") — kept
+  /// a plain string, not an FK (crosses to ONT.2, out of FND.11 scope).
   linkedTo String
   severity Severity
   status   String
@@ -397,6 +451,7 @@ enum Severity {
 model SpcSample {
   id             String   @id @default(cuid())
   orgId          String
+  org            Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
   characteristic String
   serial         String
   value          Float
@@ -412,6 +467,7 @@ model SpcSample {
 model Cert {
   id      String   @id @default(cuid())
   orgId   String
+  org     Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
   name    String
   scope   String
   validTo DateTime
@@ -423,6 +479,7 @@ model Cert {
 model Deal {
   id          String      @id @default(cuid())
   orgId       String
+  org         Org         @relation(fields: [orgId], references: [id], onDelete: Cascade)
   account     String
   config      String
   value       Float
@@ -450,6 +507,7 @@ enum Feasibility {
 model Campaign {
   id       String @id @default(cuid())
   orgId    String
+  org      Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
   name     String
   channel  String
   mqls     Int
@@ -463,6 +521,7 @@ model Campaign {
 model Delivery {
   id            String        @id @default(cuid())
   orgId         String
+  org           Org           @relation(fields: [orgId], references: [id], onDelete: Cascade)
   code          String
   account       String
   destination   String
@@ -487,15 +546,15 @@ enum DeliveryStage {
 }
 
 // ─── Robotics + back office (§3.6) ─────────────────────────────────────────
-// All tenant-owned -> scalar orgId + @@index([orgId]). Cross-entity FKs stay
-// scalar + indexed (formal @relation + FK constraints come in the FND.11 pass).
-// REUSES the Severity enum defined in §3.5 (WorkOrderField/SafetyIncident/CVE).
+// All tenant-owned -> orgId + @@index([orgId]) + formal org relation (FND.11).
+// REUSES the Severity enum from §3.5 (WorkOrderField/SafetyIncident/CVE).
 
 model Robot {
   id        String @id @default(cuid())
   orgId     String
+  org       Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
   /// Links a deployed unit back to its as-built genealogy (parts·serials·
-  /// firmware) — the ONT.2 genealogy graph keys on this serial.
+  /// firmware) — the ONT.2 genealogy graph keys on this serial (string, not FK).
   serial    String
   model     String
   customer  String
@@ -506,6 +565,8 @@ model Robot {
   lat       Float?
   lng       Float?
 
+  telemetry TelemetryPoint[]
+
   @@index([orgId])
 }
 
@@ -515,7 +576,9 @@ model Robot {
 model TelemetryPoint {
   id      String   @id @default(cuid())
   orgId   String
+  org     Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
   robotId String
+  robot   Robot    @relation(fields: [robotId], references: [id], onDelete: Cascade)
   ts      DateTime
   metric  String
   value   Float
@@ -525,14 +588,16 @@ model TelemetryPoint {
 }
 
 model WorkOrderField {
-  id          String    @id @default(cuid())
+  id          String      @id @default(cuid())
   orgId       String
+  org         Org         @relation(fields: [orgId], references: [id], onDelete: Cascade)
   code        String
   robotSerial String
   site        String
   issue       String
   slaDueAt    DateTime?
   techId      String?
+  tech        Technician? @relation(fields: [techId], references: [id], onDelete: SetNull)
   status      String
   severity    Severity
 
@@ -544,11 +609,14 @@ model WorkOrderField {
 model Technician {
   id       String @id @default(cuid())
   orgId    String
+  org      Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
   name     String
   initials String
   site     String
   status   String
   certs    Json // cert matrix: {certKey: {state, expiresAt}}
+
+  workOrders WorkOrderField[]
 
   @@index([orgId])
 }
@@ -556,6 +624,7 @@ model Technician {
 model ECO {
   id         String @id @default(cuid())
   orgId      String
+  org        Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
   code       String
   title      String
   changeType String
@@ -571,6 +640,7 @@ model ECO {
 model FirmwareRelease {
   id      String @id @default(cuid())
   orgId   String
+  org     Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
   version String
   note    String
   state   String
@@ -581,6 +651,7 @@ model FirmwareRelease {
 model CompatCell {
   id        String @id @default(cuid())
   orgId     String
+  org       Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
   hwRev     String
   fwVersion String
   state     String // cert/compatible/in-test/na
@@ -594,6 +665,7 @@ model CompatCell {
 model AutonomyMetric {
   id             String   @id @default(cuid())
   orgId          String
+  org            Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
   site           String
   ts             DateTime
   autonomyRate   Float
@@ -607,6 +679,7 @@ model AutonomyMetric {
 model SafetyIncident {
   id          String   @id @default(cuid())
   orgId       String
+  org         Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
   code        String
   type        String
   robotSerial String
@@ -620,6 +693,7 @@ model SafetyIncident {
 model PolicyVersion {
   id      String @id @default(cuid())
   orgId   String
+  org     Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
   version String
   note    String
   /// Gated rollback/promotion state (current/canary/standby). Policy rollback is
@@ -633,6 +707,7 @@ model PolicyVersion {
 model LedgerEntry {
   id      String @id @default(cuid())
   orgId   String
+  org     Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
   period  String
   account String
   amount  Float
@@ -644,6 +719,7 @@ model LedgerEntry {
 model Invoice {
   id      String    @id @default(cuid())
   orgId   String
+  org     Org       @relation(fields: [orgId], references: [id], onDelete: Cascade)
   code    String
   account String
   source  String
@@ -658,6 +734,7 @@ model Invoice {
 model UnitEconomic {
   id        String @id @default(cuid())
   orgId     String
+  org       Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
   product   String
   asp       Float
   cogs      Float
@@ -670,6 +747,7 @@ model UnitEconomic {
 model Requisition {
   id     String @id @default(cuid())
   orgId  String
+  org    Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
   role   String
   filled Int
   target Int
@@ -680,6 +758,7 @@ model Requisition {
 model CVE {
   id            String   @id @default(cuid())
   orgId         String
+  org           Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
   code          String
   severity      Severity
   affectedUnits Int
@@ -691,6 +770,7 @@ model CVE {
 model Obligation {
   id         String @id @default(cuid())
   orgId      String
+  org        Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
   account    String
   obligation String
   actual     String
@@ -702,6 +782,7 @@ model Obligation {
 model ExportLicense {
   id          String @id @default(cuid())
   orgId       String
+  org         Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
   destination String
   code        String
   state       String
@@ -712,6 +793,7 @@ model ExportLicense {
 model LegalMatter {
   id       String @id @default(cuid())
   orgId    String
+  org      Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
   type     String
   title    String
   linkedTo String

@@ -122,12 +122,13 @@ checks that can't be scripted.
 
 ---
 
-## FND.11 deferred decisions
+## FND.11 deferred decisions — CLOSED (FND.11)
 
-Tracked decisions to execute at FND.11 (first migration + org-scoped client helpers). Recorded so they aren't lost while earlier schema stories match the build-spec verbatim.
+Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND.11 — Migrations + org-scoped client + isolation" entry below for verification.
 
-- **Formal `orgId` relations + FK constraints (one consistent pass).** Schema stories FND.5–FND.10 model `orgId` as a **scalar + `@@index([orgId])`** (matching §3.2/§3.3+ verbatim); they deliberately do **not** add `@relation` to `Org` or `Org` back-relations. At FND.11, do ONE pass across **every tenant-owned model** adding the formal `orgId Org @relation(fields:[orgId], references:[id])` + the matching `Org` back-relation arrays + DB-level FK constraints. Keep it consistent — no piecemeal additions before then.
-- **Per-tenant isolation (ISO.1) in the query helpers.** The org-scoped client built at FND.11 must enforce `orgId` on every query (and reach child rows — AgentRun/Message/WorkflowRun/File/MatrixColumn — through their indexed parent FK), so tenancy is guaranteed in code, not just by convention.
+- [x] **Formal `orgId` relations + FK constraints (one consistent pass).** FND.11 added `org Org @relation(fields:[orgId], references:[id], onDelete: Cascade)` to every tenant-owned model + the matching `Org` back-relation arrays + DB-level FK constraints (44 FKs in the init migration).
+- [x] **Per-tenant isolation (ISO.1) in the query helpers.** `dbForOrg(orgId)` (a Prisma `$extends` query injector) scopes every tenant-model read/write; children (AgentRun/Message/WorkflowRun/File/MatrixColumn/MachineSignal) are reached through their indexed parent FK. Proven by the cross-tenant isolation test.
+- [ ] **(Still deferred)** genealogy FKs + immutable event log → ONT.1/ONT.2; Timescale/hypertable for telemetry → TEL.1. `MatrixColumn.projectId` left scalar until a story needs the relation.
 
 ---
 
@@ -191,3 +192,29 @@ Tracked decisions to execute at FND.11 (first migration + org-scoped client help
 - [ ] No migration run — **next story FND.11** runs the first migration, adds the org-scoped client + the one-pass `orgId` relations/FK constraints (see "FND.11 deferred decisions"), and the raw-SQL pgvector column/index.
 
 **Schema model is now complete (§3.1–§3.6).**
+
+---
+
+## FND.11 — Migrations + org-scoped client + isolation
+
+**Automated**
+- `pnpm verify:fnd-11` — schema relations (org + cross-entity FKs), `dbForOrg`, pagination, init + pgvector ANN migrations; **plus** integration checks (migration applied, cross-tenant isolation, create-injection) when `DATABASE_URL` is set. Integration auto-skips in CI (no DB), so `verify:all` stays CI-safe.
+- `pnpm typecheck` + root `tsc --noEmit -p tsconfig.json` — clean.
+
+**Manual (run `docker compose up -d` first; export DATABASE_URL)**
+- [ ] `pnpm --filter @axona/db exec prisma migrate status` → "Database schema is up to date" (2 migrations: `_init`, `_enable_pgvector_ann`).
+- [ ] `psql $DATABASE_URL -c '\d "File"'` shows `embedding | vector(1536)`.
+- [ ] `psql $DATABASE_URL -c "\di file_embedding_hnsw"` shows the HNSW index.
+- [ ] FK constraints exist (`select count(*) from pg_constraint where contype='f'` → 44), incl. PurchaseOrder→Supplier/Part (Restrict), PurchaseOrder→Agent (SetNull), TelemetryPoint→Robot (Cascade), WorkOrderField→Technician (SetNull), and the per-tenant `*_orgId_fkey` (Cascade).
+- [ ] Isolation: `dbForOrg(A).supplier.findMany()` returns 0 of B's rows (verify-fnd-11 integration proves this and self-cleans).
+- [ ] **Embedding dimension recorded = 1536** (default; revisit in FILE.2 when the embedding model is chosen).
+
+**House rules / notes**
+- `dbForOrg(orgId)` is the only sanctioned request-path client; bare `prisma` is for migrations/seed/system tasks only.
+- Unique-target ops (`findUnique`/`update`/`delete`/`upsert`) can't take `orgId` in a unique `where` — scope tenant mutations via `updateMany`/`deleteMany`, or `findFirst({ where: { id, orgId } })` ownership check first.
+- The extension scopes the **top-level** model only; nested tenant creates must carry `orgId` or go through their own scoped call.
+- `migrate dev` is interactive; in this headless env it was run via a pseudo-tty (`script -q /dev/null …`). The pgvector typed column + HNSW index live in a **separate** `enable_pgvector_ann` migration (never hand-edit an applied migration).
+- Migration reset destroys local dev data only (no prod, seed is FND.12). RLS at the Postgres-role level is a noted future hardening; app-level `dbForOrg` scoping is the chosen mechanism.
+
+### Embedding dimension
+- `File.embedding` = `vector(1536)` (FND.11 default). Revisit in FILE.2.
