@@ -78,8 +78,11 @@ check(
   /ART\.5/.test(read(join(shellDir, "TraceConsole.tsx"))),
 );
 check(
+  // SRCH.3 moved the global ⌘K handler from the sidebar into CommandPalette.
   "keyboard hook handles cmd/ctrl K",
-  /key\s*===\s*["']k["']/i.test(shellFiles),
+  /key\s*===\s*["']k["']/i.test(
+    read(join(base, "components/search/CommandPalette.tsx")),
+  ),
 );
 check(
   "agent pane min 280 / max 520 / rail 52",

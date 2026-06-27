@@ -1,40 +1,15 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import type { NavGroup } from "@/lib/nav";
+import { useCommandPalette } from "@/lib/command-palette";
 import { NavSection } from "./NavSection";
 
 // Left sidebar: wordmark, the ⌘K search entry, and the four grouped nav sections.
-// Hairline right border (no shadow). The search palette itself is SRCH.3 — here
-// the entry just focuses (⌘K / "/") and routes to /search.
+// Hairline right border (no shadow). The ⌘K entry opens the global command
+// palette (SRCH.3); the ⌘K/"/" key handling itself lives in CommandPalette.
 
 export function Sidebar({ groups }: { groups: NavGroup[] }) {
-  const router = useRouter();
-  const searchRef = useRef<HTMLButtonElement>(null);
-
-  // ⌘K / Ctrl+K (and bare "/" when not typing) focus the search entry; Esc blurs.
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      const el = e.target as HTMLElement | null;
-      const typing =
-        !!el &&
-        (el.tagName === "INPUT" ||
-          el.tagName === "TEXTAREA" ||
-          el.isContentEditable);
-      if ((e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K")) {
-        e.preventDefault();
-        searchRef.current?.focus();
-      } else if (e.key === "/" && !typing) {
-        e.preventDefault();
-        searchRef.current?.focus();
-      } else if (e.key === "Escape") {
-        (document.activeElement as HTMLElement | null)?.blur();
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  const openPalette = useCommandPalette((s) => s.openPalette);
 
   return (
     <nav
@@ -55,9 +30,8 @@ export function Sidebar({ groups }: { groups: NavGroup[] }) {
       {/* ⌘K search entry (palette = SRCH.3) */}
       <div className="px-3 pb-2">
         <button
-          ref={searchRef}
           type="button"
-          onClick={() => router.push("/search")}
+          onClick={() => openPalette()}
           className="flex w-full items-center justify-between rounded-btn border border-line-strong bg-paper px-3 py-1.5 text-sm text-ink-muted hover:bg-panel-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <span>Search</span>

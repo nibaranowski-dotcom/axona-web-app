@@ -358,3 +358,26 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Mission Control re-architected to match the prototype:** moved from in-shell (FND.13/MC.1) to a **full-screen dark launchpad at `/`** (no sidebar); module screens live under the `(shell)` group. Added a `(shell)/[module]` placeholder so the shell is reachable + tiles resolve until each screen's story lands.
 - **Fonts** stay self-hosted via next/font (not the prototype's Google CDN import).
 - Line-icons in the prototype tiles are represented by mono lettermark glyphs for now (faithful to the DS mono aesthetic); swapping to the exact line-icon set is a follow-up polish.
+
+---
+
+## SRCH.3 — Command palette (⌘K)
+
+**Automated**
+- `pnpm verify:srch-3` — components (CommandPalette/ScopeTabs/Results), global root mount, ⌘K handler, useSearch (debounce/abort + /api/search), scope counts, a11y roles (dialog/combobox/listbox) + focus restore, /search deep-link, entries repointed, token hygiene.
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001)**
+- [ ] ⌘K opens the palette on `/` (launchpad) AND on a shell route (e.g. `/quality`); Esc closes + restores focus.
+- [ ] Type "quality" → grouped hits (Module/Agents/Project/File); scope tabs show All 10 / Agents 7 / Modules 1 / … matching `/api/search?q=quality`.
+- [ ] Click the Agents tab → filters to agents; ↑↓ moves the lime highlight; ↵ opens the hit (navigates) + closes; clicking a row does the same.
+- [ ] Launcher search field + sidebar ⌘K both open THIS palette (no dead `/search` navigation).
+- [ ] `/search?q=osaka` opens with the palette pre-filled/queried.
+- [ ] Idle (no query) shows a hint; loading shows "Searching…"; no-results + error states render.
+- [ ] Matches `design/prototypes/` (overlay scrim + paper panel, field, scope tabs, result rows, mono type lettermarks); no emoji; hairlines (no shadow); lime only as the active signal.
+- [ ] accessibility-review: focus trap, combobox/listbox roles, AA contrast — 0 violations.
+
+**Notes**
+- Global mount in the root layout (works on the launchpad outside the shell + inside it). Open state in a dedicated `useCommandPalette` (Zustand). Data via `/api/search` (SRCH.2) only — debounced 150ms + AbortController; `counts` from the same response.
+- DS.1 composite: the overlay uses a new `--scrim` token (rgba ink) + the DS paper/hairline surface; built on DS `Pill` (scope tabs) + DS input styling. No off-system styling.
+- `/search` is a static route (precedence over `(shell)/[module]`) that renders the launchpad + opens the palette seeded from `?q=`.

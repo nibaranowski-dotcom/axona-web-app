@@ -131,6 +131,9 @@
   --md-glass-line: rgba(255, 255, 255, 0.13);
   --md-dot: rgba(255, 255, 255, 0.05);
   --md-rule: rgba(255, 255, 255, 0.08);
+
+  /* — Overlay scrim (modal/command-palette backdrop; DS.1 composite) — */
+  --scrim: rgba(10, 10, 10, 0.5);
 }
 
 ::selection {
