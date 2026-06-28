@@ -277,7 +277,7 @@ another module.
 
 | Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
 |---|---|---|---|---|---|---|---|
-| 109 | EMAIL.1 | Transactional email service (invites, verify, reset, receipts) — provider + React Email templates | P0 | M | 3 | FND.1 | todo |
+| 109 | EMAIL.1 | Transactional email service (invites, verify, reset, receipts) — **Resend** + React Email templates; human-approved sends only | P0 | M | 3 | FND.1 | todo |
 | 110 | NOTIF.1 | Notification model + in-app notification center | P1 | M | 3 | FND.11 | todo |
 | 111 | NOTIF.2 | Wire agent/workflow approvals + cross-module exceptions into notifications | P0 | M | 3 | NOTIF.1, RBAC.4, ART.5 | todo |
 | 112 | NOTIF.3 | Per-channel routing (in-app / email) honoring user preferences | P1 | S | 2 | NOTIF.2, EMAIL.1, SET.4 | todo |
@@ -294,7 +294,7 @@ another module.
 |---|---|---|---|---|---|---|---|
 | 114 | ONT.1 | Ontology objects + immutable event log (Unit·Part·Serial·Firmware·BOM·PO/RFQ·Supplier·WorkOrder·Machine/fixture·Human·Agent) over Postgres+pgvector | P0 | L | 6 | FND.11 | todo |
 | 115 | ONT.2 | Per-unit genealogy spine captured **as-built** (Unit→Parts/Serials/Firmware), not reconstructed; capture-fidelity guarantees | P0 | L | 5 | ONT.1, MFG.1 | todo |
-| 116 | CONN.1 | Connector framework — pluggable ingest from ERP/PLM/MES, email, chat, machine telemetry | P1 | L | 6 | ONT.1 | todo |
+| 116 | CONN.1 | Connector framework — pluggable ingest from ERP/PLM/MES, email, chat, machine telemetry; **speak MCP** as the tool/connector standard (Anthropic-native); use Arcade/Composio for authed external-SaaS connectors rather than hand-rolled OAuth | P1 | L | 6 | ONT.1 | todo |
 | 117 | CONN.2 | Normalize step — entity resolution + dedupe + diff-against-last-state → event log | P1 | L | 5 | CONN.1, ONT.1 | todo |
 | 118 | TEL.1 | Telemetry as first-class labeled input (fleet + plant) wired into event log + memory | P1 | M | 4 | ONT.1, FLEET.1, MACH.1 | todo |
 
@@ -306,14 +306,14 @@ another module.
 
 | Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
 |---|---|---|---|---|---|---|---|
-| 119 | MEM.1 | Operational memory store — structured graph + vector over decisions/exceptions/approvals/genealogy/telemetry (**not** RAG-over-PDFs) | P0 | L | 6 | ONT.1 | todo |
+| 119 | MEM.1 | Operational memory store — structured graph + vector over decisions/exceptions/approvals/genealogy/telemetry (**not** RAG-over-PDFs). **Build — do not buy Mem0/Letta** (they'd hold the moat); study Zep/Graphiti's temporal-KG as a reference. pgvector now; watch Turbopuffer if multi-tenant scale/cost bites | P0 | L | 6 | ONT.1 | todo |
 | 120 | MEM.2 | Context assembly + retrieval for operational decisions; feeds AgentRuntime context | P0 | L | 5 | MEM.1, ART.1 | todo |
 | 121 | CONF.1 | Calibrated **confidence** as a first-class field on every proposal — logged, surfaced, gates autonomy | P0 | M | 4 | ART.1, AUDIT.1 | todo |
 | 122 | TRUST.1 | Progressive-trust / autonomy ladder — per-agent scope widening, measured + surfaced as a product surface | P1 | L | 5 | CONF.1, RBAC.4 | todo |
 | 123 | LOOP.1 | Outcome capture + reward modeling from **physical** outcomes (on-time / line-halt / pass-test) | P1 | L | 5 | ONT.1, MEM.1 | todo |
-| 124 | LOOP.2 | Continuous-learning loop — production-trace → train/distill → serve (online RL / self-distillation) | P2 | XL | 8 | LOOP.1, SLM.1 | todo |
-| 125 | LOOP.3 | Reward-hack detection + eval harness (so the loop doesn't game itself) | P1 | L | 5 | LOOP.1 | todo |
-| 126 | SLM.1 | Specialized small models (BOM diff, supply-risk, genealogy QA) + frontier fallback router; VPC-deployable | P2 | XL | 8 | MEM.2, ONT.2 | todo |
+| 124 | LOOP.2 | Continuous-learning loop — production-trace → train/distill → serve (online RL / self-distillation; OpenPipe-style trace fine-tuning as a bootstrap; Modal/E2B-class or own-VPC GPUs for compute) | P2 | XL | 8 | LOOP.1, SLM.1 | todo |
+| 125 | LOOP.3 | Reward-hack detection + eval harness (so the loop doesn't game itself) — build on the OBS.1 tracing/eval substrate; Patronus-style simulation for pre-promotion stress-tests | P1 | L | 5 | LOOP.1, OBS.1 | todo |
+| 126 | SLM.1 | Specialized small models (BOM diff, supply-risk, genealogy QA) + frontier-fallback router (**adopt LiteLLM** — don't build the router); fine-tune from traces (OpenPipe/Fastino as accelerants); VPC-deployable | P2 | XL | 8 | MEM.2, ONT.2 | todo |
 
 ## E14 — Governance, Isolation & Deployment · Track: Moat · Gov
 
@@ -330,8 +330,32 @@ another module.
 
 ---
 
+## Infra build-vs-buy (from `research/agentic-infra-landscape.md`)
+
+The rule: **buy the plumbing, build the moat.** Only L2 (memory · models · learning loop) is built
+in-house; everything undifferentiated is bought if it's cheaper than building.
+
+- **Adopt now:** MCP (connector standard → CONN.1) · an observability/eval substrate, **Langfuse** self-host
+  (→ new OBS.1) · **Resend** for transactional email (→ EMAIL.1).
+- **Adopt when the trigger hits:** **LiteLLM** model-router when SLM+frontier lands (→ SLM.1) · Modal/E2B
+  for SLM train/serve + sandboxed tool execution (→ LOOP.2) · Turbopuffer if pgvector scale bites (→ MEM.1).
+- **Build — never outsource (it's the moat):** the runtime (ART.*), operational memory (MEM.1), the
+  learning loop + SLMs (LOOP.*/SLM.1). Study Mem0/Zep/Letta + OpenPipe/Fastino as references, not vendors.
+- **Watch:** Arcade/Composio (external-SaaS auth → CONN.1) · AgentMail + A2A Agent Cards (agent identity/email
+  → new AGENTID.1) · Patronus simulation (→ LOOP.3 / AUTO.2). **Skip:** heavy agent frameworks, agent
+  payment rails, Pinecone.
+
+Two stories added from the research:
+
+| Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
+|---|---|---|---|---|---|---|---|
+| 132 | OBS.1 | Agent tracing + eval substrate — adopt **Langfuse** (self-host/VPC); trace every AgentRun/WorkflowRun, power eval-driven dev + the LOOP.3 harness; complements (doesn't replace) the immutable audit log | P1 | M | 3 | ART.5 | todo |
+| 133 | AGENTID.1 | Agent-facing email + identity (WATCH/later) — outward-facing agents get inboxes (**AgentMail**) + **A2A** signed Agent Cards for supplier/customer agent interop | P2 | M | 4 | CONN.1, ART.2 | todo |
+
+---
+
 ## Totals & sequencing notes
-- **131 stories** across 15 epics. P0 = MVP spine; P1 = complete the set; P2 = harden/monetize/research.
+- **133 stories** across 15 epics. P0 = MVP spine; P1 = complete the set; P2 = harden/monetize/research.
 - **Moat layer (E12–E14)** is the part that keeps Axona *product, not services*. Build it in the
   learnings §11 order — L1 capture → memory → runtime+guardrails → procurement wedge → **close the loop**
   — and remember a plan that stops at "we shipped a procurement co-pilot" has built a feature, not the
