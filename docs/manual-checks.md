@@ -381,3 +381,23 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - Global mount in the root layout (works on the launchpad outside the shell + inside it). Open state in a dedicated `useCommandPalette` (Zustand). Data via `/api/search` (SRCH.2) only — debounced 150ms + AbortController; `counts` from the same response.
 - DS.1 composite: the overlay uses a new `--scrim` token (rgba ink) + the DS paper/hairline surface; built on DS `Pill` (scope tabs) + DS input styling. No off-system styling.
 - `/search` is a static route (precedence over `(shell)/[module]`) that renders the launchpad + opens the palette seeded from `?q=`.
+
+---
+
+## ART.1 — AgentRuntime
+
+**Automated**
+- `pnpm verify:art-1` — runtime files; offline loop (FakeModelClient, no API key): tool exec → SUCCEEDED with tool/tool-result/result trace lines, gated tool → proposal (AWAITING_APPROVAL, **no PurchaseOrder created**), turn cap → FAILED, `runAgent` persists an AgentRun with trace + model, and a cross-org load throws (tenant isolation).
+- `pnpm typecheck` (workspace + root) clean.
+
+**Manual (real model — needs ANTHROPIC_API_KEY + ANTHROPIC_MODEL set, docker up)**
+- [ ] Node script: `runAgent(<a procurement agent id>, "is any part below reorder point?", {orgId, userId})` returns a sensible answer and an AgentRun row with a trace (scan/correlate/tool/result).
+- [ ] Ask something that triggers the gated tool ("place a PO for 50 of SKU X") → run status awaits approval, NO PurchaseOrder row created.
+- [ ] Confirm the trace records the model name used and timestamps.
+- [ ] Two orgs: an agent in org A cannot read org B's rows via any tool (every tool uses `ctx.db = dbForOrg(orgId)`).
+
+**Notes**
+- Loop depends on a `ModelClient` (DI): real `AnthropicModelClient` (`@anthropic-ai/sdk`; model from `ANTHROPIC_MODEL`, default `claude-sonnet-4-6`; key from `ANTHROPIC_API_KEY`) + `FakeModelClient` for offline tests. No hardcoded model string in the loop/entry point.
+- Every tool: Zod-validated input, `ctx.db = dbForOrg(orgId)`, try/catch, typed trace lines (`scan·correlate·draft·policy-check·tool·tool-result·proposal·result·error`).
+- Gated (money/safety/contract) tools PROPOSE and stop — never auto-execute. `canUseTool` is the RBAC.3 seam (permissive now). `AgentRun.status` is RUNNING|SUCCEEDED|FAILED; AWAITING_APPROVAL maps onto RUNNING for now (real proposal state + model/confidence/approver columns = RBAC.4/AUDIT.3).
+- Example tools (ART.2 ships the full registry): `searchOperations`, `getPartStatus`, `listOpenNcrs` (read-only) + `draftPurchaseOrder` (gated stub).
