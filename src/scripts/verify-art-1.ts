@@ -102,7 +102,9 @@ async function run(): Promise<void> {
         );
       });
 
-      // 2. gating: a gated tool is proposed, NOT executed (no PO created)
+      // 2. gating: a gated tool is proposed, NOT executed (no PO sent).
+      // (draftPurchaseOrder became a draft tool in ART.2; sendPurchaseOrder is
+      // the gated one.)
       await check("gated tool is proposed, not executed", async () => {
         const fake = new FakeModelClient([
           {
@@ -112,8 +114,8 @@ async function run(): Promise<void> {
             toolUses: [
               {
                 id: "t1",
-                name: "draftPurchaseOrder",
-                input: { sku: "X", qty: 1 },
+                name: "sendPurchaseOrder",
+                input: { poId: "x" },
               },
             ],
           },
@@ -121,8 +123,8 @@ async function run(): Promise<void> {
         const before = await dbForOrg(orgId).purchaseOrder.count();
         const c = ctx("a");
         const r = await runLoop(
-          testDef(["draftPurchaseOrder"]),
-          "buy one",
+          testDef(["sendPurchaseOrder"]),
+          "send it",
           c,
           fake,
         );

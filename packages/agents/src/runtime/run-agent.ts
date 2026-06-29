@@ -1,25 +1,9 @@
 import { dbForOrg, RunStatus, Prisma } from "@axona/db";
-import type { Agent } from "@axona/db";
 import { AnthropicModelClient, type ModelClient } from "./model-client";
 import { TraceCollector } from "./trace";
 import { runLoop } from "./runtime";
-import type { AgentDef, RunResult } from "./types";
-import { toolsForModule } from "../tools";
-
-/** systemPrompt from the agent's role/description; tools by module (ART.2 expands). */
-export function buildAgentDef(
-  agent: Pick<Agent, "role" | "description" | "moduleKey">,
-): AgentDef {
-  const systemPrompt =
-    `You are the ${agent.role} agent. ${agent.description}\n\n` +
-    "You draft and monitor; a human approves any money, safety, or contract action. " +
-    "Use the available tools to gather facts before you answer.";
-  return {
-    systemPrompt,
-    tools: toolsForModule(agent.moduleKey),
-    scope: agent.moduleKey,
-  };
-}
+import type { RunResult } from "./types";
+import { buildAgentDef } from "../tools";
 
 /**
  * Loads the Agent (tenant-scoped), runs the loop, and persists an AgentRun for

@@ -401,3 +401,23 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - Every tool: Zod-validated input, `ctx.db = dbForOrg(orgId)`, try/catch, typed trace lines (`scan·correlate·draft·policy-check·tool·tool-result·proposal·result·error`).
 - Gated (money/safety/contract) tools PROPOSE and stop — never auto-execute. `canUseTool` is the RBAC.3 seam (permissive now). `AgentRun.status` is RUNNING|SUCCEEDED|FAILED; AWAITING_APPROVAL maps onto RUNNING for now (real proposal state + model/confidence/approver columns = RBAC.4/AUDIT.3).
 - Example tools (ART.2 ships the full registry): `searchOperations`, `getPartStatus`, `listOpenNcrs` (read-only) + `draftPurchaseOrder` (gated stub).
+
+---
+
+## ART.2 — Typed tool registry
+
+**Automated**
+- `pnpm verify:art-2` — registry/module files; every tool zod-typed + categorized (read/draft/gated) with `gated:true ⇔ category gated`; draft tools never gated + the four gated tools are; `buildAgentDef` wires module tools + core reads for a procurement agent; a read tool returns seeded rows; a draft tool creates a DRAFTED PO; the gated `sendPurchaseOrder` is proposed-not-executed (no SENT PO); tenant isolation (org A row invisible to org B).
+- `pnpm typecheck` (workspace + root) clean.
+
+**Manual (real key — ANTHROPIC_API_KEY set, docker up)**
+- [ ] `runAgent(<procurement agent>, "any parts below reorder point? draft POs for them")` → drafts DRAFTED POs, cites parts, does NOT send.
+- [ ] `runAgent(<procurement agent>, "send PO <id> to the supplier")` → run awaits approval; no PO moves to SENT.
+- [ ] `runAgent(<quality agent>, "is the SERVO-204 torque in spec?")` → runs the SPC check; can open an NCR (draft) but never releases/pays.
+- [ ] Two orgs: a tool in org A never returns/touches org B rows.
+
+**Notes**
+- Three categories: **read** (query via ctx.db), **draft** (create not-yet-final records — PO DRAFTED, new NCR, draft ECO, proposed tech assignment — non-gated, runs autonomously), **gated** (irreversible money/safety/contract — `gated:true` → ART.1 proposes and stops; handler is the human-approved path for RBAC.4, never called by the loop).
+- The line: drafting/opening is allowed; **placing/releasing/paying is gated** — `draftPurchaseOrder`→DRAFTED (draft) vs `sendPurchaseOrder` (gated); `openNcr` (draft); `releaseEco`/`recognizeRevenue`/`issueCreditNote` (gated).
+- `buildAgentDef(agent)` = module tools + core reads; the core agent gets cross-module reads only. Every handler uses `ctx.db = dbForOrg(orgId)`; `listReorderCandidates` uses `$queryRaw` (onHand ≤ reorderPoint, orgId pinned in SQL); list tools capped at 50.
+- Tool sets shipped: Procurement (wedge), Quality, Engineering, Field Service, Finance, Inventory + Core. Remaining modules' tools land with their screens (ART.3+).

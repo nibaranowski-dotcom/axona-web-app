@@ -81,8 +81,10 @@ export async function runLoop(
         continue;
       }
 
-      // gating: money/safety/contract → propose, do NOT execute
-      if (tool.gated) {
+      // gating: money/safety/contract → propose, do NOT execute. Keyed on the
+      // flag OR the category (defense in depth — a gated tool missing the flag
+      // still never runs autonomously).
+      if (tool.gated || tool.category === "gated") {
         ctx.trace.push(
           "proposal",
           `proposed ${tool.name} (awaiting human approval)`,

@@ -20,6 +20,7 @@ export type {
   RunResult,
   RunStatusResult,
   Tool,
+  ToolCategory,
   TraceKind,
   TraceLine,
 } from "./runtime/types";
@@ -36,17 +37,52 @@ export type {
 // Runtime
 export { TraceCollector } from "./runtime/trace";
 export { runLoop, canUseTool } from "./runtime/runtime";
-export { runAgent, buildAgentDef } from "./runtime/run-agent";
+export { runAgent } from "./runtime/run-agent";
 
-// Example tools (full registry is ART.2) + test helper
+// Typed tool registry (ART.2) — registry, agent assembly, test helper, and the
+// per-module tool sets.
 export {
-  ALL_TOOLS,
-  toolsForModule,
+  registry,
+  buildAgentDef,
   testDef,
+  // core
+  coreTools,
   searchOperations,
+  getModuleSummary,
+  // procurement (the wedge)
+  procurementTools,
   getPartStatus,
-  listOpenNcrs,
+  listReorderCandidates,
+  getSupplierRisk,
   draftPurchaseOrder,
+  sendPurchaseOrder,
+  // quality
+  qualityTools,
+  runSpcCheck,
+  listOpenNcrs,
+  getCertStatus,
+  openNcr,
+  // engineering
+  engineeringTools,
+  getEco,
+  getCompatMatrix,
+  draftEco,
+  releaseEco,
+  // field service
+  fieldServiceTools,
+  getWorkOrder,
+  findCertifiedTech,
+  getSlaCountdown,
+  routeTechnician,
+  // finance
+  financeTools,
+  getUnitEconomics,
+  getArAging,
+  recognizeRevenue,
+  issueCreditNote,
+  // inventory
+  inventoryTools,
+  getStock,
 } from "./tools";
 
 export const AGENTS_PACKAGE = "@axona/agents" as const;
