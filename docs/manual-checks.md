@@ -441,3 +441,24 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - Stream event types: `trace` (each line) · `proposal` (gated action — UI shows "awaiting approval") · `message` (final text + status + runId) · `done` · `error`. Gated actions surface as `proposal` and never execute (ART.1/ART.2 gate).
 - Org-scoped via `getCurrentUser → dbForOrg`; agent + chat lookups scoped, 404 on miss. `streamAgentChat()` (client helper) parses SSE frames into a typed async iterator; AGT.1 renders them (UI not built here).
 - Client disconnect (`req.signal`) stops enqueuing; the run completes server-side and the AgentRun (with trace) is persisted. Token-by-token final-text streaming is a later refinement (needs a streaming ModelClient).
+
+---
+
+## AGT.1 — Agents screen
+
+**Automated**
+- `pnpm verify:agt-1` — route + components (AgentsView/AgentCard/AgentChat/ChatThread); chat uses `streamAgentChat`; status-dot maps AgentState (no red); proposals surfaced as "awaiting approval"; roster scoped via `dbForOrg` + grouped by module; trace rendered live (not buffered to done); no emoji/raw hex; scoped roster ≥ 60.
+- `pnpm typecheck` (workspace + root) clean.
+
+**Manual (real key — ANTHROPIC_API_KEY set, docker up, ./dev.sh, http://localhost:3001/agents)**
+- [ ] All ~90 agents listed, grouped by module; each card shows the AgentGlyph + status dot + name/role/code + one-line description.
+- [ ] "Needs attention" filters to CRITICAL-state agents; clearing restores all.
+- [ ] Open a procurement agent, ask "any parts below reorder point? draft POs" → trace streams live in the console (scan → correlate → tool → result), the answer appears in the thread, POs drafted (DRAFTED).
+- [ ] Ask "send PO <id>" → an "awaiting approval" affordance appears; no PO becomes SENT.
+- [ ] Reopen the thread (chatId continuation) — messages persist.
+- [ ] Matches design/prototypes/ (cards, chat, dark trace console); no emoji; hairlines; lime = signal only; AgentGlyph static (only the dot conveys state).
+- [ ] accessibility-review: roles, focus, AA contrast — 0 violations.
+
+**Notes**
+- Roster (server, scoped) → `AgentsView` (client) two-pane: module-grouped cards left, live `AgentChat` right. Status dot: LIVE→success green · WORKING→lime · CRITICAL→ink (never red) · OFFLINE→muted; the glyph itself is static identity.
+- Chat consumes `streamAgentChat` (ART.4): `trace`/`proposal` render live into the reused dark `TraceConsole` (proposals also as a distinct "awaiting approval" row), `message` into the `ChatThread`. Gated actions are surfaced only — approving is RBAC.4. Switching agents (keyed remount) / unmount aborts the in-flight stream.
