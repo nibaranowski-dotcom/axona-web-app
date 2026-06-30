@@ -421,3 +421,23 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - The line: drafting/opening is allowed; **placing/releasing/paying is gated** — `draftPurchaseOrder`→DRAFTED (draft) vs `sendPurchaseOrder` (gated); `openNcr` (draft); `releaseEco`/`recognizeRevenue`/`issueCreditNote` (gated).
 - `buildAgentDef(agent)` = module tools + core reads; the core agent gets cross-module reads only. Every handler uses `ctx.db = dbForOrg(orgId)`; `listReorderCandidates` uses `$queryRaw` (onHand ≤ reorderPoint, orgId pinned in SQL); list tools capped at 50.
 - Tool sets shipped: Procurement (wedge), Quality, Engineering, Field Service, Finance, Inventory + Core. Remaining modules' tools land with their screens (ART.3+).
+
+---
+
+## ART.4 — Agent chat SSE
+
+**Automated**
+- `pnpm verify:art-4` — route + client helper exist; TraceCollector sink (`onLine`); route streams `text/event-stream` with typed events + scoped lookups + 404; `onTrace` streams lines live (sink fires during the run); back-compat (no sink = ART.1); gated call streams a `proposal` kind with no SENT-PO side effect.
+- `pnpm typecheck` (workspace + root) clean.
+
+**Manual (real key — ANTHROPIC_API_KEY set, docker up, ./dev.sh)**
+- [ ] `curl -N -X POST localhost:3001/api/agents/<id>/chat -H 'content-type: application/json' -d '{"message":"any parts below reorder point?"}'` → streams `event: trace` lines as they happen, then `event: message`, then `event: done`.
+- [ ] Ask it to "send PO <id>" → an `event: proposal` appears; no PO becomes SENT.
+- [ ] A `Chat` row + USER/AGENT `Message` rows are persisted; pass the returned `chatId` back to continue the thread.
+- [ ] An agent id from another org → 404; a `chatId` from another org → 404.
+
+**Notes**
+- The trace **sink** (`TraceCollector(onLine)` + `runAgent({ onTrace })`) is the live seam ART.5 (trace console) and OBS.1 (Langfuse) plug into — emission is kept generic, no transport/console/Langfuse specifics in the runtime. No sink = byte-for-byte ART.1 behaviour.
+- Stream event types: `trace` (each line) · `proposal` (gated action — UI shows "awaiting approval") · `message` (final text + status + runId) · `done` · `error`. Gated actions surface as `proposal` and never execute (ART.1/ART.2 gate).
+- Org-scoped via `getCurrentUser → dbForOrg`; agent + chat lookups scoped, 404 on miss. `streamAgentChat()` (client helper) parses SSE frames into a typed async iterator; AGT.1 renders them (UI not built here).
+- Client disconnect (`req.signal`) stops enqueuing; the run completes server-side and the AgentRun (with trace) is persisted. Token-by-token final-text streaming is a later refinement (needs a streaming ModelClient).

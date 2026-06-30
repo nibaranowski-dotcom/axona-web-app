@@ -2,7 +2,7 @@ import { dbForOrg, RunStatus, Prisma } from "@axona/db";
 import { AnthropicModelClient, type ModelClient } from "./model-client";
 import { TraceCollector } from "./trace";
 import { runLoop } from "./runtime";
-import type { RunResult } from "./types";
+import type { RunResult, TraceLine } from "./types";
 import { buildAgentDef } from "../tools";
 
 /**
@@ -13,14 +13,20 @@ import { buildAgentDef } from "../tools";
 export async function runAgent(
   agentId: string,
   input: string,
-  opts: { orgId: string; userId: string; model?: ModelClient },
+  opts: {
+    orgId: string;
+    userId: string;
+    model?: ModelClient;
+    /** Live trace sink (ART.4): each line as it's pushed. Omit = ART.1 behaviour. */
+    onTrace?: (line: TraceLine) => void;
+  },
 ): Promise<RunResult> {
   const db = dbForOrg(opts.orgId);
   const agent = await db.agent.findFirst({ where: { id: agentId } });
   if (!agent) throw new Error("agent not found in org");
 
   const def = buildAgentDef(agent);
-  const trace = new TraceCollector();
+  const trace = new TraceCollector(opts.onTrace);
   const ctx = { orgId: opts.orgId, userId: opts.userId, agentId, db, trace };
   const model = opts.model ?? new AnthropicModelClient();
 
