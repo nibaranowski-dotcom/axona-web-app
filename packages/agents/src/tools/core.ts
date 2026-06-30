@@ -14,7 +14,16 @@ export const searchOperations: Tool<{ query: string }> = {
   inputSchema: z.object({ query: z.string().min(1) }),
   handler: async ({ query }, ctx) => {
     const res = await search(ctx.orgId, query, { limit: 10 });
-    return res.hits.map((h) => ({ type: h.type, title: h.title, url: h.url }));
+    return {
+      results: res.hits.map((h) => ({
+        type: h.type,
+        title: h.title,
+        url: h.url,
+      })),
+      // Citation refs (GA.1): real object routes only — never fabricated. The
+      // chat route gathers `sources` from tool-results → Message.citations.
+      sources: res.hits.map((h) => ({ label: h.title, url: h.url })),
+    };
   },
 };
 

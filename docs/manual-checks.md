@@ -462,3 +462,23 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 **Notes**
 - Roster (server, scoped) → `AgentsView` (client) two-pane: module-grouped cards left, live `AgentChat` right. Status dot: LIVE→success green · WORKING→lime · CRITICAL→ink (never red) · OFFLINE→muted; the glyph itself is static identity.
 - Chat consumes `streamAgentChat` (ART.4): `trace`/`proposal` render live into the reused dark `TraceConsole` (proposals also as a distinct "awaiting approval" row), `message` into the `ChatThread`. Gated actions are surfaced only — approving is RBAC.4. Switching agents (keyed remount) / unmount aborts the in-flight stream.
+
+---
+
+## GA.1 — General Axona agent + global pane
+
+**Automated**
+- `pnpm verify:ga-1` — axona def + `readToolsAcrossModules`; pane wired (`useAgentChat` + `axonaAgentId`); shell resolves `getAxonaAgent`; ChatThread renders citation links; chat route attaches citations from tool sources; **no-emoji in both system prompts**; axona agent exists (core, idempotent), read-only, multi-module, tenant-scoped.
+- `pnpm typecheck` (workspace + root) clean.
+
+**Manual (real key — ANTHROPIC_API_KEY set, docker up, ./dev.sh)**
+- [ ] On any shell screen, the right agent pane is the "Axona agent" (resize/collapse still work).
+- [ ] Ask "what's blocking the BMW order?" → reasoning streams; the answer cites objects (e.g. DLV-3312 / ECO-318) as chips that link to the object's route; no emoji in the text.
+- [ ] Ask "place the replacement PO" / "draft a PO" → it declines and routes you to the Procurement agent; no tool acts (its set has no draft/gated tools).
+- [ ] Citations are real (link to existing routes), deduped, capped at 8; tools with no sources → no chips (never fabricated).
+- [ ] Matches design/prototypes/ agent pane; no emoji; hairlines; lime = signal. accessibility-review 0 violations.
+
+**Notes**
+- General agent: `moduleKey "core"`, `code "axona-00"`, resolved via `getAxonaAgent(orgId)` (idempotent ensure; also seeded in FND.12). `buildAgentDef("core")` → `axonaSystemPrompt()` (cite-always + read-and-route + no-emoji) + `readToolsAcrossModules()` (every module's **read** tools; no draft/gated).
+- Citations flow: read tools return `sources:{label,url}[]` (real object routes only) → the chat route gathers them from the run's `tool-result` lines → `Message.citations` + the `message` SSE event → DS chips (links) under the agent bubble.
+- No-emoji brand fix folded in: `axonaSystemPrompt()` **and** `systemPromptFor()` (ART.2 module-agent prompt) now instruct "Do not use emoji in your responses." The global `AgentPane` reuses the shared `useAgentChat` hook (also used by AGT.1's per-agent chat); FND.13 resize/collapse unchanged.

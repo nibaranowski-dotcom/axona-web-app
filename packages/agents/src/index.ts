@@ -39,6 +39,14 @@ export { TraceCollector } from "./runtime/trace";
 export { runLoop, canUseTool } from "./runtime/runtime";
 export { runAgent } from "./runtime/run-agent";
 
+// General Axona agent (GA.1) — cross-module read-only copilot.
+export {
+  AXONA_AGENT_CODE,
+  AXONA_AGENT_ROLE,
+  axonaSystemPrompt,
+  getAxonaAgent,
+} from "./agents/axona";
+
 // Typed tool registry (ART.2) — registry, agent assembly, test helper, and the
 // per-module tool sets.
 export {

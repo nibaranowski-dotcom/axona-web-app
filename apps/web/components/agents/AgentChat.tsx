@@ -1,84 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import type { TraceLine as AgentTraceLine } from "@axona/agents";
+import { useState } from "react";
 import { AgentGlyph } from "@/components/ui";
-import {
-  TraceConsole,
-  type TraceLine as ConsoleLine,
-} from "@/components/shell/TraceConsole";
-import { streamAgentChat } from "@/lib/agent-chat";
-import { ChatThread, type ChatMessage } from "./ChatThread";
+import { TraceConsole } from "@/components/shell/TraceConsole";
+import { ChatThread } from "./ChatThread";
 import { type AgentSummary, stateTone } from "./AgentCard";
+import { useAgentChat } from "./use-agent-chat";
 
-// Live chat with one agent (ART.4). On send, streamAgentChat routes events:
-//   trace/proposal → live into the TraceConsole (proposals also as a distinct
-//   "awaiting approval" affordance), message → into the ChatThread. Gated
-//   actions are surfaced only — approving them is RBAC.4.
-
-function toConsoleLine(l: AgentTraceLine): ConsoleLine {
-  return {
-    ts: l.ts.slice(11, 19), // HH:MM:SS
-    text: `${l.kind.padEnd(12)}· ${l.text}`,
-  };
-}
+// Live chat with one agent (ART.4 / AGT.1). Trace lines stream into the console,
+// the answer (with citations) into the thread, gated actions as a distinct
+// "awaiting approval" affordance.
 
 export function AgentChat({ agent }: { agent: AgentSummary }) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [traceLines, setTraceLines] = useState<ConsoleLine[]>([]);
-  const [proposals, setProposals] = useState<AgentTraceLine[]>([]);
-  const [chatId, setChatId] = useState<string | undefined>();
   const [input, setInput] = useState("");
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const ctrl = useRef<AbortController | null>(null);
-
-  // Abort the in-flight stream on unmount / agent switch (this component is
-  // keyed by agent id, so switching remounts it).
-  useEffect(() => () => ctrl.current?.abort(), []);
-
-  async function onSend() {
-    const text = input.trim();
-    if (!text || sending) return;
-    setInput("");
-    setError(null);
-    setMessages((m) => [...m, { role: "USER", text }]);
-    setSending(true);
-    ctrl.current?.abort();
-    const c = new AbortController();
-    ctrl.current = c;
-    try {
-      for await (const ev of streamAgentChat(
-        agent.id,
-        text,
-        chatId,
-        c.signal,
-      )) {
-        if (ev.type === "trace") {
-          setTraceLines((t) => [
-            ...t,
-            toConsoleLine(ev.data as AgentTraceLine),
-          ]);
-        } else if (ev.type === "proposal") {
-          const line = ev.data as AgentTraceLine;
-          setTraceLines((t) => [...t, toConsoleLine(line)]);
-          setProposals((p) => [...p, line]);
-        } else if (ev.type === "message") {
-          const d = ev.data as { chatId: string; text: string };
-          setMessages((m) => [...m, { role: "AGENT", text: d.text }]);
-          setChatId(d.chatId);
-        } else if (ev.type === "error") {
-          setError((ev.data as { message: string }).message);
-        }
-      }
-    } catch (e) {
-      if (!(e instanceof DOMException && e.name === "AbortError")) {
-        setError((e as Error).message);
-      }
-    } finally {
-      setSending(false);
-    }
-  }
+  const { messages, traceLines, proposals, sending, error, send } =
+    useAgentChat(agent.id);
 
   return (
     <div className="flex h-full flex-col">
@@ -137,7 +73,8 @@ export function AgentChat({ agent }: { agent: AgentSummary }) {
         className="flex items-center gap-2 border-t border-line px-6 py-4"
         onSubmit={(e) => {
           e.preventDefault();
-          void onSend();
+          void send(input);
+          setInput("");
         }}
       >
         <label htmlFor="agent-composer" className="sr-only">

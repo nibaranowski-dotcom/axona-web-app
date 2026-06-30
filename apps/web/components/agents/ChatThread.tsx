@@ -1,10 +1,15 @@
+import Link from "next/link";
+import type { Citation } from "@/lib/agent-chat";
+
 // DS.1 chat thread — user/agent message bubbles. Composed from DS surfaces
 // (no off-system styling); lime is reserved as the single signal, so bubbles
 // use the warm-grey / ink surfaces, distinguished by side + a mono role label.
+// Agent messages render their citations (GA.1) as DS chips linking to the object.
 
 export interface ChatMessage {
   role: "USER" | "AGENT";
   text: string;
+  citations?: Citation[];
 }
 
 export function ChatThread({ messages }: { messages: ChatMessage[] }) {
@@ -36,6 +41,23 @@ export function ChatThread({ messages }: { messages: ChatMessage[] }) {
             >
               {m.text}
             </div>
+            {!user && m.citations && m.citations.length > 0 && (
+              <ul
+                className="mt-1.5 flex flex-wrap gap-1.5"
+                aria-label="Sources"
+              >
+                {m.citations.map((c, j) => (
+                  <li key={j}>
+                    <Link
+                      href={c.url}
+                      className="inline-flex items-center rounded-[5px] border border-line-strong bg-paper px-[7px] py-[2px] font-mono text-[11px] text-ink-muted hover:border-ink-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    >
+                      {c.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </li>
         );
       })}

@@ -1,4 +1,5 @@
 import type { AgentDef, Tool } from "../runtime/types";
+import { axonaSystemPrompt } from "../agents/axona";
 import { coreTools } from "./core";
 import { procurementTools } from "./procurement";
 import { qualityTools } from "./quality";
@@ -27,10 +28,16 @@ function coreReadTools(): Tool[] {
   return coreTools.filter((t) => t.category === "read");
 }
 
+/** Every read tool across every module (+ core) — the general Axona agent's set. */
+function readToolsAcrossModules(): Tool[] {
+  return ALL.filter((t) => t.category === "read");
+}
+
 export const registry = {
   byModule,
   coreTools,
   coreReadTools,
+  readToolsAcrossModules,
   all: (): Tool[] => ALL,
   byName: (name: string): Tool => {
     const t = BY_NAME.get(name);
@@ -45,24 +52,30 @@ function systemPromptFor(agent: { role: string; description: string }): string {
     "Use read tools to gather facts and cite the records you used. You may draft " +
     "and open records (e.g. draft a PO, open an NCR) autonomously. You must NOT " +
     "place, send, release, or pay — those are gated and only proposed for human " +
-    "approval. Never claim a result you did not get from a tool."
+    "approval. Never claim a result you did not get from a tool. " +
+    "Do not use emoji in your responses."
   );
 }
 
-/** Replaces the ART.1 stub — assembles tools from the agent's module + core reads. */
+/** Replaces the ART.1 stub — assembles tools from the agent's module + core reads.
+ *  The core/Axona agent (GA.1) gets READ-ONLY tools across every module and the
+ *  cite-always + read-and-route prompt — it never drafts or acts. */
 export function buildAgentDef(agent: {
   moduleKey: string;
   role: string;
   description: string;
 }): AgentDef {
+  if (agent.moduleKey === "core") {
+    return {
+      systemPrompt: axonaSystemPrompt(),
+      tools: readToolsAcrossModules(),
+      scope: "core",
+    };
+  }
   const moduleTools = byModule[agent.moduleKey] ?? [];
-  const tools =
-    agent.moduleKey === "core"
-      ? coreReadTools()
-      : [...moduleTools, ...coreReadTools()];
   return {
     systemPrompt: systemPromptFor(agent),
-    tools,
+    tools: [...moduleTools, ...coreReadTools()],
     scope: agent.moduleKey,
   };
 }

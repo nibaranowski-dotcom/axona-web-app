@@ -1,6 +1,42 @@
-import { dbForOrg } from "@axona/db";
-import { runAgent } from "@axona/agents";
+import { dbForOrg, Prisma } from "@axona/db";
+import { runAgent, type TraceLine } from "@axona/agents";
 import { getCurrentUser } from "@/lib/session";
+
+interface Citation {
+  label: string;
+  url: string;
+}
+
+// Gather citation refs from a run's trace: tool-results carry `sources`
+// ({label,url}[]) — only real object routes, never fabricated. Dedupe by url,
+// cap at 8 (GA.1).
+function citationsFromTrace(trace: TraceLine[]): Citation[] {
+  const out: Citation[] = [];
+  const seen = new Set<string>();
+  for (const line of trace) {
+    if (
+      line.kind !== "tool-result" ||
+      !line.data ||
+      typeof line.data !== "object"
+    )
+      continue;
+    const sources = (line.data as { sources?: unknown }).sources;
+    if (!Array.isArray(sources)) continue;
+    for (const s of sources) {
+      if (
+        s &&
+        typeof (s as Citation).url === "string" &&
+        typeof (s as Citation).label === "string" &&
+        !seen.has((s as Citation).url)
+      ) {
+        seen.add((s as Citation).url);
+        out.push({ label: (s as Citation).label, url: (s as Citation).url });
+        if (out.length >= 8) return out;
+      }
+    }
+  }
+  return out;
+}
 
 // POST /api/agents/:id/chat (build-spec §6) — runs the agent (ART.1/ART.2) and
 // streams its trace lines LIVE over SSE as the runtime pushes them, then the
@@ -84,9 +120,19 @@ export async function POST(
             send(line.kind === "proposal" ? "proposal" : "trace", line),
         });
 
+        // Citations from the run's tool-result sources (GA.1).
+        const citations = citationsFromTrace(result.trace);
+
         // Persist the agent's answer (partial trace is already on the AgentRun).
         await db.message.create({
-          data: { chatId: chat.id, role: "AGENT", text: result.text },
+          data: {
+            chatId: chat.id,
+            role: "AGENT",
+            text: result.text,
+            ...(citations.length
+              ? { citations: citations as unknown as Prisma.InputJsonValue }
+              : {}),
+          },
         });
 
         send("message", {
@@ -94,6 +140,7 @@ export async function POST(
           text: result.text,
           status: result.status,
           runId: result.runId,
+          citations,
         });
         send("done", { runId: result.runId });
       } catch (e) {

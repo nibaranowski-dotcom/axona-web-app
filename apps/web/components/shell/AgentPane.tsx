@@ -1,21 +1,29 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { AgentGlyph } from "@/components/agents/AgentGlyph";
+import { ChatThread } from "@/components/agents/ChatThread";
+import { useAgentChat } from "@/components/agents/use-agent-chat";
+import { TraceConsole } from "./TraceConsole";
 import { AgentRail } from "./AgentRail";
 import { useMounted, useUi } from "@/lib/ui-store";
 
 // Right agent pane: resizable (drag the left handle) and collapsible to a 52px
-// rail. Width + collapsed persist via the UI store. The real chat thread + SSE
-// are GA.1 / ART.4 / ART.5 — the body is a placeholder here.
+// rail (width + collapsed persist via the UI store — FND.13 behaviour). The body
+// is the general Axona agent chat (GA.1): a cross-module, read-only copilot
+// streamed via ART.4, resolved server-side (getAxonaAgent) → `axonaAgentId`.
 
-export function AgentPane() {
+export function AgentPane({ axonaAgentId }: { axonaAgentId?: string }) {
   const mounted = useMounted();
   const width = useUi((s) => s.agentPaneWidth);
   const collapsed = useUi((s) => s.agentPaneCollapsed);
   const setWidth = useUi((s) => s.setAgentPaneWidth);
   const toggle = useUi((s) => s.toggleAgentPane);
   const draggingRef = useRef(false);
+
+  const [input, setInput] = useState("");
+  const { messages, traceLines, sending, error, send } =
+    useAgentChat(axonaAgentId);
 
   const onPointerMove = useCallback(
     (e: PointerEvent) => {
@@ -77,20 +85,56 @@ export function AgentPane() {
         </button>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 text-sm text-ink-muted">
-        {/* TODO GA.1 / ART.4: citation-aware chat thread + SSE reply stream */}
-        <p>Ask across modules…</p>
-        <p className="mt-2 text-ink-muted">
-          The cross-module copilot lands in GA.1 (chat + citations).
-        </p>
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 py-3">
+        {messages.length === 0 && (
+          <p className="text-sm text-ink-muted">
+            Ask across modules — I read everything and cite my sources, and
+            route actions to the module agents.
+          </p>
+        )}
+        <ChatThread messages={messages} />
+        {error && (
+          <p
+            role="status"
+            className="rounded-btn border border-line-strong bg-paper px-3 py-2 text-[13px] text-ink-muted"
+          >
+            {error}
+          </p>
+        )}
+        {traceLines.length > 0 && (
+          <TraceConsole lines={traceLines} title="Trace" />
+        )}
       </div>
 
-      <div className="border-t border-line p-3">
-        <div className="rounded-btn border border-line-strong bg-paper px-3 py-2 text-sm text-ink-muted">
-          {/* TODO ART.4: message composer */}
-          Message the agent…
+      <form
+        className="border-t border-line p-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void send(input);
+          setInput("");
+        }}
+      >
+        <label htmlFor="axona-composer" className="sr-only">
+          Message the Axona agent
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            id="axona-composer"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            disabled={!axonaAgentId}
+            placeholder="Message the agent…"
+            className="min-w-0 flex-1 rounded-btn border border-line-strong bg-paper px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-faint focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
+          />
+          <button
+            type="submit"
+            disabled={sending || !input.trim() || !axonaAgentId}
+            className="rounded-btn bg-accent px-3 py-2 text-sm font-semibold text-accent-ink transition-colors duration-200 ease-ease hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-strong disabled:opacity-40"
+          >
+            {sending ? "…" : "Send"}
+          </button>
         </div>
-      </div>
+      </form>
     </aside>
   );
 }

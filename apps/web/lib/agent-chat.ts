@@ -17,6 +17,12 @@ export interface TraceChatEvent extends ChatEvent {
   data: TraceLine;
 }
 
+/** A cited source object (GA.1) — links to the object's route. */
+export interface Citation {
+  label: string;
+  url: string;
+}
+
 /** The final answer. */
 export interface MessageChatEvent extends ChatEvent {
   type: "message";
@@ -25,6 +31,7 @@ export interface MessageChatEvent extends ChatEvent {
     text: string;
     status: "SUCCEEDED" | "FAILED" | "AWAITING_APPROVAL";
     runId: string;
+    citations?: Citation[];
   };
 }
 

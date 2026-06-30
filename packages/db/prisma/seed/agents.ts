@@ -338,5 +338,21 @@ export async function seedAgents(db: OrgScopedDb): Promise<number> {
       i++;
     }
   }
+
+  // The general Axona agent (GA.1): scope "core", read-only cross-module copilot.
+  // Code kept in sync with AXONA_AGENT_CODE in @axona/agents (no import — avoids a
+  // db→agents dependency). getAxonaAgent() also ensures this row idempotently.
+  await db.agent.create({
+    data: {
+      moduleKey: "core",
+      name: "Axona agent",
+      code: "axona-00",
+      role: "AXONA",
+      description:
+        "Cross-module copilot — reads everything, cites sources, routes actions.",
+    },
+  });
+  count++;
+
   return count;
 }

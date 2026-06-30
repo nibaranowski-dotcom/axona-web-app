@@ -37,8 +37,14 @@ async function run(): Promise<void> {
         existsSync(join(base, `components/agents/${c}.tsx`)),
       ),
   );
-  await check("chat uses streamAgentChat (ART.4)", () =>
-    /streamAgentChat/.test(read(join(base, "components/agents/AgentChat.tsx"))),
+  await check(
+    "chat uses streamAgentChat (ART.4)",
+    () =>
+      // GA.1 extracted the streaming logic into the shared useAgentChat hook.
+      /streamAgentChat/.test(
+        read(join(base, "components/agents/use-agent-chat.ts")),
+      ) &&
+      /useAgentChat/.test(read(join(base, "components/agents/AgentChat.tsx"))),
   );
   await check("status dot maps AgentState (no red)", () => {
     const t = read(join(base, "components/agents/AgentCard.tsx"));
@@ -53,8 +59,9 @@ async function run(): Promise<void> {
     return /dbForOrg/.test(t) && /moduleKey/.test(t);
   });
   await check("renders trace live (not buffered to done)", () => {
-    const t = read(join(base, "components/agents/AgentChat.tsx"));
     // trace/proposal events update the console immediately; not gated on "done".
+    // (Streaming lives in the shared useAgentChat hook since GA.1.)
+    const t = read(join(base, "components/agents/use-agent-chat.ts"));
     return /setTraceLines/.test(t) && !/done/.test(t);
   });
   await check("no emoji / no raw hex in agents components", () => {
