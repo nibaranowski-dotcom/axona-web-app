@@ -14,10 +14,12 @@ const RAIL = 52;
 interface UiState {
   agentPaneWidth: number; // px
   agentPaneCollapsed: boolean;
+  sidebarCollapsed: boolean;
   navOpen: Record<string, boolean>; // group -> open?
   setAgentPaneWidth: (w: number) => void;
   toggleAgentPane: () => void;
   setAgentPaneCollapsed: (collapsed: boolean) => void;
+  toggleSidebar: () => void;
   toggleNav: (group: string) => void;
 }
 
@@ -26,6 +28,7 @@ export const useUi = create<UiState>()(
     (set) => ({
       agentPaneWidth: 340,
       agentPaneCollapsed: false,
+      sidebarCollapsed: false,
       navOpen: {
         CORE: true,
         VALUE_CHAIN: true,
@@ -38,6 +41,8 @@ export const useUi = create<UiState>()(
         set((s) => ({ agentPaneCollapsed: !s.agentPaneCollapsed })),
       setAgentPaneCollapsed: (agentPaneCollapsed) =>
         set({ agentPaneCollapsed }),
+      toggleSidebar: () =>
+        set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       toggleNav: (group) =>
         set((s) => ({ navOpen: { ...s.navOpen, [group]: !s.navOpen[group] } })),
     }),

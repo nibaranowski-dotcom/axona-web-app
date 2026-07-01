@@ -1,33 +1,92 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import type { NavGroup } from "@/lib/nav";
 import { useCommandPalette } from "@/lib/command-palette";
+import { useMounted, useUi } from "@/lib/ui-store";
 import { NavSection } from "./NavSection";
 
-// Left sidebar (Axona v2 shell) — 232px, paper surface, hairline right border.
-// axona wordmark + the asymmetric square mark, a ⌘K search that opens the
-// command palette (SRCH.3), collapsible <details> nav sections, and the identity
-// footer. Icons are Lucide (thin stroke); no emoji.
+// Left sidebar (Axona v2 shell) — 240px, paper surface, hairline right border,
+// 1:1 with Command Center.dc.html's <aside>. axona wordmark + asymmetric square
+// mark + a collapse-menu button; a ⌘K search that opens the command palette
+// (SRCH.3); collapsible <details> nav sections with per-module alert badges; the
+// AUTH.1 identity-stub footer. Collapses to a slim rail (persisted in useUi).
+// Icons are Lucide (thin stroke); no emoji.
 
-export function Sidebar({ groups }: { groups: NavGroup[] }) {
+export function Sidebar({
+  groups,
+  alerts,
+}: {
+  groups: NavGroup[];
+  alerts: Record<string, number>;
+}) {
   const openPalette = useCommandPalette((s) => s.openPalette);
+  const collapsed = useUi((s) => s.sidebarCollapsed);
+  const toggleSidebar = useUi((s) => s.toggleSidebar);
+  const mounted = useMounted();
 
-  return (
-    <nav
-      aria-label="Primary"
-      className="flex h-dvh w-[232px] flex-none flex-col border-r border-line bg-paper px-[14px] py-[18px]"
-    >
-      {/* Wordmark + asymmetric square mark */}
-      <div className="flex items-center gap-2 px-2 pb-[18px] pt-1">
-        <span className="text-[21px] font-bold tracking-[-0.04em] text-ink-strong">
-          axona
-        </span>
+  // Hydration-safe: first paint = expanded (matches the server), then reflect
+  // the persisted collapse state.
+  if (mounted && collapsed) {
+    return (
+      <nav
+        aria-label="Primary"
+        className="flex h-dvh w-[60px] flex-none flex-col items-center border-r border-line bg-paper py-[18px]"
+      >
         <span
           aria-hidden
           className="h-3 w-3 flex-none bg-ink-strong"
           style={{ borderRadius: "0 7px 0 7px" }}
         />
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          aria-label="Expand sidebar"
+          className="mt-4 flex h-7 w-7 items-center justify-center rounded-[7px] border border-line text-ink-muted transition-colors hover:bg-panel hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          <PanelLeftOpen className="h-4 w-4" strokeWidth={1.7} aria-hidden />
+        </button>
+        <button
+          type="button"
+          onClick={() => openPalette()}
+          aria-label="Search"
+          className="mt-2 flex h-7 w-7 items-center justify-center rounded-[7px] border border-line-strong text-ink-muted transition-colors hover:bg-panel hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          <Search className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+        </button>
+      </nav>
+    );
+  }
+
+  return (
+    <nav
+      aria-label="Primary"
+      className="flex h-dvh w-[240px] flex-none flex-col border-r border-line bg-paper px-[14px] py-[18px]"
+    >
+      {/* Wordmark + asymmetric square mark · collapse-menu button */}
+      <div className="flex items-center justify-between gap-2 px-2 pb-[18px] pt-1">
+        <div className="flex items-center gap-2">
+          <span className="text-[21px] font-bold tracking-[-0.04em] text-ink-strong">
+            axona
+          </span>
+          <span
+            aria-hidden
+            className="h-3 w-3 flex-none bg-ink-strong"
+            style={{ borderRadius: "0 7px 0 7px" }}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          aria-label="Collapse sidebar"
+          className="flex h-7 w-7 flex-none items-center justify-center rounded-[7px] border border-line bg-paper text-ink-muted transition-colors hover:bg-panel hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          <PanelLeftClose
+            className="h-[15px] w-[15px]"
+            strokeWidth={1.7}
+            aria-hidden
+          />
+        </button>
       </div>
 
       {/* ⌘K search entry (palette = SRCH.3) */}
@@ -50,14 +109,16 @@ export function Sidebar({ groups }: { groups: NavGroup[] }) {
       </button>
 
       {/* Grouped nav (empty state if the seed hasn't run) */}
-      <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
+      <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-[3px] overflow-y-auto px-1">
         {groups.length === 0 ? (
           <p className="px-3 py-6 text-sm text-ink-muted">
             No modules — run the seed (
             <span className="font-mono">pnpm db:seed</span>).
           </p>
         ) : (
-          groups.map((g) => <NavSection key={g.group} group={g} />)
+          groups.map((g) => (
+            <NavSection key={g.group} group={g} alerts={alerts} />
+          ))
         )}
       </div>
 

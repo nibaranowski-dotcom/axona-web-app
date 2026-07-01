@@ -8,8 +8,16 @@ import type { NavGroup } from "@/lib/nav";
 // A collapsible nav group (Core / Value chain / Robotics / Back office) — a
 // native <details> (v2 shell). Mono uppercase eyebrow + a light-grey chevron
 // that rotates when closed (globals.css). Each module row: a 6px square marker
-// (ink when active, else line) + name; the active row gets a panel fill.
-export function NavSection({ group }: { group: NavGroup }) {
+// (ink when active, else line) + name + an optional lime alert-count badge
+// (getModuleAlerts, same source as the launcher chips); the active row gets a
+// panel fill.
+export function NavSection({
+  group,
+  alerts,
+}: {
+  group: NavGroup;
+  alerts: Record<string, number>;
+}) {
   const pathname = usePathname();
 
   return (
@@ -25,6 +33,7 @@ export function NavSection({ group }: { group: NavGroup }) {
       <ul>
         {group.modules.map((m) => {
           const active = pathname === m.href;
+          const badge = alerts[m.key] ?? 0;
           return (
             <li key={m.key}>
               <Link
@@ -45,6 +54,11 @@ export function NavSection({ group }: { group: NavGroup }) {
                   }`}
                 />
                 <span className="flex-1">{m.name}</span>
+                {badge > 0 && (
+                  <span className="flex-none rounded-full bg-accent px-[7px] py-px font-mono text-[10px] font-semibold text-accent-ink">
+                    {badge}
+                  </span>
+                )}
               </Link>
             </li>
           );

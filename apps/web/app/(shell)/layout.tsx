@@ -3,6 +3,7 @@ import { getAxonaAgent } from "@axona/agents";
 import { Sidebar } from "@/components/shell/Sidebar";
 import { AgentPane } from "@/components/shell/AgentPane";
 import { getNavModules } from "@/lib/nav";
+import { getModuleAlerts } from "@/lib/module-alerts";
 import { getCurrentUser } from "@/lib/session";
 
 // The app shell — left sidebar, content <main>, right agent pane. Every screen
@@ -14,10 +15,15 @@ export default async function ShellLayout({
   children: ReactNode;
 }) {
   const [groups, user] = await Promise.all([getNavModules(), getCurrentUser()]);
-  const axona = user ? await getAxonaAgent(user.orgId) : null;
+  const [axona, alerts] = user
+    ? await Promise.all([
+        getAxonaAgent(user.orgId),
+        getModuleAlerts(user.orgId),
+      ])
+    : [null, {}];
   return (
     <div className="grid h-dvh grid-cols-[auto_1fr_auto] bg-paper text-ink">
-      <Sidebar groups={groups} />
+      <Sidebar groups={groups} alerts={alerts} />
       <main aria-label="Main content" className="min-w-0 overflow-y-auto">
         {children}
       </main>
