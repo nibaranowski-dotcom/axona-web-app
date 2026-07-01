@@ -1,19 +1,17 @@
 "use client";
 
 import type { SearchScope } from "@axona/db";
-import { Pill } from "@/components/ui";
 
-// Scope filter tabs (DS.1 Pill). Counts come from the SRCH.2 response `counts`
-// (full totals, independent of the active scope). Active tab = lime signal.
-
+// Scope filter tabs for the dark full-screen Search (Search.dc.html). Active tab =
+// lime; inactive = dark glass. Counts from the SRCH.2 response (full totals).
 const TABS: { scope: SearchScope; label: string }[] = [
   { scope: "ALL", label: "All" },
-  { scope: "MODULE", label: "Modules" },
   { scope: "AGENT", label: "Agents" },
-  { scope: "WORKFLOW", label: "Workflows" },
-  { scope: "PROJECT", label: "Projects" },
   { scope: "FILE", label: "Files" },
   { scope: "CHAT", label: "Chats" },
+  { scope: "MODULE", label: "Modules" },
+  { scope: "WORKFLOW", label: "Workflows" },
+  { scope: "PROJECT", label: "Projects" },
 ];
 
 export function ScopeTabs({
@@ -26,23 +24,29 @@ export function ScopeTabs({
   onSelect: (s: SearchScope) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2 border-b border-line px-4 py-3">
+    <div className="mt-[14px] flex flex-none flex-wrap gap-[7px]">
       {TABS.map((t) => {
         const count = counts[t.scope] ?? 0;
-        const disabled = t.scope !== "ALL" && count === 0;
+        const active = scope === t.scope;
         return (
-          <Pill
+          <button
             key={t.scope}
-            active={scope === t.scope}
-            disabled={disabled}
+            type="button"
+            aria-pressed={active}
             onClick={() => onSelect(t.scope)}
-            className={disabled ? "opacity-40" : ""}
+            className={[
+              "inline-flex items-center gap-[7px] rounded-full border px-[11px] py-[5px] text-[12px] font-medium transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+              active
+                ? "border-accent bg-accent text-accent-ink"
+                : "border-[var(--md-glass-line)] bg-[var(--md-tile)] text-on-dark-mut hover:bg-[var(--md-tile-hover)]",
+            ].join(" ")}
           >
             {t.label}
-            <span className="ml-2 font-mono text-[11px] opacity-80">
-              {count}
-            </span>
-          </Pill>
+            {count > 0 && (
+              <span className="font-mono text-[9.5px] opacity-70">{count}</span>
+            )}
+          </button>
         );
       })}
     </div>

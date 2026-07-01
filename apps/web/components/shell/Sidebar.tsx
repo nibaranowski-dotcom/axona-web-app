@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import type { NavGroup } from "@/lib/nav";
+import { useCommandPalette } from "@/lib/command-palette";
 import { useMounted, useUi } from "@/lib/ui-store";
 import { NavSection } from "./NavSection";
 
@@ -13,11 +13,10 @@ const HIDDEN_FROM_NAV = new Set(["mission-control", "search"]);
 
 // Left sidebar (Axona v2 shell) — 240px, paper surface, hairline right border,
 // 1:1 with Command Center.dc.html's <aside>. axona wordmark + asymmetric square
-// mark + a collapse-menu button; a search bar that navigates to Mission Control
-// (the launchpad, search ready — the global ⌘K palette is a separate shortcut);
-// collapsible <details> nav sections with per-module alert badges; the AUTH.1
-// identity-stub footer. Collapses to a slim rail (persisted in useUi). Icons are
-// Lucide (thin stroke); no emoji.
+// mark + a collapse-menu button; a search bar that opens the dark full-screen
+// Search (same as ⌘K — SRCH.3); collapsible <details> nav sections with
+// per-module alert badges; the AUTH.1 identity-stub footer. Collapses to a slim
+// rail (persisted in useUi). Icons are Lucide (thin stroke); no emoji.
 
 export function Sidebar({
   groups,
@@ -26,13 +25,13 @@ export function Sidebar({
   groups: NavGroup[];
   alerts: Record<string, number>;
 }) {
-  const router = useRouter();
+  const openPalette = useCommandPalette((s) => s.openPalette);
   const collapsed = useUi((s) => s.sidebarCollapsed);
   const toggleSidebar = useUi((s) => s.toggleSidebar);
   const mounted = useMounted();
 
-  // Clicking the search bar lands on Mission Control with its search focused.
-  const goToSearch = () => router.push("/?search=1");
+  // Clicking the search bar opens the dark full-screen Search (same as ⌘K).
+  const goToSearch = () => openPalette();
 
   const navGroups = groups
     .map((g) => ({

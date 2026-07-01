@@ -52,6 +52,12 @@ check(
     /role="listbox"/.test(read(join(base, "components/search/Results.tsx"))),
 );
 check(
+  "dark full-screen Search skin (bg-mission + on-dark; no white modal)",
+  /bg-mission/.test(palette) &&
+    /text-on-dark/.test(palette) &&
+    !/bg-paper/.test(palette),
+);
+check(
   "focus restore on close (prevFocus)",
   /prevFocus/.test(palette) || /activeElement/.test(palette),
 );
@@ -62,12 +68,11 @@ check(
   /deepLinkQuery/.test(read(join(base, "app/search/page.tsx"))),
 );
 
-// Sidebar search bar → Mission Control (search ready); MC/Search dropped from nav.
-// The global ⌘K palette shortcut lives in CommandPalette (unchanged).
+// Sidebar search bar opens the dark Search (same as ⌘K); MC/Search off the nav.
 const sidebar = read(join(base, "components/shell/Sidebar.tsx"));
 check(
-  "sidebar search bar navigates to Mission Control (/)",
-  /router\.push\("\/\?search=1"\)/.test(sidebar),
+  "sidebar search bar opens the dark Search (openPalette)",
+  /openPalette/.test(sidebar),
 );
 check(
   "sidebar nav hides mission-control + search",

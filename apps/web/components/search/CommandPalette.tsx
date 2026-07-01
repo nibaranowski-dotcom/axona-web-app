@@ -2,18 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Search } from "lucide-react";
 import type { SearchHit } from "@axona/db";
 import { useCommandPalette } from "@/lib/command-palette";
 import { useSearch } from "@/lib/use-search";
 import { ScopeTabs } from "./ScopeTabs";
 import { Results, type AnnotatedGroup } from "./Results";
 
-// Global ⌘K command palette (SRCH.3). Mounted once at the root so it works on the
-// / launchpad and inside the shell. DS.1 overlay: scrim + paper panel (hairline,
-// no shadow), DS input + ScopeTabs + Results. Focus-trapped; restores focus on
-// close. Combobox/listbox a11y semantics.
+// The global ⌘K Search (SRCH.3) — a DARK full-screen surface matching
+// Search.dc.html (not a white modal). Mounted once at the root so ⌘K / the
+// sidebar bar / the Mission Control pill all open the SAME experience over any
+// screen. SRCH.2 data wiring is unchanged (useSearch → /api/search); only the
+// shell/skin is dark. Focus-trapped; ↑↓ move · ↵ open · Esc close.
 
-const TYPE_ORDER = ["MODULE", "AGENT", "WORKFLOW", "PROJECT", "FILE", "CHAT"];
+const TYPE_ORDER = ["AGENT", "CHAT", "FILE", "MODULE", "WORKFLOW", "PROJECT"];
 
 export function CommandPalette() {
   const router = useRouter();
@@ -26,7 +28,6 @@ export function CommandPalette() {
   const dialogRef = useRef<HTMLDivElement>(null);
   const prevFocus = useRef<HTMLElement | null>(null);
 
-  // Build grouped + flat (highlight order follows the rendered order).
   const { groups, flat } = useMemo(() => {
     let i = 0;
     const g: AnnotatedGroup[] = TYPE_ORDER.map((type) => ({
@@ -84,7 +85,7 @@ export function CommandPalette() {
 
   if (!open) return null;
 
-  // Focus trap: keep Tab within the dialog.
+  // Focus trap: keep Tab within the surface.
   function onDialogKeyDown(e: React.KeyboardEvent) {
     if (e.key !== "Tab") return;
     const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
@@ -119,6 +120,8 @@ export function CommandPalette() {
   }
 
   const trimmed = query.trim();
+  const hintKey =
+    "inline-flex items-center rounded-[4px] border border-[var(--md-line-hover)] px-[5px] py-px";
 
   return (
     <div
@@ -127,21 +130,19 @@ export function CommandPalette() {
       aria-modal="true"
       aria-label="Search"
       onKeyDown={onDialogKeyDown}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) close();
-      }}
-      className="fixed inset-0 z-50 flex justify-center bg-[var(--scrim)] px-4 pt-[12vh]"
+      className="bg-mission fixed inset-0 z-50 flex flex-col items-center px-5 pb-10 pt-16 font-sans text-on-dark"
     >
       <div
         role="search"
         aria-label="Sitewide search"
-        className="h-fit w-full max-w-[640px] overflow-hidden rounded-card border border-line-strong bg-paper"
+        className="flex min-h-0 w-full max-w-[680px] flex-1 flex-col"
       >
-        {/* search field (combobox) */}
-        <div className="flex items-center gap-3 border-b border-line px-4 py-3">
-          <span
+        {/* search field */}
+        <div className="flex flex-none items-center gap-[13px] rounded-[15px] border border-[var(--md-glass-line)] bg-[var(--md-glass)] px-[18px] py-[15px] backdrop-blur-[12px] focus-within:border-accent">
+          <Search
+            className="h-5 w-5 flex-none text-on-dark-mut"
+            strokeWidth={2}
             aria-hidden
-            className="h-3.5 w-3.5 flex-none rounded-pill border-[1.5px] border-ink-faint"
           />
           <input
             ref={inputRef}
@@ -156,32 +157,37 @@ export function CommandPalette() {
               flat.length > 0 ? `srch-opt-${active}` : undefined
             }
             aria-label="Search across everything"
-            placeholder="Search agents, modules, projects, files…"
-            className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-faint"
+            placeholder="Search agents, files, chats, modules…"
+            className="min-w-0 flex-1 bg-transparent text-[17px] text-on-dark outline-none placeholder:text-on-dark-mut"
           />
-          <span className="flex-none rounded-[4px] border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-muted">
-            ⌘K
-          </span>
+          <button
+            type="button"
+            onClick={close}
+            aria-label="Close search (Esc)"
+            className="flex-none rounded-[5px] border border-[var(--md-line-hover)] px-[7px] py-[3px] font-mono text-[10px] text-on-dark-mut transition-colors hover:text-on-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            ESC
+          </button>
         </div>
 
         <ScopeTabs scope={scope} counts={state.counts} onSelect={setScope} />
 
         {/* states */}
         {!trimmed ? (
-          <p className="px-4 py-8 text-center text-sm text-ink-muted">
-            Search agents, modules, projects, and files — start typing.
+          <p className="mt-[18px] flex-1 py-12 text-center font-mono text-[12px] tracking-[0.05em] text-on-dark-mut">
+            Search agents, files, chats, modules — start typing.
           </p>
         ) : state.loading && flat.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-ink-muted">
+          <p className="mt-[18px] flex-1 py-12 text-center font-mono text-[12px] tracking-[0.05em] text-on-dark-mut">
             Searching…
           </p>
         ) : state.error ? (
-          <p className="px-4 py-8 text-center text-sm text-ink-muted">
+          <p className="mt-[18px] flex-1 py-12 text-center font-mono text-[12px] tracking-[0.05em] text-on-dark-mut">
             {state.error}.
           </p>
         ) : flat.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-ink-muted">
-            No results for “{trimmed}”.
+          <p className="mt-[18px] flex-1 py-12 text-center font-mono text-[12px] uppercase tracking-[0.05em] text-on-dark-mut">
+            No matches for “{trimmed}”
           </p>
         ) : (
           <Results
@@ -191,6 +197,20 @@ export function CommandPalette() {
             onSelect={navigate}
           />
         )}
+
+        {/* footer hints */}
+        <div className="mt-[14px] flex flex-none items-center gap-[18px] border-t border-[var(--md-rule)] pt-[14px] font-mono text-[10px] text-on-dark-mut">
+          <span className="inline-flex items-center gap-[6px]">
+            <span className={hintKey}>↑↓</span>navigate
+          </span>
+          <span className="inline-flex items-center gap-[6px]">
+            <span className={hintKey}>↵</span>open
+          </span>
+          <span className="inline-flex items-center gap-[6px]">
+            <span className={hintKey}>esc</span>close
+          </span>
+          <span className="ml-auto">{flat.length} results</span>
+        </div>
       </div>
     </div>
   );

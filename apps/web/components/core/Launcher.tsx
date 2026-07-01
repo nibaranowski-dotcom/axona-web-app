@@ -1,35 +1,31 @@
 "use client";
 
 import { useEffect } from "react";
+import { Search } from "lucide-react";
 import type { NavGroup } from "@/lib/nav";
 import { metaFor } from "@/lib/module-meta";
 import { useCommandPalette } from "@/lib/command-palette";
 import { AppTile } from "./AppTile";
 
-// Mission Control launchpad (build-spec §4.1; DS.1 dark launchpad matching
-// Mission Control.dc.html). Full-screen dark surface, centered glassy search
-// affordance (opens the global ⌘K palette — SRCH.3), grouped translucent tiles.
-// `deepLinkQuery` (from /search?q=) opens the palette pre-filled on mount.
+// Mission Control launchpad (build-spec §4.1; matching Mission Control.dc.html).
+// Full-screen dark surface, a centered autofocused search pill (typing opens the
+// dark full-screen Search — SRCH.3), grouped translucent tiles. `deepLinkQuery`
+// (from /search?q=) opens the Search pre-filled. No modal pops on plain arrival.
 
 export function Launcher({
   groups,
   alerts,
   deepLinkQuery,
-  openSearch = false,
 }: {
   groups: NavGroup[];
   alerts: Record<string, number>;
   deepLinkQuery?: string;
-  // Arrived from the sidebar search bar (/?search=1) — open the search field
-  // (the ⌘K palette, cursor ready) on Mission Control.
-  openSearch?: boolean;
 }) {
   const openPalette = useCommandPalette((s) => s.openPalette);
 
   useEffect(() => {
     if (deepLinkQuery !== undefined) openPalette(deepLinkQuery);
-    else if (openSearch) openPalette();
-  }, [deepLinkQuery, openSearch, openPalette]);
+  }, [deepLinkQuery, openPalette]);
 
   const sections = groups
     .map((g) => ({
@@ -56,24 +52,26 @@ export function Launcher({
       </div>
 
       <div className="relative mx-auto flex min-h-dvh max-w-[1000px] flex-col px-7 pb-14 pt-16">
-        {/* centered glassy search affordance — opens the global palette */}
+        {/* centered search pill — autofocused; typing opens the dark Search */}
         <div className="mb-12 flex justify-center">
-          <button
-            type="button"
-            onClick={() => openPalette()}
-            className="flex w-[208px] max-w-[70vw] items-center gap-[9px] rounded-pill border border-[var(--md-glass-line)] bg-[var(--md-glass)] px-[13px] py-[7px] backdrop-blur focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          >
-            <span
+          <div className="flex w-[208px] max-w-[70vw] items-center gap-[9px] rounded-pill border border-[var(--md-glass-line)] bg-[var(--md-glass)] px-[13px] py-[7px] backdrop-blur focus-within:border-accent">
+            <Search
+              className="h-3.5 w-3.5 flex-none text-on-dark-mut"
+              strokeWidth={2}
               aria-hidden
-              className="h-3 w-3 flex-none rounded-pill border-[1.5px] border-on-dark-mut"
             />
-            <span className="min-w-0 flex-1 text-left text-[13px] text-on-dark-mut">
-              Search
-            </span>
+            <input
+              autoFocus
+              value=""
+              onChange={(e) => openPalette(e.target.value)}
+              aria-label="Search"
+              placeholder="Search"
+              className="min-w-0 flex-1 bg-transparent text-[13px] text-on-dark outline-none placeholder:text-on-dark-mut"
+            />
             <span className="flex-none rounded-[4px] border border-[var(--md-glass-line)] px-[5px] py-px font-mono text-[9.5px] text-on-dark-mut">
               ⌘K
             </span>
-          </button>
+          </div>
         </div>
 
         {sections.map((g) => (
