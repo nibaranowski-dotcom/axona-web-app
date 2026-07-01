@@ -38,6 +38,19 @@ primitives." Route→file map: the file name is the module's display name (`/sal
 `.dc.html` + tokens + docs are committed. Data/API-only stories skip this (no screen). Visual fidelity is
 part of the DoD, checked per story — never a later pass.
 
+**Design intent (from the v2 handoff — `design/prototypes/axona-v2/{axona-build-handoff,readme}.md`):**
+- **Icons = Lucide** (thin ~1.5px stroke) for platform functional icons (nav, table actions); the brand is
+  otherwise near-icon-free (mono labels · "·" separators · dots/squares/skeletons). **No emoji, ever.**
+- **Function-first, signature-artifact per module — no generic-table slop.** Each module screen leads with
+  its signature artifact (Procurement=PO queue · Quality=SPC control chart · Fulfillment=delivery pipeline
+  Alloc→…→Active · Sales=funnel + deliverability · Field Service=dispatch board · Engineering=HW↔firmware
+  compat matrix · People=cert matrix · Fleet=map/telemetry · Autonomy=autonomy-rate trend).
+- **Voice/copy:** numbers are **mono + specific** (read like a machine reported them); **sentence case**
+  except **UPPERCASE mono eyebrows/labels**; "·" separators; lead with outcomes not module names.
+- **The v2 DS ships real components** (`components/core|surfaces|forms/*.jsx` + `.prompt.md`) — port/
+  reconcile our primitives to these, don't reinvent. Layout: 232px sidebar · 60px topbar · 16–28px gaps.
+- Build gotcha: `Sales & CRM.dc.html` must be hand-edited (its `&` breaks the design's find/replace scripts).
+
 ## Stack (from build spec §2 — pin/verify at scaffold)
 Monorepo (pnpm + Turborepo) · TypeScript · Next.js (App Router) + React · Tailwind + CSS-var tokens ·
 TanStack Query + Zustand · Prisma + PostgreSQL (multi-tenant by `orgId`) · BullMQ (Redis) agents/workflows ·
