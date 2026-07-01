@@ -535,3 +535,22 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 **Notes**
 - Read-only over the existing models (no schema change, no mutations — the queue screen + approve action are PROC.2). All org-scoped via `getCurrentUser → dbForOrg`; lists paginated with the FND.11 `paginateArgs`/`pageResult` (cursor by id). `getProcurementQueue` resolves the scalar FKs via Prisma relations (`select supplier.name`, `part.sku`), flags `agentDrafted` from `draftedByAgentId`, and includes the reorder recommendation via `$queryRaw` (`onHand <= reorderPoint`, orgId pinned — the ART.2 `listReorderCandidates` logic).
+
+---
+
+## PROC.2 — Procurement screen
+
+**Automated**
+- `pnpm verify:proc-2` — route + components (ProcurementView/PoQueue/PoRow/ReorderBanner); approve action `requireRole(["OPS","ADMIN"])` FIRST + org-scoped + `revalidatePath`; AUDIT.3 seam; APPROVED→SENT is the human step; status pills no red (green/lime/neutral); no emoji/raw hex; queue has agent-drafted PO-9007 flagged; reorder candidates (SERVO-205/-204).
+- `pnpm typecheck` (workspace + root) clean.
+
+**Manual (./dev.sh, http://localhost:3001/procurement)**
+- [ ] Matches Procurement.dc.html on the v2 shell — the **PO queue is the signature artifact** (code · item · vendor · value · status · action); no emoji; lime = signal.
+- [ ] Reorder banner (accent) lists SERVO-205 0/20 · SERVO-204 6/20; "Draft PO" seeds the Axona pane.
+- [ ] Filter chips (All/Drafted/Awaiting/Approved/Sent/Received + Agent-drafted) narrow the queue with live counts.
+- [ ] As OPS/ADMIN, PO-9007 (AWAITING_APPROVAL, agent-drafted) shows **Approve** → AWAITING→APPROVED→SENT, one step per click; a trace line logs the transition attributed to the user. As VIEWER the button is hidden (and the action `requireRole`-throws — defense in depth).
+- [ ] No autonomous send — only a human reaches SENT.
+- [ ] accessibility-review 0 violations.
+
+**Notes**
+- Data from PROC.1 `getProcurementQueue` (org-scoped); agent-drafted flagged via `draftedByAgentId`. Approve = server action `advancePurchaseOrder` (`requireRole` line 1 → `dbForOrg` scoped `updateMany` → `revalidatePath`), transitions DRAFTED→AWAITING_APPROVAL→APPROVED→SENT; `/// TODO AUDIT.3` seam for the immutable event log; RBAC.4 formalizes the state machine. Status pills: green (dot+tint) approved/sent/received · lime awaiting · neutral drafted — no red (green text on tint would fail AA, so the dot carries the signal + ink text). The copilot is the global Axona pane (reused); "New order"/"Draft PO" seed it. The dark agent-trace block renders the latest real procurement `AgentRun` trace (org-scoped), hidden if none. `lib/rbac.ts` added (RBAC.2/3 seam).

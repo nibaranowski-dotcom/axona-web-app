@@ -48,7 +48,8 @@ part of the DoD, checked per story — never a later pass.
 - **Voice/copy:** numbers are **mono + specific** (read like a machine reported them); **sentence case**
   except **UPPERCASE mono eyebrows/labels**; "·" separators; lead with outcomes not module names.
 - **The v2 DS ships real components** (`components/core|surfaces|forms/*.jsx` + `.prompt.md`) — port/
-  reconcile our primitives to these, don't reinvent. Layout: 232px sidebar · 60px topbar · 16–28px gaps.
+  reconcile our primitives to these, don't reinvent. Layout: **240px sidebar** · 60px topbar · 16–28px gaps
+  (the handoff prose said 232px but the actual `.dc.html` `<aside>` is 240px — the file wins).
 - Build gotcha: `Sales & CRM.dc.html` must be hand-edited (its `&` breaks the design's find/replace scripts).
 
 ## Stack (from build spec §2 — pin/verify at scaffold)
