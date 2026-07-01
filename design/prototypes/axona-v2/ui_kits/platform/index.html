@@ -1,0 +1,212 @@
+<!-- @dsCard group="Platform" viewport="1280x800" -->
+<!-- @startingPoint section="Platform" subtitle="Axona app shell — operations, procurement, build genealogy" viewport="1280x800" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Axona — Platform</title>
+<link rel="stylesheet" href="../../styles.css">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+  body{margin:0;font-family:var(--font-sans);background:var(--panel);color:var(--ink)}
+  ::selection{background:var(--accent)}
+</style></head>
+<body><div id="root"></div>
+<script type="text/babel">
+const NS = Object.values(window).find(v => v && v.Button && v.Badge && v.StatChip) || {};
+const { Button, Badge, StatChip, Chip } = NS;
+
+const NAV = [
+  ["Overview","◳"],["Procurement","⊞"],["Build genealogy","⊟"],
+  ["Inventory","▦"],["Quality","✓"],["Field service","◎"],
+];
+
+function Sidebar({active,setActive}){
+  return (
+    <aside style={{width:232,flexShrink:0,background:'var(--paper)',borderRight:'1px solid var(--line)',height:'100vh',position:'sticky',top:0,display:'flex',flexDirection:'column',padding:'18px 14px'}}>
+      <div style={{display:'flex',alignItems:'center',gap:8,padding:'4px 8px 18px'}}>
+        <span style={{fontSize:21,fontWeight:700,letterSpacing:'-.04em'}}>axona</span>
+        <span style={{width:12,height:12,background:'var(--ink-strong)',borderRadius:'0 7px 0 7px'}}></span>
+      </div>
+      <div style={{display:'flex',flexDirection:'column',gap:2}}>
+        {NAV.map((n,i)=>(
+          <button key={n[0]} onClick={()=>setActive(i)} style={{display:'flex',alignItems:'center',gap:11,padding:'9px 10px',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'var(--font-sans)',fontSize:14,textAlign:'left',background:active===i?'var(--panel)':'transparent',color:active===i?'var(--ink)':'var(--ink-muted)',fontWeight:active===i?600:400}}>
+            <span style={{fontSize:14,width:16,textAlign:'center',opacity:.7}}>{n[1]}</span>{n[0]}
+          </button>
+        ))}
+      </div>
+      <div style={{marginTop:'auto',display:'flex',alignItems:'center',gap:10,padding:'10px 8px',borderTop:'1px solid var(--line)'}}>
+        <span style={{width:28,height:28,borderRadius:'50%',background:'var(--accent)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700}}>LC</span>
+        <div style={{fontSize:12.5,lineHeight:1.3}}><div style={{fontWeight:600}}>Lauren C.</div><div style={{color:'var(--ink-faint)'}}>Head of Ops</div></div>
+      </div>
+    </aside>
+  );
+}
+
+function Topbar({title}){
+  return (
+    <div style={{height:60,borderBottom:'1px solid var(--line)',background:'var(--paper)',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 28px',position:'sticky',top:0,zIndex:5}}>
+      <div style={{display:'flex',alignItems:'center',gap:12}}>
+        <h1 style={{margin:0,fontSize:18,fontWeight:600,letterSpacing:'-.02em'}}>{title}</h1>
+        <Badge tone="success">Live · Site-3</Badge>
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:12}}>
+        <StatChip label="Agent actions today" value="514" />
+        <Button variant="dark" size="sm">+ New order</Button>
+      </div>
+    </div>
+  );
+}
+
+const Panel = ({children,style}) => <div style={{background:'var(--paper)',border:'1px solid var(--line)',borderRadius:14,...style}}>{children}</div>;
+const Skel = ({w,mt}) => <div style={{height:8,background:'var(--skeleton)',borderRadius:4,width:(w||100)+'%',marginTop:mt==null?9:mt}}/>;
+
+function Overview(){
+  const stats = [["On-time build rate","98.2%","+3.1 pts"],["Open shortages","2","↓ from 11"],["POs awaiting approval","6","drafted by agents"],["Units in build","48","across 3 lines"]];
+  return (
+    <div style={{padding:28,display:'flex',flexDirection:'column',gap:16}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16}}>
+        {stats.map(s=>(
+          <Panel key={s[0]} style={{padding:20}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.06em',color:'var(--ink-faint)',textTransform:'uppercase'}}>{s[0]}</div>
+            <div style={{fontSize:34,fontWeight:700,letterSpacing:'-.03em',marginTop:10}}>{s[1]}</div>
+            <div style={{fontSize:12.5,color:'var(--success)',marginTop:4}}>{s[2]}</div>
+          </Panel>
+        ))}
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1.6fr 1fr',gap:16}}>
+        <Panel style={{padding:22}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:18}}>
+            <h3 style={{margin:0,fontSize:16,fontWeight:600}}>Production throughput</h3>
+            <Chip active>Last 30 days</Chip>
+          </div>
+          <div style={{display:'flex',alignItems:'flex-end',gap:6,height:160}}>
+            {[40,55,48,62,58,71,66,80,74,88,82,95].map((h,i)=>(
+              <div key={i} style={{flex:1,height:h+'%',background:i>8?'var(--accent)':'var(--skeleton)',borderRadius:'4px 4px 0 0'}}/>
+            ))}
+          </div>
+        </Panel>
+        <Panel style={{padding:22}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:16}}>
+            <span style={{width:7,height:7,borderRadius:'50%',background:'var(--success)'}}></span>
+            <h3 style={{margin:0,fontSize:16,fontWeight:600}}>Agent activity</h3>
+          </div>
+          {[["Drafted PO-10482 → Vendor A","2m"],["Flagged SERVO-204 shortage","14m"],["Reconciled receipt GRN-887","31m"],["Escalated cost variance +9%","1h"]].map((r,i)=>(
+            <div key={i} style={{display:'flex',justifyContent:'space-between',gap:12,padding:'11px 0',borderTop:i?'1px solid var(--line)':'none',fontSize:13.5}}>
+              <span style={{color:'var(--ink)'}}>{r[0]}</span><span style={{fontFamily:'var(--font-mono)',fontSize:11.5,color:'var(--ink-faint)'}}>{r[1]}</span>
+            </div>
+          ))}
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+function Procurement(){
+  const rows = [
+    ["PO-10482","SERVO-204 · Harmonic drive","Vendor A","$48,200","Awaiting approval","accent"],
+    ["PO-10481","LIDAR-88 module","Vendor C","$112,000","Approved","success"],
+    ["PO-10480","Wiring harness, qty 220","Vendor B","$9,640","Approved","success"],
+    ["PO-10479","Battery pack 48V","Vendor D","$76,500","Sent","neutral"],
+  ];
+  return (
+    <div style={{padding:28,display:'flex',flexDirection:'column',gap:16}}>
+      <div style={{display:'flex',gap:8}}>
+        <Chip active>All</Chip><Chip>Awaiting approval</Chip><Chip>Drafted by agents</Chip><Chip>Sent</Chip>
+      </div>
+      <Panel style={{overflow:'hidden'}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 2fr 1fr 1fr 1.2fr',gap:12,padding:'14px 22px',borderBottom:'1px solid var(--line)',fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.06em',color:'var(--ink-faint)',textTransform:'uppercase'}}>
+          <span>PO</span><span>Item</span><span>Vendor</span><span>Value</span><span>Status</span>
+        </div>
+        {rows.map((r,i)=>(
+          <div key={r[0]} style={{display:'grid',gridTemplateColumns:'1fr 2fr 1fr 1fr 1.2fr',gap:12,padding:'15px 22px',borderTop:i?'1px solid var(--line)':'none',alignItems:'center',fontSize:14,background:i%2?'var(--panel-2)':'#fff'}}>
+            <span style={{fontFamily:'var(--font-mono)',fontSize:12.5}}>{r[0]}</span>
+            <span>{r[1]}</span><span style={{color:'var(--ink-muted)'}}>{r[2]}</span>
+            <span style={{fontFamily:'var(--font-mono)',fontSize:12.5}}>{r[3]}</span>
+            <span><Badge tone={r[5]}>{r[4]}</Badge></span>
+          </div>
+        ))}
+      </Panel>
+      <Panel style={{padding:22,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:14}}>
+        <div>
+          <div style={{display:'flex',alignItems:'center',gap:8}}><span style={{width:7,height:7,borderRadius:'50%',background:'var(--accent)'}}></span><span style={{fontSize:14,fontWeight:600}}>Agent recommendation</span></div>
+          <div style={{fontSize:13.5,color:'var(--ink-muted)',marginTop:6,maxWidth:'60ch'}}>SERVO-204 is below reorder point and covers the next 2 builds. PO-10482 drafted to Vendor A · ETA 4 days.</div>
+        </div>
+        <div style={{display:'flex',gap:10}}><Button variant="ghost" size="sm">Edit</Button><Button variant="primary" size="sm">Approve PO</Button></div>
+      </Panel>
+    </div>
+  );
+}
+
+function Genealogy(){
+  const tree = [
+    ["Robot unit · SN-2208","",0,"In build · 84%","accent"],
+    ["Chassis assembly · SA-114","Vendor B",1,"Installed","success"],
+    ["Actuator pack · AP-77","",1,"In test","accent"],
+    ["SERVO-204 · Harmonic drive","Vendor A · Lot 88421",2,"Traced","neutral"],
+    ["Controller board · CB-12","Vendor C · Lot 5567",2,"Traced","neutral"],
+    ["Firmware v4.2.1","",1,"Flashed","success"],
+  ];
+  return (
+    <div style={{padding:28,display:'grid',gridTemplateColumns:'1.4fr 1fr',gap:16}}>
+      <Panel style={{padding:22}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:18}}>
+          <h3 style={{margin:0,fontSize:16,fontWeight:600}}>Build genealogy · SN-2208</h3>
+          <StatChip value="142 parts traced" />
+        </div>
+        {tree.map((n,i)=>(
+          <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 0',borderTop:i?'1px solid var(--line)':'none',marginLeft:n[2]*22}}>
+            <span style={{width:8,height:8,borderRadius:2,background:n[2]===0?'var(--ink-strong)':'var(--line-strong)'}}></span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:14,fontWeight:n[2]===0?600:500}}>{n[0]}</div>
+              {n[1] && <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-faint)',marginTop:2}}>{n[1]}</div>}
+            </div>
+            <Badge tone={n[4]}>{n[3]}</Badge>
+          </div>
+        ))}
+      </Panel>
+      <div style={{display:'flex',flexDirection:'column',gap:16}}>
+        <Panel style={{padding:22}}>
+          <h3 style={{margin:'0 0 14px',fontSize:16,fontWeight:600}}>Unit status</h3>
+          <div style={{display:'flex',alignItems:'flex-end',gap:5,marginBottom:8}}>
+            {[14,22,30].map((h,i)=><span key={i} style={{width:9,height:h,borderRadius:2,background:'var(--accent)'}}/>)}
+            {[24,16,12].map((h,i)=><span key={i} style={{width:9,height:h,borderRadius:2,background:'var(--skeleton)'}}/>)}
+            <span style={{marginLeft:'auto',fontFamily:'var(--font-mono)',fontSize:18,fontWeight:600}}>84%</span>
+          </div>
+          <div style={{fontSize:13,color:'var(--ink-muted)'}}>6 of 8 build stages complete</div>
+        </Panel>
+        <Panel style={{padding:22}}>
+          <h3 style={{margin:'0 0 12px',fontSize:16,fontWeight:600}}>Test results</h3>
+          {[["Power-on self test","Pass"],["Joint calibration","Pass"],["Payload load test","Running"]].map((t,i)=>(
+            <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderTop:i?'1px solid var(--line)':'none',fontSize:13.5}}>
+              <span>{t[0]}</span><span style={{color:t[1]==='Pass'?'var(--success)':'var(--ink-faint)',fontWeight:600,fontSize:12.5}}>{t[1]}</span>
+            </div>
+          ))}
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+function Placeholder({title}){
+  return <div style={{padding:28}}><Panel style={{padding:40,minHeight:300}}>
+    <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--mono-ghost)',letterSpacing:'.06em'}}>[ {title.toUpperCase()} — SCREEN ]</div>
+    {[80,60,70,50,65].map((w,i)=><Skel key={i} w={w} mt={i?12:20}/>)}
+  </Panel></div>;
+}
+
+function App(){
+  const [active,setActive] = React.useState(0);
+  const title = NAV[active][0];
+  const view = active===0?<Overview/>:active===1?<Procurement/>:active===2?<Genealogy/>:<Placeholder title={title}/>;
+  return (
+    <div style={{display:'flex',minHeight:'100vh'}}>
+      <Sidebar active={active} setActive={setActive}/>
+      <main style={{flex:1,minWidth:0}}>
+        <Topbar title={title}/>
+        {view}
+      </main>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script></body></html>

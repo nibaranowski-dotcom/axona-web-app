@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .md-bg{
+    background-color:#101013;
+    background-image:
+      radial-gradient(1100px 560px at 50% -8%,rgba(198,242,79,.07),transparent 60%),
+      radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px),
+      linear-gradient(180deg,#1a1a1e 0%,#101013 55%,#0c0c0e 100%);
+    background-size:auto,24px 24px,auto;
+  }
+  .sres{transition:background .12s,border-color .12s}
+  .sres:hover{background:rgba(255,255,255,.06)}
+  .sres.is-active{background:rgba(255,255,255,.08);border-color:rgba(198,242,79,.4)}
+  .ssearch::placeholder{color:var(--on-dark-faint)}
+  .scol::-webkit-scrollbar{width:8px}
+  .scol::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:8px}
+</style>
+</helmet>
+<div class="md-bg" style="font-family:var(--font-sans);color:#fff;min-height:100vh;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;padding:64px 20px 40px">
+
+  <div style="width:100%;max-width:680px;display:flex;flex-direction:column;flex:1;min-height:0">
+
+    <!-- search field -->
+    <div style="display:flex;align-items:center;gap:13px;background:rgba(255,255,255,.07);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.14);border-radius:15px;padding:15px 18px;flex:none">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--on-dark-mut)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <input class="ssearch" ref="{{ inputRef }}" value="{{ query }}" onInput="{{ onSearch }}" onKeyDown="{{ onKey }}" placeholder="Search agents, files, chats, modules…" style="flex:1;border:none;outline:none;background:transparent;font-size:17px;font-family:var(--font-sans);color:#fff">
+      <a href="Mission Control.dc.html" style="font-family:var(--font-mono);font-size:10px;color:var(--on-dark-faint);border:1px solid rgba(255,255,255,.16);border-radius:5px;padding:3px 7px;text-decoration:none;flex:none">ESC</a>
+    </div>
+
+    <!-- scope tabs -->
+    <div style="display:flex;gap:7px;margin-top:14px;flex-wrap:wrap;flex:none">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="6">
+        <span onClick="{{ t.pick }}" style="display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:500;padding:5px 11px;border-radius:999px;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }};border:1px solid {{ t.border }}">{{ t.label }}<sc-if value="{{ t.count }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:9.5px;opacity:.7">{{ t.count }}</span></sc-if></span>
+      </sc-for>
+    </div>
+
+    <!-- results -->
+    <div class="scol" style="margin-top:18px;overflow-y:auto;flex:1;min-height:0;padding-right:4px">
+      <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+        <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+          <div style="margin-bottom:20px">
+            <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:.07em;color:var(--on-dark-faint);text-transform:uppercase;margin:0 4px 8px">{{ g.label }}</div>
+            <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3">
+              <a href="{{ r.href }}" class="sres {{ r.activeClass }}" style="display:flex;align-items:center;gap:13px;padding:11px 13px;border-radius:11px;border:1px solid transparent;cursor:pointer;text-decoration:none;color:inherit">
+                <span style="width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);display:inline-flex;align-items:center;justify-content:center;flex:none;color:{{ r.iconColor }}">{{ r.icon }}</span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="font-size:14px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.title }}</span>
+                    <sc-if value="{{ r.tag }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.03em;color:var(--on-dark-mut);border:1px solid rgba(255,255,255,.13);border-radius:5px;padding:1px 6px;flex:none;text-transform:uppercase">{{ r.tag }}</span></sc-if>
+                  </div>
+                  <div style="font-size:12px;color:var(--on-dark-mut);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.sub }}</div>
+                </div>
+                <span style="font-family:var(--font-mono);font-size:10px;color:var(--on-dark-faint);flex:none">{{ r.meta }}</span>
+              </a>
+            </sc-for>
+          </div>
+        </sc-for>
+      </sc-if>
+      <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+        <div style="text-align:center;padding:48px 0;font-family:var(--font-mono);font-size:12px;color:var(--on-dark-faint);letter-spacing:.05em">NO MATCHES FOR “{{ query }}”</div>
+      </sc-if>
+    </div>
+
+    <!-- footer hints -->
+    <div style="display:flex;align-items:center;gap:18px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08);flex:none;font-family:var(--font-mono);font-size:10px;color:var(--on-dark-faint)">
+      <span style="display:inline-flex;align-items:center;gap:6px"><span style="border:1px solid rgba(255,255,255,.16);border-radius:4px;padding:1px 5px">↑↓</span>navigate</span>
+      <span style="display:inline-flex;align-items:center;gap:6px"><span style="border:1px solid rgba(255,255,255,.16);border-radius:4px;padding:1px 5px">↵</span>open</span>
+      <span style="display:inline-flex;align-items:center;gap:6px"><span style="border:1px solid rgba(255,255,255,.16);border-radius:4px;padding:1px 5px">esc</span>close</span>
+      <span style="margin-left:auto">{{ resultCount }} results</span>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { query:'', tab:0 };
+  inputRef = React.createRef();
+  componentDidMount(){
+    const h = (typeof location !== 'undefined' && location.hash) ? decodeURIComponent(location.hash.replace(/^#q=?/,'')) : '';
+    if (h) this.setState({ query:h });
+    setTimeout(()=>{ const el = this.inputRef.current; if(el){ el.focus(); const v = el.value; el.value=''; el.value=v; } }, 30);
+  }
+  renderVals(){
+    const P = (d) => React.createElement('path', { d });
+    const L = (x1,y1,x2,y2) => React.createElement('line', { x1,y1,x2,y2 });
+    const C = (cx,cy,r) => React.createElement('circle', { cx,cy,r });
+    const Rt = (x,y,w,h,rx) => React.createElement('rect', { x,y,width:w,height:h,rx });
+    const ico = (...k) => React.createElement('svg', { width:18, height:18, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:1.7, strokeLinecap:'round', strokeLinejoin:'round' }, ...k);
+    const glyph = () => React.createElement('svg', { width:18, height:18, viewBox:'0 0 24 24', fill:'#fff' },
+      [[12,4.6],[15.7,5.6],[18.4,8.3],[19.4,12],[18.4,15.7],[15.7,18.4],[12,19.4],[8.3,18.4],[5.6,15.7],[4.6,12],[5.6,8.3],[8.3,5.6]]
+        .map((p,i)=>React.createElement('circle',{key:i,cx:p[0],cy:p[1],r:1.5})));
+
+    const fileIco = ico(P('M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'), P('M14 2v6h6'));
+    const chatIco = ico(P('M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'));
+    const modIco = ico(Rt(3,3,7,7,1.5), Rt(14,3,7,7,1.5), Rt(14,14,7,7,1.5), Rt(3,14,7,7,1.5));
+    const wfIco = ico(Rt(4,4,6,6,1.5), Rt(14,14,6,6,1.5), P('M7 10v3a2 2 0 0 0 2 2h5'));
+    const projIco = ico(P('M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z'));
+    const actIco = ico(P('M5 12h14'), P('M12 5v14'));
+
+    // unified index
+    const DATA = [
+      // agents
+      { type:'agent', title:'Sourcing agent', sub:'Procurement · drafts the SERVO-204 reorder', meta:'proc-04', href:'Agents.dc.html', kw:'sourcing procurement reorder servo vendor' },
+      { type:'agent', title:'SPC agent', sub:'Quality · monitors control charts vs spec', meta:'qa-04', href:'Agents.dc.html', kw:'spc quality control chart torque' },
+      { type:'agent', title:'Feasibility agent', sub:'Sales · checks build & deliver dates', meta:'crm-04', href:'Agents.dc.html', kw:'feasibility sales deliverability bmw' },
+      { type:'agent', title:'Dispatch agent', sub:'Field Service · routes the right technician', meta:'fs-01', href:'Agents.dc.html', kw:'dispatch field service technician route' },
+      { type:'agent', title:'Customs agent', sub:'Fulfillment · clears export license holds', meta:'ful-04', href:'Agents.dc.html', kw:'customs export license osaka ear99 fulfillment' },
+      { type:'agent', title:'Policy agent', sub:'Autonomy · manages canary & rollback', meta:'auto-03', href:'Agents.dc.html', kw:'policy autonomy canary rollback p-13' },
+      // files
+      { type:'file', title:'ECO-318 change order', sub:'Engineering · SERVO-205 · +$140/unit', meta:'PDF', href:'Project Files.dc.html', kw:'eco-318 change order servo engineering torque' },
+      { type:'file', title:'NCR-118 report', sub:'Quality · lot 88421 · root cause', meta:'PDF', href:'Project Files.dc.html', kw:'ncr-118 quality torque defect lot' },
+      { type:'file', title:'Torque test data — SN-2208', sub:'Quality · SPC · 2 of 8 > UCL', meta:'CSV', href:'Project Files.dc.html', kw:'torque test data sn-2208 spc' },
+      { type:'file', title:'BMW impact memo', sub:'Sales · INV-2208 · 2 of 24 affected', meta:'DOCX', href:'Project Files.dc.html', kw:'bmw impact memo sales contract' },
+      { type:'file', title:'Vendor A quote — -205 drive', sub:'Procurement · $540/unit · 4wk lead', meta:'XLSX', href:'Project Files.dc.html', kw:'vendor quote drive procurement servo' },
+      // chats
+      { type:'chat', title:'“Why did line 3 slow down?”', sub:'Manufacturing agent · 2h ago', meta:'CHAT', href:'Agents.dc.html', kw:'line 3 slow manufacturing throughput chat' },
+      { type:'chat', title:'“Reorder SERVO-204 with a buffer”', sub:'Sourcing agent · 29m ago', meta:'CHAT', href:'Agents.dc.html', kw:'reorder servo buffer chat procurement' },
+      { type:'chat', title:'“Which robots are at risk this week?”', sub:'Fleet agent · yesterday', meta:'CHAT', href:'Fleet.dc.html', kw:'robots risk fleet maintenance chat' },
+      // modules
+      { type:'module', title:'Procurement', sub:'Value chain · 6 agents on shift', meta:'OPEN', href:'Procurement.dc.html', kw:'procurement sourcing supply' },
+      { type:'module', title:'Quality & Testing', sub:'Value chain · SPC · NCRs', meta:'OPEN', href:'Quality.dc.html', kw:'quality testing spc ncr inspection' },
+      { type:'module', title:'Fleet', sub:'Robotics · telemetry & uptime', meta:'OPEN', href:'Fleet.dc.html', kw:'fleet deployment telemetry uptime' },
+      { type:'module', title:'Finance & Accounting', sub:'Back office · ARR · runway', meta:'OPEN', href:'Finance.dc.html', kw:'finance accounting revenue raas runway' },
+      { type:'module', title:'Engineering & PLM', sub:'Robotics · ECOs · firmware', meta:'OPEN', href:'Engineering.dc.html', kw:'engineering plm eco firmware cad' },
+      // workflows
+      { type:'workflow', title:'Defect → engineering change', sub:'Quality → Eng → Finance → Proc', meta:'WORKFLOW', href:'Workflow.dc.html', kw:'defect engineering change workflow eco' },
+      { type:'workflow', title:'Predictive maintenance → dispatch', sub:'Fleet → Field Service → People', meta:'WORKFLOW', href:'Workflow.dc.html', kw:'predictive maintenance dispatch workflow' },
+      // projects
+      { type:'project', title:'ECO-318 · SERVO-204 → -205', sub:'Engineering · 18 files · in review', meta:'PROJECT', href:'Project Files.dc.html', kw:'eco-318 project servo engineering' },
+      { type:'project', title:'BMW · 24-unit HX-2 rollout', sub:'Sales · 21 files · in review', meta:'PROJECT', href:'Projects.dc.html', kw:'bmw project rollout sales hx-2' },
+    ];
+
+    const ICO = { agent:glyph(), file:fileIco, chat:chatIco, module:modIco, workflow:wfIco, project:projIco, action:actIco };
+    const ICOLOR = { agent:'#fff', file:'var(--on-dark-mut)', chat:'var(--accent)', module:'#fff', workflow:'var(--accent)', project:'var(--on-dark-mut)' };
+    const GROUPLABEL = { agent:'Agents', file:'Files', chat:'Chats', module:'Modules', workflow:'Workflows', project:'Projects' };
+    const ORDER = ['agent','chat','file','module','workflow','project'];
+    const TAG = { agent:'Agent', file:null, chat:null, module:'Module', workflow:null, project:null };
+
+    const q = this.state.query.trim().toLowerCase();
+    const tabs0 = [ {k:'all',label:'All'}, {k:'agent',label:'Agents'}, {k:'file',label:'Files'}, {k:'chat',label:'Chats'}, {k:'module',label:'Modules'}, {k:'workflow',label:'Workflows'}, {k:'project',label:'Projects'} ];
+    const tabKey = tabs0[this.state.tab].k;
+
+    const match = (d) => (!q || d.title.toLowerCase().includes(q) || d.sub.toLowerCase().includes(q) || d.kw.includes(q)) && (tabKey==='all' || d.type===tabKey);
+    const hits = DATA.filter(match);
+
+    const tabs = tabs0.map((t,i)=>{
+      const cnt = t.k==='all' ? DATA.filter(d=>(!q||d.title.toLowerCase().includes(q)||d.sub.toLowerCase().includes(q)||d.kw.includes(q))).length
+        : DATA.filter(d=>d.type===t.k && (!q||d.title.toLowerCase().includes(q)||d.sub.toLowerCase().includes(q)||d.kw.includes(q))).length;
+      return { label:t.label, count: cnt ? String(cnt) : null, pick:()=>this.setState({tab:i}),
+        bg: i===this.state.tab ? 'var(--accent)' : 'rgba(255,255,255,.05)',
+        fg: i===this.state.tab ? 'var(--accent-ink)' : 'var(--on-dark-mut)',
+        border: i===this.state.tab ? 'var(--accent)' : 'rgba(255,255,255,.12)' };
+    });
+
+    let first = true;
+    const groups = ORDER.map(type => {
+      const rows = hits.filter(h => h.type===type).map(h => {
+        const active = first; first = false;
+        return { title:h.title, sub:h.sub, meta:h.meta, href:h.href, tag:TAG[h.type],
+          icon:ICO[h.type], iconColor:ICOLOR[h.type], activeClass: active ? 'is-active' : '' };
+      });
+      return rows.length ? { label:GROUPLABEL[type], rows } : null;
+    }).filter(Boolean);
+
+    return {
+      query: this.state.query,
+      inputRef: this.inputRef,
+      onSearch:(e)=>this.setState({ query:e.target.value }),
+      onKey:(e)=>{ if(e.key==='Escape'){ window.location.href='Mission Control.dc.html'; } },
+      tabs, groups,
+      hasResults: hits.length > 0,
+      noResults: hits.length === 0,
+      resultCount: String(hits.length),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<!-- @dsCard group="Components" viewport="700x140" name="Forms — email capture" subtitle="Input fused to a lime CTA button" -->
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;font-family:var(--font-sans);background:var(--paper);padding:24px;display:flex;gap:18px;flex-wrap:wrap;align-items:center}</style></head>
+<body><div id="root"></div>
+<script type="text/babel">
+const NS = Object.values(window).find(v => v && v.Input) || {};
+const { Input } = NS;
+function Demo(){return (
+  <div style={{display:'flex',gap:18,flexWrap:'wrap',alignItems:'center'}}>
+    <Input buttonLabel="Book a demo" />
+    <Input placeholder="Your work email" buttonLabel="" style={{maxWidth:260}} />
+  </div>
+);}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);
+</script></body></html>

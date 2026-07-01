@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .collapse-btn{transition:background .15s,color .15s}
+  .collapse-btn:hover{background:var(--panel);color:var(--ink)}
+  .navitem{transition:background .15s,color .15s}
+  .navitem:hover{background:var(--panel)}
+  .navgroup summary{list-style:none}
+  .navgroup summary::-webkit-details-marker{display:none}
+  .navgroup summary::marker{content:""}
+  .navgroup summary:hover .navchev{stroke:var(--ink-muted)}
+  .navchev{transition:transform .15s;flex:none}
+  .navgroup:not([open]) .navchev{transform:rotate(-90deg)}
+  .navsearch{transition:border-color .15s,background .15s}
+  .navsearch:hover{border-color:var(--ink-strong);background:var(--panel-2)}
+  .filerow{transition:background .15s}
+  .filerow:hover{background:var(--panel-2)}
+  .chip{transition:border-color .15s,color .15s}
+  .chip:hover{border-color:var(--ink-strong);color:var(--ink)}
+  .resizer{transition:background .15s}
+  .resizer:hover{background:var(--panel-2)}
+  .resizer:hover .grip{background:var(--ink-strong)}
+  .crumb{transition:color .15s}
+  .crumb:hover{color:var(--ink)}
+  .scarea::-webkit-scrollbar{width:8px;height:8px}
+  .scarea::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+</style>
+<script>document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key&&e.key.toLowerCase()==='k'){e.preventDefault();window.location.href='Mission Control.dc.html';}});</script>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden;font-family:var(--font-sans);color:var(--ink);background:var(--panel)">
+
+  <aside style="width:240px;flex:none;background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 8px 18px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:21px;font-weight:700;letter-spacing:-.04em;color:var(--ink-strong)">axona</span>
+        <span style="width:12px;height:12px;background:var(--ink-strong);border-radius:0 7px 0 7px"></span>
+      </div>
+      <button class="collapse-btn" title="Collapse menu" style="width:28px;height:28px;border:1px solid var(--line);border-radius:7px;background:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-muted);flex:none;padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18"></path><path d="m15 9-3 3 3 3"></path></svg></button>
+    </div>
+    <a href="Mission Control.dc.html" class="navsearch" style="display:flex;align-items:center;gap:9px;margin:0 4px 10px;padding:8px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--panel);cursor:pointer;text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <span style="flex:1;font-size:13px;color:var(--ink-faint)">Search</span>
+      <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px">⌘K</span>
+    </a>
+    <div class="scarea" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;margin:0 -4px;padding:0 4px">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <details open="open" class="navgroup">
+          <summary style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;padding:14px 10px 6px;cursor:pointer"><span style="flex:1">{{ g.label }}</span><svg class="navchev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--line-strong)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></summary>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+          <a class="navitem" href="{{ it.href }}" style="display:flex;align-items:center;gap:11px;padding:8px 10px 8px {{ it.pad }};border-radius:8px;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.weight }};font-size:{{ it.size }};text-decoration:none">
+            <span style="width:6px;height:6px;border-radius:2px;background:{{ it.marker }};flex:none"></span>
+            <span style="flex:1">{{ it.name }}</span>
+            <sc-if value="{{ it.badge }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:10px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 7px;font-weight:600">{{ it.badge }}</span></sc-if>
+          </a>
+        </sc-for>
+        </details>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 8px 2px;border-top:1px solid var(--line);margin-top:8px">
+      <span style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink)">LC</span>
+      <div style="font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Head of Ops</div></div>
+    </div>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex">
+
+    <!-- main: project files -->
+    <div style="flex:1;min-width:520px;display:flex;flex-direction:column;background:var(--panel)">
+      <div style="height:60px;flex:none;border-bottom:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:space-between;padding:0 24px">
+        <div style="min-width:0">
+          <div style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;color:var(--ink-faint);text-transform:uppercase">
+            <a href="Projects.dc.html" class="crumb" style="color:var(--ink-faint);text-decoration:none">Projects</a><span>/</span><span style="color:var(--ink-muted)">Engineering</span>
+          </div>
+          <h1 style="margin:2px 0 0;font-size:18px;font-weight:600;letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">ECO-318 · SERVO-204 → -205 drive change</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex:none">
+          <button style="font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;padding:8px 14px;font-size:13px;background:transparent;color:var(--ink);border:1px solid var(--line-strong)">+ Add files</button>
+          <button style="font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;padding:8px 14px;font-size:13px;background:var(--ink-strong);color:#fff;border:1px solid var(--ink-strong)">Share</button>
+        </div>
+      </div>
+
+      <!-- ask-across-files bar (Hebbia matrix) -->
+      <div style="flex:none;padding:13px 24px;border-bottom:1px solid var(--line);background:var(--paper);display:flex;align-items:center;gap:12px">
+        <div style="flex:1;display:flex;align-items:center;gap:10px;border:1px solid var(--line-strong);border-radius:10px;background:var(--panel);padding:0 13px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="1.9" style="flex:none"><path d="M12 3v3m0 12v3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M3 12h3m12 0h3M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"></path></svg>
+          <input value="{{ ask }}" onInput="{{ onAsk }}" onKeyDown="{{ onAskKey }}" placeholder="Ask a question across all 8 documents — it becomes a column…" style="flex:1;min-width:0;border:none;outline:none;background:transparent;padding:10px 0;font-size:13px;font-family:var(--font-sans);color:var(--ink)">
+          <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.04em;color:var(--ink-faint);text-transform:uppercase;flex:none">Matrix</span>
+        </div>
+        <button onClick="{{ runAsk }}" style="font-family:var(--font-sans);font-weight:600;border-radius:9px;cursor:pointer;padding:10px 16px;font-size:13px;background:var(--accent);color:var(--accent-ink);border:none;flex:none">+ Add column</button>
+      </div>
+
+      <div class="scarea" style="flex:1;overflow:auto">
+        <div style="min-width:{{ tableMinWidth }}px">
+          <!-- header -->
+          <div style="display:flex;align-items:center;gap:0;padding:0 24px;height:38px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:2">
+            <span style="width:30px;flex:none"></span>
+            <span style="flex:2.4;min-width:220px;font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Document</span>
+            <span style="width:92px;flex:none;font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Type</span>
+            <span style="flex:1.3;min-width:150px;font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Linked to</span>
+            <span style="flex:1.5;min-width:170px;display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent)"></span>Cost / spec impact</span>
+            <span style="width:120px;flex:none;display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent)"></span>Agent flag</span>
+            <sc-if value="{{ hasAsked }}" hint-placeholder-val="{{ false }}"><span style="flex:1.5;min-width:180px;display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--accent-ink);text-transform:uppercase;background:rgba(198,242,79,.18);padding:0 8px;border-radius:5px;height:22px"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent)"></span>{{ askedHeader }}</span></sc-if>
+            <span style="width:92px;flex:none;font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Modified</span>
+          </div>
+
+          <!-- rows -->
+          <sc-for list="{{ files }}" as="f" hint-placeholder-count="8">
+            <div class="filerow" style="display:flex;align-items:center;gap:0;padding:0 24px;min-height:52px;border-bottom:1px solid var(--line);cursor:pointer">
+              <span style="width:30px;flex:none"><span style="width:15px;height:15px;border-radius:4px;border:1.5px solid var(--line-strong);display:inline-block"></span></span>
+              <div style="flex:2.4;min-width:220px;display:flex;align-items:center;gap:11px;padding:9px 12px 9px 0">
+                <span style="width:30px;height:30px;border-radius:7px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-muted)">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></svg>
+                </span>
+                <div style="min-width:0">
+                  <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ f.name }}</div>
+                  <div style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);margin-top:1px">{{ f.ext }} · {{ f.size }}</div>
+                </div>
+              </div>
+              <span style="width:92px;flex:none"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.03em;background:var(--panel);border:1px solid var(--line-panel);border-radius:5px;padding:2px 7px;color:var(--ink-muted)">{{ f.type }}</span></span>
+              <span style="flex:1.3;min-width:150px;font-family:var(--font-mono);font-size:11px;color:var(--ink-muted);padding-right:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ f.linked }}</span>
+              <span style="flex:1.5;min-width:170px;font-size:12.5px;color:var(--ink);padding-right:12px">{{ f.impact }}</span>
+              <span style="width:120px;flex:none"><span style="display:inline-flex;align-items:center;font-size:10px;font-weight:600;letter-spacing:.03em;padding:3px 9px;border-radius:999px;background:{{ f.flagBg }};color:{{ f.flagFg }}">{{ f.flag }}</span></span>
+              <sc-if value="{{ hasAsked }}" hint-placeholder-val="{{ false }}"><span style="flex:1.5;min-width:180px;font-size:12.5px;color:var(--ink);padding-right:12px;background:rgba(198,242,79,.08)">{{ f.askedCell }}</span></sc-if>
+              <span style="width:92px;flex:none;font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint)">{{ f.modified }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- resizer -->
+    <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ true }}">
+    <div class="resizer" onMouseDown="{{ startDrag }}" style="width:8px;flex:none;cursor:col-resize;background:var(--paper);border-left:1px solid var(--line);display:flex;align-items:center;justify-content:center">
+      <span class="grip" style="width:2px;height:34px;border-radius:2px;background:var(--line-strong)"></span>
+    </div>
+    </sc-if>
+
+    <!-- project agent -->
+    <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ true }}">
+    <div style="width:{{ panelW }}px;flex:none;min-width:0;background:var(--paper);display:flex;flex-direction:column;color:var(--ink)">
+      <div style="height:60px;flex:none;padding:0 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px">
+        <span style="flex:none;display:inline-flex"><svg width="30" height="30" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14.5px;font-weight:600">{{ activeAgent.name }}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase">{{ activeAgent.role }}</div>
+        </div>
+        <button onClick="{{ closePanel }}" title="Collapse" class="collapse-btn" style="width:28px;height:28px;border:1px solid var(--line);border-radius:7px;background:var(--paper);cursor:pointer;color:var(--ink-muted);display:flex;align-items:center;justify-content:center;padding:0;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 17 5-5-5-5"></path><path d="m13 17 5-5-5-5"></path></svg></button>
+      </div>
+
+      <div style="padding:12px 18px;border-bottom:1px solid var(--line);background:var(--panel)">
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:8px">Talk to</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <sc-for list="{{ scopes }}" as="s" hint-placeholder-count="2">
+            <span onClick="{{ s.pick }}" style="display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:500;padding:6px 11px;border-radius:999px;cursor:pointer;background:{{ s.bg }};color:{{ s.fg }};border:1px solid {{ s.border }}">{{ s.label }}</span>
+          </sc-for>
+        </div>
+      </div>
+
+      <div class="scarea" style="flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px">
+        <sc-for list="{{ thread }}" as="m" hint-placeholder-count="1">
+          <div style="display:flex;gap:9px;justify-content:{{ m.rowJustify }};align-items:flex-start">
+            <sc-if value="{{ m.isAgent }}" hint-placeholder-val="{{ true }}"><span style="flex:none;display:inline-flex;margin-top:1px"><svg width="22" height="22" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span></sc-if>
+            <div style="max-width:80%;background:{{ m.bubbleBg }};color:{{ m.bubbleFg }};border-radius:13px;padding:11px 13px;font-size:13px;line-height:1.5">{{ m.text }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:12px 18px 16px;border-top:1px solid var(--line)">
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px">
+          <sc-for list="{{ suggestions }}" as="s" hint-placeholder-count="3">
+            <span class="chip" onClick="{{ s.go }}" style="font-size:12px;font-weight:500;padding:6px 12px;border-radius:999px;cursor:pointer;background:var(--paper);color:var(--ink-muted);border:1px solid var(--line-strong)">{{ s.label }}</span>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:stretch;border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;background:var(--paper)">
+          <input value="{{ draft }}" onInput="{{ onDraft }}" onKeyDown="{{ onKey }}" placeholder="{{ inputPlaceholder }}" style="flex:1;min-width:0;border:none;outline:none;padding:11px 14px;font-size:13.5px;font-family:var(--font-sans);color:var(--ink);background:transparent">
+          <button onClick="{{ sendBtn }}" style="background:var(--accent);color:var(--accent-ink);border:none;font-size:13px;font-weight:600;padding:0 16px;cursor:pointer;font-family:var(--font-sans)">Send</button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- collapsed rail -->
+    <sc-if value="{{ panelClosed }}" hint-placeholder-val="{{ false }}">
+    <div style="width:52px;flex:none;border-left:1px solid var(--line);background:var(--paper);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:14px">
+      <button onClick="{{ reopen }}" title="Open agent" class="collapse-btn" style="width:30px;height:30px;border:1px solid var(--line);border-radius:8px;background:var(--paper);cursor:pointer;color:var(--ink-muted);display:flex;align-items:center;justify-content:center;padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5"></path><path d="m18 17-5-5 5-5"></path></svg></button>
+      <span style="flex:none;display:inline-flex"><svg width="24" height="24" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span>
+      <span style="writing-mode:vertical-rl;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;color:var(--ink-faint);text-transform:uppercase">Agent</span>
+    </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { scope:0, thread:[], draft:'', ask:'', asked:null, panelW:404, panelOpen:true };
+  _drag = false;
+  _mm = (e) => { if(!this._drag) return; const w = Math.min(620, Math.max(340, window.innerWidth - e.clientX)); this.setState({ panelW:w }); };
+  _mu = () => { this._drag = false; document.body.style.userSelect=''; window.removeEventListener('mousemove', this._mm); window.removeEventListener('mouseup', this._mu); };
+  startDrag = (e) => { e.preventDefault(); this._drag = true; document.body.style.userSelect='none'; window.addEventListener('mousemove', this._mm); window.addEventListener('mouseup', this._mu); };
+  componentWillUnmount(){ this._mu(); }
+  setScope(i){ this.setState({ scope:i, thread:[], draft:'' }); }
+  doAsk(){
+    const q = (this.state.ask || '').trim();
+    if(!q) return;
+    // canned per-file answer (demo of the matrix extracting an answer per document)
+    const cells = ['Yes — supersedes -204','Reference only','Yes — new -205 part','Supports the change','Source evidence','Blocks until cert','Affects 2 of 24','Required by CAPA'];
+    this.setState({ asked:{ header:q, cells } , ask:'' });
+  }
+  send(text){
+    const t = (text || this.state.draft || '').trim();
+    if(!t) return;
+    this.setState(s => ({ draft:'', thread:[...s.thread,
+      { role:'user', text:t },
+      { role:'agent', text:'Reading across the project\u2019s 8 files now — I\u2019ll answer with citations to the exact documents and the modules they came from.' }] }));
+  }
+  renderVals(){
+    const SUC='var(--success)', ACC='var(--accent)', CRIT='var(--ink-strong)';
+
+    const flag = (t) => t==='approve' ? { flagBg:'var(--accent)', flagFg:'var(--accent-ink)' }
+      : t==='block' ? { flagBg:'var(--ink-strong)', flagFg:'#fff' }
+      : t==='ok' ? { flagBg:'var(--success-tint)', flagFg:'var(--success)' }
+      : { flagBg:'var(--panel)', flagFg:'var(--ink-muted)' };
+    const filesRaw = [
+      { name:'ECO-318 change order', ext:'PDF', size:'240 KB', type:'Change', linked:'Engineering · SERVO-205', impact:'+$140 / unit', flag:'Approval', t:'approve', modified:'2h ago' },
+      { name:'SERVO-205 datasheet', ext:'PDF', size:'1.2 MB', type:'Spec', linked:'Vendor A', impact:'\u00b12.5% tol (was \u00b14%)', flag:'Reference', t:'ok', modified:'1d ago' },
+      { name:'Vendor A quote — -205 drive', ext:'XLSX', size:'88 KB', type:'Quote', linked:'Procurement · PO draft', impact:'$540 / unit · 4wk lead', flag:'Best ETA', t:'ok', modified:'3h ago' },
+      { name:'NCR-118 report', ext:'PDF', size:'410 KB', type:'Report', linked:'Quality · lot 88421', impact:'Root cause: stiff drive', flag:'Linked', t:'neutral', modified:'1d ago' },
+      { name:'Torque test data — SN-2208', ext:'CSV', size:'56 KB', type:'Data', linked:'Quality · SPC', impact:'2 of 8 > UCL (+4%)', flag:'Evidence', t:'neutral', modified:'2d ago' },
+      { name:'Compatibility matrix v4.2.2', ext:'PDF', size:'320 KB', type:'Doc', linked:'Engineering · firmware', impact:'HX-1 r5 cert pending', flag:'Blocked', t:'block', modified:'5h ago' },
+      { name:'BMW impact memo', ext:'DOCX', size:'72 KB', type:'Memo', linked:'Sales · INV-2208', impact:'2 of 24 units affected', flag:'Draft', t:'neutral', modified:'4h ago' },
+      { name:'CAPA-8D plan', ext:'PDF', size:'180 KB', type:'Plan', linked:'Quality', impact:'Supplier 8D + incoming check', flag:'Open', t:'approve', modified:'6h ago' },
+    ];
+    const asked = this.state.asked;
+    const files = filesRaw.map((f, i) => ({ ...f, ...flag(f.t), askedCell: asked ? (asked.cells[i] || '—') : '' }));
+
+    const hasAsked = !!asked;
+    const tableMinWidth = hasAsked ? 1240 : 1060;
+
+    // agent scopes
+    const scopesRaw = [
+      { name:'ECO-318 project agent', role:'PROJECT · 8 FILES', intro:'I\u2019ve read all 8 files in this project. The change is gated on two things: the +$140/unit cost (HX-2 margin \u22122.1pt, awaiting approval) and the v4.2.2 firmware certification on HX-1 r5, which is still pending. Two BMW units are affected. Want a one-page brief?' },
+      { name:'Axona agent', role:'GENERAL · CROSS-MODULE', intro:'I can pull beyond this project too — into the live Quality, Engineering, Procurement, and Sales modules. Ask me anything about how this change ripples across the operation, and I\u2019ll cite the files and the module data.' },
+    ];
+    const scope = this.state.scope;
+    const scopes = scopesRaw.map((s, i) => ({
+      label:s.name, pick:()=>this.setScope(i),
+      bg: i===scope ? 'var(--ink-strong)' : 'var(--paper)',
+      fg: i===scope ? '#fff' : 'var(--ink-muted)',
+      border: i===scope ? 'var(--ink-strong)' : 'var(--line-strong)',
+    }));
+    const sc = scopesRaw[scope];
+    const activeAgent = { name:sc.name, role:sc.role };
+    const baseThread = this.state.thread.length ? this.state.thread : [{ role:'agent', text:sc.intro }];
+    const thread = baseThread.map(m => ({
+      isAgent: m.role === 'agent', text:m.text,
+      rowJustify: m.role === 'agent' ? 'flex-start' : 'flex-end',
+      bubbleBg: m.role === 'agent' ? 'var(--panel)' : 'var(--ink-strong)',
+      bubbleFg: m.role === 'agent' ? 'var(--ink)' : '#fff',
+    }));
+    const suggLabels = scope === 1
+      ? ['How does this hit margin?', 'Which open orders are affected?', 'Draft the cross-team update']
+      : ['Summarize all 8 files', 'What\u2019s blocking approval?', 'Draft the approval note'];
+    const suggestions = suggLabels.map(s => ({ label:s, go:()=>this.send(s) }));
+
+    return {
+      navGroups: this._nav(), files, hasAsked, tableMinWidth,
+      askedHeader: asked ? asked.header : '',
+      ask: this.state.ask,
+      onAsk:(e)=>this.setState({ ask:e.target.value }),
+      onAskKey:(e)=>{ if(e.key === 'Enter'){ e.preventDefault(); this.doAsk(); } },
+      runAsk:()=>this.doAsk(),
+      scopes, activeAgent, thread, suggestions,
+      panelW: this.state.panelW, startDrag: this.startDrag,
+      panelOpen: this.state.panelOpen,
+      panelClosed: !this.state.panelOpen,
+      closePanel: ()=>this.setState({ panelOpen:false }),
+      reopen: ()=>this.setState({ panelOpen:true }),
+      draft:this.state.draft,
+      onDraft:(e)=>this.setState({ draft:e.target.value }),
+      onKey:(e)=>{ if(e.key === 'Enter'){ e.preventDefault(); this.send(); } },
+      sendBtn:()=>this.send(),
+      inputPlaceholder: 'Message ' + sc.name + '…',
+    };
+  }
+  _nav(){
+    const navRaw = [
+      { label:'Core', items:[ { name:'Command Center', href:'Command Center.dc.html' }, { name:'Agents', href:'Agents.dc.html' }, { name:'Workflows', href:'Workflows.dc.html' }, { name:'Projects', active:true, href:'Projects.dc.html' }, { name:'Machines', href:'Machines.dc.html' } ] },
+      { label:'Value chain', items:[
+        { name:'Procurement', badge:'6' }, { name:'Manufacturing' }, { name:'Inventory' },
+        { name:'Fulfillment', badge:'3' }, { name:'Quality' }, { name:'Sales & CRM' }, { name:'Marketing' } ] },
+      { label:'Robotics', items:[
+        { name:'Fleet' }, { name:'Field Service' }, { name:'Engineering' }, { name:'Autonomy' } ] },
+      { label:'Back office', items:[
+        { name:'Finance', badge:'6' }, { name:'People' }, { name:'Security' }, { name:'Legal' } ] },
+    ];
+    return navRaw.map(g => ({
+      label: g.label || null,
+      items: g.items.map(it => ({
+        name: it.name, badge: it.badge || null,
+        href: it.href || (it.name === 'Inventory' ? '#' : it.name + '.dc.html'),
+        bg: it.active ? 'var(--panel)' : 'transparent',
+        fg: it.active ? 'var(--ink)' : 'var(--ink-muted)',
+        weight: it.active ? 600 : 400,
+        size: '14px', pad: '10px',
+        marker: it.active ? 'var(--ink-strong)' : 'var(--line-strong)',
+      })),
+    }));
+  }
+}
+</script>
+</body>
+</html>

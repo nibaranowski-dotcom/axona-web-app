@@ -12,3 +12,10 @@ coverage/
 *.log
 npm-debug.log*
 .DS_Store
+
+# Axona v2 design export — commit the .dc.html + tokens/components/guidelines + md docs,
+# keep the ~40MB of binaries out of git.
+design/prototypes/axona-v2/uploads/
+design/prototypes/axona-v2/screenshots/
+design/prototypes/axona-v2/**/.DS_Store
+design/prototypes/axona-v2/.thumbnail

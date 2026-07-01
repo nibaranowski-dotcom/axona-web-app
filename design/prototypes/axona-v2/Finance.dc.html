@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .copilot-dark{background-color:#121214;background-image:radial-gradient(520px 280px at 8% -30%,rgba(198,242,79,.14),transparent 62%),linear-gradient(155deg,#1c1c20,#111114)}
+  .collapse-btn{transition:background .15s,color .15s}
+  .collapse-btn:hover{background:var(--panel);color:var(--ink)}
+  .navitem{transition:background .15s,color .15s}
+  .navitem:hover{background:var(--panel)}
+  .navgroup summary{list-style:none}
+  .navgroup summary::-webkit-details-marker{display:none}
+  .navgroup summary::marker{content:""}
+  .navgroup summary:hover .navchev{stroke:var(--ink-muted)}
+  .navchev{transition:transform .15s;flex:none}
+  .navgroup:not([open]) .navchev{transform:rotate(-90deg)}
+  .navsearch{transition:border-color .15s,background .15s}
+  .navsearch:hover{border-color:var(--ink-strong);background:var(--panel-2)}
+  .unrow:hover{background:var(--panel-2)}
+  .chip{transition:border-color .15s,color .15s}
+  .chip:hover{border-color:var(--ink-strong);color:var(--ink)}
+  .avs{transition:transform .12s}
+  .avs:hover{transform:translateY(-2px)}
+  .resizer{transition:background .15s}
+  .resizer:hover{background:var(--panel-2)}
+  .resizer:hover .grip{background:var(--ink-strong)}
+  .scarea::-webkit-scrollbar{width:8px}
+  .scarea::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+</style>
+<script>document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key&&e.key.toLowerCase()==='k'){e.preventDefault();window.location.href='Mission Control.dc.html';}});</script>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden;font-family:var(--font-sans);color:var(--ink);background:var(--panel)">
+
+  <aside style="width:240px;flex:none;background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 8px 18px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:21px;font-weight:700;letter-spacing:-.04em;color:var(--ink-strong)">axona</span>
+        <span style="width:12px;height:12px;background:var(--ink-strong);border-radius:0 7px 0 7px"></span>
+      </div>
+      <button class="collapse-btn" title="Collapse menu" style="width:28px;height:28px;border:1px solid var(--line);border-radius:7px;background:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-muted);flex:none;padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18"></path><path d="m15 9-3 3 3 3"></path></svg></button>
+    </div>
+    <a href="Mission Control.dc.html" class="navsearch" style="display:flex;align-items:center;gap:9px;margin:0 4px 10px;padding:8px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--panel);cursor:pointer;text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <span style="flex:1;font-size:13px;color:var(--ink-faint)">Search</span>
+      <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px">⌘K</span>
+    </a>
+    <div class="scarea" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;margin:0 -4px;padding:0 4px">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <details open="open" class="navgroup">
+          <summary style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;padding:14px 10px 6px;cursor:pointer"><span style="flex:1">{{ g.label }}</span><svg class="navchev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--line-strong)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></summary>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+          <a class="navitem" href="{{ it.href }}" style="display:flex;align-items:center;gap:11px;padding:8px 10px 8px {{ it.pad }};border-radius:8px;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.weight }};font-size:14px;text-decoration:none">
+            <span style="width:6px;height:6px;border-radius:2px;background:{{ it.marker }};flex:none"></span>
+            <span style="flex:1">{{ it.name }}</span>
+            <sc-if value="{{ it.badge }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:10px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 7px;font-weight:600">{{ it.badge }}</span></sc-if>
+          </a>
+        </sc-for>
+        </details>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 8px 2px;border-top:1px solid var(--line);margin-top:8px">
+      <span style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink)">LC</span>
+      <div style="font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Head of Ops</div></div>
+    </div>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex">
+
+    <!-- module: finance -->
+    <div style="flex:1;min-width:440px;display:flex;flex-direction:column;background:var(--panel)">
+      <div style="height:60px;flex:none;border-bottom:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:space-between;padding:0 24px">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Back office · FY26 · close in 4 days</div>
+          <h1 style="margin:2px 0 0;font-size:19px;font-weight:600;letter-spacing:-.02em">Finance &amp; Accounting</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--ink);background:var(--panel);border:1px solid var(--line-strong);border-radius:999px;padding:5px 12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--accent)"></span>HX-2 margin −2.1pt</span>
+          <button style="font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;line-height:1;padding:9px 16px;font-size:13.5px;background:var(--ink-strong);color:#fff;border:1px solid var(--ink-strong)">Run month-end close</button>
+        </div>
+      </div>
+
+      <div class="scarea" style="flex:1;overflow-y:auto;padding:22px 24px;display:flex;flex-direction:column;gap:18px">
+
+        <!-- summary -->
+        <div style="display:flex;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+          <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+            <div style="flex:1;padding:15px 18px;border-left:{{ s.divider }}">
+              <div style="font-size:22px;font-weight:700;letter-spacing:-.03em">{{ s.v }}</div>
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase;margin-top:3px">{{ s.l }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- revenue recognition + cash -->
+        <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:18px">
+          <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:4px">
+              <h3 style="margin:0;font-size:15px;font-weight:600">Recognized revenue</h3>
+              <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);letter-spacing:.04em">8 MONTHS · $M</span>
+            </div>
+            <div style="font-size:26px;font-weight:700;letter-spacing:-.03em">$6.1M<span style="font-size:13px;font-weight:500;color:var(--ink-muted)"> Jun · hardware + RaaS</span></div>
+            <div style="display:flex;align-items:flex-end;gap:9px;height:128px;margin-top:16px">
+              <sc-for list="{{ revBars }}" as="b" hint-placeholder-count="8">
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%">
+                  <div style="height:{{ b.raasH }};background:var(--accent);border-radius:3px 3px 0 0"></div>
+                  <div style="height:{{ b.hwH }};background:var(--ink-strong);border-radius:0 0 3px 3px"></div>
+                  <div style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-faint);text-align:center;margin-top:3px">{{ b.m }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;align-items:center;gap:18px;margin-top:8px;padding-top:12px;border-top:1px solid var(--line)">
+              <span style="display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-muted)"><span style="width:10px;height:10px;border-radius:3px;background:var(--ink-strong)"></span>Hardware · recognized at commissioning</span>
+              <span style="display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-muted)"><span style="width:10px;height:10px;border-radius:3px;background:var(--accent)"></span>RaaS · ratable</span>
+            </div>
+          </div>
+
+          <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <h3 style="margin:0;font-size:15px;font-weight:600">Cash &amp; runway</h3>
+              <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);letter-spacing:.04em">JUN 30</span>
+            </div>
+            <div style="font-size:30px;font-weight:700;letter-spacing:-.03em;margin-top:8px">$62.4M</div>
+            <div style="font-size:12px;color:var(--ink-muted);margin-top:2px">Net burn $3.3M / mo</div>
+            <div style="position:relative;height:10px;border-radius:999px;background:var(--skeleton);overflow:hidden;margin-top:18px">
+              <span style="position:absolute;left:0;top:0;height:10px;width:100%;background:var(--panel-2)"></span>
+              <span style="position:absolute;left:0;top:0;height:10px;width:62%;background:var(--ink-strong)"></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:8px;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)"><span>NOW</span><span>19 MO RUNWAY</span></div>
+            <div style="display:flex;gap:8px;align-items:flex-start;margin-top:auto;padding-top:14px;border-top:1px solid var(--line)">
+              <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:5px;flex:none"></span>
+              <span style="font-size:12px;color:var(--ink-muted);line-height:1.4">$8.1M working capital tied in WIP + finished units awaiting delivery.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- per-unit economics -->
+        <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 20px 13px">
+            <h3 style="margin:0;font-size:15px;font-weight:600">Per-unit economics</h3>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);letter-spacing:.04em">BY PRODUCT · FY26 QTD</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1.1fr;gap:12px;padding:10px 20px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">
+            <span>Product</span><span>ASP</span><span>Unit COGS</span><span>Gross margin</span><span>Trend</span>
+          </div>
+          <sc-for list="{{ units }}" as="u" hint-placeholder-count="4">
+            <div class="unrow" style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1.1fr;gap:12px;padding:13px 20px;align-items:center;border-top:1px solid var(--line);cursor:pointer">
+              <div style="min-width:0"><div style="font-size:13.5px;font-weight:600">{{ u.name }}</div><div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);margin-top:1px">{{ u.sub }}</div></div>
+              <span style="font-family:var(--font-mono);font-size:12.5px">{{ u.asp }}</span>
+              <span style="font-family:var(--font-mono);font-size:12.5px;color:var(--ink-muted)">{{ u.cogs }}</span>
+              <div style="display:flex;align-items:center;gap:9px">
+                <div style="flex:1;height:7px;border-radius:999px;background:var(--skeleton);overflow:hidden;max-width:90px"><span style="display:block;height:7px;width:{{ u.mpct }};background:{{ u.mcolor }}"></span></div>
+                <span style="font-family:var(--font-mono);font-size:12px;font-weight:600">{{ u.margin }}</span>
+              </div>
+              <span style="font-size:12px;color:{{ u.trendColor }};font-weight:600">{{ u.trend }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- AR aging -->
+        <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 20px 13px">
+            <h3 style="margin:0;font-size:15px;font-weight:600">Receivables</h3>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);letter-spacing:.04em">$11.4M OPEN · DSO 52D</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1.4fr 1fr 0.9fr 1.1fr;gap:12px;padding:10px 20px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">
+            <span>Invoice</span><span>Account · Source</span><span>Amount</span><span>Terms</span><span>Aging</span>
+          </div>
+          <sc-for list="{{ invoices }}" as="iv" hint-placeholder-count="4">
+            <div class="unrow" style="display:grid;grid-template-columns:1fr 1.4fr 1fr 0.9fr 1.1fr;gap:12px;padding:13px 20px;align-items:center;border-top:1px solid var(--line);cursor:pointer;opacity:{{ iv.op }}">
+              <span style="font-family:var(--font-mono);font-size:12px">{{ iv.id }}</span>
+              <div style="min-width:0"><div style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ iv.account }}</div><div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);margin-top:1px">{{ iv.source }}</div></div>
+              <span style="font-family:var(--font-mono);font-size:12.5px;font-weight:600">{{ iv.amount }}</span>
+              <span style="font-family:var(--font-mono);font-size:11.5px;color:var(--ink-muted)">{{ iv.terms }}</span>
+              <span><span style="display:inline-flex;align-items:center;font-size:10.5px;font-weight:600;letter-spacing:.03em;padding:3px 9px;border-radius:999px;background:{{ iv.badgeBg }};color:{{ iv.badgeFg }}">{{ iv.aging }}</span></span>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- orchestration trace -->
+        <div class="copilot-dark" style="border-radius:14px;padding:16px 18px;font-family:var(--font-mono);font-size:11px;line-height:1.75;color:var(--on-dark-mut)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+            <span style="color:var(--on-dark-faint);letter-spacing:.06em">AGENT TRACE</span>
+            <span style="color:var(--on-dark-faint);letter-spacing:.06em">fin-orchestrator</span>
+          </div>
+          <div><span style="color:var(--on-dark-faint)">09:15:01</span> <span style="color:var(--accent)">recognize</span> DLV-3301 Maersk commissioned → $1.9M hardware</div>
+          <div><span style="color:var(--on-dark-faint)">09:15:02</span> RaaS schedule 44 active subs → <span style="color:#fff">$1.23M</span> ratable Jun</div>
+          <div><span style="color:var(--on-dark-faint)">09:15:02</span> cost roll ECO-318 +$140/unit → <span style="color:#fff">HX-2 margin −2.1pt</span></div>
+          <div><span style="color:var(--on-dark-faint)">09:15:03</span> AR BMW INV-2208 net-60 · not yet due · $8.4M</div>
+          <div><span style="color:var(--on-dark-faint)">09:15:03</span> close 312 JEs · 3-way matched → <span style="color:var(--success)">98% auto</span></div>
+          <div><span style="color:var(--on-dark-faint)">09:15:04</span> <span style="color:var(--accent)">▍</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- resizer -->
+    <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ true }}">
+    <div class="resizer" onMouseDown="{{ startDrag }}" style="width:8px;flex:none;cursor:col-resize;background:var(--paper);border-left:1px solid var(--line);display:flex;align-items:center;justify-content:center">
+      <span class="grip" style="width:2px;height:34px;border-radius:2px;background:var(--line-strong)"></span>
+    </div>
+    </sc-if>
+
+    <!-- agent co-working -->
+    <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ true }}">
+    <div style="width:{{ panelW }}px;flex:none;min-width:0;background:var(--paper);display:flex;flex-direction:column;color:var(--ink)">
+      <div style="height:60px;flex:none;padding:0 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px">
+        <span style="flex:none;display:inline-flex"><svg width="30" height="30" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14.5px;font-weight:600">{{ activeAgent.name }}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase">{{ activeAgent.role }}</div>
+        </div>
+        <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase"><span style="width:6px;height:6px;border-radius:50%;background:var(--success)"></span>Live</span>
+        <button onClick="{{ closePanel }}" title="Collapse" class="collapse-btn" style="width:28px;height:28px;border:1px solid var(--line);border-radius:7px;background:var(--paper);cursor:pointer;color:var(--ink-muted);display:flex;align-items:center;justify-content:center;padding:0;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 17 5-5-5-5"></path><path d="m13 17 5-5-5-5"></path></svg></button>
+      </div>
+
+      <div style="padding:12px 18px;border-bottom:1px solid var(--line);background:var(--panel)">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <sc-for list="{{ agents }}" as="ag" hint-placeholder-count="6">
+            <span class="avs" onClick="{{ ag.open }}" title="{{ ag.name }}" style="position:relative;display:inline-flex;border-radius:50%;cursor:pointer;padding:2px;{{ ag.ring }}">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg>
+              <span style="position:absolute;right:0;bottom:0;width:7px;height:7px;border-radius:50%;background:{{ ag.stateColor }};border:1.5px solid var(--panel)"></span>
+            </span>
+          </sc-for>
+        </div>
+        <div style="font-size:12px;color:var(--ink-muted);margin-top:11px;line-height:1.4">{{ activeAgent.status }}</div>
+      </div>
+
+      <div style="padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+        <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Context</span>
+        <sc-for list="{{ activeAgent.context }}" as="c" hint-placeholder-count="3">
+          <span style="font-family:var(--font-mono);font-size:10px;background:var(--panel);border:1px solid var(--line-panel);border-radius:5px;padding:2px 7px;color:var(--ink-muted)">{{ c }}</span>
+        </sc-for>
+      </div>
+      <div class="scarea" style="flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px">
+        <sc-for list="{{ thread }}" as="m" hint-placeholder-count="1">
+          <div style="display:flex;gap:9px;justify-content:{{ m.rowJustify }};align-items:flex-start">
+            <sc-if value="{{ m.isAgent }}" hint-placeholder-val="{{ true }}"><span style="flex:none;display:inline-flex;margin-top:1px"><svg width="22" height="22" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span></sc-if>
+            <div style="max-width:80%;background:{{ m.bubbleBg }};color:{{ m.bubbleFg }};border-radius:13px;padding:11px 13px;font-size:13px;line-height:1.5">{{ m.text }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:12px 18px 16px;border-top:1px solid var(--line)">
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px">
+          <sc-for list="{{ suggestions }}" as="s" hint-placeholder-count="3">
+            <span class="chip" onClick="{{ s.go }}" style="font-size:12px;font-weight:500;padding:6px 12px;border-radius:999px;cursor:pointer;background:var(--paper);color:var(--ink-muted);border:1px solid var(--line-strong)">{{ s.label }}</span>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:stretch;border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;background:var(--paper)">
+          <input value="{{ draft }}" onInput="{{ onDraft }}" onKeyDown="{{ onKey }}" placeholder="{{ inputPlaceholder }}" style="flex:1;min-width:0;border:none;outline:none;padding:11px 14px;font-size:13.5px;font-family:var(--font-sans);color:var(--ink);background:transparent">
+          <button onClick="{{ sendBtn }}" style="background:var(--accent);color:var(--accent-ink);border:none;font-size:13px;font-weight:600;padding:0 16px;cursor:pointer;font-family:var(--font-sans)">Send</button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- collapsed rail -->
+    <sc-if value="{{ panelClosed }}" hint-placeholder-val="{{ false }}">
+    <div style="width:52px;flex:none;border-left:1px solid var(--line);background:var(--paper);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:14px">
+      <button onClick="{{ reopen }}" title="Open agents" class="collapse-btn" style="width:30px;height:30px;border:1px solid var(--line);border-radius:8px;background:var(--paper);cursor:pointer;color:var(--ink-muted);display:flex;align-items:center;justify-content:center;padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5"></path><path d="m18 17-5-5 5-5"></path></svg></button>
+      <span style="flex:none;display:inline-flex"><svg width="24" height="24" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span>
+      <span style="writing-mode:vertical-rl;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;color:var(--ink-faint);text-transform:uppercase">Agents</span>
+    </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { idx:1, thread:[], draft:'', panelW:404, panelOpen:true };
+  _drag = false;
+  _mm = (e) => { if(!this._drag) return; const w = Math.min(680, Math.max(320, window.innerWidth - e.clientX)); this.setState({ panelW:w }); };
+  _mu = () => { this._drag = false; document.body.style.userSelect=''; window.removeEventListener('mousemove', this._mm); window.removeEventListener('mouseup', this._mu); };
+  startDrag = (e) => { e.preventDefault(); this._drag = true; document.body.style.userSelect='none'; window.addEventListener('mousemove', this._mm); window.addEventListener('mouseup', this._mu); };
+  componentWillUnmount(){ this._mu(); }
+  openAgent(i){ this.setState({ idx:i, draft:'', panelOpen:true, thread:[{ role:'agent', text:(this._intros[i] || '') }] }); }
+  send(text){
+    const t = (text || this.state.draft || '').trim();
+    if(!t) return;
+    this.setState(s => ({ draft:'', thread:[...s.thread,
+      { role:'user', text:t },
+      { role:'agent', text:'On it — I\u2019ll post the entry, update the schedule, and reflect it in the close.' }] }));
+  }
+  renderVals(){
+    const ACC='var(--accent)', SUC='var(--success)', CRIT='var(--ink-strong)', SOFT='var(--ink-faint)';
+
+    const navRaw = [
+      { label:'Core', items:[ { name:'Command Center', href:'Command Center.dc.html' }, { name:'Agents', href:'Agents.dc.html' }, { name:'Workflows', href:'Workflows.dc.html' }, { name:'Projects', href:'Projects.dc.html' }, { name:'Machines', href:'Machines.dc.html' } ] },
+      { label:'Value chain', items:[
+        { name:'Procurement', badge:'6' }, { name:'Manufacturing' }, { name:'Inventory' },
+        { name:'Fulfillment', badge:'3' }, { name:'Quality' }, { name:'Sales & CRM' }, { name:'Marketing' } ] },
+      { label:'Robotics', items:[
+        { name:'Fleet' }, { name:'Field Service' }, { name:'Engineering' }, { name:'Autonomy' } ] },
+      { label:'Back office', items:[
+        { name:'Finance', active:true, badge:'6' }, { name:'People' }, { name:'Security' }, { name:'Legal' } ] },
+    ];
+    const navGroups = navRaw.map(g => ({
+      label: g.label || null,
+      items: g.items.map(it => ({
+        name: it.name, badge: it.badge || null, href: it.href || (it.name === 'Inventory' ? '#' : it.name + '.dc.html'), pad: it.sub ? '24px' : '10px',
+        bg: it.active ? 'var(--panel)' : 'transparent',
+        fg: it.active ? 'var(--ink)' : 'var(--ink-muted)',
+        weight: it.active ? 600 : 400,
+        marker: it.active ? 'var(--ink-strong)' : 'var(--line-strong)',
+      })),
+    }));
+
+    const statsRaw = [
+      { v:'$14.8M', l:'ARR · RaaS' },
+      { v:'41.2%', l:'Gross margin' },
+      { v:'$62.4M', l:'Cash' },
+      { v:'19 mo', l:'Runway' },
+    ];
+    const stats = statsRaw.map((s, i) => ({ ...s, divider: i ? '1px solid var(--line)' : 'none' }));
+
+    // revenue bars — hardware (lumpy) + RaaS (growing). values in $M, chart maxes ~6.4
+    const revRaw = [
+      { m:'Nov', hw:2.1, raas:0.8 }, { m:'Dec', hw:3.6, raas:0.9 }, { m:'Jan', hw:1.4, raas:1.0 },
+      { m:'Feb', hw:2.8, raas:1.05 }, { m:'Mar', hw:4.1, raas:1.1 }, { m:'Apr', hw:2.2, raas:1.15 },
+      { m:'May', hw:3.3, raas:1.2 }, { m:'Jun', hw:4.9, raas:1.23 },
+    ];
+    const revMax = 6.4;
+    const revBars = revRaw.map(r => ({
+      m: r.m,
+      hwH: (r.hw / revMax * 100).toFixed(1) + '%',
+      raasH: (r.raas / revMax * 100).toFixed(1) + '%',
+    }));
+
+    const mtrend = (t) => t==='down' ? 'var(--ink-strong)' : t==='up' ? 'var(--success)' : 'var(--ink-muted)';
+    const unitsRaw = [
+      { name:'HX-2 Humanoid', sub:'flagship · capital', asp:'$210k', cogs:'$132k', margin:'37.1%', mpct:'37%', t:'down', trend:'▼ 2.1pt · ECO-318' },
+      { name:'HX-1 Arm', sub:'high-volume · capital', asp:'$58k', cogs:'$31k', margin:'46.6%', mpct:'47%', t:'up', trend:'▲ 1.3pt' },
+      { name:'RaaS subscription', sub:'per unit · / yr', asp:'$36k', cogs:'$12k', margin:'66.7%', mpct:'67%', t:'flat', trend:'— flat' },
+      { name:'Spares & service', sub:'aftermarket', asp:'—', cogs:'—', margin:'58.0%', mpct:'58%', t:'up', trend:'▲ 0.6pt' },
+    ];
+    const units = unitsRaw.map(u => ({ ...u, mcolor: u.t==='down' ? 'var(--ink-strong)' : 'var(--accent)', trendColor: mtrend(u.t) }));
+
+    const age = (t) => t==='over' ? { badgeBg:'var(--ink-strong)', badgeFg:'#fff' }
+      : t==='soon' ? { badgeBg:'var(--accent)', badgeFg:'var(--accent-ink)' }
+      : t==='current' ? { badgeBg:'var(--success-tint)', badgeFg:'var(--success)' }
+      : { badgeBg:'var(--panel)', badgeFg:'var(--ink-muted)' };
+    const invoicesRaw = [
+      { id:'INV-2208', account:'BMW Group', source:'DLV · 24× HX-2 + RaaS', amount:'$8.4M', terms:'Net-60', aging:'Not due', t:'current', closed:false },
+      { id:'INV-2196', account:'Maersk', source:'DLV-3301 · commissioned', amount:'$1.9M', terms:'Net-30', aging:'Due 8d', t:'soon', closed:false },
+      { id:'INV-2184', account:'Tesla', source:'RaaS · Q2 ratable', amount:'$0.6M', terms:'Net-30', aging:'Current', t:'current', closed:false },
+      { id:'INV-2170', account:'Kawasaki', source:'Spares · RMA-441', amount:'$0.5M', terms:'Net-45', aging:'62d overdue', t:'over', closed:false },
+    ];
+    const invoices = invoicesRaw.map(iv => ({ ...iv, ...age(iv.t), op: iv.closed ? '0.55' : '1' }));
+
+    const agentsRaw = [
+      { name:'Revenue-recognition agent', role:'ASC 606 · fin-01', stateColor:SUC, status:'Splitting hardware (at commissioning) from ratable RaaS.' },
+      { name:'Unit-economics agent', role:'COSTING · fin-04', stateColor:ACC, status:'HX-2 margin down 2.1pt — the ECO-318 drive cost roll.' },
+      { name:'Collections agent', role:'AR · fin-02', stateColor:CRIT, status:'Kawasaki INV-2170 is 62 days overdue ($0.5M).' },
+      { name:'Payables agent', role:'AP · fin-03', stateColor:SUC, status:'312 POs three-way matched · 98% auto-cleared.' },
+      { name:'FP&A agent', role:'FORECAST · fin-06', stateColor:SUC, status:'19 months runway at the current $3.3M monthly burn.' },
+      { name:'Close agent', role:'MONTH-END · fin-09', stateColor:ACC, status:'FY26 close in 4 days · 6 journal entries need review.' },
+    ];
+    const intros = [
+      'June revenue is $6.1M — $4.9M hardware (recognized as DLV-3301 and two others commissioned) plus $1.23M ratable RaaS across 44 active subscriptions. The BMW capital portion stays deferred until commissioning. Want the recognition schedule?',
+      'HX-2 gross margin slipped 2.1 points to 37.1% this quarter — it traces entirely to ECO-318, the SERVO-204 → -205 drive swap that added $140 per unit. At 24 units on the BMW order that\u2019s $3.4k of margin. Want the cost-bridge?',
+      'Kawasaki\u2019s INV-2170 ($0.5M, spares) is 62 days overdue on net-45 terms — our only seriously aged receivable. I drafted a dunning note and can place a soft hold on their next RMA. Want me to send it?',
+      '312 supplier invoices cleared this month, 98% auto-matched three-way against POs and receipts. 6 exceptions remain — all price variances under $2k, mostly Vendor D. Want the exception list?',
+      'At the current $3.3M monthly net burn you have 19 months of runway on $62.4M cash. Note $8.1M is tied up in WIP and finished units awaiting delivery — collecting the BMW milestone earlier extends runway ~2 months. Want the scenario?',
+      'FY26 month-end close is in 4 days. 98% of entries are posted automatically; 6 need your review — the ECO-318 cost reclass and 5 RaaS cutoffs. Want to step through them?',
+    ];
+    const contexts = [
+      ['FINANCE','REV REC','RAAS'],
+      ['FINANCE','HX-2','ECO-318'],
+      ['FINANCE','INV-2170','OVERDUE'],
+      ['FINANCE','312 POS','AP'],
+      ['FINANCE','RUNWAY','BURN'],
+      ['FINANCE','CLOSE','6 JES'],
+    ];
+    const suggs = [
+      ['Recognition schedule','Show deferred'],
+      ['Show cost-bridge','Reprice HX-2'],
+      ['Send dunning note','Place RMA hold'],
+      ['Show exceptions','Approve batch'],
+      ['Show scenario','Model raise'],
+      ['Step through JEs','Lock the period'],
+    ];
+    this._intros = intros;
+
+    const idx = this.state.idx;
+    const agents = agentsRaw.map((a, i) => ({ ...a, open:()=>this.openAgent(i),
+      ring: i===idx ? 'box-shadow:0 0 0 2px var(--ink-strong)' : 'box-shadow:0 0 0 1px var(--line-strong)' }));
+
+    const a = agentsRaw[idx] || agentsRaw[0];
+    const activeAgent = { name:a.name, role:a.role, status:a.status, context:contexts[idx] || [] };
+    const baseThread = this.state.thread.length ? this.state.thread : [{ role:'agent', text:(intros[idx] || '') }];
+    const thread = baseThread.map(m => ({
+      isAgent: m.role === 'agent', text:m.text,
+      rowJustify: m.role === 'agent' ? 'flex-start' : 'flex-end',
+      bubbleBg: m.role === 'agent' ? 'var(--panel)' : 'var(--ink-strong)',
+      bubbleFg: m.role === 'agent' ? 'var(--ink)' : '#fff',
+    }));
+    const suggestions = (suggs[idx] || []).map(s => ({ label:s, go:()=>this.send(s) }));
+
+    return {
+      navGroups, stats, revBars, units, invoices, agents, activeAgent, thread, suggestions,
+      panelW: this.state.panelW,
+      startDrag: this.startDrag,
+      panelOpen: this.state.panelOpen,
+      panelClosed: !this.state.panelOpen,
+      closePanel: ()=>this.setState({ panelOpen:false }),
+      reopen: ()=>this.setState({ panelOpen:true }),
+      draft:this.state.draft,
+      onDraft:(e)=>this.setState({ draft:e.target.value }),
+      onKey:(e)=>{ if(e.key === 'Enter'){ e.preventDefault(); this.send(); } },
+      sendBtn:()=>this.send(),
+      inputPlaceholder: 'Message ' + a.name + '…',
+    };
+  }
+}
+</script>
+</body>
+</html>

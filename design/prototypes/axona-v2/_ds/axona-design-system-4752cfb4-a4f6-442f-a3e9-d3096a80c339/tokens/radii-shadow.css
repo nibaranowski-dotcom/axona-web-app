@@ -1,0 +1,15 @@
+/* Axona radii & elevation. Rounded forms (6–16px); pills for tabs/tags.
+   Soft elevation only — gentle shadows on floating mock cards, never heavy stacks. */
+:root {
+  /* Radii */
+  --radius-pill: 999px;
+  --radius-btn: 8px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-card: 14px;
+  --radius-panel: 16px;
+
+  /* Shadows — float + hero device art (the only elevation in the system) */
+  --shadow-float: 0 18px 40px rgba(0, 0, 0, 0.07);
+  --shadow-hero: 0 26px 50px rgba(0, 0, 0, 0.28); /* the tilted device card */
+}

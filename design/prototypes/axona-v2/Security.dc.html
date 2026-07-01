@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .copilot-dark{background-color:#121214;background-image:radial-gradient(520px 280px at 8% -30%,rgba(198,242,79,.14),transparent 62%),linear-gradient(155deg,#1c1c20,#111114)}
+  .collapse-btn{transition:background .15s,color .15s}
+  .collapse-btn:hover{background:var(--panel);color:var(--ink)}
+  .navitem{transition:background .15s,color .15s}
+  .navitem:hover{background:var(--panel)}
+  .navgroup summary{list-style:none}
+  .navgroup summary::-webkit-details-marker{display:none}
+  .navgroup summary::marker{content:""}
+  .navgroup summary:hover .navchev{stroke:var(--ink-muted)}
+  .navchev{transition:transform .15s;flex:none}
+  .navgroup:not([open]) .navchev{transform:rotate(-90deg)}
+  .navsearch{transition:border-color .15s,background .15s}
+  .navsearch:hover{border-color:var(--ink-strong);background:var(--panel-2)}
+  .vrow:hover{background:var(--panel-2)}
+  .chip{transition:border-color .15s,color .15s}
+  .chip:hover{border-color:var(--ink-strong);color:var(--ink)}
+  .avs{transition:transform .12s}
+  .avs:hover{transform:translateY(-2px)}
+  .resizer{transition:background .15s}
+  .resizer:hover{background:var(--panel-2)}
+  .resizer:hover .grip{background:var(--ink-strong)}
+  .scarea::-webkit-scrollbar{width:8px}
+  .scarea::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+</style>
+<script>document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key&&e.key.toLowerCase()==='k'){e.preventDefault();window.location.href='Mission Control.dc.html';}});</script>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden;font-family:var(--font-sans);color:var(--ink);background:var(--panel)">
+
+  <aside style="width:240px;flex:none;background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 8px 18px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:21px;font-weight:700;letter-spacing:-.04em;color:var(--ink-strong)">axona</span>
+        <span style="width:12px;height:12px;background:var(--ink-strong);border-radius:0 7px 0 7px"></span>
+      </div>
+      <button class="collapse-btn" title="Collapse menu" style="width:28px;height:28px;border:1px solid var(--line);border-radius:7px;background:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-muted);flex:none;padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18"></path><path d="m15 9-3 3 3 3"></path></svg></button>
+    </div>
+    <a href="Mission Control.dc.html" class="navsearch" style="display:flex;align-items:center;gap:9px;margin:0 4px 10px;padding:8px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--panel);cursor:pointer;text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <span style="flex:1;font-size:13px;color:var(--ink-faint)">Search</span>
+      <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px">⌘K</span>
+    </a>
+    <div class="scarea" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;margin:0 -4px;padding:0 4px">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <details open="open" class="navgroup">
+          <summary style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;padding:14px 10px 6px;cursor:pointer"><span style="flex:1">{{ g.label }}</span><svg class="navchev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--line-strong)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></summary>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+          <a class="navitem" href="{{ it.href }}" style="display:flex;align-items:center;gap:11px;padding:8px 10px 8px {{ it.pad }};border-radius:8px;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.weight }};font-size:14px;text-decoration:none">
+            <span style="width:6px;height:6px;border-radius:2px;background:{{ it.marker }};flex:none"></span>
+            <span style="flex:1">{{ it.name }}</span>
+            <sc-if value="{{ it.badge }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:10px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 7px;font-weight:600">{{ it.badge }}</span></sc-if>
+          </a>
+        </sc-for>
+        </details>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 8px 2px;border-top:1px solid var(--line);margin-top:8px">
+      <span style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink)">LC</span>
+      <div style="font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Head of Ops</div></div>
+    </div>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex">
+
+    <!-- module: security -->
+    <div style="flex:1;min-width:440px;display:flex;flex-direction:column;background:var(--panel)">
+      <div style="height:60px;flex:none;border-bottom:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:space-between;padding:0 24px">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Back office · OT + IT · 62 endpoints</div>
+          <h1 style="margin:2px 0 0;font-size:19px;font-weight:600;letter-spacing:-.02em">IT &amp; Security</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--ink);background:var(--panel);border:1px solid var(--line-strong);border-radius:999px;padding:5px 12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--ink-strong)"></span>1 critical CVE</span>
+          <button style="font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;line-height:1;padding:9px 16px;font-size:13.5px;background:var(--ink-strong);color:#fff;border:1px solid var(--ink-strong)">Push patch</button>
+        </div>
+      </div>
+
+      <div class="scarea" style="flex:1;overflow-y:auto;padding:22px 24px;display:flex;flex-direction:column;gap:18px">
+
+        <!-- summary -->
+        <div style="display:flex;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+          <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+            <div style="flex:1;padding:15px 18px;border-left:{{ s.divider }}">
+              <div style="font-size:22px;font-weight:700;letter-spacing:-.03em">{{ s.v }}</div>
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase;margin-top:3px">{{ s.l }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- posture + access -->
+        <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:18px">
+          <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <h3 style="margin:0;font-size:15px;font-weight:600">Fleet endpoint posture</h3>
+              <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);letter-spacing:.04em">48 ROBOTS · 14 GATEWAYS</span>
+            </div>
+            <div style="font-size:12px;color:var(--ink-muted);margin-bottom:15px">Every deployed robot is a networked OT endpoint. These are the controls that keep one from being commandeered.</div>
+            <sc-for list="{{ posture }}" as="p" hint-placeholder-count="4">
+              <div style="margin-bottom:13px">
+                <div style="display:flex;align-items:center;justify-content:space-between;font-size:12.5px;margin-bottom:5px">
+                  <span style="display:inline-flex;align-items:center;gap:8px">{{ p.control }}<sc-if value="{{ p.note }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-strong)">{{ p.note }}</span></sc-if></span>
+                  <span style="font-family:var(--font-mono);font-size:12px;font-weight:600">{{ p.val }}</span>
+                </div>
+                <div style="height:8px;border-radius:5px;background:var(--skeleton);overflow:hidden"><span style="display:block;height:8px;width:{{ p.pct }};background:{{ p.color }}"></span></div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <h3 style="margin:0;font-size:15px;font-weight:600">Fleet command access</h3>
+              <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);letter-spacing:.04em">CAN ISSUE COMMANDS</span>
+            </div>
+            <sc-for list="{{ access }}" as="a" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-top:1px solid var(--line)">
+                <div style="min-width:0;display:flex;align-items:center;gap:9px">
+                  <span style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:.04em;background:var(--panel);border:1px solid var(--line-panel);border-radius:5px;padding:2px 6px;color:var(--ink-muted);flex:none">{{ a.kind }}</span>
+                  <div style="min-width:0"><div style="font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.name }}</div><div style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);margin-top:1px">{{ a.scope }}</div></div>
+                </div>
+                <span style="display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;color:{{ a.color }};flex:none"><span style="width:6px;height:6px;border-radius:50%;background:{{ a.color }}"></span>{{ a.flag }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- vulnerabilities -->
+        <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 20px 13px">
+            <h3 style="margin:0;font-size:15px;font-weight:600">Vulnerabilities</h3>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);letter-spacing:.04em">3 OPEN · FLEET-AFFECTING</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1.1fr 1.9fr 1fr 0.9fr 1.1fr;gap:12px;padding:10px 20px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">
+            <span>CVE</span><span>Component</span><span>Affected</span><span>Severity</span><span>Remediation</span>
+          </div>
+          <sc-for list="{{ vulns }}" as="v" hint-placeholder-count="4">
+            <div class="vrow" style="display:grid;grid-template-columns:1.1fr 1.9fr 1fr 0.9fr 1.1fr;gap:12px;padding:13px 20px;align-items:center;border-top:1px solid var(--line);cursor:pointer;opacity:{{ v.op }}">
+              <span style="font-family:var(--font-mono);font-size:12px">{{ v.cve }}</span>
+              <span style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ v.component }}</span>
+              <span style="font-family:var(--font-mono);font-size:11.5px;color:var(--ink-muted)">{{ v.affected }}</span>
+              <span><span style="display:inline-flex;align-items:center;font-size:10.5px;font-weight:600;letter-spacing:.03em;padding:3px 9px;border-radius:999px;background:{{ v.badgeBg }};color:{{ v.badgeFg }}">{{ v.sev }}</span></span>
+              <span style="font-size:12px;color:var(--ink-muted)">{{ v.fix }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- orchestration trace -->
+        <div class="copilot-dark" style="border-radius:14px;padding:16px 18px;font-family:var(--font-mono);font-size:11px;line-height:1.75;color:var(--on-dark-mut)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+            <span style="color:var(--on-dark-faint);letter-spacing:.06em">AGENT TRACE</span>
+            <span style="color:var(--on-dark-faint);letter-spacing:.06em">sec-orchestrator</span>
+          </div>
+          <div><span style="color:var(--on-dark-faint)">11:30:01</span> <span style="color:var(--accent)">scan</span> 62 endpoints · firmware signatures</div>
+          <div><span style="color:var(--on-dark-faint)">11:30:02</span> <span style="color:#fff">CVE-2026-3140</span> LIDAR-88 driver RCE → 12 units</div>
+          <div><span style="color:var(--on-dark-faint)">11:30:02</span> patch in <span style="color:#fff">v4.2.2</span> (Engineering) · awaiting HX-1 cert</div>
+          <div><span style="color:var(--on-dark-faint)">11:30:03</span> access review · 1 stale agent token <span style="color:var(--accent)">revoked</span></div>
+          <div><span style="color:var(--on-dark-faint)">11:30:03</span> segment OT vlan · 0 cross-talk → <span style="color:var(--success)">ok</span></div>
+          <div><span style="color:var(--on-dark-faint)">11:30:04</span> <span style="color:var(--accent)">▍</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- resizer -->
+    <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ true }}">
+    <div class="resizer" onMouseDown="{{ startDrag }}" style="width:8px;flex:none;cursor:col-resize;background:var(--paper);border-left:1px solid var(--line);display:flex;align-items:center;justify-content:center">
+      <span class="grip" style="width:2px;height:34px;border-radius:2px;background:var(--line-strong)"></span>
+    </div>
+    </sc-if>
+
+    <!-- agent co-working -->
+    <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ true }}">
+    <div style="width:{{ panelW }}px;flex:none;min-width:0;background:var(--paper);display:flex;flex-direction:column;color:var(--ink)">
+      <div style="height:60px;flex:none;padding:0 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px">
+        <span style="flex:none;display:inline-flex"><svg width="30" height="30" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14.5px;font-weight:600">{{ activeAgent.name }}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase">{{ activeAgent.role }}</div>
+        </div>
+        <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase"><span style="width:6px;height:6px;border-radius:50%;background:var(--success)"></span>Live</span>
+        <button onClick="{{ closePanel }}" title="Collapse" class="collapse-btn" style="width:28px;height:28px;border:1px solid var(--line);border-radius:7px;background:var(--paper);cursor:pointer;color:var(--ink-muted);display:flex;align-items:center;justify-content:center;padding:0;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 17 5-5-5-5"></path><path d="m13 17 5-5-5-5"></path></svg></button>
+      </div>
+
+      <div style="padding:12px 18px;border-bottom:1px solid var(--line);background:var(--panel)">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <sc-for list="{{ agents }}" as="ag" hint-placeholder-count="6">
+            <span class="avs" onClick="{{ ag.open }}" title="{{ ag.name }}" style="position:relative;display:inline-flex;border-radius:50%;cursor:pointer;padding:2px;{{ ag.ring }}">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg>
+              <span style="position:absolute;right:0;bottom:0;width:7px;height:7px;border-radius:50%;background:{{ ag.stateColor }};border:1.5px solid var(--panel)"></span>
+            </span>
+          </sc-for>
+        </div>
+        <div style="font-size:12px;color:var(--ink-muted);margin-top:11px;line-height:1.4">{{ activeAgent.status }}</div>
+      </div>
+
+      <div style="padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+        <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Context</span>
+        <sc-for list="{{ activeAgent.context }}" as="c" hint-placeholder-count="3">
+          <span style="font-family:var(--font-mono);font-size:10px;background:var(--panel);border:1px solid var(--line-panel);border-radius:5px;padding:2px 7px;color:var(--ink-muted)">{{ c }}</span>
+        </sc-for>
+      </div>
+      <div class="scarea" style="flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px">
+        <sc-for list="{{ thread }}" as="m" hint-placeholder-count="1">
+          <div style="display:flex;gap:9px;justify-content:{{ m.rowJustify }};align-items:flex-start">
+            <sc-if value="{{ m.isAgent }}" hint-placeholder-val="{{ true }}"><span style="flex:none;display:inline-flex;margin-top:1px"><svg width="22" height="22" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span></sc-if>
+            <div style="max-width:80%;background:{{ m.bubbleBg }};color:{{ m.bubbleFg }};border-radius:13px;padding:11px 13px;font-size:13px;line-height:1.5">{{ m.text }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:12px 18px 16px;border-top:1px solid var(--line)">
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px">
+          <sc-for list="{{ suggestions }}" as="s" hint-placeholder-count="3">
+            <span class="chip" onClick="{{ s.go }}" style="font-size:12px;font-weight:500;padding:6px 12px;border-radius:999px;cursor:pointer;background:var(--paper);color:var(--ink-muted);border:1px solid var(--line-strong)">{{ s.label }}</span>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:stretch;border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;background:var(--paper)">
+          <input value="{{ draft }}" onInput="{{ onDraft }}" onKeyDown="{{ onKey }}" placeholder="{{ inputPlaceholder }}" style="flex:1;min-width:0;border:none;outline:none;padding:11px 14px;font-size:13.5px;font-family:var(--font-sans);color:var(--ink);background:transparent">
+          <button onClick="{{ sendBtn }}" style="background:var(--accent);color:var(--accent-ink);border:none;font-size:13px;font-weight:600;padding:0 16px;cursor:pointer;font-family:var(--font-sans)">Send</button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- collapsed rail -->
+    <sc-if value="{{ panelClosed }}" hint-placeholder-val="{{ false }}">
+    <div style="width:52px;flex:none;border-left:1px solid var(--line);background:var(--paper);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:14px">
+      <button onClick="{{ reopen }}" title="Open agents" class="collapse-btn" style="width:30px;height:30px;border:1px solid var(--line);border-radius:8px;background:var(--paper);cursor:pointer;color:var(--ink-muted);display:flex;align-items:center;justify-content:center;padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5"></path><path d="m18 17-5-5 5-5"></path></svg></button>
+      <span style="flex:none;display:inline-flex"><svg width="24" height="24" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span>
+      <span style="writing-mode:vertical-rl;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;color:var(--ink-faint);text-transform:uppercase">Agents</span>
+    </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { idx:0, thread:[], draft:'', panelW:404, panelOpen:true };
+  _drag = false;
+  _mm = (e) => { if(!this._drag) return; const w = Math.min(680, Math.max(320, window.innerWidth - e.clientX)); this.setState({ panelW:w }); };
+  _mu = () => { this._drag = false; document.body.style.userSelect=''; window.removeEventListener('mousemove', this._mm); window.removeEventListener('mouseup', this._mu); };
+  startDrag = (e) => { e.preventDefault(); this._drag = true; document.body.style.userSelect='none'; window.addEventListener('mousemove', this._mm); window.addEventListener('mouseup', this._mu); };
+  componentWillUnmount(){ this._mu(); }
+  openAgent(i){ this.setState({ idx:i, draft:'', panelOpen:true, thread:[{ role:'agent', text:(this._intros[i] || '') }] }); }
+  send(text){
+    const t = (text || this.state.draft || '').trim();
+    if(!t) return;
+    this.setState(s => ({ draft:'', thread:[...s.thread,
+      { role:'user', text:t },
+      { role:'agent', text:'On it — I\u2019ll action that, log it to the audit trail, and update posture.' }] }));
+  }
+  renderVals(){
+    const ACC='var(--accent)', SUC='var(--success)', CRIT='var(--ink-strong)', SOFT='var(--ink-faint)';
+
+    const navRaw = [
+      { label:'Core', items:[ { name:'Command Center', href:'Command Center.dc.html' }, { name:'Agents', href:'Agents.dc.html' }, { name:'Workflows', href:'Workflows.dc.html' }, { name:'Projects', href:'Projects.dc.html' }, { name:'Machines', href:'Machines.dc.html' } ] },
+      { label:'Value chain', items:[
+        { name:'Procurement', badge:'6' }, { name:'Manufacturing' }, { name:'Inventory' },
+        { name:'Fulfillment', badge:'3' }, { name:'Quality' }, { name:'Sales & CRM' }, { name:'Marketing' } ] },
+      { label:'Robotics', items:[
+        { name:'Fleet' }, { name:'Field Service' }, { name:'Engineering' }, { name:'Autonomy' } ] },
+      { label:'Back office', items:[
+        { name:'Finance', badge:'6' }, { name:'People' }, { name:'Security', active:true }, { name:'Legal' } ] },
+    ];
+    const navGroups = navRaw.map(g => ({
+      label: g.label || null,
+      items: g.items.map(it => ({
+        name: it.name, badge: it.badge || null, href: it.href || (it.name === 'Inventory' ? '#' : it.name + '.dc.html'), pad: it.sub ? '24px' : '10px',
+        bg: it.active ? 'var(--panel)' : 'transparent',
+        fg: it.active ? 'var(--ink)' : 'var(--ink-muted)',
+        weight: it.active ? 600 : 400,
+        marker: it.active ? 'var(--ink-strong)' : 'var(--line-strong)',
+      })),
+    }));
+
+    const statsRaw = [
+      { v:'62', l:'Endpoints managed' },
+      { v:'1', l:'Critical CVE' },
+      { v:'98%', l:'MFA coverage' },
+      { v:'1.4d', l:'Mean patch time' },
+    ];
+    const stats = statsRaw.map((s, i) => ({ ...s, divider: i ? '1px solid var(--line)' : 'none' }));
+
+    const postureRaw = [
+      { control:'Signed firmware', note:'', val:'62/62', pct:'100%', good:true },
+      { control:'Device TLS cert valid', note:'3 expiring', val:'59/62', pct:'95%', good:false },
+      { control:'On supported policy', note:'p-13 canary', val:'56/62', pct:'90%', good:false },
+      { control:'OT network segmented', note:'', val:'62/62', pct:'100%', good:true },
+    ];
+    const posture = postureRaw.map(p => ({ ...p, color: p.good ? 'var(--ink-strong)' : 'var(--accent)' }));
+
+    const accessRaw = [
+      { kind:'HUMAN', name:'Ops engineers (4)', scope:'Command · MFA + hardware key', flag:'Verified', t:'ok' },
+      { kind:'AGENT', name:'Field-Service dispatch', scope:'Scoped · safe-stop only', flag:'Scoped', t:'ok' },
+      { kind:'SVC', name:'OTA update service', scope:'Signed firmware push', flag:'Signed', t:'ok' },
+      { kind:'AGENT', name:'analytics-ro · stale token', scope:'Read-only · 92d idle', flag:'Revoked', t:'bad' },
+    ];
+    const access = accessRaw.map(a => ({ ...a, color: a.t==='bad' ? 'var(--ink-strong)' : 'var(--success)' }));
+
+    const sev = (t) => t==='crit' ? { badgeBg:'var(--ink-strong)', badgeFg:'#fff' }
+      : t==='high' ? { badgeBg:'var(--accent)', badgeFg:'var(--accent-ink)' }
+      : { badgeBg:'var(--panel)', badgeFg:'var(--ink-muted)' };
+    const vulnsRaw = [
+      { cve:'CVE-2026-3140', component:'LIDAR-88 driver · RCE', affected:'12 units', sev:'Critical', t:'crit', fix:'v4.2.2', closed:false },
+      { cve:'CVE-2026-2918', component:'ROS 2 DDS · auth bypass', affected:'fleet-wide', sev:'High', t:'high', fix:'config', closed:false },
+      { cve:'CVE-2026-2655', component:'TLS lib · cert parsing', affected:'14 gateways', sev:'Medium', t:'med', fix:'patched', closed:false },
+      { cve:'CVE-2026-2401', component:'Web console · XSS', affected:'console', sev:'Low', t:'low', fix:'closed', closed:true },
+    ];
+    const vulns = vulnsRaw.map(v => ({ ...v, ...sev(v.t), op: v.closed ? '0.55' : '1' }));
+
+    const agentsRaw = [
+      { name:'Vulnerability agent', role:'CVE · sec-01', stateColor:CRIT, status:'CVE-2026-3140 — LIDAR RCE on 12 deployed units.' },
+      { name:'Endpoint agent', role:'POSTURE · sec-04', stateColor:ACC, status:'3 device TLS certs expire inside 30 days.' },
+      { name:'Identity agent', role:'ACCESS · sec-02', stateColor:SUC, status:'Revoked a 92-day-idle read-only agent token.' },
+      { name:'Patch agent', role:'OTA · sec-03', stateColor:ACC, status:'Fix ships in v4.2.2 — gated on HX-1 certification.' },
+      { name:'Threat-detection agent', role:'ANOMALY · sec-06', stateColor:SUC, status:'No anomalous command traffic across the fleet.' },
+      { name:'Audit agent', role:'COMPLIANCE · sec-09', stateColor:SUC, status:'SOC 2 access review due in 9 days · 92% complete.' },
+    ];
+    const intros = [
+      'CVE-2026-3140 is critical — a remote-code-execution flaw in the LIDAR-88 driver that affects 12 deployed units. On a robot that means an attacker could influence perception, so this is a safety issue, not just data. The fix is in firmware v4.2.2; until HX-1 certifies, I can isolate the 12 units to safe-stop. Want me to?',
+      '3 device TLS certificates expire within 30 days — SN-2150 and two Site-3 gateways. An expired device cert drops the unit off the secure command channel. I can auto-rotate them tonight during the maintenance window. Want me to schedule it?',
+      'I found a read-only analytics agent token idle for 92 days and revoked it — stale credentials are the easiest way into the fleet. 4 humans, 2 agents, and 1 service account retain command scope, all MFA-backed. Want the full access list?',
+      'The CVE-2026-3140 fix is bundled into firmware v4.2.2, which Engineering has certified on HX-2 but not yet HX-1 r5. I can push it to the 9 HX-2 units now and hold the 3 HX-1 units on safe-stop until cert. Want the staged plan?',
+      'No anomalous command traffic across the fleet in the last 24h — command rates, sources, and geofences all nominal. The one flag was the SN-2196 thermal safe-stop, which was a safety event, not a security one. Want the activity log?',
+      'The SOC 2 access review is due in 9 days and I\u2019m 92% through it — every human and agent principal mapped to least-privilege scope. 2 items need your sign-off: the ops-engineer group and the OTA service account. Want to review them?',
+    ];
+    const contexts = [
+      ['SECURITY','CVE-2026-3140','LIDAR-88'],
+      ['SECURITY','3 CERTS','EXPIRING'],
+      ['SECURITY','ACCESS','TOKEN'],
+      ['SECURITY','v4.2.2','OTA'],
+      ['SECURITY','FLEET','ANOMALY'],
+      ['SECURITY','SOC 2','REVIEW'],
+    ];
+    const suggs = [
+      ['Isolate 12 units','Show the CVE','Patch plan'],
+      ['Auto-rotate tonight','Show certs'],
+      ['Show access list','Force re-auth'],
+      ['Push to HX-2','Show staged plan'],
+      ['Show activity log','Set an alert'],
+      ['Review sign-offs','Export report'],
+    ];
+    this._intros = intros;
+
+    const idx = this.state.idx;
+    const agents = agentsRaw.map((a, i) => ({ ...a, open:()=>this.openAgent(i),
+      ring: i===idx ? 'box-shadow:0 0 0 2px var(--ink-strong)' : 'box-shadow:0 0 0 1px var(--line-strong)' }));
+
+    const a = agentsRaw[idx] || agentsRaw[0];
+    const activeAgent = { name:a.name, role:a.role, status:a.status, context:contexts[idx] || [] };
+    const baseThread = this.state.thread.length ? this.state.thread : [{ role:'agent', text:(intros[idx] || '') }];
+    const thread = baseThread.map(m => ({
+      isAgent: m.role === 'agent', text:m.text,
+      rowJustify: m.role === 'agent' ? 'flex-start' : 'flex-end',
+      bubbleBg: m.role === 'agent' ? 'var(--panel)' : 'var(--ink-strong)',
+      bubbleFg: m.role === 'agent' ? 'var(--ink)' : '#fff',
+    }));
+    const suggestions = (suggs[idx] || []).map(s => ({ label:s, go:()=>this.send(s) }));
+
+    return {
+      navGroups, stats, posture, access, vulns, agents, activeAgent, thread, suggestions,
+      panelW: this.state.panelW,
+      startDrag: this.startDrag,
+      panelOpen: this.state.panelOpen,
+      panelClosed: !this.state.panelOpen,
+      closePanel: ()=>this.setState({ panelOpen:false }),
+      reopen: ()=>this.setState({ panelOpen:true }),
+      draft:this.state.draft,
+      onDraft:(e)=>this.setState({ draft:e.target.value }),
+      onKey:(e)=>{ if(e.key === 'Enter'){ e.preventDefault(); this.send(); } },
+      sendBtn:()=>this.send(),
+      inputPlaceholder: 'Message ' + a.name + '…',
+    };
+  }
+}
+</script>
+</body>
+</html>

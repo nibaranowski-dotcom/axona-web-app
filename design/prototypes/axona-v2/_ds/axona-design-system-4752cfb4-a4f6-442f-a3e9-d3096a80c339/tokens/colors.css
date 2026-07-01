@@ -1,0 +1,49 @@
+/* Axona color — light-canonical: ink on warm paper, ONE accent (lime). No invented hues.
+   Base palette first, then semantic aliases. Names match the product codebase so primitives
+   port 1:1. Severity in the platform is signalled by weight/label, not by inventing reds. */
+:root {
+  /* ── Neutrals — warm grey ramp ─────────────────────────────────── */
+  --paper: #ffffff; /* default surface / canvas            */
+  --panel: #f4f3ef; /* panels, cards, dotgrid bands         */
+  --panel-2: #f7f2eb; /* warmer alt panel                     */
+  --chip: #f2f2ee; /* mono chips (counters, stat values)   */
+  --skel: #f0f0ec; /* skeleton bars inside mock cards      */
+
+  /* Ink / text ramp */
+  --ink: #0a0a0a; /* strongest — announce bar, footer, marks, text on lime */
+  --text: #111111; /* primary heading + body text          */
+  --body: #6b6b63; /* body copy / secondary                */
+  --faint: #8a8a82; /* mono eyebrows                        */
+  --dim: #9a9a90; /* tertiary / captions                  */
+  --cap: #a7a79d; /* tiny mono caps inside mock cards     */
+  --logo: #c9c9c9; /* placeholder logo wall / index marks  */
+
+  /* ── Accent — lime (the one brand signal) ──────────────────────── */
+  --lime: #c6f24f;
+  --lime-hover: #bce83f;
+  --on-lime: #0a0a0a; /* ink text on lime                     */
+
+  /* ── Status — functional green only ────────────────────────────── */
+  --ok: #1f9e6f; /* approved / auto-applied / nominal     */
+  --okbg: #e9f7f0;
+  --destructive: #b42318; /* form errors only — never decorative   */
+
+  /* ── Borders & hairlines ───────────────────────────────────────── */
+  --line: #ededed; /* default hairline                      */
+  --line2: #e7e7e1; /* panel border (slightly warmer)        */
+  --line-strong: #e2e2e2; /* emphasised divider                    */
+  --line-dark: #1d1d1d; /* on dark surfaces (footer/announce)     */
+
+  /* ── Semantic surface aliases ──────────────────────────────────── */
+  --surface: var(--paper);
+  --surface-panel: var(--panel);
+  --surface-card: var(--paper);
+  --surface-inverse: var(--ink);
+  --text-heading: var(--text);
+  --text-body: var(--body);
+  --text-muted: var(--dim);
+  --border-default: var(--line);
+  --accent: var(--lime);
+  --accent-hover: var(--lime-hover);
+  --focus-ring: var(--lime);
+}

@@ -2,7 +2,8 @@
 
 Authoritative tokens for the product app, **reconciled to the imported Claude Design
 system** (DS.1 — project "Axona v2" / "Axona Design System"). This **supersedes the
-FND.2 starter tokens**. Verbatim import lives in `design/prototypes/source/`. The app's
+FND.2 starter tokens**. The canonical design reference is the Axona v2 export at
+`design/prototypes/axona-v2/` (per-screen `.dc.html` + `tokens/` + `components/`). The app's
 single source of truth is `packages/config/styles/tokens.css`; Tailwind maps it via
 `packages/config/src/tailwind.ts`. Where this conflicts with a brand invariant in
 `../CLAUDE.md`, the invariant wins.

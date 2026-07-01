@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .md-bg{
+    background-color:#101013;
+    background-image:
+      radial-gradient(1100px 560px at 50% -8%,rgba(198,242,79,.07),transparent 60%),
+      radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px),
+      linear-gradient(180deg,#1a1a1e 0%,#101013 55%,#0c0c0e 100%);
+    background-size:auto,24px 24px,auto;
+  }
+  .app{transition:transform .18s cubic-bezier(.2,.6,.2,1),background .18s,box-shadow .18s,border-color .18s}
+  .app:hover{transform:translateY(-3px);background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16);box-shadow:0 14px 30px rgba(0,0,0,.45)}
+  .mdsearch::placeholder{color:var(--on-dark-faint)}
+</style>
+</helmet>
+<div class="md-bg" style="font-family:var(--font-sans);color:#fff;min-height:100vh;box-sizing:border-box;position:relative;overflow:hidden">
+
+  <div style="position:absolute;top:16px;right:24px;display:flex;align-items:center;gap:13px;z-index:5">
+    <span style="display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:11px;color:var(--on-dark-mut)"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent)"></span>514 agent actions</span>
+    <span style="font-family:var(--font-mono);font-size:11px;color:var(--on-dark-faint)">09:41</span>
+    <span style="width:26px;height:26px;border-radius:50%;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:var(--accent-ink)">LC</span>
+  </div>
+
+  <div style="position:relative;max-width:1000px;margin:0 auto;padding:64px 28px 56px;min-height:100vh;box-sizing:border-box;display:flex;flex-direction:column">
+
+    <div style="display:flex;justify-content:center;margin-bottom:48px">
+      <div style="display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.08);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.13);border-radius:999px;padding:7px 13px;width:208px;max-width:70vw">
+        <span style="width:12px;height:12px;border:1.5px solid var(--on-dark-mut);border-radius:50%;flex:none"></span>
+        <input class="mdsearch" ref="{{ inputRef }}" value="{{ query }}" onInput="{{ onSearch }}" placeholder="Search" style="flex:1;border:none;outline:none;background:transparent;font-size:13px;font-family:var(--font-sans);color:#fff">
+        <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--on-dark-faint);border:1px solid rgba(255,255,255,.15);border-radius:4px;padding:1px 5px">⌘K</span>
+      </div>
+    </div>
+
+    <sc-for list="{{ sections }}" as="section" hint-placeholder-count="4">
+      <div style="margin-bottom:32px">
+        <sc-if value="{{ showSections }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;gap:13px;margin-bottom:16px">
+            <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.07em;color:var(--on-dark-mut);text-transform:uppercase">{{ section.label }}</span>
+            <span style="flex:1;height:1px;background:rgba(255,255,255,.08)"></span>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--on-dark-faint)">{{ section.count }}</span>
+          </div>
+        </sc-if>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:14px">
+          <sc-for list="{{ section.apps }}" as="a" hint-placeholder-count="4">
+            <div class="app" style="display:flex;align-items:center;gap:13px;padding:15px 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:13px;cursor:pointer">
+              <span style="width:44px;height:44px;border-radius:11px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);display:inline-flex;align-items:center;justify-content:center;color:{{ a.fg }};flex:none">{{ a.icon }}</span>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:14px;font-weight:600;letter-spacing:-.01em;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.label }}</span>
+                  <sc-if value="{{ a.badge }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-family:var(--font-mono);font-size:10px;font-weight:700;background:{{ a.badgeBg }};color:{{ a.badgeFg }};border-radius:999px;padding:1px 6px;flex:none">{{ a.badge }}</span>
+                  </sc-if>
+                </div>
+                <div style="font-size:12px;color:var(--on-dark-mut);margin-top:3px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.desc }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+
+    <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;padding:40px 0;font-family:var(--font-mono);font-size:12px;color:var(--on-dark-faint);letter-spacing:.05em">NO APPS MATCH “{{ query }}”</div>
+    </sc-if>
+
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1000,&quot;height&quot;:820},&quot;showStatus&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;showSections&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { query: '' };
+  inputRef = React.createRef();
+  componentDidMount(){
+    this._kd = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (this.inputRef.current) this.inputRef.current.focus();
+      }
+    };
+    window.addEventListener('keydown', this._kd);
+  }
+  componentWillUnmount(){ window.removeEventListener('keydown', this._kd); }
+  renderVals(){
+    const goSearch = (e) => {
+      const v = e.target.value || '';
+      window.location.href = 'Search.dc.html#q=' + encodeURIComponent(v);
+    };
+    const P = (d) => React.createElement('path', { d });
+    const L = (x1,y1,x2,y2) => React.createElement('line', { x1, y1, x2, y2 });
+    const C = (cx,cy,r) => React.createElement('circle', { cx, cy, r });
+    const Rt = (x,y,w,h,rx) => React.createElement('rect', { x, y, width:w, height:h, rx });
+    const PG = (points) => React.createElement('polygon', { points });
+    const ico = (...k) => React.createElement('svg', { width:22, height:22, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:1.6, strokeLinecap:'round', strokeLinejoin:'round' }, ...k);
+
+    const showStatus = this.props.showStatus ?? true;
+    const badgeColors = (tone) => tone === 'crit'
+      ? { badgeBg:'#fff', badgeFg:'var(--ink-strong)' }
+      : { badgeBg:'var(--accent)', badgeFg:'var(--accent-ink)' };
+
+    const sections = [
+      { label:'Core', apps:[
+        { label:'Command Center', desc:'Live overview across every module', full:'command center core overview', accent:true,
+          icon: ico(Rt(3,3,7,9,1), Rt(14,3,7,5,1), Rt(14,12,7,9,1), Rt(3,16,7,5,1)) },
+        { label:'Agents', desc:'Every module’s agents in one place', full:'agents multi-agent roster chat copilot',
+          icon: ico(P('M9 4 10.5 8.5 15 10l-4.5 1.5L9 16l-1.5-4.5L3 10l4.5-1.5z'), P('M17.5 13.5l.8 2.4 2.4.8-2.4.8-.8 2.4-.8-2.4-2.4-.8 2.4-.8z')) },
+        { label:'Workflows', desc:'Orchestrate agents across modules', full:'workflows orchestration automation pipeline',
+          icon: ico(Rt(4,4,6,6,1.5), Rt(14,14,6,6,1.5), P('M7 10v3a2 2 0 0 0 2 2h5')) },
+        { label:'Projects', desc:'Workspaces & files by module', full:'projects files workspace documents',
+          icon: ico(P('M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z')) },
+        { label:'Machines', desc:'Plant & equipment register', full:'machines plant equipment assets fixed mobile',
+          icon: ico(Rt(3,4,18,7,1.5), Rt(3,13,18,7,1.5), L(7,7.5,7.01,7.5), L(7,16.5,7.01,16.5)) },
+      ]},
+      { label:'Value chain', apps:[
+        { label:'Procurement', desc:'Sourcing, RFQs & purchase orders', full:'Procurement & Supply Chain sourcing RFQ PO', badge:'6', badgeTone:'accent',
+          icon: ico(P('m7.5 4.27 9 5.15'), P('M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z'), P('m3.3 7 8.7 5 8.7-5'), P('M12 22V12')) },
+        { label:'Manufacturing', desc:'Work orders & build genealogy', full:'Manufacturing & Production work orders build',
+          icon: ico(Rt(4,4,16,16,2), Rt(9,9,6,6,1), L(15,2,15,4), L(15,20,15,22), L(2,15,4,15), L(2,9,4,9), L(20,15,22,15), L(20,9,22,9), L(9,2,9,4), L(9,20,9,22)) },
+        { label:'Inventory', desc:'Parts, spares & RMA logistics', full:'Inventory & Warehouse parts spares RMA', badge:'2', badgeTone:'accent',
+          icon: ico(P('M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z'), P('M6 18h12'), P('M6 14h12'), P('M6 10h12')) },
+        { label:'Quality', desc:'Inspection, calibration & certs', full:'Quality & Testing inspection calibration certs',
+          icon: ico(P('M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z'), P('m9 12 2 2 4-4')) },
+        { label:'Fulfillment & Delivery', desc:'Outbound shipping, install & commissioning', full:'Fulfillment Delivery logistics shipping freight install commissioning last mile', badge:'3', badgeTone:'accent',
+          icon: ico(P('M14 18V6a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h2'), P('M15 18H9'), P('M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14'), C(17,18,2), C(7,18,2)) },
+        { label:'Sales & CRM', desc:'Pipeline & configure-price-quote', full:'Sales CRM pipeline CPQ',
+          icon: ico(P('M16 7h6v6'), P('m22 7-8.5 8.5-5-5L2 17')) },
+        { label:'Marketing', desc:'Campaigns & demand generation', full:'Marketing campaigns demand gen',
+          icon: ico(P('m3 11 18-5v12L3 14v-3z'), P('M11.6 16.8a3 3 0 1 1-5.8-1.6')) },
+      ]},
+      { label:'Robotics', apps:[
+        { label:'Fleet', desc:'Deployed units & telemetry', full:'Fleet & Deployment units telemetry',
+          icon: ico(P('M12 8V4H8'), Rt(4,8,16,12,2), L(2,14,4,14), L(20,14,22,14), P('M15 13v2'), P('M9 13v2')) },
+        { label:'Field Service', desc:'Dispatch & predictive maintenance', full:'Field Service Maintenance dispatch repair',
+          icon: ico(P('M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z')) },
+        { label:'Engineering', desc:'CAD, firmware & change orders', full:'Engineering PLM CAD firmware ECO',
+          icon: ico(L(6,3,6,15), C(18,6,3), C(6,18,3), P('M18 9a9 9 0 0 1-9 9')) },
+        { label:'Autonomy', desc:'Missions, safety & SLAs', full:'Robotics Ops Autonomy missions safety SLA incident', badge:'1', badgeTone:'crit',
+          icon: ico(P('M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2')) },
+      ]},
+      { label:'Back office', apps:[
+        { label:'Finance', desc:'GL, AP/AR & RaaS revenue', full:'Finance Accounting GL AP AR RaaS revenue', badge:'6', badgeTone:'accent',
+          icon: ico(L(3,22,21,22), L(6,18,6,11), L(10,18,10,11), L(14,18,14,11), L(18,18,18,11), PG('12 2 20 7 4 7')) },
+        { label:'People', desc:'Workforce & technician certs', full:'People HR workforce technician certs',
+          icon: ico(P('M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'), C(9,7,4), P('M22 21v-2a4 4 0 0 0-3-3.87'), P('M16 3.13a4 4 0 0 1 0 7.75')) },
+        { label:'Security', desc:'Access & device posture', full:'IT Security access device posture',
+          icon: ico(P('M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z'), P('m9 12 2 2 4-4')) },
+        { label:'Legal', desc:'Contracts & export control', full:'Legal Compliance contracts export control',
+          icon: ico(P('m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z'), P('m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z'), P('M7 21h10'), P('M12 3v18'), P('M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2')) },
+      ]},
+    ];
+
+    const q = this.state.query.trim().toLowerCase();
+    const matchApp = (a) => !q || a.label.toLowerCase().includes(q) || a.full.toLowerCase().includes(q);
+    const view = sections
+      .map(s => ({ label:s.label, apps: s.apps.filter(matchApp).map(a => {
+        const bc = a.badge ? badgeColors(a.badgeTone) : {};
+        return { label:a.label, desc:a.desc, icon:a.icon, fg: a.accent ? 'var(--accent)' : '#fff',
+          badge: (showStatus ? (a.badge || null) : null), badgeBg:bc.badgeBg, badgeFg:bc.badgeFg };
+      }) }))
+      .filter(s => s.apps.length)
+      .map(s => ({ ...s, count: s.apps.length + (s.apps.length === 1 ? ' app' : ' apps') }));
+
+    return {
+      query: this.state.query,
+      onSearch: goSearch,
+      inputRef: this.inputRef,
+      sections: view,
+      showSections: this.props.showSections ?? true,
+      noResults: !!q && view.length === 0,
+    };
+  }
+}
+</script>
+</body>
+</html>

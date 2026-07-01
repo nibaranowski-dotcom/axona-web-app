@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .copilot-dark{background-color:#121214;background-image:radial-gradient(520px 280px at 8% -30%,rgba(198,242,79,.14),transparent 62%),linear-gradient(155deg,#1c1c20,#111114)}
+  .collapse-btn{transition:background .15s,color .15s}
+  .collapse-btn:hover{background:var(--panel);color:var(--ink)}
+  .navitem{transition:background .15s,color .15s}
+  .navitem:hover{background:var(--panel)}
+  .navgroup summary{list-style:none}
+  .navgroup summary::-webkit-details-marker{display:none}
+  .navgroup summary::marker{content:""}
+  .navgroup summary:hover .navchev{stroke:var(--ink-muted)}
+  .navchev{transition:transform .15s;flex:none}
+  .navgroup:not([open]) .navchev{transform:rotate(-90deg)}
+  .navsearch{transition:border-color .15s,background .15s}
+  .navsearch:hover{border-color:var(--ink-strong);background:var(--panel-2)}
+  .wfpill{transition:border-color .15s,background .15s,color .15s}
+  .wfpill:hover{border-color:var(--ink-strong)}
+  .stepcard{transition:border-color .15s,box-shadow .15s}
+  .chip{transition:border-color .15s,color .15s}
+  .chip:hover{border-color:var(--ink-strong);color:var(--ink)}
+  .runbtn{transition:background .15s,opacity .15s}
+  .runbtn:hover{background:var(--lime-hover,#bce83f)}
+  .resizer{transition:background .15s}
+  .resizer:hover{background:var(--panel-2)}
+  .resizer:hover .grip{background:var(--ink-strong)}
+  @keyframes wfpulse{0%,100%{opacity:1}50%{opacity:.45}}
+  .running-dot{animation:wfpulse 1s ease-in-out infinite}
+  .scarea::-webkit-scrollbar{width:8px}
+  .scarea::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+</style>
+<script>document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key&&e.key.toLowerCase()==='k'){e.preventDefault();window.location.href='Mission Control.dc.html';}});</script>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden;font-family:var(--font-sans);color:var(--ink);background:var(--panel)">
+
+  <aside style="width:240px;flex:none;background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 8px 18px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:21px;font-weight:700;letter-spacing:-.04em;color:var(--ink-strong)">axona</span>
+        <span style="width:12px;height:12px;background:var(--ink-strong);border-radius:0 7px 0 7px"></span>
+      </div>
+      <button class="collapse-btn" title="Collapse menu" style="width:28px;height:28px;border:1px solid var(--line);border-radius:7px;background:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-muted);flex:none;padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18"></path><path d="m15 9-3 3 3 3"></path></svg></button>
+    </div>
+    <a href="Mission Control.dc.html" class="navsearch" style="display:flex;align-items:center;gap:9px;margin:0 4px 10px;padding:8px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--panel);cursor:pointer;text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <span style="flex:1;font-size:13px;color:var(--ink-faint)">Search</span>
+      <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px">⌘K</span>
+    </a>
+    <div class="scarea" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;margin:0 -4px;padding:0 4px">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <details open="open" class="navgroup">
+          <summary style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;padding:14px 10px 6px;cursor:pointer"><span style="flex:1">{{ g.label }}</span><svg class="navchev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--line-strong)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></summary>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+          <a class="navitem" href="{{ it.href }}" style="display:flex;align-items:center;gap:11px;padding:8px 10px 8px {{ it.pad }};border-radius:8px;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.weight }};font-size:{{ it.size }};text-decoration:none">
+            <span style="width:6px;height:6px;border-radius:2px;background:{{ it.marker }};flex:none"></span>
+            <span style="flex:1">{{ it.name }}</span>
+            <sc-if value="{{ it.badge }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:10px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 7px;font-weight:600">{{ it.badge }}</span></sc-if>
+          </a>
+        </sc-for>
+        </details>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 8px 2px;border-top:1px solid var(--line);margin-top:8px">
+      <span style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink)">LC</span>
+      <div style="font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Head of Ops</div></div>
+    </div>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex">
+
+    <!-- main: workflow builder -->
+    <div style="flex:1;min-width:480px;display:flex;flex-direction:column;background:var(--panel)">
+      <div style="height:60px;flex:none;border-bottom:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:space-between;padding:0 24px">
+        <div>
+          <a href="Workflows.dc.html" style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;text-decoration:none">← All workflows</a>
+          <h1 style="margin:2px 0 0;font-size:19px;font-weight:600;letter-spacing:-.02em">Workflows</h1>
+        </div>
+        <button style="font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;line-height:1;padding:9px 16px;font-size:13.5px;background:var(--ink-strong);color:#fff;border:1px solid var(--ink-strong)">+ New workflow</button>
+      </div>
+
+      <div class="scarea" style="flex:1;overflow-y:auto;padding:22px 24px">
+
+        <!-- workflow header -->
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:6px;flex-wrap:wrap">
+          <div style="min-width:0">
+            <div style="display:flex;align-items:center;gap:10px">
+              <h2 style="margin:0;font-size:17px;font-weight:600;letter-spacing:-.02em">{{ wf.name }}</h2>
+              <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:9px;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:{{ wf.statusBg }};color:{{ wf.statusFg }}">{{ wf.status }}</span>
+            </div>
+            <div style="font-size:13px;color:var(--ink-muted);margin-top:5px;max-width:74ch;line-height:1.45">{{ wf.desc }}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:20px;margin:14px 0 22px;flex-wrap:wrap">
+          <sc-for list="{{ wf.stats }}" as="s" hint-placeholder-count="4">
+            <div><div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase">{{ s.l }}</div><div style="font-size:15px;font-weight:600;margin-top:2px">{{ s.v }}</div></div>
+          </sc-for>
+        </div>
+
+        <!-- step flow canvas -->
+        <sc-for list="{{ steps }}" as="st" hint-placeholder-count="6">
+          <div style="display:flex;align-items:stretch;gap:14px">
+            <div style="width:34px;flex:none;display:flex;flex-direction:column;align-items:center">
+              <span style="width:34px;height:34px;border-radius:{{ st.markerRadius }};background:{{ st.markerBg }};border:1.5px solid {{ st.markerBorder }};display:flex;align-items:center;justify-content:center;flex:none;transform:{{ st.markerTransform }}">
+                <span style="transform:{{ st.iconTransform }};display:inline-flex">{{ st.icon }}</span>
+              </span>
+              <sc-if value="{{ st.hasConnector }}" hint-placeholder-val="{{ true }}"><span style="flex:1;width:2px;background:{{ st.connectorColor }};min-height:18px;margin:3px 0"></span></sc-if>
+            </div>
+            <div class="stepcard" style="flex:1;margin-bottom:6px;background:var(--paper);border:1px solid {{ st.cardBorder }};border-radius:12px;padding:13px 16px;box-shadow:{{ st.cardShadow }}">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+                <div style="min-width:0">
+                  <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+                    <span style="font-size:13.5px;font-weight:600">{{ st.title }}</span>
+                    <sc-if value="{{ st.module }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.03em;background:var(--panel);border:1px solid var(--line-panel);border-radius:5px;padding:2px 6px;color:var(--ink-muted)">{{ st.module }}</span></sc-if>
+                  </div>
+                  <div style="font-size:12.5px;color:var(--ink-muted);margin-top:4px;line-height:1.45">{{ st.action }}</div>
+                  <sc-if value="{{ st.isDecision }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+                      <sc-for list="{{ st.branches }}" as="b" hint-placeholder-count="2">
+                        <span style="display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-family:var(--font-mono);background:var(--panel);border:1px solid var(--line-strong);border-radius:7px;padding:5px 10px;color:var(--ink-muted)"><span style="width:6px;height:6px;border-radius:1px;background:{{ b.dot }}"></span>{{ b.label }}</span>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+                <span style="flex:none;font-family:var(--font-mono);font-size:9px;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:{{ st.badgeBg }};color:{{ st.badgeFg }}">{{ st.statusLabel }}</span>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+
+      </div>
+    </div>
+
+    <!-- resizer -->
+    <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ true }}">
+    <div class="resizer" onMouseDown="{{ startDrag }}" style="width:8px;flex:none;cursor:col-resize;background:var(--paper);border-left:1px solid var(--line);display:flex;align-items:center;justify-content:center">
+      <span class="grip" style="width:2px;height:34px;border-radius:2px;background:var(--line-strong)"></span>
+    </div>
+    </sc-if>
+
+    <!-- run console -->
+    <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ true }}">
+    <div style="width:{{ panelW }}px;flex:none;min-width:0;background:var(--paper);display:flex;flex-direction:column;color:var(--ink)">
+      <div style="height:60px;flex:none;padding:0 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div style="min-width:0">
+          <div style="font-size:14.5px;font-weight:600">Run console</div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ wf.name }}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex:none">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase;flex:none"><span class="{{ liveDotClass }}" style="width:6px;height:6px;border-radius:50%;background:{{ liveDotColor }}"></span>{{ runState }}</span>
+          <button onClick="{{ closePanel }}" title="Collapse" class="collapse-btn" style="width:28px;height:28px;border:1px solid var(--line);border-radius:7px;background:var(--paper);cursor:pointer;color:var(--ink-muted);display:flex;align-items:center;justify-content:center;padding:0;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 17 5-5-5-5"></path><path d="m13 17 5-5-5-5"></path></svg></button>
+        </div>
+      </div>
+
+      <div style="padding:16px 18px;border-bottom:1px solid var(--line);background:var(--panel)">
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:7px">Trigger</div>
+        <div style="display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:var(--ink);line-height:1.45">
+          <span style="width:7px;height:7px;border-radius:50%;background:var(--ink-strong);margin-top:5px;flex:none"></span>
+          <span>{{ wf.trigger }}</span>
+        </div>
+        <button class="runbtn" onClick="{{ runWf }}" style="margin-top:14px;width:100%;border:none;border-radius:9px;cursor:pointer;padding:11px 0;font-size:13.5px;font-weight:600;font-family:var(--font-sans);background:var(--accent);color:var(--accent-ink);opacity:{{ runBtnOpacity }}">{{ runBtnLabel }}</button>
+      </div>
+
+      <div style="padding:13px 18px 8px;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Execution log</span>
+        <span style="font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">{{ logCount }} events</span>
+      </div>
+      <div class="scarea copilot-dark" style="flex:1;overflow-y:auto;margin:0 18px;border-radius:12px;padding:14px 16px;font-family:var(--font-mono);font-size:11px;line-height:1.7;color:var(--on-dark-mut)">
+        <sc-if value="{{ logEmpty }}" hint-placeholder-val="{{ true }}">
+          <div style="color:var(--on-dark-faint)">Run the workflow to stream the orchestration trace…</div>
+        </sc-if>
+        <sc-for list="{{ log }}" as="l" hint-placeholder-count="0">
+          <div><span style="color:var(--on-dark-faint)">{{ l.t }}</span> <span style="color:{{ l.color }}">{{ l.tag }}</span> {{ l.text }}</div>
+        </sc-for>
+      </div>
+
+      <div style="padding:14px 18px 16px">
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:9px">Recent runs</div>
+        <sc-for list="{{ wf.recent }}" as="r" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line)">
+            <div style="display:flex;align-items:center;gap:9px;min-width:0">
+              <span style="width:7px;height:7px;border-radius:50%;background:{{ r.dot }};flex:none"></span>
+              <span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.outcome }}</span>
+            </div>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);flex:none">{{ r.when }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- collapsed rail -->
+    <sc-if value="{{ panelClosed }}" hint-placeholder-val="{{ false }}">
+    <div style="width:52px;flex:none;border-left:1px solid var(--line);background:var(--paper);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:14px">
+      <button onClick="{{ reopen }}" title="Open run console" class="collapse-btn" style="width:30px;height:30px;border:1px solid var(--line);border-radius:8px;background:var(--paper);cursor:pointer;color:var(--ink-muted);display:flex;align-items:center;justify-content:center;padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5"></path><path d="m18 17-5-5 5-5"></path></svg></button>
+      <span style="flex:none;display:inline-flex"><svg width="24" height="24" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span>
+      <span style="writing-mode:vertical-rl;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;color:var(--ink-faint);text-transform:uppercase">Run</span>
+    </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { sel:0, running:false, activeStep:-1, done:false, log:[], panelW:412, panelOpen:true };
+  _drag = false; _timers = [];
+  _mm = (e) => { if(!this._drag) return; const w = Math.min(620, Math.max(360, window.innerWidth - e.clientX)); this.setState({ panelW:w }); };
+  _mu = () => { this._drag = false; document.body.style.userSelect=''; window.removeEventListener('mousemove', this._mm); window.removeEventListener('mouseup', this._mu); };
+  startDrag = (e) => { e.preventDefault(); this._drag = true; document.body.style.userSelect='none'; window.addEventListener('mousemove', this._mm); window.addEventListener('mouseup', this._mu); };
+  _clearTimers(){ this._timers.forEach(t => clearTimeout(t)); this._timers = []; }
+  componentWillUnmount(){ this._mu(); this._clearTimers(); }
+  pick(i){ if(i === this.state.sel) return; this._clearTimers(); this.setState({ sel:i, running:false, activeStep:-1, done:false, log:[] }); }
+  run(){
+    if(this.state.running) return;
+    this._clearTimers();
+    const wf = this._wfs[this.state.sel];
+    const steps = wf.steps;
+    this.setState({ running:true, activeStep:0, done:false, log:[] });
+    const stamp = (s) => { const d = new Date(Date.now() + s*1000); return d.toTimeString().slice(0,8); };
+    let base = 9*3600 + 15*60; // 09:15:00 baseline seconds
+    const fmt = (sec) => { const h = Math.floor(sec/3600)%24, m = Math.floor(sec/60)%60, s = sec%60; return [h,m,s].map(n => String(n).padStart(2,'0')).join(':'); };
+    steps.forEach((st, i) => {
+      const t = setTimeout(() => {
+        this.setState(s => ({
+          activeStep: i,
+          log: [...s.log, { t: fmt(base + i*1 + 1), tag: st.logTag, color: st.logColor, text: st.logText }],
+        }));
+      }, i * 760 + 120);
+      this._timers.push(t);
+    });
+    const end = setTimeout(() => {
+      this.setState(s => ({
+        running:false, done:true, activeStep: steps.length,
+        log: [...s.log, { t: fmt(base + steps.length + 1), tag:'done', color:'var(--success)', text: wf.outcome }],
+      }));
+    }, steps.length * 760 + 500);
+    this._timers.push(end);
+  }
+  renderVals(){
+    const ACC='var(--accent)', SUC='var(--success)', CRIT='var(--ink-strong)', INK='#1b1b1f';
+    const glyph = (sz) => React.createElement('svg', { width:sz, height:sz, viewBox:'0 0 24 24', fill:'currentColor' },
+      [[12,4.6],[15.7,5.6],[18.4,8.3],[19.4,12],[18.4,15.7],[15.7,18.4],[12,19.4],[8.3,18.4],[5.6,15.7],[4.6,12],[5.6,8.3],[8.3,5.6]]
+        .map((p,i) => React.createElement('circle', { key:i, cx:p[0], cy:p[1], r:1.55 })));
+    const boltIcon = React.createElement('svg', { width:15, height:15, viewBox:'0 0 24 24', fill:'currentColor' },
+      React.createElement('path', { d:'M13 2 4 14h6l-1 8 9-12h-6z' }));
+    const checkIcon = React.createElement('svg', { width:15, height:15, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:3, strokeLinecap:'round', strokeLinejoin:'round' },
+      React.createElement('path', { d:'M20 6 9 17l-5-5' }));
+    const forkIcon = React.createElement('svg', { width:13, height:13, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:2.4, strokeLinecap:'round', strokeLinejoin:'round' },
+      [React.createElement('path',{key:1,d:'M6 3v6'}),React.createElement('path',{key:2,d:'M6 9c0 4 6 2 6 6'}),React.createElement('path',{key:3,d:'M18 15v6'}),React.createElement('circle',{key:4,cx:6,cy:3,r:0.5}),React.createElement('circle',{key:5,cx:18,cy:15,r:0.5})]);
+
+    // ---- workflow library (cross-module agent orchestration) ----
+    const wfs = [
+      { name:'Defect → engineering change', status:'Active', desc:'When Quality detects an out-of-spec characteristic, trace the root cause, raise an engineering change, re-cost the unit, and reorder the corrected part — across Quality, Engineering, Finance, and Procurement.',
+        trigger:'Quality · SPC agent flags a characteristic breaching its control limit.',
+        outcome:'ECO-318 raised, HX-2 re-costed (\u22122.1pt), SERVO-205 reorder drafted.',
+        stats:[ ['Steps','7'], ['Modules','4'], ['Avg run','42s'], ['Runs · 30d','11'] ],
+        recent:[ ['ok','ECO-318 raised · lot 88421','2h ago'], ['ok','No deviation · SN-2204','1d ago'], ['ok','ECO-311 raised · harness','3d ago'] ],
+        steps:[
+          { type:'trigger', title:'Torque out of spec', module:'Quality · SPC', action:'Left-actuator torque breaches UCL on 2 of the last 8 units.', logTag:'trigger', logText:'SPC torque > UCL · SN-2208 +4%' },
+          { type:'agent', title:'Root-cause agent', module:'Quality', action:'Correlates the failures to a common cause across recent builds.', logTag:'analyze', logText:'correlate \u2192 SERVO-204 lot 88421 (3 units)' },
+          { type:'agent', title:'Change agent', module:'Engineering', action:'Drafts ECO-318 to supersede SERVO-204 with the tighter -205 drive.', logTag:'draft', logText:'ECO-318 supersede -204 \u2192 -205' },
+          { type:'decision', title:'Cost-impact gate', action:'Branch on the per-unit cost delta from the change.', branches:[ ['\u2264 $100/unit \u2192 auto-proceed', SUC], ['> $100/unit \u2192 require approval', CRIT] ], logTag:'branch', logText:'+$140/unit \u2192 route for approval' },
+          { type:'agent', title:'Unit-economics agent', module:'Finance', action:'Recomputes HX-2 gross margin with the new drive cost.', logTag:'cost', logText:'HX-2 margin 39.2% \u2192 37.1% (\u22122.1pt)' },
+          { type:'agent', title:'Sourcing agent', module:'Procurement', action:'Drafts a PO for the -205 drive and quarantines lot 88421.', logTag:'order', logText:'draft PO -205 · quarantine 88421' },
+          { type:'output', title:'Notify Sales feasibility', module:'Sales', action:'Flags affected open orders (BMW) for the feasibility agent.', logTag:'notify', logText:'flag BMW order \u2192 Feasibility' },
+        ] },
+      { name:'Long-lead part reorder', status:'Active', desc:'Keep the robot line fed: when a long-lead drive or sensor crosses its reorder point, quote it, apply the spend policy, and place or escalate the purchase order automatically.',
+        trigger:'Procurement · Reorder agent detects a SKU below its reorder point.',
+        outcome:'PO-10482 auto-approved and sent to Vendor A · ETA 4 days.',
+        stats:[ ['Steps','5'], ['Modules','2'], ['Avg run','28s'], ['Runs · 30d','46'] ],
+        recent:[ ['ok','PO-10482 sent · Vendor A','29m ago'], ['ok','PO-10479 sent · Vendor D','5h ago'], ['warn','Escalated · $76k > policy','1d ago'] ],
+        steps:[
+          { type:'trigger', title:'Below reorder point', module:'Procurement · Reorder', action:'SERVO-204 on-hand 6 vs reorder point 8 — covers 2 builds.', logTag:'trigger', logText:'SERVO-204 below reorder point' },
+          { type:'agent', title:'RFQ agent', module:'Procurement', action:'Requests quotes from approved vendors and ranks by ETA and price.', logTag:'rfq', logText:'3 quotes · best Vendor A 4d $48,200' },
+          { type:'decision', title:'Spend-policy gate', action:'Branch on the order value against the approval policy.', branches:[ ['< $50k \u2192 auto-approve', SUC], ['\u2265 $50k \u2192 escalate', CRIT] ], logTag:'branch', logText:'$48,200 < $50k \u2192 auto-approve' },
+          { type:'agent', title:'Sourcing agent', module:'Procurement', action:'Places PO-10482 with Vendor A and confirms the delivery date.', logTag:'order', logText:'PO-10482 \u2192 Vendor A · ETA 4d' },
+          { type:'output', title:'Reconciliation agent', module:'Procurement', action:'Arms the three-way match for receipt and invoice on arrival.', logTag:'arm', logText:'3-way match armed for GRN' },
+        ] },
+      { name:'Robot deal → deliverability', status:'Active', desc:'Every robot quote gets a reality check: configure and price the units, verify the floor can build and deliver them by the requested date, then route the contract and revenue steps.',
+        trigger:'Sales · CPQ agent configures a quote on an enterprise deal.',
+        outcome:'BMW quote priced $8.4M · flagged +3w · phased delivery proposed.',
+        stats:[ ['Steps','6'], ['Modules','4'], ['Avg run','37s'], ['Runs · 30d','22'] ],
+        recent:[ ['warn','BMW +3w · phased proposed','1h ago'], ['ok','Tesla on-time · $14.2M','6h ago'], ['ok','Kawasaki on-time · $4.1M','2d ago'] ],
+        steps:[
+          { type:'trigger', title:'Quote configured', module:'Sales · CPQ', action:'24× HX-2 + a 3-year RaaS subscription priced at $8.4M.', logTag:'trigger', logText:'BMW quote configured · $8.4M' },
+          { type:'agent', title:'Feasibility agent', module:'Sales', action:'Checks build + delivery capacity against the requested date.', logTag:'check', logText:'capacity covers 18/24 by date' },
+          { type:'decision', title:'Deliverable-by-date gate', action:'Branch on whether ops can meet the committed date.', branches:[ ['On-time \u2192 proceed', SUC], ['At risk \u2192 propose phased', CRIT] ], logTag:'branch', logText:'24 slips 3w \u2192 propose phased' },
+          { type:'agent', title:'Contract agent', module:'Sales', action:'Drafts the MSA with the agreed terms and SLA schedule.', logTag:'draft', logText:'MSA draft · net-60 · 99.5% SLA' },
+          { type:'agent', title:'Obligations agent', module:'Legal', action:'Registers the SLA and liability terms for live tracking.', logTag:'register', logText:'register 99.5% SLA obligation' },
+          { type:'output', title:'Revenue-recognition agent', module:'Finance', action:'Sets the recognition schedule — hardware at commissioning, RaaS ratable.', logTag:'schedule', logText:'rev-rec schedule set' },
+        ] },
+      { name:'Fleet CVE response', status:'Active', desc:'Contain a vulnerability across deployed robots fast: confirm affected units, verify the patched firmware is certified for each hardware rev, then isolate or push the fix and log it.',
+        trigger:'Security · Vulnerability agent finds a critical CVE on deployed units.',
+        outcome:'12 units isolated to safe-stop · v4.2.2 staged for HX-2.',
+        stats:[ ['Steps','6'], ['Modules','3'], ['Avg run','34s'], ['Runs · 30d','4'] ],
+        recent:[ ['warn','12 units isolated · CVE-3140','3h ago'], ['ok','Patched · CVE-2655','4d ago'], ['ok','No exposure · CVE-2401','9d ago'] ],
+        steps:[
+          { type:'trigger', title:'Critical CVE found', module:'Security · Vuln', action:'CVE-2026-3140 — a LIDAR-88 driver RCE on deployed robots.', logTag:'trigger', logText:'CVE-2026-3140 · 12 units' },
+          { type:'agent', title:'Patch agent', module:'Security', action:'Locates the fix and the firmware version that carries it.', logTag:'locate', logText:'fix in firmware v4.2.2' },
+          { type:'agent', title:'Compatibility agent', module:'Engineering', action:'Checks v4.2.2 certification across the affected hardware revs.', logTag:'verify', logText:'HX-2 certified · HX-1 r5 in test' },
+          { type:'decision', title:'Certification gate', action:'Branch on whether the patched firmware is certified for each rev.', branches:[ ['Certified \u2192 push patch', SUC], ['Not certified \u2192 isolate', CRIT] ], logTag:'branch', logText:'HX-1 not certified \u2192 isolate' },
+          { type:'agent', title:'OTA agent', module:'Fleet', action:'Pushes v4.2.2 to certified units, safe-stops the rest.', logTag:'act', logText:'push 9 HX-2 · isolate 3 HX-1' },
+          { type:'output', title:'Audit agent', module:'Security', action:'Logs the response to the SOC 2 evidence trail.', logTag:'log', logText:'logged to SOC 2 evidence' },
+        ] },
+      { name:'Robot delivery recovery', status:'Draft', desc:'Recover a slipping robot delivery: clear the export-license blocker, expedite freight, schedule on-site install and commissioning, and keep the SLA and revenue records in sync.',
+        trigger:'Fulfillment · Delivery-SLA agent flags a shipment behind its commit date.',
+        outcome:'EAR99 filed · air slot booked · DLV-3312 recovered to commit.',
+        stats:[ ['Steps','6'], ['Modules','4'], ['Avg run','39s'], ['Runs · 30d','7'] ],
+        recent:[ ['ok','DLV-3309 recovered','5h ago'], ['warn','DLV-3312 +2d · expediting','8h ago'], ['ok','DLV-3305 on-time','2d ago'] ],
+        steps:[
+          { type:'trigger', title:'Delivery behind commit', module:'Fulfillment · SLA', action:'DLV-3312 is +2 days against the committed date.', logTag:'trigger', logText:'DLV-3312 +2d vs commit' },
+          { type:'agent', title:'Customs agent', module:'Fulfillment', action:'Files the missing EAR99 export license to clear the hold.', logTag:'file', logText:'file EAR99 · clear Osaka hold' },
+          { type:'agent', title:'Freight agent', module:'Fulfillment', action:'Books an expedited air slot to recover the lost days.', logTag:'book', logText:'air slot · DB Schenker · +$4.1k' },
+          { type:'agent', title:'Install-scheduling agent', module:'Field Service', action:'Schedules the on-site commissioning crew for the new ETA.', logTag:'schedule', logText:'install crew set · new ETA' },
+          { type:'agent', title:'Obligations agent', module:'Legal', action:'Updates the delivery-warranty obligation with the recovery.', logTag:'update', logText:'SLA obligation back in compliance' },
+          { type:'output', title:'Revenue-recognition agent', module:'Finance', action:'Holds revenue until commissioning confirms on the new date.', logTag:'hold', logText:'rev deferred \u2192 commissioning' },
+        ] },
+    ];
+    this._wfs = wfs;
+
+    const sel = this.state.sel;
+    const wf0 = wfs[sel];
+
+    // tabs
+    const wfTabs = wfs.map((w, i) => {
+      const active = i === sel;
+      const draft = w.status === 'Draft';
+      return {
+        name: w.name, pick: () => this.pick(i),
+        meta: w.status + ' · ' + w.steps.length + ' steps',
+        bg: active ? 'var(--panel)' : 'var(--paper)',
+        border: active ? 'var(--ink-strong)' : 'var(--line)',
+        titleColor: 'var(--ink)',
+        metaColor: 'var(--ink-faint)',
+        dot: draft ? 'var(--line-strong)' : 'var(--success)',
+      };
+    });
+
+    // header status
+    const draft = wf0.status === 'Draft';
+    const wf = {
+      name: wf0.name, desc: wf0.desc, trigger: wf0.trigger,
+      status: wf0.status,
+      statusBg: draft ? 'var(--panel)' : 'var(--success-tint)',
+      statusFg: draft ? 'var(--ink-muted)' : 'var(--success)',
+      stats: wf0.stats.map(s => ({ l:s[0], v:s[1] })),
+      recent: wf0.recent.map(r => ({ outcome:r[1], when:r[2], dot: r[0]==='warn' ? 'var(--accent)' : 'var(--success)' })),
+    };
+
+    // steps with run status
+    const aStep = this.state.activeStep, running = this.state.running, done = this.state.done;
+    const stepStatus = (i) => {
+      if (done) return 'done';
+      if (!running && aStep < 0) return 'idle';
+      if (i < aStep) return 'done';
+      if (i === aStep) return 'running';
+      return 'idle';
+    };
+    const steps = wf0.steps.map((st, i) => {
+      const ss = stepStatus(i);
+      const isDecision = st.type === 'decision';
+      const isTrigger = st.type === 'trigger';
+      const isOutput = st.type === 'output';
+      let icon, markerRadius = '50%', markerTransform = 'none', iconTransform = 'none';
+      const iconColor = ss === 'idle' ? 'var(--ink-faint)' : (ss === 'running' ? 'var(--accent-ink)' : '#fff');
+      if (isTrigger) icon = React.createElement('span', { style:{ color: ss==='idle'?'var(--ink-faint)':'#fff', display:'inline-flex' } }, boltIcon);
+      else if (isDecision) { markerRadius = '7px'; markerTransform = 'rotate(45deg)'; iconTransform = 'rotate(-45deg)'; icon = React.createElement('span', { style:{ color: ss==='idle'?'var(--ink-faint)':'#fff', display:'inline-flex' } }, forkIcon); }
+      else if (isOutput) icon = React.createElement('span', { style:{ color: ss==='idle'?'var(--ink-faint)':'#fff', display:'inline-flex' } }, checkIcon);
+      else icon = React.createElement('span', { style:{ color: ss==='idle'?'var(--ink-faint)':(ss==='running'?'var(--accent-ink)':'#fff'), display:'inline-flex' } }, glyph(20));
+
+      const markerBg = ss === 'done' ? 'var(--ink-strong)' : (ss === 'running' ? 'var(--accent)' : 'var(--paper)');
+      const markerBorder = ss === 'done' ? 'var(--ink-strong)' : (ss === 'running' ? 'var(--accent)' : 'var(--line-strong)');
+      const badge = ss === 'done' ? { badgeBg:'var(--success-tint)', badgeFg:'var(--success)', statusLabel:'Done' }
+        : ss === 'running' ? { badgeBg:'var(--accent)', badgeFg:'var(--accent-ink)', statusLabel:'Running' }
+        : { badgeBg:'var(--panel)', badgeFg:'var(--ink-faint)', statusLabel:'Idle' };
+
+      return {
+        title: st.title, module: st.module || null, action: st.action,
+        isDecision,
+        branches: isDecision ? st.branches.map(b => ({ label:b[0], dot:b[1] })) : [],
+        icon, markerRadius, markerTransform, iconTransform,
+        markerBg, markerBorder,
+        hasConnector: i < wf0.steps.length - 1,
+        connectorColor: (ss === 'done') ? 'var(--ink-strong)' : 'var(--line-strong)',
+        cardBorder: ss === 'running' ? 'var(--accent)' : 'var(--line)',
+        cardShadow: ss === 'running' ? '0 6px 20px rgba(0,0,0,.06)' : 'none',
+        ...badge,
+      };
+    });
+
+    const log = this.state.log.map(l => ({ t:l.t, tag:l.tag, color:l.color, text:l.text }));
+    const runState = running ? 'Running' : (done ? 'Completed' : 'Idle');
+    const liveDotColor = running ? 'var(--accent)' : (done ? 'var(--success)' : 'var(--line-strong)');
+
+    return {
+      navGroups: this._nav(), wfTabs, wf, steps, log,
+      logEmpty: log.length === 0, logCount: log.length,
+      runState, liveDotColor, liveDotClass: running ? 'running-dot' : '',
+      runWf: () => this.run(),
+      runBtnLabel: running ? 'Running…' : (done ? 'Run again' : 'Run workflow'),
+      runBtnOpacity: running ? '0.6' : '1',
+      panelW: this.state.panelW, startDrag: this.startDrag,
+      panelOpen: this.state.panelOpen, panelClosed: !this.state.panelOpen,
+      closePanel: ()=>this.setState({ panelOpen:false }), reopen: ()=>this.setState({ panelOpen:true }),
+    };
+  }
+  _nav(){
+    const navRaw = [
+      { label:'Core', items:[ { name:'Command Center', href:'Command Center.dc.html' }, { name:'Agents', href:'Agents.dc.html' }, { name:'Workflows', active:true, href:'Workflows.dc.html' }, { name:'Projects', href:'Projects.dc.html' }, { name:'Machines', href:'Machines.dc.html' } ] },
+      { label:'Value chain', items:[
+        { name:'Procurement', badge:'6' }, { name:'Manufacturing' }, { name:'Inventory' },
+        { name:'Fulfillment', badge:'3' }, { name:'Quality' }, { name:'Sales & CRM' }, { name:'Marketing' } ] },
+      { label:'Robotics', items:[
+        { name:'Fleet' }, { name:'Field Service' }, { name:'Engineering' }, { name:'Autonomy' } ] },
+      { label:'Back office', items:[
+        { name:'Finance', badge:'6' }, { name:'People' }, { name:'Security' }, { name:'Legal' } ] },
+    ];
+    return navRaw.map(g => ({
+      label: g.label || null,
+      items: g.items.map(it => ({
+        name: it.name, badge: it.badge || null,
+        href: it.href || (it.name === 'Inventory' ? '#' : it.name + '.dc.html'),
+        bg: it.active ? 'var(--panel)' : 'transparent',
+        fg: it.active ? 'var(--ink)' : 'var(--ink-muted)',
+        weight: it.active ? 600 : 400,
+        size: it.sub ? '13px' : '14px',
+        pad: it.sub ? '24px' : '10px',
+        marker: it.active ? 'var(--ink-strong)' : 'var(--line-strong)',
+      })),
+    }));
+  }
+}
+</script>
+</body>
+</html>

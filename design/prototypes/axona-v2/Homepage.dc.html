@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:"Archivo",system-ui,sans-serif;background:#fff;color:#111;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:#c6f24f}
+  .dotgrid{background-image:radial-gradient(#d9d8d2 1.1px,transparent 1.1px);background-size:18px 18px}
+</style>
+</helmet>
+
+<div style="width:100%;overflow-x:hidden;background:#fff">
+
+  <!-- ANNOUNCE BAR -->
+  <div style="background:#0a0a0a;color:#fff;min-height:36px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;padding:7px 40px;position:relative">
+    <span>Introducing Agents by {{ companyName }} — the AI operating system for robotics ops.</span>
+    <a href="#demo" style="text-decoration:underline;text-underline-offset:2px">Learn more</a>
+    <span style="position:absolute;right:18px;color:#888;cursor:pointer">✕</span>
+  </div>
+
+  <!-- NAV -->
+  <header style="position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid #eee">
+    <nav style="max-width:1180px;margin:0 auto;padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:40px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:23px;font-weight:700;letter-spacing:-.04em">{{ companyLower }}</span>
+          <span style="width:13px;height:13px;background:#0a0a0a;border-radius:0 7px 0 7px;transform:rotate(0deg)"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:24px;font-size:14.5px;color:#1a1a1a">
+          <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+            <a href="#" style="display:flex;align-items:center;gap:4px" style-hover="opacity:.6">{{ n.label }}<span style="font-size:9px;color:#aaa">{{ n.car }}</span></a>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:18px">
+        <a href="#" style="font-size:14.5px" style-hover="opacity:.6">Sign in</a>
+        <a href="#demo" style="background:#c6f24f;color:#0a0a0a;font-size:14px;font-weight:600;padding:9px 18px;border-radius:7px" style-hover="background:#bce83f">See a demo</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section style="max-width:1180px;margin:0 auto;padding:64px 28px 0">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:26px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;color:#8a8a82">PARTS UNDER MANAGEMENT BY {{ companyUpper }}:</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;background:#f2f2ee;border:1px solid #e7e7e1;border-radius:5px;padding:3px 8px">{{ counter }}</span>
+    </div>
+    <h1 style="font-size:clamp(48px,8.2vw,108px);line-height:.92;letter-spacing:-.045em;font-weight:600;max-width:13ch">Build robots. Not spreadsheets.</h1>
+    <p style="font-size:clamp(17px,1.8vw,21px);color:#444;margin-top:22px;max-width:54ch">Procurement, manufacturing, quality, fulfillment, field service, finance — humans, machines, and agents on one AI-native operating system for robotics.</p>
+    <div style="display:flex;align-items:stretch;gap:0;margin-top:34px;max-width:430px;border:1px solid #ddd;border-radius:9px;overflow:hidden;background:#fff">
+      <input placeholder="What's your work email?" style="flex:1;border:none;outline:none;padding:13px 18px;font-size:15px;font-family:inherit;color:#111" />
+      <a href="#demo" style="background:#c6f24f;color:#0a0a0a;font-size:14.5px;font-weight:600;padding:13px 22px;white-space:nowrap;display:flex;align-items:center" style-hover="background:#bce83f">Book a demo</a>
+    </div>
+
+    <!-- hero panel -->
+    <div class="dotgrid" style="margin-top:48px;border-radius:14px;background:#f4f3ef;min-height:540px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden">
+      <!-- floating mock stack -->
+      <div style="position:relative;width:min(560px,80%);height:340px">
+        <div style="position:absolute;left:0;top:48px;width:230px;height:150px;background:#fff;border:1px solid #e6e6e1;border-radius:10px;box-shadow:0 18px 40px rgba(0,0,0,.07);padding:16px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#9a9a90;letter-spacing:.08em">BOM · WORK ORDER</div>
+          <div style="height:7px;background:#eee;border-radius:3px;margin-top:14px"></div>
+          <div style="height:7px;background:#eee;border-radius:3px;margin-top:9px;width:70%"></div>
+          <div style="height:7px;background:#eee;border-radius:3px;margin-top:9px;width:84%"></div>
+        </div>
+        <div style="position:absolute;right:0;bottom:0;width:250px;height:150px;background:#fff;border:1px solid #e6e6e1;border-radius:10px;box-shadow:0 18px 40px rgba(0,0,0,.07);padding:16px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#1f9e6f;font-weight:600"><span style="width:7px;height:7px;border-radius:50%;background:#1f9e6f"></span>ROUTED FOR APPROVAL</div>
+          <div style="height:7px;background:#eee;border-radius:3px;margin-top:16px"></div>
+          <div style="height:7px;background:#eee;border-radius:3px;margin-top:9px;width:60%"></div>
+        </div>
+        <!-- center card: per-unit build genealogy -->
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-8deg);width:212px;height:138px;border-radius:13px;background:linear-gradient(135deg,#1a1a1a,#000);box-shadow:0 26px 50px rgba(0,0,0,.28);padding:18px;color:#fff;display:flex;flex-direction:column;justify-content:space-between">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;color:rgba(255,255,255,.55)">UNIT · SN-2208</span>
+            <span style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;color:#c6f24f"><span style="width:6px;height:6px;border-radius:50%;background:#c6f24f"></span>IN BUILD</span>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:5px">
+            <span style="width:7px;height:14px;border-radius:2px;background:#c6f24f"></span>
+            <span style="width:7px;height:22px;border-radius:2px;background:#c6f24f"></span>
+            <span style="width:7px;height:30px;border-radius:2px;background:#c6f24f"></span>
+            <span style="width:7px;height:24px;border-radius:2px;background:rgba(255,255,255,.25)"></span>
+            <span style="width:7px;height:16px;border-radius:2px;background:rgba(255,255,255,.25)"></span>
+            <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600">84%</span>
+          </div>
+          <div style="font-size:12px;font-weight:600;letter-spacing:-.01em;color:rgba(255,255,255,.85)">Build genealogy · 142 parts traced</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AGENTS AT WORK strip -->
+    <div style="border-top:1px solid #eee;border-bottom:1px solid #eee;margin-top:28px;padding:14px 0;display:flex;align-items:center;gap:0;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px;padding-right:22px;margin-right:22px;border-right:1px solid #eee">
+        <span style="display:grid;grid-template-columns:repeat(3,3px);gap:2px">
+          <span style="width:3px;height:3px;background:#0a0a0a"></span><span style="width:3px;height:3px;background:#0a0a0a"></span><span style="width:3px;height:3px;background:#ccc"></span>
+          <span style="width:3px;height:3px;background:#0a0a0a"></span><span style="width:3px;height:3px;background:#ccc"></span><span style="width:3px;height:3px;background:#0a0a0a"></span>
+        </span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.06em;color:#444">AGENTS AT WORK TODAY</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:26px;flex-wrap:wrap;flex:1">
+        <sc-for list="{{ agentStats }}" as="a" hint-placeholder-count="5">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.04em;color:#9a9a90">{{ a.label }}:</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;background:#f2f2ee;border:1px solid #e7e7e1;border-radius:5px;padding:2px 7px">{{ a.value }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- JOIN -->
+  <section style="max-width:1180px;margin:0 auto;padding:68px 28px 30px">
+    <h2 style="font-size:clamp(26px,3.4vw,40px);line-height:1.12;letter-spacing:-.02em;font-weight:500;max-width:24ch"><span style="font-weight:700;border-bottom:3px solid #c6f24f">Join 1,200 of the world's most ambitious hardware teams</span> <span style="color:#9a9a90">shipping 3.2× faster than the industry average.</span></h2>
+    <a href="#" style="display:inline-flex;align-items:center;gap:7px;font-size:14.5px;font-weight:500;margin-top:24px" style-hover="opacity:.6">Read the report <span>→</span></a>
+
+    <!-- logo grid -->
+    <div style="margin-top:36px;display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:128px;border:1px solid #ededed;border-radius:12px;overflow:hidden">
+      <sc-for list="{{ gridLogos }}" as="g" hint-placeholder-count="11">
+        <div style="border-right:1px solid #ededed;border-bottom:1px solid #ededed;display:flex;align-items:center;justify-content:center;position:relative;background:#fff" style-hover="background:#fafafa">
+          <span style="font-size:17px;font-weight:700;letter-spacing:-.02em;color:#c9c9c9">{{ g }}</span>
+        </div>
+      </sc-for>
+      <!-- photo cell spanning 2x2 -->
+      <div style="grid-column:5 / span 2;grid-row:1 / span 2;position:relative;background-image:repeating-linear-gradient(135deg,#2a2a2a 0,#2a2a2a 1px,#1a1a1a 1px,#1a1a1a 12px);display:flex;align-items:flex-end;padding:22px;color:#fff">
+        <div>
+          <div style="font-size:46px;font-weight:700;letter-spacing:-.03em;line-height:1">40hrs</div>
+          <div style="font-size:13.5px;color:rgba(255,255,255,.7);margin-top:4px">Saved every month, per ops lead</div>
+        </div>
+        <span style="position:absolute;top:16px;left:18px;font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,.4)">[ CUSTOMER PHOTO ]</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ONE PLATFORM -->
+  <section style="max-width:1180px;margin:0 auto;padding:72px 28px 30px">
+    <h2 style="font-size:clamp(30px,4vw,52px);line-height:1.02;letter-spacing:-.035em;font-weight:600;max-width:18ch">One operating system. Every function on the floor.</h2>
+    <p style="font-size:clamp(18px,2vw,24px);color:#9a9a90;margin-top:6px;font-weight:500;max-width:46ch">Every module ships with agents. Workflows orchestrates them across modules. Command Center is the single pane over all of it.</p>
+
+    <!-- module map / launcher -->
+    <div style="display:flex;flex-direction:column;gap:26px;margin-top:40px">
+      <sc-for list="{{ moduleGroups }}" as="g" hint-placeholder-count="4">
+        <div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:#8a8a82">{{ g.label }}</span>
+            <span style="flex:1;height:1px;background:#ececec"></span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
+            <sc-for list="{{ g.modules }}" as="m" hint-placeholder-count="5">
+              <div style="position:relative;background:#fff;border:1px solid #e7e7e1;border-radius:12px;padding:16px;min-height:112px;display:flex;flex-direction:column;justify-content:space-between" style-hover="border-color:#0a0a0a">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+                  <span style="width:9px;height:9px;background:#0a0a0a;border-radius:0 5px 0 5px;flex:none;margin-top:3px"></span>
+                  <sc-if value="{{ m.agents }}" hint-placeholder-val="6 agents"><span style="display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;background:#c6f24f;color:#0a0a0a;padding:2px 7px;border-radius:999px;white-space:nowrap"><span style="width:5px;height:5px;border-radius:50%;background:#0a0a0a"></span>{{ m.agents }}</span></sc-if>
+                </div>
+                <div>
+                  <div style="font-size:14.5px;font-weight:600;letter-spacing:-.02em">{{ m.name }}</div>
+                  <div style="font-size:11.5px;color:#8a8a82;line-height:1.35;margin-top:3px">{{ m.desc }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- land & expand band -->
+    <div style="margin-top:36px;border:1px solid #ededed;border-radius:14px;padding:30px 28px;display:flex;align-items:center;gap:28px;flex-wrap:wrap">
+      <div style="flex:1;min-width:280px">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:#8a8a82">LAND &amp; EXPAND</span>
+        <h3 style="font-size:clamp(20px,2.2vw,28px);line-height:1.1;letter-spacing:-.025em;font-weight:600;margin-top:12px;max-width:24ch">Start where it's on fire. Run the whole floor on the same spine.</h3>
+        <p style="font-size:14px;color:#6b6b63;margin-top:10px;max-width:46ch;line-height:1.5">Land with procurement and per-unit build genealogy. The same system then runs quality, fulfillment, field service, and finance — adding a module is configuration, not a rebuild.</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <sc-for list="{{ expandSteps }}" as="s" hint-placeholder-count="4">
+          <span style="display:inline-flex;align-items:center;gap:9px;font-size:13px;font-weight:500;padding:9px 14px;border-radius:999px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }}"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;opacity:.7">{{ s.idx }}</span>{{ s.label }}</span>
+          <sc-if value="{{ s.arrow }}" hint-placeholder-val="{{ true }}"><span style="color:#cfcfc7">→</span></sc-if>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- SYSTEMS THAT NEVER SPOKE -->
+  <section style="max-width:1180px;margin:0 auto;padding:88px 28px;text-align:center">
+    <h2 style="font-size:clamp(30px,4vw,52px);line-height:1.02;letter-spacing:-.035em;font-weight:600">Systems that never spoke.</h2>
+    <p style="font-size:16px;color:#9a9a90;margin-top:12px;max-width:48ch;margin-left:auto;margin-right:auto">Spreadsheets, your PLM, the shop floor, accounting — finally on one connected graph.</p>
+    <div style="display:flex;align-items:center;justify-content:center;gap:18px;margin-top:48px;flex-wrap:wrap">
+      <sc-for list="{{ legacy }}" as="l" hint-placeholder-count="3">
+        <div style="width:200px;height:150px;border-radius:10px;background:#f4f3ef;border:1px solid #ececec;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:#a7a79d">{{ l }}</div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE / PRIMITIVES -->
+  <section style="max-width:1180px;margin:0 auto;padding:88px 28px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:20px">
+      <div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:#8a8a82">THE ARCHITECTURE</span>
+        <h2 style="font-size:clamp(30px,4vw,52px);line-height:1.02;letter-spacing:-.035em;font-weight:600;max-width:20ch;margin-top:14px">One system that adapts to how your factory runs.</h2>
+      </div>
+      <p style="font-size:15px;color:#6b6b63;max-width:36ch;line-height:1.5">Four layers stacked on one spine. Forward-deployed work recycles into reusable primitives — a platform, never one-off code.</p>
+    </div>
+
+    <!-- layer stack -->
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:44px">
+      <sc-for list="{{ layers }}" as="l" hint-placeholder-count="4">
+        <div style="position:relative;border-radius:14px;background:{{ l.bg }};color:{{ l.fg }};padding:26px 28px;display:flex;align-items:center;gap:28px;flex-wrap:wrap;border:1px solid #ececec">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;color:{{ l.sub }};min-width:230px">{{ l.tag }}</div>
+          <div style="flex:1;min-width:240px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <h3 style="font-size:19px;font-weight:600;letter-spacing:-.02em">{{ l.title }}</h3>
+              <sc-if value="{{ l.moat }}" hint-placeholder-val="{{ true }}">
+                <span style="font-size:10.5px;font-weight:600;letter-spacing:.04em;background:#c6f24f;color:#0a0a0a;padding:3px 8px;border-radius:999px">THE MOAT</span>
+              </sc-if>
+            </div>
+            <p style="font-size:14px;margin-top:6px;line-height:1.45;color:{{ l.sub }};max-width:74ch">{{ l.body }}</p>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- primitives -->
+    <div style="margin-top:40px;border-top:1px solid #eee;padding-top:32px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;color:#8a8a82;margin-bottom:18px">THE PRIMITIVES — THE ELEMENTS EVERY WORKFLOW IS BUILT FROM</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <sc-for list="{{ primitives }}" as="p" hint-placeholder-count="10">
+          <span style="font-size:14px;font-weight:500;padding:10px 18px;border-radius:999px;border:1px solid #e2e2e2;background:#fff" style-hover="border-color:#0a0a0a">{{ p }}</span>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- VERTICALS -->
+  <section style="max-width:1180px;margin:0 auto;padding:20px 28px 40px">
+    <div class="dotgrid" style="border-radius:16px;background:#f4f3ef;padding:56px 40px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:#8a8a82">THE VERTICALS</span>
+      <h2 style="font-size:clamp(28px,3.6vw,46px);line-height:1.04;letter-spacing:-.03em;font-weight:600;max-width:22ch;margin-top:14px">One engine, proven on humanoids — then carried to every kind of robot company.</h2>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:36px">
+        <sc-for list="{{ verticals }}" as="v" hint-placeholder-count="8">
+          <div style="position:relative;background:#fff;border:1px solid #e7e7e1;border-radius:12px;padding:22px 20px;min-height:96px;display:flex;flex-direction:column;justify-content:space-between" style-hover="border-color:#0a0a0a">
+            <sc-if value="{{ v.tag }}" hint-placeholder-val="MVP">
+              <span style="position:absolute;top:14px;right:14px;font-size:10px;font-weight:600;letter-spacing:.04em;background:#c6f24f;color:#0a0a0a;padding:3px 8px;border-radius:999px">{{ v.tag }}</span>
+            </sc-if>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#bdbdb4">{{ v.idx }}</span>
+            <span style="font-size:18px;font-weight:600;letter-spacing:-.02em">{{ v.name }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- INTRODUCING AGENTS (split) -->
+  <section style="max-width:1180px;margin:0 auto;padding:20px 28px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch">
+      <div style="padding:40px 0">
+        <h2 style="font-size:clamp(26px,3vw,38px);line-height:1.08;letter-spacing:-.03em;font-weight:600;max-width:16ch">Introducing Agents by {{ companyName }}. The AI operating system for hardware ops.</h2>
+        <p style="font-size:15px;color:#6b6b63;margin-top:24px;max-width:40ch;line-height:1.5">"We turned off three legacy tools in our first month. {{ companyName }} caught a servo shortage before it ever reached the line."</p>
+        <div style="margin-top:18px;font-size:14px;color:#9a9a90">— VP Operations, mobility robotics</div>
+        <a href="#" style="display:inline-flex;align-items:center;gap:7px;font-size:14.5px;font-weight:500;margin-top:24px" style-hover="opacity:.6">Read the story <span>→</span></a>
+      </div>
+      <div style="background:#f4f3ef;border-radius:14px;min-height:340px;display:flex;align-items:center;justify-content:center;position:relative">
+        <span style="font-size:clamp(40px,5vw,70px);font-weight:700;letter-spacing:-.04em;color:#1a1a1a">{{ companyName }}</span>
+        <span style="position:absolute;top:14px;left:16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#a7a79d">[ BRAND LOCKUP / LOGO ]</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- KEEP TEAM FOCUSED (testimonial split) -->
+  <section style="max-width:1180px;margin:0 auto;padding:48px 28px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center">
+      <div style="position:relative;border-radius:14px;overflow:hidden;aspect-ratio:1/1.05;background-image:repeating-linear-gradient(135deg,#e6e5df 0,#e6e5df 1px,#f1f0ea 1px,#f1f0ea 12px)">
+        <div style="position:absolute;bottom:22px;left:22px;color:#0a0a0a">
+          <div style="font-size:38px;font-weight:700;letter-spacing:-.02em">Lauren</div>
+          <div style="font-size:13.5px;color:#555">Head of Ops, drone manufacturer</div>
+        </div>
+        <span style="position:absolute;top:14px;left:16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#a7a79d">[ CUSTOMER PORTRAIT ]</span>
+      </div>
+      <div>
+        <h2 style="font-size:clamp(26px,3.2vw,42px);line-height:1.06;letter-spacing:-.03em;font-weight:600;max-width:16ch">Keep your ops team focused on shipping. Let agents handle the busywork.</h2>
+        <p style="font-size:15px;color:#6b6b63;margin-top:22px;max-width:42ch;line-height:1.5">Agents watch stock, draft purchase orders, reconcile receipts, and surface exceptions — around the clock. Your team approves and moves on.</p>
+        <a href="#demo" style="display:inline-flex;align-items:center;gap:7px;font-size:14.5px;font-weight:500;margin-top:22px" style-hover="opacity:.6">See how it works <span>→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI THAT LEARNS (split, policy card) -->
+  <section style="max-width:1180px;margin:0 auto;padding:48px 28px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center">
+      <div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:#8a8a82">A LOOK AT ONE MODULE · PROCUREMENT</span>
+        <h2 style="font-size:clamp(26px,3.2vw,42px);line-height:1.06;letter-spacing:-.03em;font-weight:600;max-width:14ch;margin-top:14px">AI that learns from your operation. Powered by 1,200 teams that came before you.</h2>
+        <p style="font-size:13px;color:#9a9a90;margin-top:10px;max-width:40ch;line-height:1.45">The same propose → approve → audit pattern runs in every module.</p>
+        <p style="font-size:15px;color:#6b6b63;margin-top:22px;max-width:42ch;line-height:1.5">{{ companyName }} flags the part that always slips, the vendor that always runs late, and the cost leak hiding in your BOM — before they cost you a build.</p>
+      </div>
+      <div style="background:#f4f3ef;border-radius:14px;padding:30px;min-height:300px">
+        <div style="background:#fff;border:1px solid #e7e7e1;border-radius:12px;padding:22px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+            <span style="font-size:15px;font-weight:600">Procurement Policy</span>
+            <span style="font-size:11px;font-weight:600;color:#1f9e6f;background:#e9f7f0;padding:4px 9px;border-radius:999px">Auto-applied</span>
+          </div>
+          <sc-for list="{{ policyRows }}" as="p" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-top:1px solid #f0f0ec;font-size:13.5px">
+              <span style="color:#444">{{ p.k }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111">{{ p.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCALE THE TEAM -->
+  <section style="max-width:1180px;margin:0 auto;padding:72px 28px;text-align:center">
+    <h2 style="font-size:clamp(30px,4.4vw,58px);line-height:1;letter-spacing:-.035em;font-weight:600">Scale the line.<br><span style="color:#9a9a90">Shrink the paperwork.</span></h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:48px;text-align:left">
+      <sc-for list="{{ scaleCards }}" as="c" hint-placeholder-count="2">
+        <div style="background:#f4f3ef;border-radius:14px;padding:28px;min-height:260px;display:flex;flex-direction:column">
+          <div style="background:#fff;border:1px solid #e7e7e1;border-radius:10px;height:120px;padding:14px;margin-bottom:auto">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#a7a79d">{{ c.cap }}</div>
+            <div style="height:8px;background:#f0f0ec;border-radius:4px;margin-top:13px"></div>
+            <div style="height:8px;background:#f0f0ec;border-radius:4px;margin-top:9px;width:70%"></div>
+          </div>
+          <h3 style="font-size:18px;font-weight:600;letter-spacing:-.02em;margin-top:22px">{{ c.title }}</h3>
+          <p style="font-size:14px;color:#6b6b63;margin-top:7px;line-height:1.45">{{ c.body }}</p>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- RECEIPTS / TESTIMONIALS -->
+  <section style="max-width:1180px;margin:0 auto;padding:40px 28px 80px;text-align:center">
+    <h2 style="font-size:clamp(30px,4vw,52px);line-height:1.02;letter-spacing:-.035em;font-weight:600">We've got the receipts.</h2>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:48px;text-align:left">
+      <sc-for list="{{ receipts }}" as="t" hint-placeholder-count="8">
+        <div style="border:1px solid #ededed;border-radius:12px;padding:22px;min-height:200px;display:flex;flex-direction:column">
+          <span style="font-size:13px;font-weight:700;color:#c9c9c9;letter-spacing:-.01em">{{ t.logo }}</span>
+          <p style="font-size:13.5px;line-height:1.45;color:#2a2a2a;margin-top:16px">"{{ t.quote }}"</p>
+          <div style="margin-top:auto;padding-top:16px;font-size:12px;color:#9a9a90">{{ t.who }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- CLOSING CTA -->
+  <section id="demo" style="max-width:1180px;margin:0 auto;padding:0 28px 80px;text-align:center">
+    <div class="dotgrid" style="border-radius:16px;background:#f4f3ef;padding:90px 28px">
+      <h2 style="font-size:clamp(36px,5.5vw,76px);line-height:.96;letter-spacing:-.04em;font-weight:600">Hit every build date.</h2>
+      <div style="display:flex;align-items:stretch;gap:0;margin:34px auto 0;max-width:430px;border:1px solid #ddd;border-radius:9px;overflow:hidden;background:#fff">
+        <input placeholder="What's your work email?" style="flex:1;border:none;outline:none;padding:13px 18px;font-size:15px;font-family:inherit" />
+        <a href="#" style="background:#c6f24f;color:#0a0a0a;font-size:14.5px;font-weight:600;padding:13px 22px;white-space:nowrap;display:flex;align-items:center" style-hover="background:#bce83f">Book a demo</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer style="background:#0a0a0a;color:#fff">
+    <div style="max-width:1180px;margin:0 auto;padding:72px 28px 28px">
+      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;gap:32px">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
+            <span style="font-size:23px;font-weight:700;letter-spacing:-.04em">{{ companyLower }}</span>
+            <span style="width:13px;height:13px;background:#fff;border-radius:0 7px 0 7px"></span>
+          </div>
+          <p style="font-size:13.5px;color:#888;line-height:1.5;max-width:26ch">The AI-native operating system for companies building robots.</p>
+        </div>
+        <sc-for list="{{ footerCols }}" as="col" hint-placeholder-count="4">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:#666;letter-spacing:.04em;margin-bottom:16px">{{ col.head }}</div>
+            <div style="display:flex;flex-direction:column;gap:11px;font-size:13.5px;color:#bbb">
+              <sc-for list="{{ col.links }}" as="lk" hint-placeholder-count="4">
+                <a href="#" style-hover="color:#fff">{{ lk }}</a>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;border-top:1px solid #1d1d1d;margin-top:52px;padding-top:24px">
+        <span style="font-size:12.5px;color:#666">© {{ year }} {{ companyName }}, Inc. · Placeholder wordmark — swap with your logo</span>
+        <a href="#demo" style="background:#c6f24f;color:#0a0a0a;font-size:13.5px;font-weight:600;padding:9px 18px;border-radius:7px" style-hover="background:#bce83f">See a demo</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:900},&quot;companyName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Axona&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { parts: 7491284 };
+  componentDidMount() {
+    this.timer = setInterval(() => this.setState(s => ({ parts: s.parts + Math.floor(Math.random() * 7 + 1) })), 1200);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    const companyName = this.props.companyName ?? "Axona";
+    return {
+      companyName,
+      companyLower: companyName.toLowerCase(),
+      companyUpper: companyName.toUpperCase(),
+      year: new Date().getFullYear(),
+      counter: this.state.parts.toLocaleString() + " parts",
+      moduleGroups: [
+        { label: "CORE", modules: [
+          { name: "Command Center", desc: "Live overview across every module" },
+          { name: "Agents", desc: "Every module's agents in one place" },
+          { name: "Workflows", desc: "Orchestrate agents across modules" },
+          { name: "Projects", desc: "Workspaces, files & matrices" },
+          { name: "Machines", desc: "Plant & equipment register" },
+        ] },
+        { label: "VALUE CHAIN", modules: [
+          { name: "Procurement", desc: "Sourcing, RFQs & POs", agents: "6 agents" },
+          { name: "Manufacturing", desc: "Work orders & build genealogy" },
+          { name: "Inventory", desc: "Parts, spares & RMA" },
+          { name: "Quality", desc: "Inspection, calibration & certs" },
+          { name: "Fulfillment", desc: "Install & commissioning", agents: "3 active" },
+          { name: "Sales & CRM", desc: "CPQ & deliverability" },
+          { name: "Marketing", desc: "Demand & pipeline" },
+        ] },
+        { label: "ROBOTICS", modules: [
+          { name: "Fleet", desc: "Deployed units & telemetry", agents: "4 agents" },
+          { name: "Field Service", desc: "Dispatch & predictive maintenance" },
+          { name: "Engineering", desc: "CAD, firmware & change orders" },
+          { name: "Autonomy", desc: "Missions, safety & SLAs" },
+        ] },
+        { label: "BACK OFFICE", modules: [
+          { name: "Finance", desc: "GL, AP/AR & RaaS revenue", agents: "6 agents" },
+          { name: "People", desc: "Workforce & technician certs" },
+          { name: "Security", desc: "Access & device posture" },
+          { name: "Legal", desc: "Contracts & export control" },
+        ] },
+      ],
+      expandSteps: [
+        { idx: "01", label: "Procurement", bg: "#0a0a0a", fg: "#fff", bd: "#0a0a0a", arrow: true },
+        { idx: "02", label: "Quality", bg: "#fff", fg: "#444", bd: "#e2e2e2", arrow: true },
+        { idx: "03", label: "Fulfillment", bg: "#fff", fg: "#444", bd: "#e2e2e2", arrow: true },
+        { idx: "04", label: "Finance", bg: "#fff", fg: "#444", bd: "#e2e2e2", arrow: false },
+      ],
+      navItems: [
+        { label: "Platform", car: "▾" }, { label: "Modules", car: "▾" },
+        { label: "Solutions", car: "▾" }, { label: "Customers", car: "" }, { label: "Pricing", car: "" },
+      ],
+      agentStats: [
+        { label: "BOMS SYNCED", value: "175.5K" },
+        { label: "AGENT ACTIONS", value: "514" },
+        { label: "POS DRAFTED", value: "13,422" },
+        { label: "SHORTAGES CAUGHT", value: "2,288" },
+        { label: "UNITS TRACED", value: "3,280" },
+      ],
+      gridLogos: ["NORTHWIND", "EIGHT", "FORGE", "MERIDIAN", "ATLAS", "VANTA", "AXIOM", "HELIX", "ORBIT", "NOVA", "PILOT"],
+      tabs: [
+        { label: "Procurement", bg: "#0a0a0a", fg: "#fff", bd: "#0a0a0a" },
+        { label: "Manufacturing", bg: "#fff", fg: "#444", bd: "#e2e2e2" },
+        { label: "Quality & Test", bg: "#fff", fg: "#444", bd: "#e2e2e2" },
+        { label: "Logistics", bg: "#fff", fg: "#444", bd: "#e2e2e2" },
+        { label: "Field Service", bg: "#fff", fg: "#444", bd: "#e2e2e2" },
+        { label: "R&D", bg: "#fff", fg: "#444", bd: "#e2e2e2" },
+        { label: "IT & Security", bg: "#fff", fg: "#444", bd: "#e2e2e2" },
+      ],
+      platformCards: [
+        { title: "Procurement", body: "The wedge. Agents source long-lead components, run RFQs, and draft purchase orders from live BOM demand — your buyers approve in one click.", cap: "PO-10482 · DRAFT" },
+        { title: "Manufacturing", body: "Plan builds, route work orders, and keep per-unit build genealogy from the first PCB to the packaged robot.", cap: "WORK ORDER · UNIT #2208" },
+      ],
+      platformSmall: [
+        { title: "Quality & Test", body: "Capture test results against every serial. Catch the defect pattern before it ships.", cap: "QA · SERIAL TRACE" },
+        { title: "Logistics", body: "Multi-site stock, transfers, and inbound tracking on one connected graph.", cap: "INBOUND · SITE-3" },
+        { title: "Field Service", body: "Warranty, parts, firmware, and uptime for every robot in the field.", cap: "FLEET · UPTIME" },
+      ],
+      verticals: [
+        { name: "Humanoids", tag: "Coming soon", idx: "01" }, { name: "Defense", tag: "Coming soon", idx: "02" }, { name: "Logistics", tag: "Coming soon", idx: "03" }, { name: "Manufacturing", tag: "", idx: "04" },
+        { name: "Construction", tag: "", idx: "05" }, { name: "Healthcare", tag: "", idx: "06" }, { name: "Space", tag: "", idx: "07" }, { name: "Automotive", tag: "", idx: "08" },
+      ],
+      primitives: ["SOPs", "Documents", "Data", "Agents", "Humans", "Machines", "Inventory", "Meetings", "Integrations", "Interfaces"],
+      layers: [
+        { tag: "L4 · VERTICAL EDITIONS", title: "Vertical Editions", body: "A version of Axona pre-configured for your industry — the workflows, terminology, and screens a humanoid, defense, or space team actually needs on day one.", bg: "#f4f3ef", fg: "#111", sub: "#6b6b63", moat: false },
+        { tag: "L3 · DOMAIN APPS", title: "Domain Apps", body: "Composable workflows built from shared primitives — procurement, manufacturing, quality, logistics, field service.", bg: "#f4f3ef", fg: "#111", sub: "#6b6b63", moat: false },
+        { tag: "L2 · INTELLIGENCE & AGENT SPINE", title: "Intelligence & Agent Spine", body: "Specialized models, long-term memory, and per-unit build genealogy — orchestrating humans, machines, and agents.", bg: "#f4f3ef", fg: "#111", sub: "#6b6b63", moat: false },
+        { tag: "L1 · DATA & CONTEXT", title: "Data & Context", body: "Connectors to ERP, PLM, MES, telemetry, and docs — plus an ontology of how your company actually works. VPC / on-prem / edge.", bg: "#f4f3ef", fg: "#111", sub: "#6b6b63", moat: false },
+      ],
+      legacy: ["[ SPREADSHEETS ]", "[ PLM / CAD ]", "[ ACCOUNTING ]"],
+      policyRows: [
+        { k: "Reorder point breach", v: "AUTO-PO" },
+        { k: "Vendor lead-time risk", v: "FLAGGED" },
+        { k: "Cost variance > 8%", v: "ESCALATE" },
+      ],
+      scaleCards: [
+        { title: "Role-based access & approvals", body: "Give buyers, line leads, and finance exactly the access they need — nothing more.", cap: "ACCESS · ROLES" },
+        { title: "One platform for every site", body: "Multi-site stock, transfers, and global spend in a single view.", cap: "SITES · GLOBAL" },
+      ],
+      receipts: [
+        { logo: "NORTHWIND", quote: "Cycle counts went from days to minutes. The line hasn't stopped for a missing part since.", who: "Director of Ops" },
+        { logo: "FORGE", quote: "Agents draft our POs before a shortage ever hits the floor. It pays for itself.", who: "VP Manufacturing" },
+        { logo: "MERIDIAN", quote: "One graph for every screw and every deployed unit. Books finally close on time.", who: "Founder" },
+        { logo: "ATLAS", quote: "We replaced four tools and a pile of spreadsheets in our first month.", who: "Head of Supply Chain" },
+        { logo: "HELIX", quote: "Per-unit margin visibility changed how we price every contract.", who: "CFO" },
+        { logo: "ORBIT", quote: "Onboarded across two sites in under 30 days. No rip-and-replace.", who: "COO" },
+        { logo: "NOVA", quote: "The firmware and warranty traceability alone was worth the switch.", who: "Head of Service" },
+        { logo: "PILOT", quote: "Our ops team finally builds robots instead of reconciling sheets.", who: "Eng Lead" },
+      ],
+      footerCols: [
+        { head: "PRODUCT", links: ["Platform", "Modules", "AI agents", "Integrations", "Security", "Pricing"] },
+        { head: "SOLUTIONS", links: ["Drones", "Mobility", "Warehouse", "Industrial", "Contract mfg"] },
+        { head: "COMPANY", links: ["About", "Customers", "Careers", "Blog", "Contact"] },
+        { head: "RESOURCES", links: ["Docs", "Guides", "ROI calculator", "Status", "FAQs"] },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

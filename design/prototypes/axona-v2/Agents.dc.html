@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .collapse-btn{transition:background .15s,color .15s}
+  .collapse-btn:hover{background:var(--panel);color:var(--ink)}
+  .navitem{transition:background .15s,color .15s}
+  .navitem:hover{background:var(--panel)}
+  .navgroup summary{list-style:none}
+  .navgroup summary::-webkit-details-marker{display:none}
+  .navgroup summary::marker{content:""}
+  .navgroup summary:hover .navchev{stroke:var(--ink-muted)}
+  .navchev{transition:transform .15s;flex:none}
+  .navgroup:not([open]) .navchev{transform:rotate(-90deg)}
+  .navsearch{transition:border-color .15s,background .15s}
+  .navsearch:hover{border-color:var(--ink-strong);background:var(--panel-2)}
+  .agentcard{transition:border-color .15s,background .15s}
+  .agentcard:hover{border-color:var(--ink-strong);background:var(--panel-2)}
+  .chip{transition:border-color .15s,color .15s}
+  .chip:hover{border-color:var(--ink-strong);color:var(--ink)}
+  .avs{transition:transform .12s}
+  .avs:hover{transform:translateY(-2px)}
+  .resizer{transition:background .15s}
+  .resizer:hover{background:var(--panel-2)}
+  .resizer:hover .grip{background:var(--ink-strong)}
+  .openlink{transition:color .15s}
+  .openlink:hover{color:var(--ink)}
+  .scarea::-webkit-scrollbar{width:8px}
+  .scarea::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+</style>
+<script>document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key&&e.key.toLowerCase()==='k'){e.preventDefault();window.location.href='Mission Control.dc.html';}});</script>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden;font-family:var(--font-sans);color:var(--ink);background:var(--panel)">
+
+  <aside style="width:240px;flex:none;background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 8px 18px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:21px;font-weight:700;letter-spacing:-.04em;color:var(--ink-strong)">axona</span>
+        <span style="width:12px;height:12px;background:var(--ink-strong);border-radius:0 7px 0 7px"></span>
+      </div>
+      <button class="collapse-btn" title="Collapse menu" style="width:28px;height:28px;border:1px solid var(--line);border-radius:7px;background:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-muted);flex:none;padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18"></path><path d="m15 9-3 3 3 3"></path></svg></button>
+    </div>
+    <a href="Mission Control.dc.html" class="navsearch" style="display:flex;align-items:center;gap:9px;margin:0 4px 10px;padding:8px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--panel);cursor:pointer;text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <span style="flex:1;font-size:13px;color:var(--ink-faint)">Search</span>
+      <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px">⌘K</span>
+    </a>
+    <div class="scarea" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;margin:0 -4px;padding:0 4px">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <details open="open" class="navgroup">
+          <summary style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;padding:14px 10px 6px;cursor:pointer"><span style="flex:1">{{ g.label }}</span><svg class="navchev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--line-strong)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></summary>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+          <a class="navitem" href="{{ it.href }}" style="display:flex;align-items:center;gap:11px;padding:8px 10px 8px {{ it.pad }};border-radius:8px;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.weight }};font-size:{{ it.size }};text-decoration:none">
+            <span style="width:6px;height:6px;border-radius:2px;background:{{ it.marker }};flex:none"></span>
+            <span style="flex:1">{{ it.name }}</span>
+            <sc-if value="{{ it.badge }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:10px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 7px;font-weight:600">{{ it.badge }}</span></sc-if>
+          </a>
+        </sc-for>
+        </details>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 8px 2px;border-top:1px solid var(--line);margin-top:8px">
+      <span style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink)">LC</span>
+      <div style="font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Head of Ops</div></div>
+    </div>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex">
+
+    <!-- agent directory -->
+    <div style="flex:1;min-width:440px;display:flex;flex-direction:column;background:var(--panel)">
+      <div style="height:60px;flex:none;border-bottom:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:space-between;padding:0 24px">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Core · agent control plane</div>
+          <h1 style="margin:2px 0 0;font-size:19px;font-weight:600;letter-spacing:-.02em">Agents</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--ink);background:var(--panel);border:1px solid var(--line-strong);border-radius:999px;padding:5px 12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--success)"></span>{{ liveCount }} live now</span>
+        </div>
+      </div>
+
+      <div style="flex:none;padding:16px 24px 14px;border-bottom:1px solid var(--line);background:var(--paper)">
+        <div style="display:flex;align-items:center;gap:10px;border:1px solid var(--line-strong);border-radius:10px;background:var(--panel);padding:0 13px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+          <input value="{{ query }}" onInput="{{ onQuery }}" placeholder="Search 90 agents by name, role, or module…" style="flex:1;min-width:0;border:none;outline:none;background:transparent;padding:11px 0;font-size:13.5px;font-family:var(--font-sans);color:var(--ink)">
+          <sc-if value="{{ hasQuery }}" hint-placeholder-val="{{ false }}"><span onClick="{{ clearQuery }}" style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);cursor:pointer;flex:none">CLEAR</span></sc-if>
+        </div>
+      </div>
+
+      <div class="scarea" style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:22px">
+        <sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+          <div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+              <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;color:var(--mono-faint);text-transform:uppercase">{{ g.label }}</span>
+              <span style="flex:1;height:1px;background:var(--line)"></span>
+            </div>
+            <sc-for list="{{ g.modules }}" as="mod" hint-placeholder-count="3">
+              <div style="margin-bottom:18px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+                  <div style="display:flex;align-items:center;gap:9px">
+                    <span style="width:7px;height:7px;border-radius:2px;background:var(--ink-strong);flex:none"></span>
+                    <span style="font-size:13.5px;font-weight:600">{{ mod.name }}</span>
+                    <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">{{ mod.count }} agents</span>
+                  </div>
+                  <span class="openlink" style="font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;color:var(--ink-faint);text-transform:uppercase;cursor:pointer">Open module →</span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                  <sc-for list="{{ mod.agents }}" as="a" hint-placeholder-count="6">
+                    <div class="agentcard" onClick="{{ a.open }}" style="display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border-radius:10px;cursor:pointer;background:var(--paper);border:1px solid {{ a.cardBorder }};min-width:0">
+                      <span style="position:relative;flex:none;display:inline-flex;margin-top:1px">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg>
+                        <span style="position:absolute;right:-1px;bottom:-1px;width:7px;height:7px;border-radius:50%;background:{{ a.stateColor }};border:1.5px solid var(--paper)"></span>
+                      </span>
+                      <div style="min-width:0;flex:1">
+                        <div style="font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.name }}</div>
+                        <div style="font-size:11.5px;color:var(--ink-muted);margin-top:2px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">{{ a.desc }}</div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+        <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:40px 0;text-align:center;color:var(--ink-faint);font-size:13px">No agents match “{{ query }}”.</div>
+        </sc-if>
+      </div>
+    </div>
+
+    <!-- resizer -->
+    <div class="resizer" onMouseDown="{{ startDrag }}" style="width:8px;flex:none;cursor:col-resize;background:var(--paper);border-left:1px solid var(--line);display:flex;align-items:center;justify-content:center">
+      <span class="grip" style="width:2px;height:34px;border-radius:2px;background:var(--line-strong)"></span>
+    </div>
+
+    <!-- chat pane -->
+    <div style="width:{{ panelW }}px;flex:none;min-width:0;background:var(--paper);display:flex;flex-direction:column;color:var(--ink)">
+      <div style="height:60px;flex:none;padding:0 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px">
+        <span style="position:relative;flex:none;display:inline-flex">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg>
+          <span style="position:absolute;right:0;bottom:0;width:8px;height:8px;border-radius:50%;background:{{ activeAgent.stateColor }};border:1.5px solid var(--paper)"></span>
+        </span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14.5px;font-weight:600">{{ activeAgent.name }}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase">{{ activeAgent.role }} · {{ activeAgent.module }}</div>
+        </div>
+        <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase"><span style="width:6px;height:6px;border-radius:50%;background:{{ activeAgent.stateColor }}"></span>{{ activeAgent.stateLabel }}</span>
+      </div>
+
+      <div style="padding:11px 18px;border-bottom:1px solid var(--line);background:var(--panel);display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+        <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Context</span>
+        <span style="font-family:var(--font-mono);font-size:10px;background:var(--panel);border:1px solid var(--line-panel);border-radius:5px;padding:2px 7px;color:var(--ink-muted)">{{ activeAgent.module }}</span>
+        <span style="font-family:var(--font-mono);font-size:10px;background:var(--panel);border:1px solid var(--line-panel);border-radius:5px;padding:2px 7px;color:var(--ink-muted)">{{ activeAgent.roleTag }}</span>
+      </div>
+
+      <div class="scarea" style="flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px">
+        <sc-for list="{{ thread }}" as="m" hint-placeholder-count="1">
+          <div style="display:flex;gap:9px;justify-content:{{ m.rowJustify }};align-items:flex-start">
+            <sc-if value="{{ m.isAgent }}" hint-placeholder-val="{{ true }}"><span style="flex:none;display:inline-flex;margin-top:1px"><svg width="22" height="22" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span></sc-if>
+            <div style="max-width:80%;background:{{ m.bubbleBg }};color:{{ m.bubbleFg }};border-radius:13px;padding:11px 13px;font-size:13px;line-height:1.5">{{ m.text }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:12px 18px 16px;border-top:1px solid var(--line)">
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px">
+          <sc-for list="{{ suggestions }}" as="s" hint-placeholder-count="3">
+            <span class="chip" onClick="{{ s.go }}" style="font-size:12px;font-weight:500;padding:6px 12px;border-radius:999px;cursor:pointer;background:var(--paper);color:var(--ink-muted);border:1px solid var(--line-strong)">{{ s.label }}</span>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:stretch;border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;background:var(--paper)">
+          <input value="{{ draft }}" onInput="{{ onDraft }}" onKeyDown="{{ onKey }}" placeholder="{{ inputPlaceholder }}" style="flex:1;min-width:0;border:none;outline:none;padding:11px 14px;font-size:13.5px;font-family:var(--font-sans);color:var(--ink);background:transparent">
+          <button onClick="{{ sendBtn }}" style="background:var(--accent);color:var(--accent-ink);border:none;font-size:13px;font-weight:600;padding:0 16px;cursor:pointer;font-family:var(--font-sans)">Send</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { selKey:'Procurement|0', thread:[], draft:'', query:'', panelW:404 };
+  _drag = false;
+  _mm = (e) => { if(!this._drag) return; const w = Math.min(680, Math.max(340, window.innerWidth - e.clientX)); this.setState({ panelW:w }); };
+  _mu = () => { this._drag = false; document.body.style.userSelect=''; window.removeEventListener('mousemove', this._mm); window.removeEventListener('mouseup', this._mu); };
+  startDrag = (e) => { e.preventDefault(); this._drag = true; document.body.style.userSelect='none'; window.addEventListener('mousemove', this._mm); window.addEventListener('mouseup', this._mu); };
+  componentWillUnmount(){ this._mu(); }
+  pick(key){ this.setState({ selKey:key, draft:'', thread:[] }); }
+  send(text){
+    const t = (text || this.state.draft || '').trim();
+    if(!t) return;
+    this.setState(s => ({ draft:'', thread:[...s.thread,
+      { role:'user', text:t },
+      { role:'agent', text:'On it — I\u2019ll action that in my module and post the result back to its queue. Open the module to see it land.' }] }));
+  }
+  renderVals(){
+    const SUC='var(--success)', ACC='var(--accent)', CRIT='var(--ink-strong)';
+    const stateColor = (s) => s==='crit' ? CRIT : s==='work' ? ACC : SUC;
+    const stateLabel = (s) => s==='crit' ? 'Attention' : s==='work' ? 'Working' : 'Live';
+
+    // [name, role, state, status]
+    const DATA = [
+      { g:'Value chain', m:'Procurement', a:[
+        ['Sourcing agent','SOURCING · proc-04','live','Scanning BOM demand for shortfalls across SN-2208–2256.'],
+        ['RFQ agent','QUOTES · proc-02','live','3 RFQs out to Vendor A, B, C — best ETA 4 days.'],
+        ['Negotiation agent','TERMS · proc-07','work','Holding Vendor A at $48,200, pushing for net-45.'],
+        ['Reorder agent','DEMAND · proc-03','live','Watching 312 SKUs against live reorder points.'],
+        ['Reconciliation agent','3-WAY MATCH · proc-05','live','Matched receipt GRN-887 to its PO and invoice.'],
+        ['Supply-risk agent','RISK · proc-09','crit','Vendor D cost variance +9% — escalated to Finance.'] ] },
+      { g:'Value chain', m:'Manufacturing', a:[
+        ['Scheduling agent','PLAN · mfg-01','work','Rebalancing line 3 around the SERVO-204 hold.'],
+        ['Work-order agent','WO · mfg-02','live','42 work orders open · 6 builds active now.'],
+        ['Genealogy agent','TRACE · mfg-04','live','Recording per-unit build genealogy to SN-2256.'],
+        ['Throughput agent','OEE · mfg-06','work','Line 3 OEE dipped to 81% — station L1-ST3.'],
+        ['Materials agent','KITTING · mfg-03','live','Kitted 6 builds · 1 short on SERVO-204.'],
+        ['Maintenance agent','UPTIME · mfg-09','live','Spindle L1-ST3 flagged for preventive service.'] ] },
+      { g:'Value chain', m:'Inventory', a:[
+        ['Stock agent','LEVELS · inv-01','live','Tracking on-hand across parts, sub-assy, finished.'],
+        ['Reorder-point agent','REORDER · inv-02','work','2 SKUs below threshold today — SERVO-204, harness.'],
+        ['RMA agent','RETURNS · inv-04','live','RMA-441 spares return pending from Kawasaki.'],
+        ['Cycle-count agent','AUDIT · inv-03','live','Cycle count Site-1 bin A — 0 variance.'],
+        ['Allocation agent','RESERVE · inv-06','work','Reserving finished units against open deliveries.'],
+        ['Spares agent','EDGE · inv-09','live','Edge caches stocked · pack PK-48 at Rotterdam.'] ] },
+      { g:'Value chain', m:'Fulfillment', a:[
+        ['Allocation agent','ATP · ful-01','live','Matched 6 finished units to open orders.'],
+        ['Freight agent','CARRIER · ful-02','work','Holding an air slot for DLV-3312 · DB Schenker.'],
+        ['Customs agent','COMPLIANCE · ful-04','crit','DLV-3312 held — filing the missing export license.'],
+        ['Install-scheduling agent','SCHEDULE · ful-03','live','Tech on-site at BMW Munich for DLV-3309.'],
+        ['Commissioning agent','ACTIVATION · ful-06','work','DLV-3309 commissioning at 50% · 3 checks left.'],
+        ['Delivery-SLA agent','ON-TIME · ful-09','work','DLV-3312 at risk +2 days vs the commitment.'] ] },
+      { g:'Value chain', m:'Quality', a:[
+        ['Inspection agent','INSPECT · qa-01','live','Running final acceptance on SN-2205 · 142 checks.'],
+        ['SPC agent','CONTROL · qa-04','work','Torque trending toward UCL across the last 8 units.'],
+        ['Root-cause agent','ANALYSIS · qa-06','work','Correlated 3 torque failures to SERVO-204 lot 88421.'],
+        ['NCR / CAPA agent','CORRECTIVE · qa-03','crit','Opened NCR-118 · containment in progress.'],
+        ['Calibration agent','RIGS · qa-07','live','Test rig R-3 due for re-calibration in 2 days.'],
+        ['Compliance agent','CERTS · qa-09','live','CE / UL / ISO evidence packs complete and current.'] ] },
+      { g:'Value chain', m:'Sales & CRM', a:[
+        ['Lead-qualification agent','INBOUND · crm-01','live','Qualified 9 of 14 new leads · top is Siemens.'],
+        ['CPQ agent','CONFIGURE · crm-02','live','Configured the BMW quote — 24× HX-2 + RaaS → $8.4M.'],
+        ['Feasibility agent','CAPACITY · crm-04','work','BMW: build+deliver covers 18/24 by date — 24 slips 3w.'],
+        ['Forecast agent','PIPELINE · crm-06','live','92% to the $15.5M quarter target · BMW is the swing.'],
+        ['Contract agent','TERMS · crm-03','work','BMW redline: net-60 + 99.5% SLA · within policy.'],
+        ['Renewal agent','EXPANSION · crm-09','live','Maersk RaaS renews in 60d · usage +22%.'] ] },
+      { g:'Value chain', m:'Marketing', a:[
+        ['Campaign agent','BUDGET · mkt-01','work','Paid LinkedIn 18% over budget at half conversion.'],
+        ['Content agent','SEO · mkt-02','live','Whitepaper is the top asset — 1,240 downloads.'],
+        ['ABM agent','ACCOUNTS · mkt-03','work','12 of 40 target accounts showing in-market intent.'],
+        ['Lead-nurture agent','SCORING · mkt-04','live','312 MQLs · 9 hot leads ready to hand to Sales.'],
+        ['Attribution agent','PIPELINE · mkt-06','live','Events source 38% of pipeline — strongest channel.'],
+        ['Events agent','AUTOMATE · mkt-09','work','Automate 2026 in 6 days · 40 demo slots 78% booked.'] ] },
+      { g:'Robotics', m:'Fleet', a:[
+        ['Telemetry agent','SIGNALS · flt-01','live','Streaming health from 48 deployed units.'],
+        ['Predictive-maintenance agent','PREDICT · flt-02','work','SN-2196 battery thermal trend — flagged a swap.'],
+        ['Uptime agent','SLA · flt-06','live','Fleet uptime 98.2% · Site-3 the laggard.'],
+        ['OTA agent','FIRMWARE · flt-03','work','v4.2.2 staged · awaiting HX-1 certification.'],
+        ['Anomaly agent','DETECT · flt-04','live','No new hardware anomalies in the last 6h.'],
+        ['Energy agent','POWER · flt-09','live','Charge cycles nominal across all sites.'] ] },
+      { g:'Robotics', m:'Field Service', a:[
+        ['Dispatch agent','ROUTING · fs-01','work','Routing M. Osei to Site-2 with the edge-cache pack.'],
+        ['Triage agent','INTAKE · fs-02','crit','Classified WO-4471 critical · 2h SLA.'],
+        ['Parts agent','SPARES · fs-04','live','Reserved pack PK-48 from the Rotterdam edge cache.'],
+        ['Scheduling agent','CALENDAR · fs-03','live','Balanced 7 jobs across 6 techs today.'],
+        ['Knowledge agent','REPAIR · fs-06','live','Pushed the SN-2196 swap procedure to Osei\u2019s tablet.'],
+        ['PM agent','PREVENTIVE · fs-09','work','3 preventive jobs due this week from Fleet.'] ] },
+      { g:'Robotics', m:'Engineering', a:[
+        ['Change agent','ECO · eng-01','work','ECO-318 in review — supersede SERVO-204.'],
+        ['Compatibility agent','MATRIX · eng-04','work','v4.2.2 certified on HX-2 · HX-1 r5 still in test.'],
+        ['Firmware-release agent','RELEASE · eng-02','live','v4.2.2-rc carries the torque fix · awaiting cert.'],
+        ['Impact agent','TRACEABILITY · eng-06','work','ECO-318 touches 3 units, 2 BOMs, the BMW order.'],
+        ['Requirements agent','VERIFY · eng-03','live','Tightening REQ-114 torque spec to ±2.5%.'],
+        ['CAD / config agent','DESIGN · eng-07','live','Branched config for the -205 drive · BRK-12 r3.'] ] },
+      { g:'Robotics', m:'Autonomy', a:[
+        ['Mission agent','TASKS · auto-01','live','12,480 tasks today · Site-3 the outlier at 96.1%.'],
+        ['Intervention agent','AUTONOMY · auto-04','work','Takeovers on Site-3 up to 7/1k since p-13.'],
+        ['Safety agent','SAFETY · auto-02','crit','INC-201 proximity near-miss on SN-2150 · review.'],
+        ['Policy agent','MODELS · auto-03','work','Recommending Site-3 rollback p-13 → p-12.4.'],
+        ['Simulation agent','REPLAY · auto-06','live','Replayed INC-201 — candidate p-13.1 clears it.'],
+        ['SLA agent','TASK SLA · auto-09','live','Fleet SLA 99.2% · Site-3 dipped to 98.1%.'] ] },
+      { g:'Back office', m:'Finance', a:[
+        ['Revenue-recognition agent','ASC 606 · fin-01','live','Splitting hardware from ratable RaaS revenue.'],
+        ['Unit-economics agent','COSTING · fin-04','work','HX-2 margin down 2.1pt — the ECO-318 cost roll.'],
+        ['Collections agent','AR · fin-02','crit','Kawasaki INV-2170 is 62 days overdue ($0.5M).'],
+        ['Payables agent','AP · fin-03','live','312 POs three-way matched · 98% auto-cleared.'],
+        ['FP&A agent','FORECAST · fin-06','live','19 months runway at the current $3.3M burn.'],
+        ['Close agent','MONTH-END · fin-09','work','FY26 close in 4 days · 6 entries need review.'] ] },
+      { g:'Back office', m:'People', a:[
+        ['Certification agent','COMPLIANCE · ppl-01','crit','M. Osei\u2019s HV/battery cert expires in 12 days.'],
+        ['Recruiting agent','PIPELINE · ppl-02','live','3 field-tech reqs open · 14 candidates.'],
+        ['Onboarding agent','RAMP · ppl-03','live','2 new techs in week-1 certification training.'],
+        ['Workforce-planning agent','CAPACITY · ppl-04','work','Tech-to-fleet ratio at 1:2.7 vs the 1:4 target.'],
+        ['Skills agent','COMPETENCY · ppl-06','live','Commissioning is the thinnest cert — 3 techs.'],
+        ['Scheduling agent','SHIFTS · ppl-09','live','Shift coverage solid across all 3 sites.'] ] },
+      { g:'Back office', m:'Security', a:[
+        ['Vulnerability agent','CVE · sec-01','crit','CVE-2026-3140 — LIDAR RCE on 12 deployed units.'],
+        ['Endpoint agent','POSTURE · sec-04','work','3 device TLS certs expire inside 30 days.'],
+        ['Identity agent','ACCESS · sec-02','live','Revoked a 92-day-idle read-only agent token.'],
+        ['Patch agent','OTA · sec-03','work','Fix ships in v4.2.2 — gated on HX-1 cert.'],
+        ['Threat-detection agent','ANOMALY · sec-06','live','No anomalous command traffic across the fleet.'],
+        ['Audit agent','COMPLIANCE · sec-09','live','SOC 2 access review due in 9 days · 92% complete.'] ] },
+      { g:'Back office', m:'Legal', a:[
+        ['Obligations agent','SLA · legal-01','crit','BMW 99.5% SLA vs Site-3\u2019s 98.1% — breach risk.'],
+        ['Contract agent','LIFECYCLE · legal-02','work','BMW MSA redline executing — net-60 + SLA clause.'],
+        ['Export-control agent','TRADE · legal-04','crit','DLV-3312 needs an EAR99 license before Osaka.'],
+        ['Compliance agent','REGULATORY · legal-03','work','EU Machinery Reg 2027 conformity in progress.'],
+        ['Liability agent','RISK · legal-06','live','Logged INC-201; exposure within insured limit.'],
+        ['IP agent','PATENTS · legal-09','live','Filed the harmonic-drive patent from ECO-318.'] ] },
+    ];
+
+    // what each agent does (keyed by role code)
+    const DESC = {
+      'proc-04':'Finds and qualifies suppliers for every component.','proc-02':'Runs quote requests and compares vendor bids.','proc-07':'Negotiates price, terms, and lead times with vendors.','proc-03':'Raises purchase orders when stock hits reorder points.','proc-05':'Three-way matches POs, receipts, and invoices.','proc-09':'Monitors multi-tier supplier risk and cost variance.',
+      'mfg-01':'Plans and balances the production line schedule.','mfg-02':'Issues and tracks build work orders on the floor.','mfg-04':'Records the full build history of every serial.','mfg-06':'Watches line OEE and flags bottlenecks.','mfg-03':'Kits parts to each build and flags shortages.','mfg-09':'Schedules preventive maintenance on line equipment.',
+      'inv-01':'Tracks on-hand stock across parts and finished units.','inv-02':'Maintains reorder points and flags low SKUs.','inv-04':'Processes returns and warranty stock movements.','inv-03':'Runs cycle counts and reconciles variances.','inv-06':'Reserves stock against open orders and builds.','inv-09':'Keeps field edge-caches stocked with spares.',
+      'ful-01':'Matches finished units to customer orders.','ful-02':'Books carriers and optimizes shipping routes.','ful-04':'Clears export paperwork and customs holds.','ful-03':'Schedules on-site installation crews.','ful-06':'Runs the on-site commissioning checklist.','ful-09':'Tracks delivery dates against commitments.',
+      'qa-01':'Runs incoming and final acceptance inspections.','qa-04':'Monitors process control charts against spec.','qa-06':'Correlates defects back to their root cause.','qa-03':'Opens non-conformances and drives corrective action.','qa-07':'Tracks test-rig calibration schedules.','qa-09':'Maintains CE/UL/ISO certification evidence.',
+      'crm-01':'Scores and qualifies inbound leads.','crm-02':'Configures, prices, and quotes complex orders.','crm-04':'Checks whether ops can build and deliver on time.','crm-06':'Forecasts pipeline against quarterly quota.','crm-03':'Drafts and redlines customer contracts.','crm-09':'Surfaces renewals and expansion opportunities.',
+      'mkt-01':'Plans campaigns and allocates budget.','mkt-02':'Produces content and tracks SEO performance.','mkt-03':'Targets named accounts using intent signals.','mkt-04':'Scores and nurtures leads toward sales.','mkt-06':'Attributes pipeline to marketing channels.','mkt-09':'Runs trade shows and event logistics.',
+      'flt-01':'Streams live health telemetry from every unit.','flt-02':'Predicts failures before they happen.','flt-06':'Tracks fleet uptime against SLA targets.','flt-03':'Manages over-the-air firmware rollouts.','flt-04':'Detects hardware anomalies across the fleet.','flt-09':'Monitors charging and energy use.',
+      'fs-01':'Routes the right technician to each job.','fs-02':'Classifies and prioritizes incoming work orders.','fs-04':'Reserves spare parts for each repair.','fs-03':'Balances jobs across the technician roster.','fs-06':'Pushes repair procedures to technicians.','fs-09':'Schedules preventive field maintenance.',
+      'eng-01':'Drives engineering change orders through review.','eng-04':'Maintains the hardware-firmware compatibility matrix.','eng-02':'Manages firmware release candidates.','eng-06':'Traces change impact across BOMs and units.','eng-03':'Manages requirements and verification tests.','eng-07':'Versions CAD and product configurations.',
+      'auto-01':'Tracks mission tasks and success rates.','auto-04':'Monitors human-takeover rates by site.','auto-02':'Logs and reviews safety incidents.','auto-03':'Manages autonomy policy versions and rollouts.','auto-06':'Replays incidents and validates fixes in sim.','auto-09':'Tracks task-completion SLAs across the fleet.',
+      'fin-01':'Recognizes hardware and RaaS revenue per ASC 606.','fin-04':'Computes gross margin per robot.','fin-02':'Chases receivables and manages collections.','fin-03':'Matches and clears supplier invoices.','fin-06':'Forecasts burn, cash, and runway.','fin-09':'Runs the month-end accounting close.',
+      'ppl-01':'Tracks technician certifications and expiries.','ppl-02':'Manages open reqs and the candidate pipeline.','ppl-03':'Ramps new hires through certification training.','ppl-04':'Plans headcount against fleet growth.','ppl-06':'Maps team competencies and skill gaps.','ppl-09':'Builds shift coverage across sites.',
+      'sec-01':'Triages CVEs affecting deployed units.','sec-04':'Tracks device security posture across endpoints.','sec-02':'Manages access and credentials for the fleet.','sec-03':'Coordinates signed firmware patch rollouts.','sec-06':'Watches for anomalous command traffic.','sec-09':'Runs access reviews and compliance audits.',
+      'legal-01':'Tracks contract obligations against live ops.','legal-02':'Manages the contract lifecycle and redlines.','legal-04':'Classifies exports and files licenses.','legal-03':'Manages regulatory conformity dossiers.','legal-06':'Assesses product-liability exposure.','legal-09':'Files and manages patents.',
+    };
+
+    // flatten + index
+    const flat = {};
+    let liveCount = 0;
+    DATA.forEach(mod => mod.a.forEach((row, i) => {
+      const key = mod.m + '|' + i;
+      const roleTag = (row[1].split('·')[0] || '').trim();
+      const code = (row[1].split('·')[1] || '').trim();
+      flat[key] = { key, name:row[0], role:row[1], roleTag, state:row[2], status:row[3], module:mod.m, desc: DESC[code] || row[3] };
+      if (row[2] !== 'crit') liveCount++;
+    }));
+
+    const q = this.state.query.trim().toLowerCase();
+    const match = (a) => !q || (a.name + ' ' + a.role + ' ' + a.module + ' ' + a.status).toLowerCase().includes(q);
+
+    const navGroups = [
+      { label:'Core', items:[
+        { name:'Command Center', href:'Command Center.dc.html' }, { name:'Agents', active:true, href:'Agents.dc.html' }, { name:'Workflows', href:'Workflows.dc.html' }, { name:'Projects', href:'Projects.dc.html' }, { name:'Machines', href:'Machines.dc.html' } ] },
+      { label:'Value chain', items:[
+        { name:'Procurement', badge:'6' }, { name:'Manufacturing' }, { name:'Inventory' },
+        { name:'Fulfillment', badge:'3' }, { name:'Quality' }, { name:'Sales & CRM' }, { name:'Marketing' } ] },
+      { label:'Robotics', items:[
+        { name:'Fleet' }, { name:'Field Service' }, { name:'Engineering' }, { name:'Autonomy' } ] },
+      { label:'Back office', items:[
+        { name:'Finance', badge:'6' }, { name:'People' }, { name:'Security' }, { name:'Legal' } ] },
+    ].map(g => ({
+      label: g.label || null,
+      items: g.items.map(it => ({
+        name: it.name, badge: it.badge || null,
+        href: it.href || (it.name === 'Inventory' ? '#' : it.name + '.dc.html'),
+        bg: it.active ? 'var(--panel)' : 'transparent',
+        fg: it.active ? 'var(--ink)' : 'var(--ink-muted)',
+        weight: it.active ? 600 : 400,
+        size: it.sub ? '13px' : '14px',
+        pad: it.sub ? '22px' : '10px',
+        marker: it.active ? 'var(--ink-strong)' : 'var(--line-strong)',
+      })),
+    }));
+
+    // build grouped, filtered roster
+    const groupOrder = ['Value chain', 'Robotics', 'Back office'];
+    const groups = groupOrder.map(gl => ({
+      label: gl,
+      modules: DATA.filter(d => d.g === gl).map(mod => {
+        const agents = mod.a.map((row, i) => {
+          const key = mod.m + '|' + i;
+          const a = flat[key];
+          return { ...a, open:()=>this.pick(key) };
+        }).filter(match);
+        return { name: mod.m, count: agents.length, agents };
+      }).filter(mod => mod.agents.length > 0)
+        .map(mod => ({ ...mod, agents: mod.agents.map(a => ({
+          name:a.name, desc:a.desc, open:a.open,
+          stateColor: stateColor(a.state),
+          cardBorder: a.key === this.state.selKey ? 'var(--ink-strong)' : 'var(--line)',
+        })) })),
+    })).filter(g => g.modules.length > 0);
+
+    const empty = groups.length === 0;
+
+    const sel = flat[this.state.selKey] || flat['Procurement|0'];
+    const activeAgent = {
+      name: sel.name, role: sel.role, roleTag: sel.roleTag, module: sel.module,
+      stateColor: stateColor(sel.state), stateLabel: stateLabel(sel.state),
+    };
+
+    const baseThread = this.state.thread.length ? this.state.thread : [{ role:'agent', text:sel.status + ' What do you want me to do?' }];
+    const thread = baseThread.map(m => ({
+      isAgent: m.role === 'agent', text:m.text,
+      rowJustify: m.role === 'agent' ? 'flex-start' : 'flex-end',
+      bubbleBg: m.role === 'agent' ? 'var(--panel)' : 'var(--ink-strong)',
+      bubbleFg: m.role === 'agent' ? 'var(--ink)' : '#fff',
+    }));
+
+    const suggLabels = ['Brief me', 'Take the next step', 'Open in ' + sel.module];
+    const suggestions = suggLabels.map(s => ({ label:s, go:()=>this.send(s) }));
+
+    return {
+      navGroups, groups, empty, liveCount,
+      query: this.state.query, hasQuery: q.length > 0,
+      onQuery:(e)=>this.setState({ query:e.target.value }),
+      clearQuery:()=>this.setState({ query:'' }),
+      activeAgent, thread, suggestions,
+      panelW: this.state.panelW, startDrag: this.startDrag,
+      draft:this.state.draft,
+      onDraft:(e)=>this.setState({ draft:e.target.value }),
+      onKey:(e)=>{ if(e.key === 'Enter'){ e.preventDefault(); this.send(); } },
+      sendBtn:()=>this.send(),
+      inputPlaceholder: 'Message ' + sel.name + '…',
+    };
+  }
+}
+</script>
+</body>
+</html>

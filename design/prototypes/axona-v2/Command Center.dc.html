@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .copilot-dark{background-color:#121214;background-image:radial-gradient(520px 280px at 8% -30%,rgba(198,242,79,.14),transparent 62%),linear-gradient(155deg,#1c1c20,#111114)}
+  .collapse-btn{transition:background .15s,color .15s}
+  .collapse-btn:hover{background:var(--panel);color:var(--ink)}
+  .navitem{transition:background .15s,color .15s}
+  .navitem:hover{background:var(--panel)}
+  .navgroup summary{list-style:none}
+  .navgroup summary::-webkit-details-marker{display:none}
+  .navgroup summary::marker{content:""}
+  .navgroup summary:hover .navchev{stroke:var(--ink-muted)}
+  .navchev{transition:transform .15s;flex:none}
+  .navgroup:not([open]) .navchev{transform:rotate(-90deg)}
+  .navsearch{transition:border-color .15s,background .15s}
+  .navsearch:hover{border-color:var(--ink-strong);background:var(--panel-2)}
+  .kpi{transition:border-color .18s,transform .18s}
+  .kpi:hover{border-color:var(--ink-strong);transform:translateY(-2px)}
+  .alert:hover{background:var(--panel-2)}
+  .pchip{transition:border-color .18s,color .18s}
+  .pchip:hover{color:#fff}
+  .scarea::-webkit-scrollbar{width:8px}
+  .scarea::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+</style>
+<script>document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key&&e.key.toLowerCase()==='k'){e.preventDefault();window.location.href='Mission Control.dc.html';}});</script>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden;font-family:var(--font-sans);color:var(--ink);background:var(--panel)">
+
+  <aside style="width:240px;flex:none;background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 8px 18px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:21px;font-weight:700;letter-spacing:-.04em;color:var(--ink-strong)">axona</span>
+        <span style="width:12px;height:12px;background:var(--ink-strong);border-radius:0 7px 0 7px"></span>
+      </div>
+      <button class="collapse-btn" title="Collapse menu" style="width:28px;height:28px;border:1px solid var(--line);border-radius:7px;background:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-muted);flex:none;padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18"></path><path d="m15 9-3 3 3 3"></path></svg></button>
+    </div>
+    <a href="Mission Control.dc.html" class="navsearch" style="display:flex;align-items:center;gap:9px;margin:0 4px 10px;padding:8px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--panel);cursor:pointer;text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <span style="flex:1;font-size:13px;color:var(--ink-faint)">Search</span>
+      <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px">⌘K</span>
+    </a>
+    <div class="scarea" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;margin:0 -4px;padding:0 4px">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <details open="open" class="navgroup">
+          <summary style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;padding:14px 10px 6px;cursor:pointer"><span style="flex:1">{{ g.label }}</span><svg class="navchev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--line-strong)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></summary>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+          <a class="navitem" href="{{ it.href }}" style="display:flex;align-items:center;gap:11px;padding:8px 10px 8px {{ it.pad }};border-radius:8px;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.weight }};font-size:14px;text-decoration:none">
+            <span style="width:6px;height:6px;border-radius:2px;background:{{ it.marker }};flex:none"></span>
+            <span style="flex:1">{{ it.name }}</span>
+            <sc-if value="{{ it.badge }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:10px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 7px;font-weight:600">{{ it.badge }}</span></sc-if>
+          </a>
+        </sc-for>
+        </details>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 8px 2px;border-top:1px solid var(--line);margin-top:8px">
+      <span style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink)">LC</span>
+      <div style="font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Head of Ops</div></div>
+    </div>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--panel)">
+    <div style="height:60px;flex:none;border-bottom:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:space-between;padding:0 28px">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Tuesday · 09:41 · All sites</div>
+        <h1 style="margin:2px 0 0;font-size:19px;font-weight:600;letter-spacing:-.02em">Command center</h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <span style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--success);background:var(--success-tint);border-radius:999px;padding:5px 12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--success)"></span>Systems nominal</span>
+        <span style="display:inline-flex;align-items:center;gap:8px"><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;color:var(--ink-faint);text-transform:uppercase">Agent actions</span><span style="font-family:var(--font-mono);font-size:11.5px;font-weight:500;background:var(--panel);border:1px solid var(--line-panel);border-radius:5px;padding:2px 7px">514</span></span>
+      </div>
+    </div>
+
+    <div style="flex:1;min-height:0;display:grid;grid-template-columns:1.55fr 1fr;gap:20px;padding:22px 24px">
+
+      <div class="scarea" style="overflow-y:auto;min-width:0;display:flex;flex-direction:column;gap:18px;padding-right:4px">
+        <div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:13px">
+            <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;color:var(--mono-faint);text-transform:uppercase">System health</span>
+            <span style="flex:1;height:1px;background:var(--line)"></span>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">Last 24h</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+            <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="8">
+              <div class="kpi" style="background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:15px;cursor:pointer;min-width:0">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase">{{ k.domain }}</span>
+                  <span style="width:6px;height:6px;border-radius:50%;background:{{ k.dot }}"></span>
+                </div>
+                <div style="font-size:25px;font-weight:700;letter-spacing:-.03em;margin-top:9px">{{ k.value }}</div>
+                <div style="font-size:11px;color:{{ k.noteColor }};margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ k.note }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h3 style="margin:0;font-size:15px;font-weight:600">Production throughput</h3>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);letter-spacing:.04em">UNITS / DAY · 12 WK</span>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:7px;height:120px">
+            <sc-for list="{{ bars }}" as="b" hint-placeholder-count="12">
+              <div style="flex:1;height:{{ b.h }};background:{{ b.color }};border-radius:4px 4px 0 0"></div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div class="scarea" style="overflow-y:auto;min-width:0;display:flex;flex-direction:column;gap:18px;padding-right:4px">
+        <div class="copilot-dark" style="border-radius:14px;padding:18px 18px 16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:13px">
+            <span style="width:7px;height:7px;border-radius:50%;background:var(--accent)"></span>
+            <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--accent);text-transform:uppercase">Ask Axona</span>
+          </div>
+          <div style="display:flex;align-items:stretch;background:var(--paper);border-radius:9px;overflow:hidden">
+            <input placeholder="Ask anything…" style="flex:1;border:none;outline:none;padding:11px 13px;font-size:13.5px;font-family:var(--font-sans);color:var(--ink);background:transparent">
+            <button style="background:var(--accent);color:var(--accent-ink);border:none;font-size:13px;font-weight:600;padding:0 16px;cursor:pointer;font-family:var(--font-sans)">Ask</button>
+          </div>
+          <div style="display:flex;flex-direction:column;margin-top:12px">
+            <sc-for list="{{ prompts }}" as="p" hint-placeholder-count="4">
+              <div class="pchip" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 2px;border-top:1px solid var(--line-dark);font-size:12.5px;color:var(--on-dark-mut);cursor:pointer">{{ p }}<span style="color:var(--accent);font-size:12px">↗</span></div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;color:var(--mono-faint);text-transform:uppercase">Needs attention</span>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">{{ alertCount }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ alerts }}" as="a" hint-placeholder-count="5">
+              <div class="alert" style="display:flex;align-items:flex-start;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:13px 14px;cursor:pointer">
+                <span style="width:3px;align-self:stretch;border-radius:2px;background:{{ a.bar }};flex:none"></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13.5px;font-weight:600;line-height:1.3">{{ a.title }}</div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+                    <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.04em;color:var(--ink-muted);text-transform:uppercase;background:var(--panel);border-radius:5px;padding:2px 6px">{{ a.module }}</span>
+                    <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)">{{ a.meta }}</span>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){
+    const ACC = 'var(--accent)', SUC = 'var(--success)', CRIT = 'var(--ink-strong)', MUT = 'var(--ink-muted)', FNT = 'var(--ink-faint)';
+
+    const navRaw = [
+      { label:'Core', items:[ { name:'Command Center', active:true, href:'Command Center.dc.html' }, { name:'Agents', href:'Agents.dc.html' }, { name:'Workflows', href:'Workflows.dc.html' }, { name:'Projects', href:'Projects.dc.html' }, { name:'Machines', href:'Machines.dc.html' } ] },
+      { label:'Value chain', items:[
+        { name:'Procurement', badge:'6' }, { name:'Manufacturing' }, { name:'Inventory' },
+        { name:'Fulfillment', badge:'3' }, { name:'Quality' }, { name:'Sales & CRM' }, { name:'Marketing' } ] },
+      { label:'Robotics', items:[
+        { name:'Fleet' }, { name:'Field Service' }, { name:'Engineering' }, { name:'Autonomy' } ] },
+      { label:'Back office', items:[
+        { name:'Finance', badge:'6' }, { name:'People' }, { name:'Security' }, { name:'Legal' } ] },
+    ];
+    const navGroups = navRaw.map(g => ({
+      label: g.label || null,
+      items: g.items.map(it => ({
+        name: it.name, badge: it.badge || null, href: it.href || (it.name === 'Inventory' ? '#' : it.name + '.dc.html'), pad: it.sub ? '24px' : '10px',
+        bg: it.active ? 'var(--panel)' : 'transparent',
+        fg: it.active ? 'var(--ink)' : 'var(--ink-muted)',
+        weight: it.active ? 600 : 400,
+        marker: it.active ? 'var(--ink-strong)' : 'var(--line-strong)',
+      })),
+    }));
+
+    const kpis = [
+      { domain:'Manufacturing', value:'98.2%', note:'On-time build · +3.1 pts', dot:SUC, noteColor:SUC },
+      { domain:'Inventory', value:'2', note:'Open shortages · ↓ from 11', dot:ACC, noteColor:SUC },
+      { domain:'Procurement', value:'6', note:'POs awaiting approval', dot:ACC, noteColor:MUT },
+      { domain:'Production', value:'48', note:'Units in build · 3 lines', dot:SUC, noteColor:MUT },
+      { domain:'Fleet', value:'99.1%', note:'Uptime · 48 units live', dot:SUC, noteColor:SUC },
+      { domain:'Fulfillment', value:'3', note:'In transit · 2 installs due', dot:ACC, noteColor:MUT },
+      { domain:'Autonomy', value:'1', note:'Open incident · Line 2', dot:CRIT, noteColor:'var(--ink)' },
+      { domain:'Finance', value:'$24.6M', note:'Cash · 14 mo runway', dot:SUC, noteColor:MUT },
+    ];
+
+    const sevBar = { crit:CRIT, attn:ACC, info:FNT, ok:SUC };
+    const alertsRaw = [
+      { sev:'crit', title:'Line 2 halted — payload test failure', meta:'SN-2208 · 6 MIN AGO', module:'Autonomy', action:'Open incident' },
+      { sev:'attn', title:'SERVO-204 covers only 2 more builds', meta:'AGENT RECOMMENDS REORDER', module:'Inventory', action:'Resolve' },
+      { sev:'attn', title:'Cost variance +9% on Vendor D', meta:'ESCALATED BY AGENT · 1H AGO', module:'Finance', action:'Review' },
+      { sev:'info', title:'2 receipts pending reconciliation', meta:'SITE-3 · GRN-887, GRN-889', module:'Procurement', action:'Review' },
+      { sev:'ok', title:'PO-10481 approved & sent to Vendor C', meta:'AUTO-APPLIED · 2H AGO', module:'Procurement', action:null },
+    ];
+    const alerts = alertsRaw.map((a, i) => ({
+      ...a, bar: sevBar[a.sev], divider: i ? '1px solid var(--line)' : 'none',
+    }));
+
+    const prompts = [
+      'Why did Line 2 halt?',
+      'Which robots are at risk this week?',
+      'Draft a PO for SERVO-204',
+      'Summarize this week\u2019s cost variances',
+    ];
+
+    const heights = [42,55,49,63,58,70,64,79,73,86,81,94];
+    const bars = heights.map((h, i) => ({ h: h + '%', color: i > 8 ? 'var(--accent)' : 'var(--skeleton)' }));
+
+    return { navGroups, kpis, alerts, prompts, bars, alertCount: alerts.length + ' open' };
+  }
+}
+</script>
+</body>
+</html>

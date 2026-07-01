@@ -1,0 +1,29 @@
+/* Axona — Radii, shadows, motifs */
+:root {
+  /* Corner radii */
+  --r-pill: 999px; /* chips, badges */
+  --r-btn: 8px; /* buttons, inputs (7–9px range) */
+  --r-card: 14px; /* cards, product panels */
+  --r-panel: 16px; /* large CTA / hero panels */
+  --r-sm: 7px;
+
+  /* Shadows */
+  --shadow-float: 0 18px 40px rgba(0, 0, 0, 0.07); /* floating mock cards */
+  --shadow-hero: 0 26px 50px rgba(0, 0, 0, 0.28); /* dark hero center card */
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.1);
+
+  /* Dotted-grid motif — apply as a background on panels/heros */
+  --dotgrid: radial-gradient(#d9d8d2 1.1px, transparent 1.1px);
+  --dotgrid-size: 18px 18px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.2, 0.6, 0.2, 1);
+  --dur-fast: 0.12s;
+  --dur: 0.2s;
+}
+
+/* Utility class for the signature dotted-grid background */
+.ax-dotgrid {
+  background-image: var(--dotgrid);
+  background-size: var(--dotgrid-size);
+}

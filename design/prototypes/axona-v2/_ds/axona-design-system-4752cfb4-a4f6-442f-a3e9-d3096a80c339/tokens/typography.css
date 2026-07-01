@@ -1,0 +1,35 @@
+/* Axona type scale. Archivo 600–700 for display (fluid clamps, tight tracking);
+   JetBrains Mono 400/500 UPPERCASE for labels/codes/counters (+.06–.08em).
+   "Type does the work" — minimal decoration, the letterforms carry the page. */
+:root {
+  /* Weights */
+  --fw-regular: 400; /* @kind font */
+  --fw-medium: 500; /* @kind font */
+  --fw-semibold: 600; /* @kind font */
+  --fw-bold: 700; /* @kind font */
+
+  /* Display / heading sizes (fluid) — size / line-height / tracking */
+  --text-hero: clamp(48px, 8.2vw, 108px); /* 0.92 / -0.045em */
+  --text-h1: var(--text-hero);
+  --text-h2: clamp(30px, 4vw, 52px); /* 1.02 / -0.035em */
+  --text-h3: 24px; /* 1.2  / -0.02em  */
+  --text-lead: clamp(17px, 1.8vw, 21px); /* 1.5             */
+  --text-body-size: 16px; /* 1.5             */
+  --text-sm: 14px;
+  --text-xs: 13px;
+  --text-mono: 11px; /* +0.06em UPPER   */
+
+  /* Tracking */
+  --track-hero: -0.045em;
+  --track-h2: -0.035em;
+  --track-h3: -0.02em;
+  --track-tight: -0.03em;
+  --track-mono: 0.06em;
+  --track-mono-wide: 0.08em;
+
+  /* Line heights */
+  --lh-hero: 0.92; /* @kind font */
+  --lh-h2: 1.02; /* @kind font */
+  --lh-tight: 1.08; /* @kind font */
+  --lh-body: 1.5; /* @kind font */
+}

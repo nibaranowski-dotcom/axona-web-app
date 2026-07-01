@@ -1,0 +1,10 @@
+/* Axona type — Archivo (display + body) + JetBrains Mono (labels, codes, counters).
+   Self-hosted by next/font in the product codebase; here we load the Google Fonts webfonts.
+   If you need offline/self-hosted binaries, drop them in assets/fonts and replace this @import. */
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+:root {
+  --font-sans:
+    "Archivo", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}

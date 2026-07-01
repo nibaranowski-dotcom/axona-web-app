@@ -3,8 +3,9 @@
  *
  * Reconciled to the imported Claude Design system (DS.1, project "Axona v2" /
  * "Axona Design System"). Supersedes the FND.2 starter tokens. The verbatim
- * imported token files live in design/prototypes/source/tokens/. Mapped 1:1 into
- * Tailwind via ../src/tailwind.ts. No raw hex anywhere else in the app.
+ * imported token files live in design/prototypes/axona-v2/tokens/ (canonical
+ * reference). Mapped 1:1 into Tailwind via ../src/tailwind.ts. No raw hex
+ * anywhere else in the app.
  *
  * Brand reconciliation (CLAUDE.md invariants win):
  *  - Fonts: --font-sans/--font-mono point at the next/font vars (self-hosted,

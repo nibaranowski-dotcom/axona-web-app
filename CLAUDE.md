@@ -23,9 +23,20 @@ critical states use ink) · hairlines over shadows · dotted-grid motif · **no 
 
 **Canonical design system = DS.1 (imported via the `claude_design` MCP → `Design System.dc.html`).** The
 implemented tokens + primitives in `design/` are the visual source of truth; `design.md` is reconciled to
-match it (brand invariants above still win on any conflict). **Every screen must match DS.1 1:1** — visual
-fidelity is part of the definition of done, checked per story, not a later pass. `FND.14`/`FND.15`
-(data + agent primitives) build on DS.1's components, not parallel to them.
+match it (brand invariants above still win on any conflict). `FND.14`/`FND.15` (data + agent primitives)
+build on DS.1's components, not parallel to them.
+
+**Per-screen design source = the committed `Axona v2` export at `design/prototypes/axona-v2/`** (exported
+from the `claude_design` project `30c1e297…`; ~26 `.dc.html` files, one per screen, + `tokens/`,
+`components/`, `guidelines/`, and handoff `.md` docs). This is the canonical fidelity reference — it
+supersedes the older DS.1-era `design/prototypes/` set. **Every UI story implements its screen 1:1 against
+its local `.dc.html`** (Claude Code reads the file directly — no MCP/connector round-trip, no re-auth).
+The block names the file: "implement `design/prototypes/axona-v2/<Screen>.dc.html` 1:1 on the DS.1
+primitives." Route→file map: the file name is the module's display name (`/sales` → `Sales & CRM.dc.html`,
+`/core` → `Command Center.dc.html`, `/agents` → `Agents.dc.html`, `/procurement` → `Procurement.dc.html`,
+…). `uploads/` (40MB binaries), `.DS_Store`, `.thumbnail`, `screenshots/` are gitignored — only the
+`.dc.html` + tokens + docs are committed. Data/API-only stories skip this (no screen). Visual fidelity is
+part of the DoD, checked per story — never a later pass.
 
 ## Stack (from build spec §2 — pin/verify at scaffold)
 Monorepo (pnpm + Turborepo) · TypeScript · Next.js (App Router) + React · Tailwind + CSS-var tokens ·

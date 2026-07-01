@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .ax-dotgrid{background-image:var(--dotgrid);background-size:var(--dotgrid-size)}
+  .copilot-dark{background-color:#121214;background-image:radial-gradient(520px 280px at 8% -30%,rgba(198,242,79,.14),transparent 62%),linear-gradient(155deg,#1c1c20,#111114)}
+  .collapse-btn{transition:background .15s,color .15s}
+  .collapse-btn:hover{background:var(--panel);color:var(--ink)}
+  .navitem{transition:background .15s,color .15s}
+  .navitem:hover{background:var(--panel)}
+  .navgroup summary{list-style:none}
+  .navgroup summary::-webkit-details-marker{display:none}
+  .navgroup summary::marker{content:""}
+  .navgroup summary:hover .navchev{stroke:var(--ink-muted)}
+  .navchev{transition:transform .15s;flex:none}
+  .navgroup:not([open]) .navchev{transform:rotate(-90deg)}
+  .navsearch{transition:border-color .15s,background .15s}
+  .navsearch:hover{border-color:var(--ink-strong);background:var(--panel-2)}
+  .unitrow:hover{background:var(--panel-2)}
+  .chip{transition:border-color .15s,color .15s}
+  .chip:hover{border-color:var(--ink-strong);color:var(--ink)}
+  .avs{transition:transform .12s}
+  .avs:hover{transform:translateY(-2px)}
+  .resizer{transition:background .15s}
+  .resizer:hover{background:var(--panel-2)}
+  .resizer:hover .grip{background:var(--ink-strong)}
+  .scarea::-webkit-scrollbar{width:8px}
+  .scarea::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+</style>
+<script>document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key&&e.key.toLowerCase()==='k'){e.preventDefault();window.location.href='Mission Control.dc.html';}});</script>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden;font-family:var(--font-sans);color:var(--ink);background:var(--panel)">
+
+  <aside style="width:240px;flex:none;background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 8px 18px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:21px;font-weight:700;letter-spacing:-.04em;color:var(--ink-strong)">axona</span>
+        <span style="width:12px;height:12px;background:var(--ink-strong);border-radius:0 7px 0 7px"></span>
+      </div>
+      <button class="collapse-btn" title="Collapse menu" style="width:28px;height:28px;border:1px solid var(--line);border-radius:7px;background:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-muted);flex:none;padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18"></path><path d="m15 9-3 3 3 3"></path></svg></button>
+    </div>
+    <a href="Mission Control.dc.html" class="navsearch" style="display:flex;align-items:center;gap:9px;margin:0 4px 10px;padding:8px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--panel);cursor:pointer;text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <span style="flex:1;font-size:13px;color:var(--ink-faint)">Search</span>
+      <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px">⌘K</span>
+    </a>
+    <div class="scarea" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;margin:0 -4px;padding:0 4px">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <details open="open" class="navgroup">
+          <summary style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;padding:14px 10px 6px;cursor:pointer"><span style="flex:1">{{ g.label }}</span><svg class="navchev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--line-strong)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></summary>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+          <a class="navitem" href="{{ it.href }}" style="display:flex;align-items:center;gap:11px;padding:8px 10px 8px {{ it.pad }};border-radius:8px;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.weight }};font-size:14px;text-decoration:none">
+            <span style="width:6px;height:6px;border-radius:2px;background:{{ it.marker }};flex:none"></span>
+            <span style="flex:1">{{ it.name }}</span>
+            <sc-if value="{{ it.badge }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:10px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 7px;font-weight:600">{{ it.badge }}</span></sc-if>
+          </a>
+        </sc-for>
+        </details>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 8px 2px;border-top:1px solid var(--line);margin-top:8px">
+      <span style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink)">LC</span>
+      <div style="font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Head of Ops</div></div>
+    </div>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex">
+
+    <!-- module: fleet command -->
+    <div style="flex:1;min-width:420px;display:flex;flex-direction:column;background:var(--panel)">
+      <div style="height:60px;flex:none;border-bottom:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:space-between;padding:0 24px">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Robotics · 48 units · 3 sites</div>
+          <h1 style="margin:2px 0 0;font-size:19px;font-weight:600;letter-spacing:-.02em">Fleet &amp; Deployment</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--ink);background:var(--panel);border:1px solid var(--line-strong);border-radius:999px;padding:5px 12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--ink-strong)"></span>1 unit down</span>
+          <button style="font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;line-height:1;padding:9px 16px;font-size:13.5px;background:var(--ink-strong);color:#fff;border:1px solid var(--ink-strong)">Schedule rollout</button>
+        </div>
+      </div>
+
+      <div class="scarea" style="flex:1;overflow-y:auto;padding:22px 24px;display:flex;flex-direction:column;gap:18px">
+
+        <!-- fleet health distribution -->
+        <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px">
+            <h3 style="margin:0;font-size:15px;font-weight:600">Fleet health</h3>
+            <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);letter-spacing:.04em">99.1% UPTIME · 92% ON v4.2.1 · 78% AVG BATTERY</span>
+          </div>
+          <div style="display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--skeleton);gap:2px">
+            <sc-for list="{{ health }}" as="h" hint-placeholder-count="4">
+              <span style="width:{{ h.pct }};background:{{ h.color }}"></span>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:13px">
+            <sc-for list="{{ health }}" as="h" hint-placeholder-count="4">
+              <span style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-muted)"><span style="width:8px;height:8px;border-radius:50%;background:{{ h.color }}"></span>{{ h.label }}<span style="font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--ink)">{{ h.n }}</span></span>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- map + OTA -->
+        <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:18px">
+          <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <h3 style="margin:0;font-size:15px;font-weight:600">Deployment map</h3>
+              <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);letter-spacing:.04em">3 SITES</span>
+            </div>
+            <div class="ax-dotgrid" style="position:relative;height:236px;border-radius:10px;background-color:var(--panel)">
+              <sc-for list="{{ sites }}" as="s" hint-placeholder-count="3">
+                <div style="display:contents">
+                  <span style="position:absolute;left:{{ s.x }};top:{{ s.y }};width:13px;height:13px;border-radius:50%;background:{{ s.color }};box-shadow:0 0 0 5px {{ s.glow }};transform:translate(-50%,-50%)"></span>
+                  <span style="position:absolute;left:{{ s.x }};top:{{ s.y }};transform:translate(14px,-6px);font-family:var(--font-mono);font-size:9.5px;color:var(--ink-muted);white-space:nowrap">{{ s.label }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <h3 style="margin:0;font-size:15px;font-weight:600">Firmware</h3>
+              <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);letter-spacing:.04em">OTA</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--ink-muted);margin-bottom:6px">v4.2.1 rollout</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+              <div style="flex:1;height:6px;border-radius:999px;background:var(--skeleton);overflow:hidden"><span style="display:block;height:6px;width:92%;background:var(--accent)"></span></div>
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)">44 / 48</span>
+            </div>
+            <sc-for list="{{ versions }}" as="v" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px">
+                <span style="font-family:var(--font-mono);font-size:12px">{{ v.v }}<sc-if value="{{ v.behind }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.04em;background:var(--accent);color:var(--accent-ink);border-radius:4px;padding:1px 5px;margin-left:7px;text-transform:uppercase">behind</span></sc-if></span>
+                <span style="color:var(--ink-muted)">{{ v.n }}</span>
+              </div>
+            </sc-for>
+            <div style="display:flex;gap:8px;align-items:flex-start;margin-top:13px;padding-top:12px;border-top:1px solid var(--line)">
+              <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:5px;flex:none"></span>
+              <span style="font-size:12px;color:var(--ink-muted);line-height:1.4">OTA agent staging v4.2.1 to the last 4 units in Osaka tonight.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- live units -->
+        <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 20px 13px">
+            <h3 style="margin:0;font-size:15px;font-weight:600">Live units</h3>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);letter-spacing:.04em">SHOWING 5 OF 48</span>
+          </div>
+          <div style="display:grid;grid-template-columns:14px 2fr 1.1fr 0.9fr 1.1fr 1.2fr;gap:12px;padding:10px 20px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">
+            <span></span><span>Unit</span><span>Battery</span><span>Firmware</span><span>Telemetry</span><span>Status</span>
+          </div>
+          <sc-for list="{{ units }}" as="r" hint-placeholder-count="5">
+            <div class="unitrow" style="display:grid;grid-template-columns:14px 2fr 1.1fr 0.9fr 1.1fr 1.2fr;gap:12px;padding:13px 20px;align-items:center;border-top:1px solid var(--line);cursor:pointer">
+              <span style="width:8px;height:8px;border-radius:50%;background:{{ r.dot }}"></span>
+              <div style="min-width:0">
+                <div style="font-family:var(--font-mono);font-size:12.5px;font-weight:600">{{ r.sn }}</div>
+                <div style="font-size:11px;color:var(--ink-faint);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.model }} · {{ r.site }}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;min-width:0">
+                <div style="flex:1;max-width:52px;height:5px;border-radius:999px;background:var(--skeleton);overflow:hidden"><span style="display:block;height:5px;width:{{ r.batt }};background:{{ r.battC }}"></span></div>
+                <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-muted)">{{ r.battLabel }}</span>
+              </div>
+              <div style="min-width:0"><span style="font-family:var(--font-mono);font-size:12px">{{ r.fw }}</span><sc-if value="{{ r.behind }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:.04em;background:var(--accent);color:var(--accent-ink);border-radius:4px;padding:1px 4px;margin-left:5px;text-transform:uppercase">old</span></sc-if></div>
+              <svg width="100%" height="22" viewBox="0 0 100 24" preserveAspectRatio="none"><polyline points="{{ r.spark }}" fill="none" stroke="{{ r.sparkColor }}" stroke-width="1.6" stroke-linejoin="round"></polyline></svg>
+              <span><span style="display:inline-flex;align-items:center;font-size:10.5px;font-weight:600;letter-spacing:.03em;padding:3px 9px;border-radius:999px;background:{{ r.badgeBg }};color:{{ r.badgeFg }}">{{ r.status }}</span></span>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- orchestration trace -->
+        <div class="copilot-dark" style="border-radius:14px;padding:16px 18px;font-family:var(--font-mono);font-size:11px;line-height:1.75;color:var(--on-dark-mut)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+            <span style="color:var(--on-dark-faint);letter-spacing:.06em">AGENT TRACE</span>
+            <span style="color:var(--on-dark-faint);letter-spacing:.06em">flt-orchestrator</span>
+          </div>
+          <div><span style="color:var(--on-dark-faint)">14:30:01</span> <span style="color:var(--accent)">ingest</span> telemetry · 48 units · 1.2M sig/min</div>
+          <div><span style="color:var(--on-dark-faint)">14:30:02</span> <span style="color:#fff">SN-2196</span> cell-4 ΔV → degradation (36h to limit)</div>
+          <div><span style="color:var(--on-dark-faint)">14:30:02</span> predict failure · confidence <span style="color:#fff">0.91</span></div>
+          <div><span style="color:var(--on-dark-faint)">14:30:03</span> recovery <span style="color:var(--accent)">safe-stop</span> SN-2196 · thermal guard</div>
+          <div><span style="color:var(--on-dark-faint)">14:30:03</span> dispatch tech → Site-2 · ETA 3h · <span style="color:var(--success)">spare cached</span></div>
+          <div><span style="color:var(--on-dark-faint)">14:30:04</span> SLA Site-2 99.05% → <span style="color:var(--success)">protected</span></div>
+          <div><span style="color:var(--on-dark-faint)">14:30:04</span> <span style="color:var(--accent)">▍</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- resizer -->
+    <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ true }}">
+    <div class="resizer" onMouseDown="{{ startDrag }}" style="width:8px;flex:none;cursor:col-resize;background:var(--paper);border-left:1px solid var(--line);display:flex;align-items:center;justify-content:center">
+      <span class="grip" style="width:2px;height:34px;border-radius:2px;background:var(--line-strong)"></span>
+    </div>
+    </sc-if>
+
+    <!-- agent co-working -->
+    <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ true }}">
+    <div style="width:{{ panelW }}px;flex:none;min-width:0;background:var(--paper);display:flex;flex-direction:column;color:var(--ink)">
+      <div style="height:60px;flex:none;padding:0 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px">
+        <span style="flex:none;display:inline-flex"><svg width="30" height="30" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14.5px;font-weight:600">{{ activeAgent.name }}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase">{{ activeAgent.role }}</div>
+        </div>
+        <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase"><span style="width:6px;height:6px;border-radius:50%;background:var(--success)"></span>Live</span>
+        <button onClick="{{ closePanel }}" title="Collapse" class="collapse-btn" style="width:28px;height:28px;border:1px solid var(--line);border-radius:7px;background:var(--paper);cursor:pointer;color:var(--ink-muted);display:flex;align-items:center;justify-content:center;padding:0;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 17 5-5-5-5"></path><path d="m13 17 5-5-5-5"></path></svg></button>
+      </div>
+
+      <!-- agent team switcher -->
+      <div style="padding:12px 18px;border-bottom:1px solid var(--line);background:var(--panel)">
+        <div style="display:flex;gap:10px;align-items:center">
+          <sc-for list="{{ agents }}" as="ag" hint-placeholder-count="6">
+            <span class="avs" onClick="{{ ag.open }}" title="{{ ag.name }}" style="position:relative;display:inline-flex;border-radius:50%;cursor:pointer;padding:2px;{{ ag.ring }}">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg>
+              <span style="position:absolute;right:0;bottom:0;width:7px;height:7px;border-radius:50%;background:{{ ag.stateColor }};border:1.5px solid var(--panel)"></span>
+            </span>
+          </sc-for>
+        </div>
+        <div style="font-size:12px;color:var(--ink-muted);margin-top:11px;line-height:1.4">{{ activeAgent.status }}</div>
+      </div>
+
+      <div style="padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+        <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Context</span>
+        <sc-for list="{{ activeAgent.context }}" as="c" hint-placeholder-count="3">
+          <span style="font-family:var(--font-mono);font-size:10px;background:var(--panel);border:1px solid var(--line-panel);border-radius:5px;padding:2px 7px;color:var(--ink-muted)">{{ c }}</span>
+        </sc-for>
+      </div>
+      <div class="scarea" style="flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px">
+        <sc-for list="{{ thread }}" as="m" hint-placeholder-count="1">
+          <div style="display:flex;gap:9px;justify-content:{{ m.rowJustify }};align-items:flex-start">
+            <sc-if value="{{ m.isAgent }}" hint-placeholder-val="{{ true }}"><span style="flex:none;display:inline-flex;margin-top:1px"><svg width="22" height="22" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span></sc-if>
+            <div style="max-width:80%;background:{{ m.bubbleBg }};color:{{ m.bubbleFg }};border-radius:13px;padding:11px 13px;font-size:13px;line-height:1.5">{{ m.text }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:12px 18px 16px;border-top:1px solid var(--line)">
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px">
+          <sc-for list="{{ suggestions }}" as="s" hint-placeholder-count="3">
+            <span class="chip" onClick="{{ s.go }}" style="font-size:12px;font-weight:500;padding:6px 12px;border-radius:999px;cursor:pointer;background:var(--paper);color:var(--ink-muted);border:1px solid var(--line-strong)">{{ s.label }}</span>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:stretch;border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;background:var(--paper)">
+          <input value="{{ draft }}" onInput="{{ onDraft }}" onKeyDown="{{ onKey }}" placeholder="{{ inputPlaceholder }}" style="flex:1;min-width:0;border:none;outline:none;padding:11px 14px;font-size:13.5px;font-family:var(--font-sans);color:var(--ink);background:transparent">
+          <button onClick="{{ sendBtn }}" style="background:var(--accent);color:var(--accent-ink);border:none;font-size:13px;font-weight:600;padding:0 16px;cursor:pointer;font-family:var(--font-sans)">Send</button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- collapsed rail -->
+    <sc-if value="{{ panelClosed }}" hint-placeholder-val="{{ false }}">
+    <div style="width:52px;flex:none;border-left:1px solid var(--line);background:var(--paper);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:14px">
+      <button onClick="{{ reopen }}" title="Open agents" class="collapse-btn" style="width:30px;height:30px;border:1px solid var(--line);border-radius:8px;background:var(--paper);cursor:pointer;color:var(--ink-muted);display:flex;align-items:center;justify-content:center;padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5"></path><path d="m18 17-5-5 5-5"></path></svg></button>
+      <span style="flex:none;display:inline-flex"><svg width="24" height="24" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span>
+      <span style="writing-mode:vertical-rl;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;color:var(--ink-faint);text-transform:uppercase">Agents</span>
+    </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { idx:0, thread:[], draft:'', panelW:404, panelOpen:true };
+  _drag = false;
+  _mm = (e) => { if(!this._drag) return; const w = Math.min(680, Math.max(320, window.innerWidth - e.clientX)); this.setState({ panelW:w }); };
+  _mu = () => { this._drag = false; document.body.style.userSelect=''; window.removeEventListener('mousemove', this._mm); window.removeEventListener('mouseup', this._mu); };
+  startDrag = (e) => { e.preventDefault(); this._drag = true; document.body.style.userSelect='none'; window.addEventListener('mousemove', this._mm); window.addEventListener('mouseup', this._mu); };
+  componentWillUnmount(){ this._mu(); }
+  openAgent(i){ this.setState({ idx:i, draft:'', panelOpen:true, thread:[{ role:'agent', text:(this._intros[i] || '') }] }); }
+  send(text){
+    const t = (text || this.state.draft || '').trim();
+    if(!t) return;
+    this.setState(s => ({ draft:'', thread:[...s.thread,
+      { role:'user', text:t },
+      { role:'agent', text:'On it — I\u2019ll action that across the fleet and reflect the change on the affected units.' }] }));
+  }
+  renderVals(){
+    const ACC='var(--accent)', SUC='var(--success)', CRIT='var(--ink-strong)', OFF='var(--line-strong)', MUT='var(--ink-muted)';
+
+    const navRaw = [
+      { label:'Core', items:[ { name:'Command Center', href:'Command Center.dc.html' }, { name:'Agents', href:'Agents.dc.html' }, { name:'Workflows', href:'Workflows.dc.html' }, { name:'Projects', href:'Projects.dc.html' }, { name:'Machines', href:'Machines.dc.html' } ] },
+      { label:'Value chain', items:[
+        { name:'Procurement', badge:'6' }, { name:'Manufacturing' }, { name:'Inventory' },
+        { name:'Fulfillment', badge:'3' }, { name:'Quality' }, { name:'Sales & CRM' }, { name:'Marketing' } ] },
+      { label:'Robotics', items:[
+        { name:'Fleet', active:true }, { name:'Field Service' }, { name:'Engineering' }, { name:'Autonomy' } ] },
+      { label:'Back office', items:[
+        { name:'Finance', badge:'6' }, { name:'People' }, { name:'Security' }, { name:'Legal' } ] },
+    ];
+    const navGroups = navRaw.map(g => ({
+      label: g.label || null,
+      items: g.items.map(it => ({
+        name: it.name, badge: it.badge || null, href: it.href || (it.name === 'Inventory' ? '#' : it.name + '.dc.html'), pad: it.sub ? '24px' : '10px',
+        bg: it.active ? 'var(--panel)' : 'transparent',
+        fg: it.active ? 'var(--ink)' : 'var(--ink-muted)',
+        weight: it.active ? 600 : 400,
+        marker: it.active ? 'var(--ink-strong)' : 'var(--line-strong)',
+      })),
+    }));
+
+    const TOTAL = 48;
+    const healthRaw = [
+      { label:'Nominal', n:43, color:SUC },
+      { label:'Attention', n:3, color:ACC },
+      { label:'Critical', n:1, color:CRIT },
+      { label:'Offline', n:1, color:OFF },
+    ];
+    const health = healthRaw.map(h => ({ ...h, pct:(h.n / TOTAL * 100).toFixed(1) + '%' }));
+
+    const sites = [
+      { label:'Site-1 · Detroit · 18', color:SUC, glow:'rgba(31,158,111,.18)', x:'24%', y:'42%' },
+      { label:'Site-2 · Rotterdam · 18', color:CRIT, glow:'rgba(10,10,10,.12)', x:'50%', y:'30%' },
+      { label:'Site-3 · Osaka · 12', color:ACC, glow:'rgba(198,242,79,.32)', x:'76%', y:'60%' },
+    ];
+
+    const versions = [
+      { v:'v4.2.1', n:'44 units', behind:false },
+      { v:'v4.1.0', n:'3 units', behind:false },
+      { v:'v4.0.2', n:'1 unit', behind:true },
+    ];
+
+    const stateBadge = (tone) => tone==='crit' ? { badgeBg:'var(--ink-strong)', badgeFg:'#fff', dot:CRIT }
+      : tone==='accent' ? { badgeBg:'var(--accent)', badgeFg:'var(--accent-ink)', dot:ACC }
+      : tone==='success' ? { badgeBg:'var(--success-tint)', badgeFg:'var(--success)', dot:SUC }
+      : { badgeBg:'var(--panel)', badgeFg:'var(--ink-muted)', dot:OFF };
+    const unitsRaw = [
+      { sn:'SN-2208', model:'HX-2 Humanoid', site:'Site-2', batt:'82%', battC:SUC, fw:'v4.2.1', behind:false, status:'Nominal', tone:'success', spark:'0,17 14,15 28,16 42,12 56,13 70,10 84,11 100,8', sparkColor:'var(--ink-faint)' },
+      { sn:'SN-2196', model:'HX-2 Humanoid', site:'Site-2', batt:'14%', battC:CRIT, fw:'v4.2.1', behind:false, status:'Critical · cell', tone:'crit', spark:'0,7 14,9 28,8 42,12 56,14 70,17 84,20 100,22', sparkColor:'var(--ink-strong)' },
+      { sn:'SN-2184', model:'HX-1 Arm', site:'Site-1', batt:'67%', battC:SUC, fw:'v4.2.1', behind:false, status:'Nominal', tone:'success', spark:'0,13 14,12 28,13 42,11 56,12 70,12 84,11 100,12', sparkColor:'var(--ink-faint)' },
+      { sn:'SN-2150', model:'HX-2 Humanoid', site:'Site-3', batt:'58%', battC:ACC, fw:'v4.0.2', behind:true, status:'Attention · fw', tone:'accent', spark:'0,14 14,13 28,15 42,14 56,16 70,15 84,17 100,16', sparkColor:'var(--accent)' },
+      { sn:'SN-2133', model:'HX-1 Arm', site:'Site-1', batt:'0%', battLabel:'—', battC:OFF, fw:'v4.2.1', behind:false, status:'Offline · 3h', tone:'neutral', spark:'0,22 100,22', sparkColor:'var(--line-strong)' },
+    ];
+    const units = unitsRaw.map(r => ({ ...r, ...stateBadge(r.tone), battLabel: r.battLabel || r.batt }));
+
+    const agentsRaw = [
+      { name:'Telemetry agent', role:'SIGNALS · flt-01', stateColor:SUC, status:'Streaming 1.2M signals/min · 1 anomaly on SN-2196.' },
+      { name:'Predictive-maintenance agent', role:'HEALTH · flt-04', stateColor:ACC, status:'SN-2196 battery cell degrading — ~36h to safe limit.' },
+      { name:'OTA agent', role:'FIRMWARE · flt-02', stateColor:ACC, status:'Staging v4.2.1 to the last 4 units in Osaka tonight.' },
+      { name:'SLA agent', role:'UPTIME · flt-06', stateColor:SUC, status:'All sites above 99% — Site-2 closest to breach.' },
+      { name:'Dispatch agent', role:'FIELD · flt-03', stateColor:SUC, status:'Booked a tech for the SN-2196 pack swap · ETA 3h.' },
+      { name:'Recovery agent', role:'SAFETY · flt-09', stateColor:CRIT, status:'Safe-stopped SN-2196 on thermal guard · awaiting swap.' },
+    ];
+    const intros = [
+      'I\u2019m ingesting 1.2M signals/min across 48 units. One live anomaly: SN-2196\u2019s left-knee actuator temp is trending +0.4°C/min. Want me to pull its live telemetry?',
+      'SN-2196\u2019s battery cell 4 is degrading fast — about 36 hours to the safe limit. I recommend a pack swap before it hits the floor. Want me to schedule it?',
+      'v4.2.1 is on 44 of 48 units. The last 4 are in Osaka (Site-3). I can stage the rollout for tonight\u2019s idle window with auto-rollback on any failed post-flash check. Proceed?',
+      'All three sites are above their 99% uptime SLA. Site-2 is closest to breach at 99.05% — if SN-2196 goes down it tips over. Want the SLA breakdown?',
+      'I\u2019ve booked a field tech for the SN-2196 battery swap — arriving Site-2 in 3 hours with a spare pack from the edge cache. Want the work order?',
+      'SN-2196 hit the thermal threshold so I safe-stopped it — parked, powered down, no payload at risk. It stays down until the swap. Want the incident?',
+    ];
+    const contexts = [
+      ['FLEET','SN-2196','SIGNALS'],
+      ['FLEET','SN-2196','BATTERY'],
+      ['FLEET','v4.2.1','SITE-3'],
+      ['FLEET','SLA','SITE-2'],
+      ['FLEET','SN-2196','FIELD'],
+      ['FLEET','SN-2196','SAFETY'],
+    ];
+    const suggs = [
+      ['Show telemetry','Compare to fleet','Mute'],
+      ['Schedule swap','Show the curve','Defer'],
+      ['Stage rollout','Show changelog','Hold'],
+      ['Show breakdown','Protect Site-2'],
+      ['Open work order','Reschedule'],
+      ['Open incident','Show timeline'],
+    ];
+    this._intros = intros;
+
+    const idx = this.state.idx;
+    const agents = agentsRaw.map((a, i) => ({ ...a, open:()=>this.openAgent(i),
+      ring: i===idx ? 'box-shadow:0 0 0 2px var(--ink-strong)' : 'box-shadow:0 0 0 1px var(--line-strong)' }));
+
+    const a = agentsRaw[idx] || agentsRaw[0];
+    const activeAgent = { name:a.name, role:a.role, status:a.status, context:contexts[idx] || [] };
+    const baseThread = this.state.thread.length ? this.state.thread : [{ role:'agent', text:(intros[idx] || '') }];
+    const thread = baseThread.map(m => ({
+      isAgent: m.role === 'agent', text:m.text,
+      rowJustify: m.role === 'agent' ? 'flex-start' : 'flex-end',
+      bubbleBg: m.role === 'agent' ? 'var(--panel)' : 'var(--ink-strong)',
+      bubbleFg: m.role === 'agent' ? 'var(--ink)' : '#fff',
+    }));
+    const suggestions = (suggs[idx] || []).map(s => ({ label:s, go:()=>this.send(s) }));
+
+    return {
+      navGroups, health, sites, versions, units, agents, activeAgent, thread, suggestions,
+      panelW: this.state.panelW,
+      startDrag: this.startDrag,
+      panelOpen: this.state.panelOpen,
+      panelClosed: !this.state.panelOpen,
+      closePanel: ()=>this.setState({ panelOpen:false }),
+      reopen: ()=>this.setState({ panelOpen:true }),
+      draft:this.state.draft,
+      onDraft:(e)=>this.setState({ draft:e.target.value }),
+      onKey:(e)=>{ if(e.key === 'Enter'){ e.preventDefault(); this.send(); } },
+      sendBtn:()=>this.send(),
+      inputPlaceholder: 'Message ' + a.name + '…',
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,5 +1,0 @@
-/* Webfonts — Archivo (UI/display) + JetBrains Mono (data/labels).
-   Loaded from Google Fonts CDN. These ARE the brand fonts (not substitutes).
-   NOTE: the product app self-hosts these via next/font (FND.2); this CDN import
-   is the design-system prototype's loader. */
-@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");

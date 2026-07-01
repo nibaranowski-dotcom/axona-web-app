@@ -1,0 +1,674 @@
+{
+  "namespace": "AxonaDesignSystem_4752cf",
+  "components": [
+    { "name": "ArrowLink", "sourcePath": "components/core/ArrowLink.jsx" },
+    { "name": "Badge", "sourcePath": "components/core/Badge.jsx" },
+    { "name": "Button", "sourcePath": "components/core/Button.jsx" },
+    { "name": "MonoChip", "sourcePath": "components/core/MonoChip.jsx" },
+    { "name": "Pill", "sourcePath": "components/core/Pill.jsx" },
+    { "name": "StatChip", "sourcePath": "components/core/StatChip.jsx" },
+    { "name": "Wordmark", "sourcePath": "components/core/Wordmark.jsx" },
+    { "name": "FeatureCard", "sourcePath": "components/data/FeatureCard.jsx" },
+    { "name": "Skel", "sourcePath": "components/data/Skel.jsx" },
+    { "name": "StatTile", "sourcePath": "components/data/StatTile.jsx" },
+    {
+      "name": "EmailCapture",
+      "sourcePath": "components/forms/EmailCapture.jsx"
+    },
+    { "name": "Select", "sourcePath": "components/forms/Select.jsx" },
+    { "name": "Toggle", "sourcePath": "components/forms/Toggle.jsx" }
+  ],
+  "startingPoints": [
+    {
+      "name": "platform",
+      "path": "ui_kits/platform/index.html",
+      "previewPath": "ui_kits/platform/index.html",
+      "kind": "screen",
+      "section": "Platform",
+      "subtitle": "Axona platform — procurement / fleet dashboard",
+      "viewport": "1280x820"
+    },
+    {
+      "name": "website",
+      "path": "ui_kits/website/index.html",
+      "previewPath": "ui_kits/website/index.html",
+      "kind": "screen",
+      "section": "Website",
+      "subtitle": "Full Axona marketing homepage",
+      "viewport": "1180x820"
+    }
+  ],
+  "cards": [
+    {
+      "path": "guidelines/brand-dotgrid.html",
+      "group": "Brand",
+      "viewport": "700x180",
+      "subtitle": "radial dots 1.1px @ 18px — the one signature texture",
+      "name": "The dotted-grid motif"
+    },
+    {
+      "path": "guidelines/brand-wordmark.html",
+      "group": "Brand",
+      "viewport": "700x180",
+      "subtitle": "Lowercase axona + asymmetric square mark, on light and ink",
+      "name": "Wordmark & mark"
+    },
+    {
+      "path": "guidelines/colors-accent.html",
+      "group": "Colors",
+      "viewport": "700x180",
+      "subtitle": "The one brand signal: lime on ink. Never floods a viewport",
+      "name": "Accent — lime"
+    },
+    {
+      "path": "guidelines/colors-borders.html",
+      "group": "Colors",
+      "viewport": "700x150",
+      "subtitle": "Quiet greys that separate panels; line-dark for inverse surfaces",
+      "name": "Borders & hairlines"
+    },
+    {
+      "path": "guidelines/colors-neutrals.html",
+      "group": "Colors",
+      "viewport": "700x190",
+      "subtitle": "Paper → ink, the warm-grey field the whole system sits on",
+      "name": "Neutrals — warm grey ramp"
+    },
+    {
+      "path": "guidelines/colors-status.html",
+      "group": "Colors",
+      "viewport": "700x170",
+      "subtitle": "Approved / auto-applied / nominal. The only status hue — no invented reds",
+      "name": "Status — functional green"
+    },
+    {
+      "path": "components/core/core.card.html",
+      "group": "Components",
+      "viewport": "700x300",
+      "subtitle": "Lime CTAs, mono chips, status badges, tab pills, wordmark",
+      "name": "Core — buttons, chips, badges, wordmark"
+    },
+    {
+      "path": "components/data/data.card.html",
+      "group": "Components",
+      "viewport": "700x400",
+      "subtitle": "KPI tiles and marketing feature panels with mock surfaces",
+      "name": "Data — stat tiles & feature cards"
+    },
+    {
+      "path": "components/forms/forms.card.html",
+      "group": "Components",
+      "viewport": "700x230",
+      "subtitle": "Signature email capture, lime toggle, dropdown",
+      "name": "Forms — email capture, toggle, select"
+    },
+    {
+      "path": "ui_kits/platform/index.html",
+      "group": "Platform",
+      "viewport": "1280x820",
+      "subtitle": "Procurement view — KPIs, PO table, agent recommendation + trace, incidents",
+      "name": "Operational intelligence app"
+    },
+    {
+      "path": "guidelines/radii-shadow.html",
+      "group": "Spacing",
+      "viewport": "700x180",
+      "subtitle": "pill / btn / card / panel radii · soft float + hero shadows",
+      "name": "Radii & elevation"
+    },
+    {
+      "path": "guidelines/spacing-scale.html",
+      "group": "Spacing",
+      "viewport": "700x180",
+      "subtitle": "space-1 → space-22; layout max 1180 / 28px gutters",
+      "name": "Spacing scale — 4px base"
+    },
+    {
+      "path": "guidelines/type-body.html",
+      "group": "Type",
+      "viewport": "700x190",
+      "subtitle": "Operator-to-operator prose: plain, declarative, sentence case",
+      "name": "Lead & body — Archivo"
+    },
+    {
+      "path": "guidelines/type-display.html",
+      "group": "Type",
+      "viewport": "700x200",
+      "subtitle": "Hero / H2 / H3 — Archivo 600–700, tight tracking",
+      "name": "Display — Archivo"
+    },
+    {
+      "path": "guidelines/type-mono.html",
+      "group": "Type",
+      "viewport": "700x150",
+      "subtitle": "UPPERCASE labels, codes, counters · +.06em tracking",
+      "name": "Mono labels — JetBrains Mono"
+    },
+    {
+      "path": "ui_kits/website/index.html",
+      "group": "Website",
+      "viewport": "1180x820",
+      "subtitle": "Axona v2 homepage — hero, platform, architecture, verticals, closing",
+      "name": "Marketing homepage"
+    }
+  ],
+  "templates": [],
+  "hasThumbnailHtml": false,
+  "globalCssPaths": [
+    "tokens/fonts.css",
+    "tokens/colors.css",
+    "tokens/typography.css",
+    "tokens/spacing.css",
+    "tokens/radii-shadow.css",
+    "tokens/motifs.css",
+    "styles.css"
+  ],
+  "tokens": [
+    {
+      "name": "--font-sans",
+      "value": "\"Archivo\", ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+      "kind": "font",
+      "definedIn": "tokens/fonts.css"
+    },
+    {
+      "name": "--font-mono",
+      "value": "\"JetBrains Mono\", ui-monospace, \"SF Mono\", Menlo, monospace",
+      "kind": "font",
+      "definedIn": "tokens/fonts.css"
+    },
+    {
+      "name": "--paper",
+      "value": "#ffffff",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--panel",
+      "value": "#f4f3ef",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--panel-2",
+      "value": "#f7f2eb",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--chip",
+      "value": "#f2f2ee",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--skel",
+      "value": "#f0f0ec",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--ink",
+      "value": "#0a0a0a",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--text",
+      "value": "#111111",
+      "kind": "font",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--body",
+      "value": "#6b6b63",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--faint",
+      "value": "#8a8a82",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--dim",
+      "value": "#9a9a90",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--cap",
+      "value": "#a7a79d",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--logo",
+      "value": "#c9c9c9",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--lime",
+      "value": "#c6f24f",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--lime-hover",
+      "value": "#bce83f",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--on-lime",
+      "value": "#0a0a0a",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--ok",
+      "value": "#1f9e6f",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--okbg",
+      "value": "#e9f7f0",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--destructive",
+      "value": "#b42318",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--line",
+      "value": "#ededed",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--line2",
+      "value": "#e7e7e1",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--line-strong",
+      "value": "#e2e2e2",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--line-dark",
+      "value": "#1d1d1d",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--surface",
+      "value": "var(--paper)",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--surface-panel",
+      "value": "var(--panel)",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--surface-card",
+      "value": "var(--paper)",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--surface-inverse",
+      "value": "var(--ink)",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--text-heading",
+      "value": "var(--text)",
+      "kind": "font",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--text-body",
+      "value": "var(--body)",
+      "kind": "font",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--text-muted",
+      "value": "var(--dim)",
+      "kind": "font",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--border-default",
+      "value": "var(--line)",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--accent",
+      "value": "var(--lime)",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--accent-hover",
+      "value": "var(--lime-hover)",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--focus-ring",
+      "value": "var(--lime)",
+      "kind": "color",
+      "definedIn": "tokens/colors.css"
+    },
+    {
+      "name": "--fw-regular",
+      "value": "400",
+      "kind": "font",
+      "definedIn": "tokens/typography.css",
+      "annotation": "font"
+    },
+    {
+      "name": "--fw-medium",
+      "value": "500",
+      "kind": "font",
+      "definedIn": "tokens/typography.css",
+      "annotation": "font"
+    },
+    {
+      "name": "--fw-semibold",
+      "value": "600",
+      "kind": "font",
+      "definedIn": "tokens/typography.css",
+      "annotation": "font"
+    },
+    {
+      "name": "--fw-bold",
+      "value": "700",
+      "kind": "font",
+      "definedIn": "tokens/typography.css",
+      "annotation": "font"
+    },
+    {
+      "name": "--text-hero",
+      "value": "clamp(48px, 8.2vw, 108px)",
+      "kind": "font",
+      "definedIn": "tokens/typography.css"
+    },
+    {
+      "name": "--text-h1",
+      "value": "var(--text-hero)",
+      "kind": "font",
+      "definedIn": "tokens/typography.css"
+    },
+    {
+      "name": "--text-h2",
+      "value": "clamp(30px, 4vw, 52px)",
+      "kind": "font",
+      "definedIn": "tokens/typography.css"
+    },
+    {
+      "name": "--text-h3",
+      "value": "24px",
+      "kind": "font",
+      "definedIn": "tokens/typography.css"
+    },
+    {
+      "name": "--text-lead",
+      "value": "clamp(17px, 1.8vw, 21px)",
+      "kind": "font",
+      "definedIn": "tokens/typography.css"
+    },
+    {
+      "name": "--text-body-size",
+      "value": "16px",
+      "kind": "font",
+      "definedIn": "tokens/typography.css"
+    },
+    {
+      "name": "--text-sm",
+      "value": "14px",
+      "kind": "font",
+      "definedIn": "tokens/typography.css"
+    },
+    {
+      "name": "--text-xs",
+      "value": "13px",
+      "kind": "font",
+      "definedIn": "tokens/typography.css"
+    },
+    {
+      "name": "--text-mono",
+      "value": "11px",
+      "kind": "font",
+      "definedIn": "tokens/typography.css"
+    },
+    {
+      "name": "--track-hero",
+      "value": "-0.045em",
+      "kind": "spacing",
+      "definedIn": "tokens/typography.css"
+    },
+    {
+      "name": "--track-h2",
+      "value": "-0.035em",
+      "kind": "spacing",
+      "definedIn": "tokens/typography.css"
+    },
+    {
+      "name": "--track-h3",
+      "value": "-0.02em",
+      "kind": "spacing",
+      "definedIn": "tokens/typography.css"
+    },
+    {
+      "name": "--track-tight",
+      "value": "-0.03em",
+      "kind": "spacing",
+      "definedIn": "tokens/typography.css"
+    },
+    {
+      "name": "--track-mono",
+      "value": "0.06em",
+      "kind": "spacing",
+      "definedIn": "tokens/typography.css"
+    },
+    {
+      "name": "--track-mono-wide",
+      "value": "0.08em",
+      "kind": "spacing",
+      "definedIn": "tokens/typography.css"
+    },
+    {
+      "name": "--lh-hero",
+      "value": "0.92",
+      "kind": "font",
+      "definedIn": "tokens/typography.css",
+      "annotation": "font"
+    },
+    {
+      "name": "--lh-h2",
+      "value": "1.02",
+      "kind": "font",
+      "definedIn": "tokens/typography.css",
+      "annotation": "font"
+    },
+    {
+      "name": "--lh-tight",
+      "value": "1.08",
+      "kind": "font",
+      "definedIn": "tokens/typography.css",
+      "annotation": "font"
+    },
+    {
+      "name": "--lh-body",
+      "value": "1.5",
+      "kind": "font",
+      "definedIn": "tokens/typography.css",
+      "annotation": "font"
+    },
+    {
+      "name": "--space-1",
+      "value": "4px",
+      "kind": "spacing",
+      "definedIn": "tokens/spacing.css"
+    },
+    {
+      "name": "--space-2",
+      "value": "8px",
+      "kind": "spacing",
+      "definedIn": "tokens/spacing.css"
+    },
+    {
+      "name": "--space-3",
+      "value": "12px",
+      "kind": "spacing",
+      "definedIn": "tokens/spacing.css"
+    },
+    {
+      "name": "--space-4",
+      "value": "16px",
+      "kind": "spacing",
+      "definedIn": "tokens/spacing.css"
+    },
+    {
+      "name": "--space-6",
+      "value": "24px",
+      "kind": "spacing",
+      "definedIn": "tokens/spacing.css"
+    },
+    {
+      "name": "--space-8",
+      "value": "32px",
+      "kind": "spacing",
+      "definedIn": "tokens/spacing.css"
+    },
+    {
+      "name": "--space-12",
+      "value": "48px",
+      "kind": "spacing",
+      "definedIn": "tokens/spacing.css"
+    },
+    {
+      "name": "--space-16",
+      "value": "64px",
+      "kind": "spacing",
+      "definedIn": "tokens/spacing.css"
+    },
+    {
+      "name": "--space-22",
+      "value": "88px",
+      "kind": "spacing",
+      "definedIn": "tokens/spacing.css"
+    },
+    {
+      "name": "--layout-max",
+      "value": "1180px",
+      "kind": "spacing",
+      "definedIn": "tokens/spacing.css"
+    },
+    {
+      "name": "--layout-gutter",
+      "value": "28px",
+      "kind": "spacing",
+      "definedIn": "tokens/spacing.css"
+    },
+    {
+      "name": "--radius-pill",
+      "value": "999px",
+      "kind": "radius",
+      "definedIn": "tokens/radii-shadow.css"
+    },
+    {
+      "name": "--radius-btn",
+      "value": "8px",
+      "kind": "radius",
+      "definedIn": "tokens/radii-shadow.css"
+    },
+    {
+      "name": "--radius-sm",
+      "value": "6px",
+      "kind": "radius",
+      "definedIn": "tokens/radii-shadow.css"
+    },
+    {
+      "name": "--radius-md",
+      "value": "10px",
+      "kind": "radius",
+      "definedIn": "tokens/radii-shadow.css"
+    },
+    {
+      "name": "--radius-card",
+      "value": "14px",
+      "kind": "radius",
+      "definedIn": "tokens/radii-shadow.css"
+    },
+    {
+      "name": "--radius-panel",
+      "value": "16px",
+      "kind": "radius",
+      "definedIn": "tokens/radii-shadow.css"
+    },
+    {
+      "name": "--shadow-float",
+      "value": "0 18px 40px rgba(0, 0, 0, 0.07)",
+      "kind": "shadow",
+      "definedIn": "tokens/radii-shadow.css"
+    },
+    {
+      "name": "--shadow-hero",
+      "value": "0 26px 50px rgba(0, 0, 0, 0.28)",
+      "kind": "shadow",
+      "definedIn": "tokens/radii-shadow.css"
+    },
+    {
+      "name": "--dotgrid-color",
+      "value": "#d9d8d2",
+      "kind": "color",
+      "definedIn": "tokens/motifs.css"
+    },
+    {
+      "name": "--dotgrid-size",
+      "value": "18px",
+      "kind": "spacing",
+      "definedIn": "tokens/motifs.css"
+    },
+    {
+      "name": "--motion-fast",
+      "value": "0.15s ease",
+      "kind": "other",
+      "definedIn": "tokens/motifs.css",
+      "annotation": "other"
+    }
+  ],
+  "themes": [],
+  "fonts": [],
+  "brandFonts": [
+    {
+      "family": "Archivo",
+      "status": "ok",
+      "tokens": ["--font-sans"],
+      "path": "tokens/fonts.css"
+    },
+    {
+      "family": "JetBrains Mono",
+      "status": "ok",
+      "tokens": ["--font-mono"],
+      "path": "tokens/fonts.css"
+    }
+  ],
+  "source": "spa"
+}

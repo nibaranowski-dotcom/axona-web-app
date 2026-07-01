@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .copilot-dark{background-color:#121214;background-image:radial-gradient(520px 280px at 8% -30%,rgba(198,242,79,.14),transparent 62%),linear-gradient(155deg,#1c1c20,#111114)}
+  .collapse-btn{transition:background .15s,color .15s}
+  .collapse-btn:hover{background:var(--panel);color:var(--ink)}
+  .navitem{transition:background .15s,color .15s}
+  .navitem:hover{background:var(--panel)}
+  .navgroup summary{list-style:none}
+  .navgroup summary::-webkit-details-marker{display:none}
+  .navgroup summary::marker{content:""}
+  .navgroup summary:hover .navchev{stroke:var(--ink-muted)}
+  .navchev{transition:transform .15s;flex:none}
+  .navgroup:not([open]) .navchev{transform:rotate(-90deg)}
+  .navsearch{transition:border-color .15s,background .15s}
+  .navsearch:hover{border-color:var(--ink-strong);background:var(--panel-2)}
+  .hrow:hover{background:var(--panel-2)}
+  .chip{transition:border-color .15s,color .15s}
+  .chip:hover{border-color:var(--ink-strong);color:var(--ink)}
+  .avs{transition:transform .12s}
+  .avs:hover{transform:translateY(-2px)}
+  .resizer{transition:background .15s}
+  .resizer:hover{background:var(--panel-2)}
+  .resizer:hover .grip{background:var(--ink-strong)}
+  .scarea::-webkit-scrollbar{width:8px}
+  .scarea::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+</style>
+<script>document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key&&e.key.toLowerCase()==='k'){e.preventDefault();window.location.href='Mission Control.dc.html';}});</script>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden;font-family:var(--font-sans);color:var(--ink);background:var(--panel)">
+
+  <aside style="width:240px;flex:none;background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 8px 18px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:21px;font-weight:700;letter-spacing:-.04em;color:var(--ink-strong)">axona</span>
+        <span style="width:12px;height:12px;background:var(--ink-strong);border-radius:0 7px 0 7px"></span>
+      </div>
+      <button class="collapse-btn" title="Collapse menu" style="width:28px;height:28px;border:1px solid var(--line);border-radius:7px;background:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-muted);flex:none;padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18"></path><path d="m15 9-3 3 3 3"></path></svg></button>
+    </div>
+    <a href="Mission Control.dc.html" class="navsearch" style="display:flex;align-items:center;gap:9px;margin:0 4px 10px;padding:8px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--panel);cursor:pointer;text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <span style="flex:1;font-size:13px;color:var(--ink-faint)">Search</span>
+      <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px">⌘K</span>
+    </a>
+    <div class="scarea" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;margin:0 -4px;padding:0 4px">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <details open="open" class="navgroup">
+          <summary style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;padding:14px 10px 6px;cursor:pointer"><span style="flex:1">{{ g.label }}</span><svg class="navchev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--line-strong)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></summary>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+          <a class="navitem" href="{{ it.href }}" style="display:flex;align-items:center;gap:11px;padding:8px 10px 8px {{ it.pad }};border-radius:8px;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.weight }};font-size:14px;text-decoration:none">
+            <span style="width:6px;height:6px;border-radius:2px;background:{{ it.marker }};flex:none"></span>
+            <span style="flex:1">{{ it.name }}</span>
+            <sc-if value="{{ it.badge }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:10px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 7px;font-weight:600">{{ it.badge }}</span></sc-if>
+          </a>
+        </sc-for>
+        </details>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 8px 2px;border-top:1px solid var(--line);margin-top:8px">
+      <span style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink)">LC</span>
+      <div style="font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Head of Ops</div></div>
+    </div>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex">
+
+    <!-- module: people -->
+    <div style="flex:1;min-width:440px;display:flex;flex-direction:column;background:var(--panel)">
+      <div style="height:60px;flex:none;border-bottom:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:space-between;padding:0 24px">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Back office · 142 people · 3 sites</div>
+          <h1 style="margin:2px 0 0;font-size:19px;font-weight:600;letter-spacing:-.02em">People &amp; Workforce</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--ink);background:var(--panel);border:1px solid var(--line-strong);border-radius:999px;padding:5px 12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--ink-strong)"></span>1 cert expiring</span>
+          <button style="font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;line-height:1;padding:9px 16px;font-size:13.5px;background:var(--ink-strong);color:#fff;border:1px solid var(--ink-strong)">Open requisition</button>
+        </div>
+      </div>
+
+      <div class="scarea" style="flex:1;overflow-y:auto;padding:22px 24px;display:flex;flex-direction:column;gap:18px">
+
+        <!-- summary -->
+        <div style="display:flex;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+          <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+            <div style="flex:1;padding:15px 18px;border-left:{{ s.divider }}">
+              <div style="font-size:22px;font-weight:700;letter-spacing:-.03em">{{ s.v }}</div>
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase;margin-top:3px">{{ s.l }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- CERTIFICATION MATRIX -->
+        <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <h3 style="margin:0;font-size:15px;font-weight:600">Field technician certifications</h3>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);letter-spacing:.04em">GATES FIELD-SERVICE DISPATCH</span>
+          </div>
+          <div style="font-size:12px;color:var(--ink-muted);margin-bottom:14px">A tech can only be dispatched to a job their certification covers. Expiries are tracked against every deployed model.</div>
+          <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr 1fr;gap:2px">
+            <span style="padding:6px 4px"></span>
+            <sc-for list="{{ certCols }}" as="c" hint-placeholder-count="5">
+              <span style="font-family:var(--font-mono);font-size:8.5px;color:var(--ink-faint);text-align:center;padding:6px 2px;text-transform:uppercase;letter-spacing:.03em">{{ c }}</span>
+            </sc-for>
+            <sc-for list="{{ matrix }}" as="row" hint-placeholder-count="6">
+              <span style="font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;padding:8px 4px">
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--panel);border:1px solid var(--line-strong);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:8.5px;font-weight:700;flex:none">{{ row.init }}</span>
+                {{ row.name }}
+              </span>
+              <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="5">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;background:var(--panel-2);border-radius:6px">
+                  <span style="width:9px;height:9px;border-radius:50%;background:{{ c.color }}"></span>
+                  <span style="font-family:var(--font-mono);font-size:7.5px;letter-spacing:.02em;color:var(--ink-faint);text-transform:uppercase">{{ c.label }}</span>
+                </div>
+              </sc-for>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-muted)"><span style="width:8px;height:8px;border-radius:50%;background:var(--success)"></span>Certified</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-muted)"><span style="width:8px;height:8px;border-radius:50%;background:var(--ink-strong)"></span>Expiring &lt; 30d</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-muted)"><span style="width:8px;height:8px;border-radius:50%;background:var(--accent)"></span>In training</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-muted)"><span style="width:8px;height:8px;border-radius:50%;background:var(--skeleton)"></span>Not held</span>
+          </div>
+        </div>
+
+        <!-- hiring vs plan + headcount by function -->
+        <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:18px">
+          <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <h3 style="margin:0;font-size:15px;font-weight:600">Field team vs fleet growth</h3>
+              <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);letter-spacing:.04em">RATIO TARGET 1:4</span>
+            </div>
+            <div style="font-size:12px;color:var(--ink-muted);margin-bottom:14px">Certified techs must scale with deployed units. Current 18 techs : 48 units = 1:2.7 — hiring ahead of plan.</div>
+            <sc-for list="{{ hiring }}" as="h" hint-placeholder-count="4">
+              <div style="margin-bottom:12px">
+                <div style="display:flex;align-items:center;justify-content:space-between;font-size:12.5px;margin-bottom:5px"><span>{{ h.role }}</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-muted)">{{ h.filled }}</span></div>
+                <div style="position:relative;height:9px;border-radius:5px;background:var(--skeleton);overflow:hidden"><span style="display:block;height:9px;width:{{ h.pct }};background:{{ h.color }}"></span></div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <h3 style="margin:0;font-size:15px;font-weight:600">Headcount</h3>
+              <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);letter-spacing:.04em">142 · BY FUNCTION</span>
+            </div>
+            <sc-for list="{{ functions }}" as="f" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line)">
+                <span style="font-size:13px">{{ f.name }}</span>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:64px;height:6px;border-radius:999px;background:var(--skeleton);overflow:hidden"><span style="display:block;height:6px;width:{{ f.pct }};background:var(--ink-faint)"></span></div>
+                  <span style="font-family:var(--font-mono);font-size:12px;font-weight:600;width:24px;text-align:right">{{ f.n }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- orchestration trace -->
+        <div class="copilot-dark" style="border-radius:14px;padding:16px 18px;font-family:var(--font-mono);font-size:11px;line-height:1.75;color:var(--on-dark-mut)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+            <span style="color:var(--on-dark-faint);letter-spacing:.06em">AGENT TRACE</span>
+            <span style="color:var(--on-dark-faint);letter-spacing:.06em">ppl-orchestrator</span>
+          </div>
+          <div><span style="color:var(--on-dark-faint)">10:48:01</span> <span style="color:var(--accent)">scan</span> 18 field techs · 5 cert types</div>
+          <div><span style="color:var(--on-dark-faint)">10:48:02</span> <span style="color:#fff">M. Osei</span> HV/battery cert expires <span style="color:#fff">12d</span> → gates SN-2196 work</div>
+          <div><span style="color:var(--on-dark-faint)">10:48:02</span> book recert slot · notify Field Service</div>
+          <div><span style="color:var(--on-dark-faint)">10:48:03</span> capacity 18 techs : 48 units → hire ahead 1:4</div>
+          <div><span style="color:var(--on-dark-faint)">10:48:03</span> req <span style="color:var(--success)">FS-Tech ×3</span> · pipeline 14 candidates</div>
+          <div><span style="color:var(--on-dark-faint)">10:48:04</span> <span style="color:var(--accent)">▍</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- resizer -->
+    <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ true }}">
+    <div class="resizer" onMouseDown="{{ startDrag }}" style="width:8px;flex:none;cursor:col-resize;background:var(--paper);border-left:1px solid var(--line);display:flex;align-items:center;justify-content:center">
+      <span class="grip" style="width:2px;height:34px;border-radius:2px;background:var(--line-strong)"></span>
+    </div>
+    </sc-if>
+
+    <!-- agent co-working -->
+    <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ true }}">
+    <div style="width:{{ panelW }}px;flex:none;min-width:0;background:var(--paper);display:flex;flex-direction:column;color:var(--ink)">
+      <div style="height:60px;flex:none;padding:0 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px">
+        <span style="flex:none;display:inline-flex"><svg width="30" height="30" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14.5px;font-weight:600">{{ activeAgent.name }}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase">{{ activeAgent.role }}</div>
+        </div>
+        <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase"><span style="width:6px;height:6px;border-radius:50%;background:var(--success)"></span>Live</span>
+        <button onClick="{{ closePanel }}" title="Collapse" class="collapse-btn" style="width:28px;height:28px;border:1px solid var(--line);border-radius:7px;background:var(--paper);cursor:pointer;color:var(--ink-muted);display:flex;align-items:center;justify-content:center;padding:0;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 17 5-5-5-5"></path><path d="m13 17 5-5-5-5"></path></svg></button>
+      </div>
+
+      <div style="padding:12px 18px;border-bottom:1px solid var(--line);background:var(--panel)">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <sc-for list="{{ agents }}" as="ag" hint-placeholder-count="6">
+            <span class="avs" onClick="{{ ag.open }}" title="{{ ag.name }}" style="position:relative;display:inline-flex;border-radius:50%;cursor:pointer;padding:2px;{{ ag.ring }}">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg>
+              <span style="position:absolute;right:0;bottom:0;width:7px;height:7px;border-radius:50%;background:{{ ag.stateColor }};border:1.5px solid var(--panel)"></span>
+            </span>
+          </sc-for>
+        </div>
+        <div style="font-size:12px;color:var(--ink-muted);margin-top:11px;line-height:1.4">{{ activeAgent.status }}</div>
+      </div>
+
+      <div style="padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+        <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Context</span>
+        <sc-for list="{{ activeAgent.context }}" as="c" hint-placeholder-count="3">
+          <span style="font-family:var(--font-mono);font-size:10px;background:var(--panel);border:1px solid var(--line-panel);border-radius:5px;padding:2px 7px;color:var(--ink-muted)">{{ c }}</span>
+        </sc-for>
+      </div>
+      <div class="scarea" style="flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px">
+        <sc-for list="{{ thread }}" as="m" hint-placeholder-count="1">
+          <div style="display:flex;gap:9px;justify-content:{{ m.rowJustify }};align-items:flex-start">
+            <sc-if value="{{ m.isAgent }}" hint-placeholder-val="{{ true }}"><span style="flex:none;display:inline-flex;margin-top:1px"><svg width="22" height="22" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span></sc-if>
+            <div style="max-width:80%;background:{{ m.bubbleBg }};color:{{ m.bubbleFg }};border-radius:13px;padding:11px 13px;font-size:13px;line-height:1.5">{{ m.text }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:12px 18px 16px;border-top:1px solid var(--line)">
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px">
+          <sc-for list="{{ suggestions }}" as="s" hint-placeholder-count="3">
+            <span class="chip" onClick="{{ s.go }}" style="font-size:12px;font-weight:500;padding:6px 12px;border-radius:999px;cursor:pointer;background:var(--paper);color:var(--ink-muted);border:1px solid var(--line-strong)">{{ s.label }}</span>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:stretch;border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;background:var(--paper)">
+          <input value="{{ draft }}" onInput="{{ onDraft }}" onKeyDown="{{ onKey }}" placeholder="{{ inputPlaceholder }}" style="flex:1;min-width:0;border:none;outline:none;padding:11px 14px;font-size:13.5px;font-family:var(--font-sans);color:var(--ink);background:transparent">
+          <button onClick="{{ sendBtn }}" style="background:var(--accent);color:var(--accent-ink);border:none;font-size:13px;font-weight:600;padding:0 16px;cursor:pointer;font-family:var(--font-sans)">Send</button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- collapsed rail -->
+    <sc-if value="{{ panelClosed }}" hint-placeholder-val="{{ false }}">
+    <div style="width:52px;flex:none;border-left:1px solid var(--line);background:var(--paper);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:14px">
+      <button onClick="{{ reopen }}" title="Open agents" class="collapse-btn" style="width:30px;height:30px;border:1px solid var(--line);border-radius:8px;background:var(--paper);cursor:pointer;color:var(--ink-muted);display:flex;align-items:center;justify-content:center;padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5"></path><path d="m18 17-5-5 5-5"></path></svg></button>
+      <span style="flex:none;display:inline-flex"><svg width="24" height="24" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span>
+      <span style="writing-mode:vertical-rl;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;color:var(--ink-faint);text-transform:uppercase">Agents</span>
+    </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { idx:0, thread:[], draft:'', panelW:404, panelOpen:true };
+  _drag = false;
+  _mm = (e) => { if(!this._drag) return; const w = Math.min(680, Math.max(320, window.innerWidth - e.clientX)); this.setState({ panelW:w }); };
+  _mu = () => { this._drag = false; document.body.style.userSelect=''; window.removeEventListener('mousemove', this._mm); window.removeEventListener('mouseup', this._mu); };
+  startDrag = (e) => { e.preventDefault(); this._drag = true; document.body.style.userSelect='none'; window.addEventListener('mousemove', this._mm); window.addEventListener('mouseup', this._mu); };
+  componentWillUnmount(){ this._mu(); }
+  openAgent(i){ this.setState({ idx:i, draft:'', panelOpen:true, thread:[{ role:'agent', text:(this._intros[i] || '') }] }); }
+  send(text){
+    const t = (text || this.state.draft || '').trim();
+    if(!t) return;
+    this.setState(s => ({ draft:'', thread:[...s.thread,
+      { role:'user', text:t },
+      { role:'agent', text:'On it — I\u2019ll action that and update the record, then notify whoever it affects.' }] }));
+  }
+  renderVals(){
+    const ACC='var(--accent)', SUC='var(--success)', CRIT='var(--ink-strong)', SOFT='var(--ink-faint)';
+
+    const navRaw = [
+      { label:'Core', items:[ { name:'Command Center', href:'Command Center.dc.html' }, { name:'Agents', href:'Agents.dc.html' }, { name:'Workflows', href:'Workflows.dc.html' }, { name:'Projects', href:'Projects.dc.html' }, { name:'Machines', href:'Machines.dc.html' } ] },
+      { label:'Value chain', items:[
+        { name:'Procurement', badge:'6' }, { name:'Manufacturing' }, { name:'Inventory' },
+        { name:'Fulfillment', badge:'3' }, { name:'Quality' }, { name:'Sales & CRM' }, { name:'Marketing' } ] },
+      { label:'Robotics', items:[
+        { name:'Fleet' }, { name:'Field Service' }, { name:'Engineering' }, { name:'Autonomy' } ] },
+      { label:'Back office', items:[
+        { name:'Finance', badge:'6' }, { name:'People', active:true }, { name:'Security' }, { name:'Legal' } ] },
+    ];
+    const navGroups = navRaw.map(g => ({
+      label: g.label || null,
+      items: g.items.map(it => ({
+        name: it.name, badge: it.badge || null, href: it.href || (it.name === 'Inventory' ? '#' : it.name + '.dc.html'), pad: it.sub ? '24px' : '10px',
+        bg: it.active ? 'var(--panel)' : 'transparent',
+        fg: it.active ? 'var(--ink)' : 'var(--ink-muted)',
+        weight: it.active ? 600 : 400,
+        marker: it.active ? 'var(--ink-strong)' : 'var(--line-strong)',
+      })),
+    }));
+
+    const statsRaw = [
+      { v:'142', l:'Headcount' },
+      { v:'18', l:'Field techs' },
+      { v:'7', l:'Open reqs' },
+      { v:'94%', l:'Cert compliance' },
+    ];
+    const stats = statsRaw.map((s, i) => ({ ...s, divider: i ? '1px solid var(--line)' : 'none' }));
+
+    const certCols = ['HX-2 svc', 'HX-1 svc', 'HV / batt', 'Safety LOTO', 'Commission'];
+    const cell = (s) => s==='cert' ? { color:'var(--success)', label:'OK' }
+      : s==='exp' ? { color:'var(--ink-strong)', label:'12d' }
+      : s==='train' ? { color:'var(--accent)', label:'Trng' }
+      : { color:'var(--skeleton)', label:'—' };
+    const matrixRaw = [
+      { init:'MO', name:'M. Osei', cells:['cert','cert','exp','cert','cert'] },
+      { init:'AB', name:'A. Brandt', cells:['cert','cert','cert','cert','train'] },
+      { init:'JR', name:'J. Rivera', cells:['cert','cert','none','cert','cert'] },
+      { init:'KT', name:'K. Tanaka', cells:['cert','cert','cert','cert','none'] },
+      { init:'LS', name:'L. Sato', cells:['train','cert','none','cert','none'] },
+      { init:'DC', name:'D. Cruz', cells:['cert','train','cert','cert','none'] },
+    ];
+    const matrix = matrixRaw.map(r => ({ init:r.init, name:r.name, cells:r.cells.map(cell) }));
+
+    const hiringRaw = [
+      { role:'Field service techs', filled:'18 / 21', pct:'86%', good:true },
+      { role:'Commissioning engineers', filled:'6 / 8', pct:'75%', good:true },
+      { role:'Production assembly', filled:'42 / 44', pct:'95%', good:true },
+      { role:'Autonomy / SW', filled:'19 / 24', pct:'79%', good:false },
+    ];
+    const hiring = hiringRaw.map(h => ({ ...h, color: h.good ? 'var(--ink-strong)' : 'var(--accent)' }));
+
+    const functionsRaw = [
+      { name:'Production', n:48, pct:'100%' },
+      { name:'Engineering', n:34, pct:'71%' },
+      { name:'Field service', n:18, pct:'38%' },
+      { name:'Go-to-market', n:22, pct:'46%' },
+      { name:'G&A', n:20, pct:'42%' },
+    ];
+    const functions = functionsRaw;
+
+    const agentsRaw = [
+      { name:'Certification agent', role:'COMPLIANCE · ppl-01', stateColor:CRIT, status:'M. Osei\u2019s HV/battery cert expires in 12 days.' },
+      { name:'Recruiting agent', role:'PIPELINE · ppl-02', stateColor:SUC, status:'3 field-tech reqs open · 14 candidates in pipeline.' },
+      { name:'Onboarding agent', role:'RAMP · ppl-03', stateColor:SUC, status:'2 new techs in week-1 certification training.' },
+      { name:'Workforce-planning agent', role:'CAPACITY · ppl-04', stateColor:ACC, status:'Tech-to-fleet ratio at 1:2.7 vs the 1:4 target.' },
+      { name:'Skills agent', role:'COMPETENCY · ppl-06', stateColor:SUC, status:'Commissioning is the thinnest cert — 3 techs hold it.' },
+      { name:'Scheduling agent', role:'SHIFTS · ppl-09', stateColor:SUC, status:'Shift coverage solid across all 3 sites this week.' },
+    ];
+    const intros = [
+      'M. Osei\u2019s high-voltage / battery certification expires in 12 days — and he\u2019s the tech currently dispatched to the SN-2196 battery swap. If it lapses, Field Service loses its only battery-certified tech at Site-2. I can book a recert slot before the job and flag it to Field Service. Want me to?',
+      '3 field-service tech requisitions are open with 14 candidates in the pipeline — 5 already hold an HV/battery cert, which cuts ramp time in half. Want me to prioritize the pre-certified ones?',
+      '2 new technicians start their week-1 certification track Monday — safety/LOTO and HX-1 service first. Both reach dispatch-ready in ~3 weeks. Want the onboarding plan?',
+      'Field techs to deployed units is at 1:2.7 (18 techs : 48 units) — ahead of the 1:4 target, but fleet is growing ~8 units/quarter. To stay ahead through Q4 you need 3 more certified techs. Want the hiring plan?',
+      'Commissioning is the thinnest competency — only 3 techs are certified, and one (Rivera) is fully booked on the BMW install. I\u2019d cross-train Brandt next; he\u2019s already in the training queue. Want me to enroll him?',
+      'Shift coverage is solid across all 3 sites this week, with one gap: Site-2 night shift drops to a single tech Thursday. I can offer the open slot to Cruz. Want me to send it?',
+    ];
+    const contexts = [
+      ['PEOPLE','M. OSEI','HV CERT'],
+      ['PEOPLE','3 REQS','FS-TECH'],
+      ['PEOPLE','2 HIRES','ONBOARDING'],
+      ['PEOPLE','1:2.7','CAPACITY'],
+      ['PEOPLE','COMMISSION','SKILLS'],
+      ['PEOPLE','SITE-2','SHIFTS'],
+    ];
+    const suggs = [
+      ['Book recert','Notify Field Service','Show expiries'],
+      ['Prioritize certified','Show pipeline'],
+      ['Show onboarding plan','Assign mentor'],
+      ['Show hiring plan','Model Q4'],
+      ['Enroll Brandt','Show coverage'],
+      ['Offer to Cruz','Show roster'],
+    ];
+    this._intros = intros;
+
+    const idx = this.state.idx;
+    const agents = agentsRaw.map((a, i) => ({ ...a, open:()=>this.openAgent(i),
+      ring: i===idx ? 'box-shadow:0 0 0 2px var(--ink-strong)' : 'box-shadow:0 0 0 1px var(--line-strong)' }));
+
+    const a = agentsRaw[idx] || agentsRaw[0];
+    const activeAgent = { name:a.name, role:a.role, status:a.status, context:contexts[idx] || [] };
+    const baseThread = this.state.thread.length ? this.state.thread : [{ role:'agent', text:(intros[idx] || '') }];
+    const thread = baseThread.map(m => ({
+      isAgent: m.role === 'agent', text:m.text,
+      rowJustify: m.role === 'agent' ? 'flex-start' : 'flex-end',
+      bubbleBg: m.role === 'agent' ? 'var(--panel)' : 'var(--ink-strong)',
+      bubbleFg: m.role === 'agent' ? 'var(--ink)' : '#fff',
+    }));
+    const suggestions = (suggs[idx] || []).map(s => ({ label:s, go:()=>this.send(s) }));
+
+    return {
+      navGroups, stats, certCols, matrix, hiring, functions, agents, activeAgent, thread, suggestions,
+      panelW: this.state.panelW,
+      startDrag: this.startDrag,
+      panelOpen: this.state.panelOpen,
+      panelClosed: !this.state.panelOpen,
+      closePanel: ()=>this.setState({ panelOpen:false }),
+      reopen: ()=>this.setState({ panelOpen:true }),
+      draft:this.state.draft,
+      onDraft:(e)=>this.setState({ draft:e.target.value }),
+      onKey:(e)=>{ if(e.key === 'Enter'){ e.preventDefault(); this.send(); } },
+      sendBtn:()=>this.send(),
+      inputPlaceholder: 'Message ' + a.name + '…',
+    };
+  }
+}
+</script>
+</body>
+</html>

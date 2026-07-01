@@ -1,0 +1,24 @@
+<!-- @dsCard group="Components" viewport="700x400" name="Surfaces — card & layer row" subtitle="Feature card with mock-UI footer + architecture layer row" -->
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;font-family:var(--font-sans);background:var(--paper);padding:24px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}</style></head>
+<body><div id="root"></div>
+<script type="text/babel">
+const NS = Object.values(window).find(v => v && v.Card && v.LayerRow) || {};
+const { Card, LayerRow } = NS;
+function Demo(){return (
+  <div>
+    <div className="grid">
+      <Card title="Procurement" body="Agents source long-lead parts, run RFQs, and draft POs from live BOM demand." caption="PO-10482 · DRAFT" />
+      <Card title="Manufacturing" body="Plan builds and keep per-unit build genealogy from first PCB to packaged robot." caption="WORK ORDER · UNIT #2208" />
+    </div>
+    <LayerRow tag="L2 · INTELLIGENCE & AGENT SPINE" title="Intelligence & Agent Spine" body="Specialized models, long-term memory, and per-unit build genealogy — orchestrating humans, machines, and agents." />
+  </div>
+);}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);
+</script></body></html>

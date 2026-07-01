@@ -55,14 +55,17 @@ check(
     /var\(--on-dark\)/.test(tw),
 );
 
-// Imported source committed.
+// Canonical design reference committed. (The DS.1-era design/prototypes/source/
+// set was retired when the Axona v2 export became the canonical reference.)
 check(
-  "imported source committed (design/prototypes/source/tokens + Mission Control ref)",
-  existsSync(join(root, "design/prototypes/source/tokens/colors.css")) &&
+  "canonical v2 reference committed (axona-v2 tokens + Design System + Mission Control)",
+  existsSync(join(root, "design/prototypes/axona-v2/tokens/colors.css")) &&
     existsSync(
-      join(root, "design/prototypes/source/components/core/Button.jsx"),
+      join(root, "design/prototypes/axona-v2/Design System.dc.html"),
     ) &&
-    existsSync(join(root, "design/prototypes/Mission Control.dc.html")),
+    existsSync(
+      join(root, "design/prototypes/axona-v2/Mission Control.dc.html"),
+    ),
 );
 
 // Primitive library.

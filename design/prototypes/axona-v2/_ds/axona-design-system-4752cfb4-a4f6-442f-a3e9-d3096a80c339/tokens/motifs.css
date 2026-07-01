@@ -1,0 +1,34 @@
+/* Axona signature motifs.
+   The dotted grid is THE texture — a radial dot grid behind hero panels, verticals, and the
+   closing CTA. Don't add competing motifs. Motion: 0.15s ease, honor reduced-motion. */
+:root {
+  --dotgrid-color: #d9d8d2;
+  --dotgrid-size: 18px;
+  --motion-fast: 0.15s ease; /* @kind other */
+}
+
+.ax-dotgrid {
+  background-image: radial-gradient(
+    var(--dotgrid-color) 1.1px,
+    transparent 1.1px
+  );
+  background-size: var(--dotgrid-size) var(--dotgrid-size);
+}
+
+/* Hatch fill used for placeholder customer portraits (no real photos in prototype). */
+.ax-hatch {
+  background-image: repeating-linear-gradient(
+    135deg,
+    #e6e5df 0,
+    #e6e5df 1px,
+    #f1f0ea 1px,
+    #f1f0ea 12px
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

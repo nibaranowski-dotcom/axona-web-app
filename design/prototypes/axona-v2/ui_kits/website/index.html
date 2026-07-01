@@ -1,0 +1,162 @@
+<!-- @dsCard group="Website" viewport="1180x760" -->
+<!-- @startingPoint section="Website" subtitle="Axona marketing homepage" viewport="1180x760" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Axona — Website</title>
+<link rel="stylesheet" href="../../styles.css">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+  body{margin:0;font-family:var(--font-sans);background:var(--paper);color:var(--ink)}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+</style></head>
+<body><div id="root"></div>
+<script type="text/babel">
+const NS = Object.values(window).find(v => v && v.Button && v.Chip && v.Card) || {};
+const { Button, Chip, Badge, StatChip, Card, LayerRow, Input } = NS;
+
+const DOMAINS = ["Procurement","Manufacturing","Quality & Test","Logistics","Field Service","R&D"];
+const VERTICALS = [["Humanoids","Coming soon"],["Defense","Coming soon"],["Logistics","Coming soon"],["Manufacturing",""],["Construction",""],["Healthcare",""],["Space",""],["Automotive",""]];
+const PRIMS = ["SOPs","Documents","Data","Agents","Humans","Machines","Inventory","Meetings","Integrations","Interfaces"];
+const LAYERS = [
+  ["L4 · VERTICAL EDITIONS","Vertical Editions","A version of Axona pre-configured for your industry — the workflows and screens a humanoid, defense, or space team needs on day one."],
+  ["L3 · DOMAIN APPS","Domain Apps","Composable workflows built from shared primitives — procurement, manufacturing, quality, logistics, field service."],
+  ["L2 · INTELLIGENCE & AGENT SPINE","Intelligence & Agent Spine","Specialized models, long-term memory, and per-unit build genealogy — orchestrating humans, machines, and agents."],
+  ["L1 · DATA & CONTEXT","Data & Context","Connectors to ERP, PLM, MES, telemetry, and docs — plus an ontology of how your company actually works."],
+];
+
+function Wordmark({dark}){return (
+  <div style={{display:'flex',alignItems:'center',gap:8}}>
+    <span style={{fontSize:23,fontWeight:700,letterSpacing:'-.04em',color:dark?'#fff':'var(--ink-strong)'}}>axona</span>
+    <span style={{width:13,height:13,background:dark?'#fff':'var(--ink-strong)',borderRadius:'0 7px 0 7px'}}></span>
+  </div>
+);}
+
+function App(){
+  const [parts,setParts] = React.useState(7491284);
+  React.useEffect(()=>{const t=setInterval(()=>setParts(p=>p+Math.floor(Math.random()*7+1)),1200);return ()=>clearInterval(t);},[]);
+  const [domain,setDomain] = React.useState(0);
+  return (
+  <div>
+    {/* announce */}
+    <div style={{background:'var(--ink-strong)',color:'#fff',minHeight:36,display:'flex',alignItems:'center',justifyContent:'center',gap:10,fontSize:13,padding:'7px 40px'}}>
+      <span>Introducing Agents by Axona — the AI operating system for robotics ops.</span>
+      <a href="#" style={{textDecoration:'underline',textUnderlineOffset:2}}>Learn more</a>
+    </div>
+    {/* nav */}
+    <header style={{position:'sticky',top:0,zIndex:50,background:'rgba(255,255,255,.92)',backdropFilter:'blur(10px)',borderBottom:'1px solid var(--line-soft)'}}>
+      <nav className="wrap" style={{height:62,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <div style={{display:'flex',alignItems:'center',gap:40}}>
+          <Wordmark/>
+          <div style={{display:'flex',gap:24,fontSize:14.5,color:'#1a1a1a'}}>
+            {["Platform","Modules","Solutions","Customers","Pricing"].map(x=><a key={x} href="#">{x}</a>)}
+          </div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:18}}>
+          <a href="#" style={{fontSize:14.5}}>Sign in</a>
+          <Button variant="primary" size="sm">See a demo</Button>
+        </div>
+      </nav>
+    </header>
+    {/* hero */}
+    <section className="wrap" style={{padding:'64px 28px 0'}}>
+      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:26}}>
+        <span style={{fontFamily:'var(--font-mono)',fontSize:11,letterSpacing:'.06em',color:'var(--mono-faint)'}}>PARTS UNDER MANAGEMENT BY AXONA:</span>
+        <StatChip value={parts.toLocaleString()+" parts"} />
+      </div>
+      <h1 style={{fontSize:'clamp(48px,8.2vw,108px)',lineHeight:.92,letterSpacing:'-.045em',fontWeight:600,maxWidth:'13ch',margin:0}}>Build robots. Not spreadsheets.</h1>
+      <p style={{fontSize:'clamp(17px,1.8vw,21px)',color:'var(--ink-muted)',marginTop:22,maxWidth:'52ch'}}>Inventory, production, supply chain, and finance — unified in one AI-native operating system for hardware teams.</p>
+      <div style={{marginTop:34}}><Input buttonLabel="Book a demo" /></div>
+      <div className="ax-dotgrid" style={{marginTop:48,borderRadius:14,background:'var(--panel)',minHeight:420,position:'relative',display:'flex',alignItems:'center',justifyContent:'center'}}>
+        <div style={{position:'absolute',top:16,left:18,fontFamily:'var(--font-mono)',fontSize:10.5,color:'var(--mono-ghost)'}}>[ HERO COMPOSITION — product UI + robot ]</div>
+        <div style={{position:'relative',width:'min(560px,80%)',height:300}}>
+          <div style={{position:'absolute',left:0,top:40,width:230,height:140,background:'#fff',border:'1px solid var(--line-panel)',borderRadius:10,boxShadow:'var(--shadow-float)',padding:16}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,color:'var(--mono-ghost)',letterSpacing:'.08em'}}>BOM · WORK ORDER</div>
+            {[100,70,84].map((w,i)=><div key={i} style={{height:7,background:'var(--skeleton)',borderRadius:3,marginTop:i?9:14,width:w+'%'}}/>)}
+          </div>
+          <div style={{position:'absolute',right:0,bottom:0,width:250,height:140,background:'#fff',border:'1px solid var(--line-panel)',borderRadius:10,boxShadow:'var(--shadow-float)',padding:16}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,fontSize:11,color:'var(--success)',fontWeight:600}}><span style={{width:7,height:7,borderRadius:'50%',background:'var(--success)'}}></span>ROUTED FOR APPROVAL</div>
+            {[100,60].map((w,i)=><div key={i} style={{height:7,background:'var(--skeleton)',borderRadius:3,marginTop:i?9:16,width:w+'%'}}/>)}
+          </div>
+          <div style={{position:'absolute',left:'50%',top:'50%',transform:'translate(-50%,-50%) rotate(-8deg)',width:212,height:138,borderRadius:13,background:'linear-gradient(135deg,#1a1a1a,#000)',boxShadow:'var(--shadow-hero)',padding:18,color:'#fff',display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+              <span style={{fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.06em',color:'rgba(255,255,255,.55)'}}>UNIT · SN-2208</span>
+              <span style={{display:'flex',alignItems:'center',gap:5,fontSize:10,fontWeight:600,color:'var(--accent)'}}><span style={{width:6,height:6,borderRadius:'50%',background:'var(--accent)'}}></span>IN BUILD</span>
+            </div>
+            <div style={{display:'flex',alignItems:'flex-end',gap:5}}>
+              {[14,22,30].map((h,i)=><span key={i} style={{width:7,height:h,borderRadius:2,background:'var(--accent)'}}/>)}
+              {[24,16].map((h,i)=><span key={i} style={{width:7,height:h,borderRadius:2,background:'rgba(255,255,255,.25)'}}/>)}
+              <span style={{marginLeft:'auto',fontFamily:'var(--font-mono)',fontSize:11,fontWeight:600}}>84%</span>
+            </div>
+            <div style={{fontSize:12,fontWeight:600,color:'rgba(255,255,255,.85)'}}>Build genealogy · 142 parts traced</div>
+          </div>
+        </div>
+      </div>
+      <div style={{borderTop:'1px solid var(--line-soft)',borderBottom:'1px solid var(--line-soft)',marginTop:28,padding:'14px 0',display:'flex',gap:26,flexWrap:'wrap',alignItems:'center'}}>
+        <span style={{fontFamily:'var(--font-mono)',fontSize:10.5,letterSpacing:'.06em',color:'var(--ink-muted)'}}>AGENTS AT WORK TODAY</span>
+        <StatChip label="BOMs synced" value="175.5K" /><StatChip label="PO drafts" value="13,422" /><StatChip label="Shortages caught" value="2,288" /><StatChip label="Units traced" value="3,280" />
+      </div>
+    </section>
+    {/* domains */}
+    <section className="wrap" style={{padding:'72px 28px 30px'}}>
+      <h2 style={{fontSize:'clamp(30px,4vw,52px)',lineHeight:1.02,letterSpacing:'-.035em',fontWeight:600,maxWidth:'18ch',margin:0}}>One operating system. Every function on the floor.</h2>
+      <p style={{fontSize:'clamp(18px,2vw,24px)',color:'var(--ink-faint)',marginTop:6,fontWeight:500}}>Domains that share one spine — and infinite agents that work 24/7.</p>
+      <div style={{display:'flex',gap:8,marginTop:28,flexWrap:'wrap'}}>
+        {DOMAINS.map((d,i)=><Chip key={d} active={i===domain} onClick={()=>setDomain(i)}>{d}</Chip>)}
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginTop:24}}>
+        <Card title="Procurement" body="Agents source long-lead components, run RFQs, and draft purchase orders from live BOM demand — your buyers approve in one click." caption="PO-10482 · DRAFT" />
+        <Card title="Manufacturing" body="Plan builds, route work orders, and keep per-unit build genealogy from the first PCB to the packaged robot." caption="WORK ORDER · UNIT #2208" />
+      </div>
+    </section>
+    {/* architecture */}
+    <section className="wrap" style={{padding:'56px 28px'}}>
+      <span style={{fontFamily:'var(--font-mono)',fontSize:11,letterSpacing:'.08em',color:'var(--mono-faint)'}}>THE ARCHITECTURE</span>
+      <h2 style={{fontSize:'clamp(30px,4vw,52px)',lineHeight:1.02,letterSpacing:'-.035em',fontWeight:600,maxWidth:'20ch',marginTop:14}}>One system that adapts to how your factory runs.</h2>
+      <div style={{display:'flex',flexDirection:'column',gap:10,marginTop:36}}>
+        {LAYERS.map(l=><LayerRow key={l[0]} tag={l[0]} title={l[1]} body={l[2]} />)}
+      </div>
+      <div style={{marginTop:32,borderTop:'1px solid var(--line-soft)',paddingTop:28}}>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:11,letterSpacing:'.06em',color:'var(--mono-faint)',marginBottom:16}}>THE PRIMITIVES</div>
+        <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>{PRIMS.map(p=><Chip key={p}>{p}</Chip>)}</div>
+      </div>
+    </section>
+    {/* verticals */}
+    <section className="wrap" style={{padding:'20px 28px 60px'}}>
+      <div className="ax-dotgrid" style={{borderRadius:16,background:'var(--panel)',padding:'56px 40px'}}>
+        <span style={{fontFamily:'var(--font-mono)',fontSize:11,letterSpacing:'.08em',color:'var(--mono-faint)'}}>THE VERTICALS</span>
+        <h2 style={{fontSize:'clamp(28px,3.6vw,46px)',lineHeight:1.04,letterSpacing:'-.03em',fontWeight:600,maxWidth:'22ch',marginTop:14}}>One engine, proven on humanoids — then carried to every kind of robot company.</h2>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginTop:36}}>
+          {VERTICALS.map(([name,tag],i)=>(
+            <div key={name} style={{position:'relative',background:'#fff',border:'1px solid var(--line-panel)',borderRadius:12,padding:'22px 20px',minHeight:96,display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+              {tag && <span style={{position:'absolute',top:14,right:14}}><Badge tone="accent">{tag}</Badge></span>}
+              <span style={{fontFamily:'var(--font-mono)',fontSize:11,color:'#bdbdb4'}}>{String(i+1).padStart(2,'0')}</span>
+              <span style={{fontSize:18,fontWeight:600,letterSpacing:'-.02em'}}>{name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+    {/* CTA */}
+    <section className="wrap" style={{padding:'0 28px 80px'}}>
+      <div className="ax-dotgrid" style={{borderRadius:16,background:'var(--panel)',padding:'90px 28px',textAlign:'center'}}>
+        <h2 style={{fontSize:'clamp(36px,5.5vw,76px)',lineHeight:.96,letterSpacing:'-.04em',fontWeight:600,margin:0}}>Hit every build date.</h2>
+        <div style={{display:'flex',justifyContent:'center',marginTop:34}}><Input buttonLabel="Book a demo" /></div>
+      </div>
+    </section>
+    {/* footer */}
+    <footer style={{background:'var(--ink-strong)',color:'#fff'}}>
+      <div className="wrap" style={{padding:'72px 28px 28px'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16}}>
+          <Wordmark dark/>
+          <Button variant="primary" size="sm">See a demo</Button>
+        </div>
+        <div style={{borderTop:'1px solid var(--line-dark)',marginTop:32,paddingTop:24,fontSize:12.5,color:'#666'}}>© 2026 Axona, Inc. · Placeholder wordmark — swap with your logo</div>
+      </div>
+    </footer>
+  </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script></body></html>
