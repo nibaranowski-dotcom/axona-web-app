@@ -482,3 +482,20 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - General agent: `moduleKey "core"`, `code "axona-00"`, resolved via `getAxonaAgent(orgId)` (idempotent ensure; also seeded in FND.12). `buildAgentDef("core")` → `axonaSystemPrompt()` (cite-always + read-and-route + no-emoji) + `readToolsAcrossModules()` (every module's **read** tools; no draft/gated).
 - Citations flow: read tools return `sources:{label,url}[]` (real object routes only) → the chat route gathers them from the run's `tool-result` lines → `Message.citations` + the `message` SSE event → DS chips (links) under the agent bubble.
 - No-emoji brand fix folded in: `axonaSystemPrompt()` **and** `systemPromptFor()` (ART.2 module-agent prompt) now instruct "Do not use emoji in your responses." The global `AgentPane` reuses the shared `useAgentChat` hook (also used by AGT.1's per-agent chat); FND.13 resize/collapse unchanged.
+
+---
+
+## CMD.1 — Command Center rollups API
+
+**Automated**
+- `pnpm verify:cmd-1` — lib + route exist; `kpisByModule` covers core modules; KPIs derive from seeded rows (procurement open POs > 0); exceptions present + shaped (url, sourceLabel, ripples[], severity ink/lime/green); the **full seeded narrative surfaces** — NCR-118 (critical → engineering/procurement/fulfillment), DLV-3312 customs hold (→ legal/finance), SN-2196 thermal (→ field-service), Osei cert-expiring (people → field-service), HX-2 margin (finance), BMW SLA at-risk (legal → autonomy), agent-drafted PO awaiting approval (procurement), p-13 canary regression (→ fleet); no red severities; critical ranked first; org isolation.
+- `pnpm typecheck` (workspace + root) clean.
+
+**Manual (docker up, ./dev.sh)**
+- [ ] `curl -s localhost:3001/api/core/summary | jq` → `{ company, kpisByModule, exceptions }`.
+- [ ] Exceptions include the narrative items above, each with `ripples[]` + a `url` to the source module.
+- [ ] Numbers match the seed (e.g. Procurement awaiting-approval = 1); change a seeded row → the number changes.
+- [ ] A second org's summary contains only its own rows (isolation).
+
+**Notes**
+- `getCoreSummary(orgId)` (`apps/web/lib/core-summary.ts`) runs every query via `dbForOrg`, parallelised with `Promise.all`; no hardcoded numbers. SPC breach uses `$queryRaw` (value > ucl OR value < lcl, orgId pinned). Severity is `critical→ink · warn→lime · ok→green` only (no invented red). Exceptions are real rows + a curated `ripples[]` mapping, ranked critical-first and capped at 12. Predicates are tuned to the actual seeded status strings (NCR CRITICAL/OPEN, Delivery stage CUSTOMS + riskState, Robot WATCH, Technician certs.*.state EXPIRING, UnitEconomic trend `-…`, Obligation state AT_RISK, PO AWAITING_APPROVAL + draftedByAgentId, PolicyVersion state canary).
