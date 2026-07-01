@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { PanelRightClose } from "lucide-react";
 import { AgentGlyph } from "@/components/agents/AgentGlyph";
 import { ChatThread } from "@/components/agents/ChatThread";
 import { useAgentChat } from "@/components/agents/use-agent-chat";
@@ -90,9 +91,9 @@ export function AgentPane({ axonaAgentId }: { axonaAgentId?: string }) {
           type="button"
           onClick={toggle}
           aria-label="Collapse agent pane"
-          className="rounded-btn px-2 py-1 font-mono text-xs text-ink-muted hover:bg-panel-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="flex h-7 w-7 items-center justify-center rounded-btn text-ink-muted hover:bg-panel-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
-          ›
+          <PanelRightClose className="h-4 w-4" strokeWidth={1.7} aria-hidden />
         </button>
       </header>
 

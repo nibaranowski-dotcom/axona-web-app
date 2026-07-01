@@ -135,6 +135,12 @@
 
   /* — Overlay scrim (modal/command-palette backdrop; DS.1 composite) — */
   --scrim: rgba(10, 10, 10, 0.5);
+
+  /* — Copilot dark surface (Command Center "Ask Axona" card; from v2 CC) — */
+  --copilot-bg: #121214;
+  --copilot-grad-a: #1c1c20;
+  --copilot-grad-b: #111114;
+  --copilot-glow: rgba(198, 242, 79, 0.14);
 }
 
 ::selection {

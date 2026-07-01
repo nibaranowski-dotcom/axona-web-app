@@ -106,6 +106,10 @@ const allowedHex = new Set(
     "#101013",
     "#1a1a1e",
     "#0c0c0e",
+    // copilot dark surface (Command Center "Ask Axona" card — v2 retrofit)
+    "#121214",
+    "#1c1c20",
+    "#111114",
   ].map((h) => h.toLowerCase()),
 );
 const hexRe = /#[0-9a-fA-F]{3,8}\b/g;

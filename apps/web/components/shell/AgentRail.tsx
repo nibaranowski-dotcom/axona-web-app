@@ -1,5 +1,6 @@
 "use client";
 
+import { PanelRightOpen } from "lucide-react";
 import { AgentGlyph } from "@/components/agents/AgentGlyph";
 import { RAIL_WIDTH, useUi } from "@/lib/ui-store";
 
@@ -18,9 +19,7 @@ export function AgentRail() {
         className="flex flex-col items-center gap-2 rounded-btn p-2 text-ink-muted hover:bg-panel-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         <AgentGlyph tone="ink" status="live" size={22} />
-        <span aria-hidden className="font-mono text-[10px] text-ink-faint">
-          ‹
-        </span>
+        <PanelRightOpen className="h-4 w-4" strokeWidth={1.7} aria-hidden />
       </button>
     </div>
   );

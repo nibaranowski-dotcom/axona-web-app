@@ -17,6 +17,7 @@ interface UiState {
   navOpen: Record<string, boolean>; // group -> open?
   setAgentPaneWidth: (w: number) => void;
   toggleAgentPane: () => void;
+  setAgentPaneCollapsed: (collapsed: boolean) => void;
   toggleNav: (group: string) => void;
 }
 
@@ -35,6 +36,8 @@ export const useUi = create<UiState>()(
         set({ agentPaneWidth: Math.min(Math.max(w, MIN), MAX) }),
       toggleAgentPane: () =>
         set((s) => ({ agentPaneCollapsed: !s.agentPaneCollapsed })),
+      setAgentPaneCollapsed: (agentPaneCollapsed) =>
+        set({ agentPaneCollapsed }),
       toggleNav: (group) =>
         set((s) => ({ navOpen: { ...s.navOpen, [group]: !s.navOpen[group] } })),
     }),

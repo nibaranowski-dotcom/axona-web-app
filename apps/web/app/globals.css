@@ -21,6 +21,23 @@
     background-size: var(--dotgrid-size);
   }
 
+  /* Command Center "Ask Axona" copilot card (dark): lime radial glow + gradient. */
+  .copilot-surface {
+    background-color: var(--copilot-bg);
+    background-image:
+      radial-gradient(
+        520px 280px at 8% -30%,
+        var(--copilot-glow),
+        transparent 62%
+      ),
+      linear-gradient(155deg, var(--copilot-grad-a), var(--copilot-grad-b));
+  }
+
+  /* Nav chevron rotates when its <details> group is closed. */
+  .navgroup:not([open]) .navchev {
+    transform: rotate(-90deg);
+  }
+
   /* Mission Control launchpad backdrop (dark): lime glow + dot grid + gradient. */
   .bg-mission {
     background-color: var(--md-bg);

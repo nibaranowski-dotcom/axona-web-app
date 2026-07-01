@@ -21,11 +21,11 @@ console.log("\nVerifying CMD.2 — Command Center screen\n");
 check(
   "core route + components exist",
   existsSync(join(base, "app/(shell)/core/page.tsx")) &&
+    // v2 retrofit: KpiStrip (company) + HealthGrid (per-module) + the feed.
     [
       "CommandCenter",
       "KpiStrip",
-      "KpiTile",
-      "ModuleKpiGrid",
+      "HealthGrid",
       "ExceptionFeed",
       "ExceptionRow",
     ].every((c) => existsSync(join(base, `components/core/${c}.tsx`))),
@@ -46,7 +46,7 @@ check(
 
 const sevFiles =
   read(join(base, "components/core/ExceptionRow.tsx")) +
-  read(join(base, "components/core/KpiTile.tsx"));
+  read(join(base, "components/core/HealthGrid.tsx"));
 check(
   "severity dots ink/lime/green (no red)",
   /bg-ink-strong/.test(sevFiles) &&

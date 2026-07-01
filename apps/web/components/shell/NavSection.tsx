@@ -2,60 +2,54 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChevronDown } from "lucide-react";
 import type { NavGroup } from "@/lib/nav";
-import { useMounted, useUi } from "@/lib/ui-store";
 
-// A collapsible nav group (CORE / VALUE CHAIN / ROBOTICS / BACK OFFICE) with its
-// module rows. Open/closed persists via the UI store; active row gets the lime
-// signal (2px left bar + ink-strong). Inactive rows are ink-muted.
-
+// A collapsible nav group (Core / Value chain / Robotics / Back office) — a
+// native <details> (v2 shell). Mono uppercase eyebrow + a light-grey chevron
+// that rotates when closed (globals.css). Each module row: a 6px square marker
+// (ink when active, else line) + name; the active row gets a panel fill.
 export function NavSection({ group }: { group: NavGroup }) {
   const pathname = usePathname();
-  const mounted = useMounted();
-  const open = useUi((s) => s.navOpen[group.group]);
-  const toggleNav = useUi((s) => s.toggleNav);
-
-  // Hydration-safe: default to open on first paint, then reflect persisted state.
-  const isOpen = mounted ? open !== false : true;
 
   return (
-    <div className="px-2 py-1">
-      <button
-        type="button"
-        onClick={() => toggleNav(group.group)}
-        aria-expanded={isOpen}
-        className="flex w-full items-center justify-between rounded-btn px-2 py-1.5 font-mono text-[11px] uppercase tracking-wider text-ink-muted hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-      >
-        <span>{group.label}</span>
-        <span aria-hidden className="text-ink-muted">
-          {isOpen ? "−" : "+"}
-        </span>
-      </button>
-
-      {isOpen && (
-        <ul className="mt-0.5">
-          {group.modules.map((m) => {
-            const active = pathname === m.href;
-            return (
-              <li key={m.key}>
-                <Link
-                  href={m.href}
-                  aria-current={active ? "page" : undefined}
-                  className={[
-                    "flex items-center gap-2 rounded-btn border-l-2 px-3 py-1.5 text-sm",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
-                    active
-                      ? "border-accent bg-panel-2 text-ink-strong"
-                      : "border-transparent text-ink-muted hover:bg-panel-2 hover:text-ink",
-                  ].join(" ")}
-                >
-                  {m.name}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
+    <details open className="navgroup">
+      <summary className="flex cursor-pointer list-none items-center gap-[7px] rounded-btn px-[10px] pb-[6px] pt-[14px] font-mono text-[9.5px] uppercase tracking-[0.06em] text-ink-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent [&::-webkit-details-marker]:hidden">
+        <span className="flex-1">{group.label}</span>
+        <ChevronDown
+          className="navchev h-[11px] w-[11px] flex-none text-line-strong transition-transform duration-150"
+          strokeWidth={2.4}
+          aria-hidden
+        />
+      </summary>
+      <ul>
+        {group.modules.map((m) => {
+          const active = pathname === m.href;
+          return (
+            <li key={m.key}>
+              <Link
+                href={m.href}
+                aria-current={active ? "page" : undefined}
+                className={[
+                  "flex items-center gap-[11px] rounded-btn px-[10px] py-2 text-[14px] transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+                  active
+                    ? "bg-panel font-semibold text-ink"
+                    : "font-normal text-ink-muted hover:bg-panel",
+                ].join(" ")}
+              >
+                <span
+                  aria-hidden
+                  className={`h-[6px] w-[6px] flex-none rounded-[2px] ${
+                    active ? "bg-ink-strong" : "bg-line-strong"
+                  }`}
+                />
+                <span className="flex-1">{m.name}</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </details>
   );
 }

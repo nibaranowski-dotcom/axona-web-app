@@ -1,12 +1,14 @@
 "use client";
 
+import { Search } from "lucide-react";
 import type { NavGroup } from "@/lib/nav";
 import { useCommandPalette } from "@/lib/command-palette";
 import { NavSection } from "./NavSection";
 
-// Left sidebar: wordmark, the ⌘K search entry, and the four grouped nav sections.
-// Hairline right border (no shadow). The ⌘K entry opens the global command
-// palette (SRCH.3); the ⌘K/"/" key handling itself lives in CommandPalette.
+// Left sidebar (Axona v2 shell) — 232px, paper surface, hairline right border.
+// axona wordmark + the asymmetric square mark, a ⌘K search that opens the
+// command palette (SRCH.3), collapsible <details> nav sections, and the identity
+// footer. Icons are Lucide (thin stroke); no emoji.
 
 export function Sidebar({ groups }: { groups: NavGroup[] }) {
   const openPalette = useCommandPalette((s) => s.openPalette);
@@ -14,37 +16,43 @@ export function Sidebar({ groups }: { groups: NavGroup[] }) {
   return (
     <nav
       aria-label="Primary"
-      className="flex h-dvh w-60 flex-col border-r border-line bg-panel"
+      className="flex h-dvh w-[232px] flex-none flex-col border-r border-line bg-paper px-[14px] py-[18px]"
     >
-      {/* Wordmark */}
-      <div className="flex items-center gap-2 px-4 py-4">
+      {/* Wordmark + asymmetric square mark */}
+      <div className="flex items-center gap-2 px-2 pb-[18px] pt-1">
+        <span className="text-[21px] font-bold tracking-[-0.04em] text-ink-strong">
+          axona
+        </span>
         <span
           aria-hidden
-          className="inline-block h-2.5 w-2.5 rounded-[3px] bg-accent"
+          className="h-3 w-3 flex-none bg-ink-strong"
+          style={{ borderRadius: "0 7px 0 7px" }}
         />
-        <span className="text-base font-semibold tracking-tight text-ink-strong">
-          Axona
-        </span>
       </div>
 
       {/* ⌘K search entry (palette = SRCH.3) */}
-      <div className="px-3 pb-2">
-        <button
-          type="button"
-          onClick={() => openPalette()}
-          className="flex w-full items-center justify-between rounded-btn border border-line-strong bg-paper px-3 py-1.5 text-sm text-ink-muted hover:bg-panel-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          <span>Search</span>
-          <span className="rounded-[4px] border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-muted">
-            ⌘K
-          </span>
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => openPalette()}
+        className="mx-1 mb-[10px] flex items-center gap-[9px] rounded-[9px] border border-line-strong bg-panel px-[11px] py-2 transition-colors hover:border-ink-strong hover:bg-panel-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      >
+        <Search
+          className="h-3.5 w-3.5 flex-none text-ink-muted"
+          strokeWidth={2}
+          aria-hidden
+        />
+        <span className="flex-1 text-left text-[13px] text-ink-muted">
+          Search
+        </span>
+        <span className="rounded-[4px] border border-line-strong px-[5px] py-px font-mono text-[9.5px] text-ink-muted">
+          ⌘K
+        </span>
+      </button>
 
       {/* Grouped nav (empty state if the seed hasn't run) */}
-      <div className="min-h-0 flex-1 overflow-y-auto py-1">
+      <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
         {groups.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-ink-muted">
+          <p className="px-3 py-6 text-sm text-ink-muted">
             No modules — run the seed (
             <span className="font-mono">pnpm db:seed</span>).
           </p>
@@ -54,9 +62,17 @@ export function Sidebar({ groups }: { groups: NavGroup[] }) {
       </div>
 
       {/* Stubbed identity until AUTH.1 */}
-      <div className="border-t border-line px-4 py-3 text-xs text-ink-muted">
-        {/* TODO AUTH.1: real session/user + org switcher */}
-        Demo workspace · ADMIN
+      <div className="mt-2 flex items-center gap-[10px] border-t border-line px-2 pb-0.5 pt-3">
+        <span
+          aria-hidden
+          className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-accent text-[12px] font-bold text-accent-ink"
+        >
+          AX
+        </span>
+        <div className="min-w-0 text-[12.5px] leading-[1.3]">
+          <div className="font-semibold text-ink">Demo workspace</div>
+          <div className="text-ink-muted">Head of Ops</div>
+        </div>
       </div>
     </nav>
   );
