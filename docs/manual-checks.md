@@ -499,3 +499,23 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 **Notes**
 - `getCoreSummary(orgId)` (`apps/web/lib/core-summary.ts`) runs every query via `dbForOrg`, parallelised with `Promise.all`; no hardcoded numbers. SPC breach uses `$queryRaw` (value > ucl OR value < lcl, orgId pinned). Severity is `critical→ink · warn→lime · ok→green` only (no invented red). Exceptions are real rows + a curated `ripples[]` mapping, ranked critical-first and capped at 12. Predicates are tuned to the actual seeded status strings (NCR CRITICAL/OPEN, Delivery stage CUSTOMS + riskState, Robot WATCH, Technician certs.*.state EXPIRING, UnitEconomic trend `-…`, Obligation state AT_RISK, PO AWAITING_APPROVAL + draftedByAgentId, PolicyVersion state canary).
+
+---
+
+## CMD.2 — Command Center screen
+
+**Automated**
+- `pnpm verify:cmd-2` — /core route + components (CommandCenter/KpiStrip/KpiTile/ModuleKpiGrid/ExceptionFeed/ExceptionRow); renders `getCoreSummary`; exception rows link to source + ripple modules; severity dots ink/lime/green (no red); copilot entry reuses the GA.1 pane (no second chat); no emoji/raw hex.
+- `pnpm typecheck` (workspace + root) clean.
+
+**Manual (docker up, ./dev.sh, http://localhost:3001/core)**
+- [ ] Renders inside the shell: company KPI strip + per-module KPI grid + the cross-module exception feed — all live from CMD.1 (no hardcoded numbers).
+- [ ] The 8 narrative exceptions appear with a severity dot (ink/lime/green), title link, source chip, and ripple chips (NCR-118 → engineering/procurement/fulfillment, DLV-3312 → legal/finance, …).
+- [ ] Click an exception title/source → its module; click a ripple chip → `/{module}` (404 until that screen exists — expected).
+- [ ] Per-module KPI cards show CMD.1 values and link to each module.
+- [ ] Click an "Ask the Axona agent…" suggestion → the right pane (GA.1) opens with the question seeded; Send → a cross-module answer over this data.
+- [ ] Loading skeleton (route `loading.tsx`), empty ("All clear" / "run the seed"), and error states render.
+- [ ] Matches design/prototypes/ (KPI tiles, feed rows, chips, hairlines); no emoji; lime = signal (severity ink/lime/green). accessibility-review 0 violations.
+
+**Notes**
+- `/core` is a static shell route (overrides `(shell)/[module]`, like `/agents`); server-fetches `getCoreSummary` (org-scoped) with try/catch → error state. The copilot is the existing GA.1 `AgentPane` reused — the on-screen entries set a transient `useCopilotSeed` and open the pane (which prefills its composer); no second chat surface is built. Severity → `critical:bg-ink-strong · warn:bg-accent · ok:bg-success`.

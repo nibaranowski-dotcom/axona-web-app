@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AgentGlyph } from "@/components/agents/AgentGlyph";
 import { ChatThread } from "@/components/agents/ChatThread";
 import { useAgentChat } from "@/components/agents/use-agent-chat";
 import { TraceConsole } from "./TraceConsole";
 import { AgentRail } from "./AgentRail";
 import { useMounted, useUi } from "@/lib/ui-store";
+import { useCopilotSeed } from "@/lib/copilot-seed";
 
 // Right agent pane: resizable (drag the left handle) and collapsible to a 52px
 // rail (width + collapsed persist via the UI store — FND.13 behaviour). The body
@@ -24,6 +25,16 @@ export function AgentPane({ axonaAgentId }: { axonaAgentId?: string }) {
   const [input, setInput] = useState("");
   const { messages, traceLines, sending, error, send } =
     useAgentChat(axonaAgentId);
+
+  // A CMD.2 copilot entry can seed a starter question — prefill the composer once.
+  const seed = useCopilotSeed((s) => s.seed);
+  const setSeed = useCopilotSeed((s) => s.setSeed);
+  useEffect(() => {
+    if (seed) {
+      setInput(seed);
+      setSeed(null);
+    }
+  }, [seed, setSeed]);
 
   const onPointerMove = useCallback(
     (e: PointerEvent) => {

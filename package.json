@@ -31,7 +31,7 @@
     "verify:srch-1": "tsx src/scripts/verify-srch-1.ts",
     "verify:srch-2": "tsx src/scripts/verify-srch-2.ts",
     "verify:ds-1": "tsx src/scripts/verify-ds-1.ts",
-    "verify:all": "pnpm verify:fnd-1 && pnpm verify:fnd-2 && pnpm verify:fnd-3 && pnpm verify:fnd-4 && pnpm verify:fnd-5 && pnpm verify:fnd-6 && pnpm verify:fnd-7 && pnpm verify:fnd-8 && pnpm verify:fnd-9 && pnpm verify:fnd-10 && pnpm verify:fnd-11 && pnpm verify:fnd-12 && pnpm verify:fnd-13 && pnpm verify:mc-1 && pnpm verify:srch-1 && pnpm verify:srch-2 && pnpm verify:ds-1 && pnpm verify:srch-3 && pnpm verify:art-1 && pnpm verify:art-2 && pnpm verify:art-4 && pnpm verify:agt-1 && pnpm verify:ga-1 && pnpm verify:cmd-1",
+    "verify:all": "pnpm verify:fnd-1 && pnpm verify:fnd-2 && pnpm verify:fnd-3 && pnpm verify:fnd-4 && pnpm verify:fnd-5 && pnpm verify:fnd-6 && pnpm verify:fnd-7 && pnpm verify:fnd-8 && pnpm verify:fnd-9 && pnpm verify:fnd-10 && pnpm verify:fnd-11 && pnpm verify:fnd-12 && pnpm verify:fnd-13 && pnpm verify:mc-1 && pnpm verify:srch-1 && pnpm verify:srch-2 && pnpm verify:ds-1 && pnpm verify:srch-3 && pnpm verify:art-1 && pnpm verify:art-2 && pnpm verify:art-4 && pnpm verify:agt-1 && pnpm verify:ga-1 && pnpm verify:cmd-1 && pnpm verify:cmd-2",
     "prepare": "git config core.hooksPath .husky || true",
     "verify:srch-3": "tsx src/scripts/verify-srch-3.ts",
     "verify:art-1": "tsx src/scripts/verify-art-1.ts",
@@ -39,7 +39,8 @@
     "verify:art-4": "tsx src/scripts/verify-art-4.ts",
     "verify:agt-1": "tsx src/scripts/verify-agt-1.ts",
     "verify:ga-1": "tsx src/scripts/verify-ga-1.ts",
-    "verify:cmd-1": "tsx src/scripts/verify-cmd-1.ts"
+    "verify:cmd-1": "tsx src/scripts/verify-cmd-1.ts",
+    "verify:cmd-2": "tsx src/scripts/verify-cmd-2.ts"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
