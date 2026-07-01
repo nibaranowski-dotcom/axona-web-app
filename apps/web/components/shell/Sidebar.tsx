@@ -1,17 +1,23 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import type { NavGroup } from "@/lib/nav";
-import { useCommandPalette } from "@/lib/command-palette";
 import { useMounted, useUi } from "@/lib/ui-store";
 import { NavSection } from "./NavSection";
 
+// Modules that live only on Mission Control / as the palette — not in the left
+// nav (Command Center.dc.html's Core is exactly CC · Agents · Workflows ·
+// Projects · Machines). Scoped to the sidebar; the launcher keeps its tiles.
+const HIDDEN_FROM_NAV = new Set(["mission-control", "search"]);
+
 // Left sidebar (Axona v2 shell) — 240px, paper surface, hairline right border,
 // 1:1 with Command Center.dc.html's <aside>. axona wordmark + asymmetric square
-// mark + a collapse-menu button; a ⌘K search that opens the command palette
-// (SRCH.3); collapsible <details> nav sections with per-module alert badges; the
-// AUTH.1 identity-stub footer. Collapses to a slim rail (persisted in useUi).
-// Icons are Lucide (thin stroke); no emoji.
+// mark + a collapse-menu button; a search bar that navigates to Mission Control
+// (the launchpad, search ready — the global ⌘K palette is a separate shortcut);
+// collapsible <details> nav sections with per-module alert badges; the AUTH.1
+// identity-stub footer. Collapses to a slim rail (persisted in useUi). Icons are
+// Lucide (thin stroke); no emoji.
 
 export function Sidebar({
   groups,
@@ -20,10 +26,20 @@ export function Sidebar({
   groups: NavGroup[];
   alerts: Record<string, number>;
 }) {
-  const openPalette = useCommandPalette((s) => s.openPalette);
+  const router = useRouter();
   const collapsed = useUi((s) => s.sidebarCollapsed);
   const toggleSidebar = useUi((s) => s.toggleSidebar);
   const mounted = useMounted();
+
+  // Clicking the search bar lands on Mission Control with its search focused.
+  const goToSearch = () => router.push("/?search=1");
+
+  const navGroups = groups
+    .map((g) => ({
+      ...g,
+      modules: g.modules.filter((m) => !HIDDEN_FROM_NAV.has(m.key)),
+    }))
+    .filter((g) => g.modules.length > 0);
 
   // Hydration-safe: first paint = expanded (matches the server), then reflect
   // the persisted collapse state.
@@ -48,7 +64,7 @@ export function Sidebar({
         </button>
         <button
           type="button"
-          onClick={() => openPalette()}
+          onClick={goToSearch}
           aria-label="Search"
           className="mt-2 flex h-7 w-7 items-center justify-center rounded-[7px] border border-line-strong text-ink-muted transition-colors hover:bg-panel hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
@@ -89,10 +105,10 @@ export function Sidebar({
         </button>
       </div>
 
-      {/* ⌘K search entry (palette = SRCH.3) */}
+      {/* Search bar → Mission Control (search ready). ⌘K palette = SRCH.3. */}
       <button
         type="button"
-        onClick={() => openPalette()}
+        onClick={goToSearch}
         className="mx-1 mb-[10px] flex items-center gap-[9px] rounded-[9px] border border-line-strong bg-panel px-[11px] py-2 transition-colors hover:border-ink-strong hover:bg-panel-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         <Search
@@ -110,13 +126,13 @@ export function Sidebar({
 
       {/* Grouped nav (empty state if the seed hasn't run) */}
       <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-[3px] overflow-y-auto px-1">
-        {groups.length === 0 ? (
+        {navGroups.length === 0 ? (
           <p className="px-3 py-6 text-sm text-ink-muted">
             No modules — run the seed (
             <span className="font-mono">pnpm db:seed</span>).
           </p>
         ) : (
-          groups.map((g) => (
+          navGroups.map((g) => (
             <NavSection key={g.group} group={g} alerts={alerts} />
           ))
         )}

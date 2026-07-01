@@ -62,10 +62,18 @@ check(
   /deepLinkQuery/.test(read(join(base, "app/search/page.tsx"))),
 );
 
-// entries repointed to the palette (no dead /search nav)
+// Sidebar search bar → Mission Control (search ready); MC/Search dropped from nav.
+// The global ⌘K palette shortcut lives in CommandPalette (unchanged).
+const sidebar = read(join(base, "components/shell/Sidebar.tsx"));
 check(
-  "sidebar ⌘K entry opens the palette",
-  /openPalette/.test(read(join(base, "components/shell/Sidebar.tsx"))),
+  "sidebar search bar navigates to Mission Control (/)",
+  /router\.push\("\/\?search=1"\)/.test(sidebar),
+);
+check(
+  "sidebar nav hides mission-control + search",
+  /HIDDEN_FROM_NAV/.test(sidebar) &&
+    /"mission-control"/.test(sidebar) &&
+    /"search"/.test(sidebar),
 );
 check(
   "launcher field opens the palette",

@@ -8,11 +8,21 @@ import { getCurrentUser } from "@/lib/session";
 // Module screens live under the (shell) group with the sidebar/agent-pane.
 export const dynamic = "force-dynamic";
 
-export default async function MissionControl() {
+export default async function MissionControl({
+  searchParams,
+}: {
+  searchParams?: { search?: string };
+}) {
   const user = await getCurrentUser(); // TODO AUTH.1
   const [groups, alerts] = await Promise.all([
     getNavModules(),
     user ? getModuleAlerts(user.orgId) : Promise.resolve({}),
   ]);
-  return <Launcher groups={groups} alerts={alerts} />;
+  return (
+    <Launcher
+      groups={groups}
+      alerts={alerts}
+      openSearch={searchParams?.search !== undefined}
+    />
+  );
 }

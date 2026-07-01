@@ -15,16 +15,21 @@ export function Launcher({
   groups,
   alerts,
   deepLinkQuery,
+  openSearch = false,
 }: {
   groups: NavGroup[];
   alerts: Record<string, number>;
   deepLinkQuery?: string;
+  // Arrived from the sidebar search bar (/?search=1) — open the search field
+  // (the ⌘K palette, cursor ready) on Mission Control.
+  openSearch?: boolean;
 }) {
   const openPalette = useCommandPalette((s) => s.openPalette);
 
   useEffect(() => {
     if (deepLinkQuery !== undefined) openPalette(deepLinkQuery);
-  }, [deepLinkQuery, openPalette]);
+    else if (openSearch) openPalette();
+  }, [deepLinkQuery, openSearch, openPalette]);
 
   const sections = groups
     .map((g) => ({
