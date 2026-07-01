@@ -68,11 +68,12 @@ check(
   /deepLinkQuery/.test(read(join(base, "app/search/page.tsx"))),
 );
 
-// Sidebar search bar opens the dark Search (same as ⌘K); MC/Search off the nav.
+// Sidebar search bar routes to Mission Control (⌘K keeps the overlay); MC/Search
+// off the nav.
 const sidebar = read(join(base, "components/shell/Sidebar.tsx"));
 check(
-  "sidebar search bar opens the dark Search (openPalette)",
-  /openPalette/.test(sidebar),
+  "sidebar search bar routes to Mission Control (/)",
+  /router\.push\("\/"\)/.test(sidebar),
 );
 check(
   "sidebar nav hides mission-control + search",
