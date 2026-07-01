@@ -3,8 +3,16 @@ import { PrismaClient } from "@prisma/client";
 /**
  * The bare client — for migrations, seed, and system tasks ONLY. Request paths
  * must use `dbForOrg(orgId)` so tenant isolation (ISO.1) is enforced by default.
+ *
+ * Dev singleton: Next hot-reload (and repeated tsx runs) re-evaluate this module,
+ * each time spawning a fresh PrismaClient + connection pool — which exhausts
+ * Postgres ("too many clients already"). Pin ONE client on globalThis in dev so
+ * every reload reuses it. In production the module is evaluated once, so we skip
+ * the global.
  */
-export const prisma = new PrismaClient();
+const g = globalThis as unknown as { __axonaPrisma?: PrismaClient };
+export const prisma = g.__axonaPrisma ?? new PrismaClient();
+if (process.env.NODE_ENV !== "production") g.__axonaPrisma = prisma;
 
 /**
  * Tenant-owned models that carry a real `orgId` column. Children that inherit
