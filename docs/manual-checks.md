@@ -554,3 +554,19 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 **Notes**
 - Data from PROC.1 `getProcurementQueue` (org-scoped); agent-drafted flagged via `draftedByAgentId`. Approve = server action `advancePurchaseOrder` (`requireRole` line 1 → `dbForOrg` scoped `updateMany` → `revalidatePath`), transitions DRAFTED→AWAITING_APPROVAL→APPROVED→SENT; `/// TODO AUDIT.3` seam for the immutable event log; RBAC.4 formalizes the state machine. Status pills: green (dot+tint) approved/sent/received · lime awaiting · neutral drafted — no red (green text on tint would fail AA, so the dot carries the signal + ink text). The copilot is the global Axona pane (reused); "New order"/"Draft PO" seed it. The dark agent-trace block renders the latest real procurement `AgentRun` trace (org-scoped), hidden if none. `lib/rbac.ts` added (RBAC.2/3 seam).
+
+---
+
+## QUAL.1 — Quality data/API
+
+**Automated**
+- `pnpm verify:qual-1` — routes (spc/ncrs/certs); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); UCL/LCL compare via `$queryRaw`; getQualityData returns spcSeries grouped w/ breach flag (drive_torque_Nm breaches UCL), NCR-118 as CRITICAL (linkedTo lot 88421), certs w/ audit-ready/expiring flags, defectPareto descending; org isolation (unknown org → empty).
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001)**
+- [ ] `curl 'http://localhost:3001/api/quality/ncrs?status=OPEN'` returns NCR-118 (CRITICAL, linkedTo "lot 88421; SERVO-204").
+- [ ] `curl 'http://localhost:3001/api/quality/spc?characteristic=drive_torque_Nm'` returns the SERVO-204 torque series (last points 4.3/4.5 breach UCL 4.2).
+- [ ] `curl http://localhost:3001/api/quality/certs` returns CE/UL/ISO with validTo.
+
+**Notes**
+- Read/API only over existing SpcSample/NCR/Cert (no schema change, no mutations — the SPC control-chart + NCR tracker screen is QUAL.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; UCL/LCL out-of-control compare uses `$queryRaw` with orgId pinned. Cert expiry window = 90 days (auditReady = VALID && !expiring).
