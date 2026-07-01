@@ -570,3 +570,21 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 **Notes**
 - Read/API only over existing SpcSample/NCR/Cert (no schema change, no mutations — the SPC control-chart + NCR tracker screen is QUAL.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; UCL/LCL out-of-control compare uses `$queryRaw` with orgId pinned. Cert expiry window = 90 days (auditReady = VALID && !expiring).
+
+---
+
+## QUAL.2 — Quality screen
+
+**Automated**
+- `pnpm verify:qual-2` — route + components (QualityView/SpcChart/DefectPareto/CertList/NcrTable); renders getQualityData; SPC chart shows UCL/LCL/mean + a breach marker (ink, not red); read-only (no mutations); no red/emoji/raw hex; SPC series breaches, NCR-118 CRITICAL, certs + Pareto present.
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001/quality)**
+- [ ] Matches Quality.dc.html on the v2 shell — the **SPC control chart leads** (signature artifact); UCL/mean/LCL reference lines; the SERVO-204 torque points at 4.3/4.5 breach UCL and render as INK (out of spec), within-control points ink-faint. No red.
+- [ ] Defect Pareto (descending) + Certifications (CE/UL/ISO; UL flagged expiring, dot signal).
+- [ ] NCR tracker: NCR-118 first (Critical, linked to "lot 88421; SERVO-204").
+- [ ] The Quality agents (SPC / inspection / root-cause / NCR-CAPA / calibration / compliance) appear in the module-aware pane; "Open NCR" seeds the agent.
+- [ ] accessibility-review 0 violations.
+
+**Notes**
+- Read-only over QUAL.1 getQualityData (org-scoped); no schema change, no mutations. SPC breach = INK (critical = ink, never red); severity + cert status carried by ink/lime/green dots with ink text (AA-safe — green text on paper fails contrast). The dark agent-trace block renders the latest real quality AgentRun (org-scoped), hidden if none.
