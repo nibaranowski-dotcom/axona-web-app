@@ -31,6 +31,21 @@ fi
 
 # 3. Infra (Postgres + pgvector, Redis, MinIO). Don't use `--wait`: the one-shot
 #    `createbuckets` container exits 0, which `--wait` would treat as a failure.
+
+# Make sure the Docker daemon is up (Docker Desktop). Auto-start it on macOS.
+if ! docker info >/dev/null 2>&1; then
+  bold "▸ Docker isn't running — starting Docker Desktop…"
+  open -a Docker >/dev/null 2>&1 || true
+  for i in $(seq 1 60); do
+    if docker info >/dev/null 2>&1; then echo "  Docker ready."; break; fi
+    if [ "$i" -eq 60 ]; then
+      echo "  Docker didn't start in ~2min. Open Docker Desktop manually, then re-run ./dev.sh." >&2
+      exit 1
+    fi
+    sleep 2
+  done
+fi
+
 bold "▸ Bringing up infra (Postgres + pgvector, Redis, MinIO)…"
 docker compose up -d
 
