@@ -519,3 +519,19 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 **Notes**
 - `/core` is a static shell route (overrides `(shell)/[module]`, like `/agents`); server-fetches `getCoreSummary` (org-scoped) with try/catch → error state. The copilot is the existing GA.1 `AgentPane` reused — the on-screen entries set a transient `useCopilotSeed` and open the pane (which prefills its composer); no second chat surface is built. Severity → `critical:bg-ink-strong · warn:bg-accent · ok:bg-success`.
+
+---
+
+## PROC.1 — Procurement data/API
+
+**Automated**
+- `pnpm verify:proc-1` — lib + routes exist; `getProcurementQueue` returns POs with joined supplier name + part SKU and an agent-drafted flag; the agent-drafted **PO-9007** is present + flagged under `status=AWAITING_APPROVAL`; status filter narrows; reorder candidates query works (onHand ≤ reorderPoint); org isolation (org B's queue excludes org A's POs).
+- `pnpm typecheck` (workspace + root) clean.
+
+**Manual (docker up, ./dev.sh)**
+- [ ] `curl -s 'localhost:3001/api/procurement/pos?status=AWAITING_APPROVAL' | jq '.pos'` → includes **PO-9007** with `supplier`, `partSku`, `agentDrafted: true`.
+- [ ] `curl -s localhost:3001/api/procurement/pos | jq '.reorderCandidates'` → parts at/below reorder point (SERVO-205, SERVO-204).
+- [ ] `curl -s localhost:3001/api/procurement/suppliers | jq '.items[0]'` and `.../parts` → paginated `{ items, nextCursor }`.
+
+**Notes**
+- Read-only over the existing models (no schema change, no mutations — the queue screen + approve action are PROC.2). All org-scoped via `getCurrentUser → dbForOrg`; lists paginated with the FND.11 `paginateArgs`/`pageResult` (cursor by id). `getProcurementQueue` resolves the scalar FKs via Prisma relations (`select supplier.name`, `part.sku`), flags `agentDrafted` from `draftedByAgentId`, and includes the reorder recommendation via `$queryRaw` (`onHand <= reorderPoint`, orgId pinned — the ART.2 `listReorderCandidates` logic).
