@@ -41,11 +41,15 @@ export function AgentGlyph({
   status,
   size = 24,
   className = "",
+  decorative = false,
 }: {
   tone?: AgentTone;
   status?: Exclude<AgentTone, "ink">;
   size?: number;
   className?: string;
+  // When the surrounding control already names the agent (an avatar button),
+  // mark the glyph decorative so screen readers don't double-announce it.
+  decorative?: boolean;
 }) {
   return (
     <span
@@ -56,8 +60,9 @@ export function AgentGlyph({
         width={size}
         height={size}
         viewBox="0 0 24 24"
-        role="img"
-        aria-label="Axona agent"
+        role={decorative ? undefined : "img"}
+        aria-label={decorative ? undefined : "Axona agent"}
+        aria-hidden={decorative || undefined}
         className={fillClass[tone]}
       >
         {DOTS.map(([cx, cy], i) => (

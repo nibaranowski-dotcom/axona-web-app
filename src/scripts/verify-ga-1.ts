@@ -38,9 +38,11 @@ async function run(): Promise<void> {
       ),
   );
   await check(
-    "agent pane wired to the Axona chat (useAgentChat)",
+    "agent pane wired to the Axona chat (useAgentChat + axonaAgentId)",
     () =>
-      /useAgentChat/.test(read("apps/web/components/shell/AgentPane.tsx")) &&
+      // module-aware pane: chat body is PaneChat (useAgentChat); AgentPane
+      // resolves the Axona agent on Core routes via axonaAgentId.
+      /useAgentChat/.test(read("apps/web/components/shell/PaneChat.tsx")) &&
       /axonaAgentId/.test(read("apps/web/components/shell/AgentPane.tsx")),
   );
   await check("shell resolves getAxonaAgent + passes to pane", () =>

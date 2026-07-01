@@ -7,8 +7,8 @@ import { persist } from "zustand/middleware";
 // Shell UI state — agent-pane width/collapsed + nav group open/closed.
 // Persisted to localStorage; read hydration-safe via useMounted (see below).
 
-const MIN = 280;
-const MAX = 520;
+const MIN = 320;
+const MAX = 680;
 const RAIL = 52;
 
 interface UiState {
@@ -26,7 +26,7 @@ interface UiState {
 export const useUi = create<UiState>()(
   persist(
     (set) => ({
-      agentPaneWidth: 340,
+      agentPaneWidth: 404,
       agentPaneCollapsed: false,
       sidebarCollapsed: false,
       navOpen: {

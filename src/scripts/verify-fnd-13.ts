@@ -85,10 +85,11 @@ check(
   ),
 );
 check(
-  "agent pane min 280 / max 520 / rail 52",
-  /280/.test(read(join(base, "lib/ui-store.ts"))) &&
-    /520/.test(read(join(base, "lib/ui-store.ts"))) &&
-    /52/.test(read(join(base, "lib/ui-store.ts"))),
+  // v2 pane clamps widened for the module-aware pane (avatar row + chat).
+  "agent pane min 320 / max 680 / rail 52",
+  /320/.test(read(join(base, "lib/ui-store.ts"))) &&
+    /680/.test(read(join(base, "lib/ui-store.ts"))) &&
+    /RAIL = 52/.test(read(join(base, "lib/ui-store.ts"))),
 );
 
 if (failed === 0) {
