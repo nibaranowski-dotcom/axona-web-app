@@ -834,3 +834,19 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ### Deferred decisions (FIN.2)
 - (a) Treasury / cash-burn model → the design's "Cash & runway" panel + Cash/Runway stats (currently the derivable Working-capital view + ARR/Net-income stats). Schema addition; deferred.
 - (b) Period-close model → month-end-close gated write (recognize revenue + period lock). Currently "Run month-end close" seeds the fin agent (proposes). Schema addition; deferred.
+
+---
+
+## LEGAL.1 — Legal data/API
+
+**Automated**
+- `pnpm verify:legal-1` — routes (obligations/export-licenses/matters); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getLegalData returns obligations (BMW 99.5% fleet SLA AT_RISK from the autonomy regression), export licenses (DLV-3312 EAR99 HOLD), legal matters (ECO-318 IP → engineering, INC-201 liability → autonomy) with source-module links, the rollup; org isolation (unknown org → empty).
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001)**
+- [ ] `curl 'http://localhost:3001/api/legal/obligations?state=AT_RISK'` returns BMW 99.5% fleet SLA (actual 99.3%, autonomy regression).
+- [ ] `curl http://localhost:3001/api/legal/export-licenses` returns EAR99-DLV-3312 (Osaka JP, HOLD).
+- [ ] `curl 'http://localhost:3001/api/legal/matters?status=OPEN'` returns INC-201 liability (→ autonomy).
+
+**Notes**
+- Read/API only over Obligation/ExportLicense/LegalMatter (no schema change, no mutations — the screen is LEGAL.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; caps (200 / lists 50). Closes the BMW thread: 99.5% SLA at-risk (autonomy regression) · DLV-3312 EAR99 export hold · ECO-318 patent (IP) + INC-201 (liability) matters. `atRisk` = state contains RISK · `onHold` = state HOLD · `open` = status not closed/resolved/cleared. Matter `module` inferred from the linkedTo prefix (ECO→engineering · INC→autonomy · NCR→quality · DLV→fulfillment · PO→procurement · WO→field-service · CVE→security) — the cross-module link back to the source artifact.
