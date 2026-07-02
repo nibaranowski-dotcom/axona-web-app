@@ -752,3 +752,19 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - (a) WorkOrderField opened/closed timestamps + repair outcomes → "mean time to repair" + "first-time fix" metrics (currently SLA-at-risk + tech counts). Schema change; deferred.
 - (b) Scheduled start/end per WO → clock-positioned dispatch-board blocks (currently a queue ordered by SLA urgency). Schema change; deferred.
 - (c) Create/assign work order gated write (propose → approve, like PROC.2/ENG.2). Story addition; deferred (currently seeds the dispatch agent).
+
+---
+
+## AUTO.1 — Autonomy data/API
+
+**Automated**
+- `pnpm verify:auto-1` — routes (metrics/incidents/policies); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getAutonomyData returns per-site autonomySeries (Site-3 shows the p-13 canary regression — autonomy dips + takeovers spike after p-13), open safetyIncidents (INC-201 near-miss, SN-2196, Site-3), policyVersions (p-13 canary + current/standby), the rollup; org isolation (unknown org → empty).
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001)**
+- [ ] `curl 'http://localhost:3001/api/autonomy/metrics?site=Site-3'` returns the Site-3 series (autonomyRate 98.x→96.x, takeoversPer1k rising after p-13).
+- [ ] `curl 'http://localhost:3001/api/autonomy/incidents?status=REVIEW'` returns INC-201 (near-miss, SN-2196, Site-3, MAJOR).
+- [ ] `curl http://localhost:3001/api/autonomy/policies` returns p-13 (canary) + p-12 (current) + p-11 (standby).
+
+**Notes**
+- Read/API only over AutonomyMetric/SafetyIncident/PolicyVersion (no schema change, no mutations — the trend + policy screen is AUTO.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; caps (metrics 500, incidents 200, policies 100 / lists 50–100). Continues the Site-3 thread: the p-13 canary regression → INC-201. `regression` = autonomy declined or takeovers rose across the window; rollup = avg autonomy rate + takeovers/1k (latest per site) + open-incident count + the canary policy version. Policy rollback/promotion is a gated action (RBAC.4) — surfaced here read-only.
