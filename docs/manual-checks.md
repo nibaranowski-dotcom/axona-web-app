@@ -850,3 +850,27 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 **Notes**
 - Read/API only over Obligation/ExportLicense/LegalMatter (no schema change, no mutations — the screen is LEGAL.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; caps (200 / lists 50). Closes the BMW thread: 99.5% SLA at-risk (autonomy regression) · DLV-3312 EAR99 export hold · ECO-318 patent (IP) + INC-201 (liability) matters. `atRisk` = state contains RISK · `onHold` = state HOLD · `open` = status not closed/resolved/cleared. Matter `module` inferred from the linkedTo prefix (ECO→engineering · INC→autonomy · NCR→quality · DLV→fulfillment · PO→procurement · WO→field-service · CVE→security) — the cross-module link back to the source artifact.
+
+---
+
+## LEGAL.2 — Legal screen
+
+**Automated**
+- `pnpm verify:legal-2` — route + components (LegalView/ObligationsPanel/ExportControl/MattersTable); renders getLegalData; obligations panel (state vs live ops); matters table (source-module links); read-only (no mutations); no red/emoji/raw hex; BMW SLA at-risk + DLV-3312 EAR99 hold; ECO-318→engineering + INC-201→autonomy; renders full (≥3 obligations, ≥3 licenses, ≥4 matters).
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001/legal)**
+- [ ] Matches Legal.dc.html on the v2 shell — **contract obligations** (BMW 99.5% SLA "At risk" ink · Maersk/Tesla "Met" · Kawasaki "Review") + **export control** (DLV-3312 EAR99 "Hold" ink dot · others "Clear"/"Pending") + **matters & compliance** table (INC-201→Autonomy, ECO-318→Engineering, EU Reg→Quality, etc.). No red.
+- [ ] BMW SLA at-risk + DLV-3312 EAR99 hold surface; matters link back to their source module.
+- [ ] Legal agents appear in the module-aware pane; "New matter" seeds the legal agent.
+- [ ] accessibility-review 0 violations.
+
+**Notes / flags**
+- Read-only reads over LEGAL.1 getLegalData (org-scoped). Enriched seed (FND.12, idempotent): 4 obligations (BMW at-risk kept) + 4 export licenses (DLV-3312 EAR99 hold kept) + 5 matters (ECO-318/INC-201 kept, +REG/CONTRACT/EXPORT) + a real legal-orchestrator AgentRun.
+- **Design deviations flagged (data-shape mismatch — not substituted silently):**
+  1. Stat **"Active contracts"** needs a Contract model the schema doesn't carry → **Obligations tracked** fills that slot. Adding a contracts model = schema addition (deferred).
+  2. **"New matter"** seeds the legal agent (proposes); creating a LegalMatter is a **gated write** (propose→approve, would gate ADMIN/OPS — there is no LEGAL role in the enum) — deferred, kept read-only per the "no new columns / AI-proposes" guardrails.
+
+### Deferred decisions (LEGAL.2)
+- (a) Contract model → "Active contracts" metric (currently "Obligations tracked"). Schema addition; deferred.
+- (b) Legal gated writes (clear export hold: ExportLicense.state HOLD→CLEARED · new matter: create LegalMatter) → gate FINANCE/ADMIN per RBAC §8 + `/// TODO AUDIT.3` seam (no LEGAL role in the enum). Currently "New matter" seeds the legal agent (proposes). Story addition; deferred.

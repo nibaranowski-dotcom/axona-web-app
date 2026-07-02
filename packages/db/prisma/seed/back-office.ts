@@ -186,36 +186,137 @@ export async function seedBackOffice(db: OrgScopedDb): Promise<void> {
     },
   });
 
-  // Legal — obligations vs live ops, export license, IP/liability matters
-  await db.obligation.create({
-    data: {
-      account: "BMW",
-      obligation: "99.5% fleet SLA",
-      actual: "99.3% (autonomy regression)",
-      state: "AT_RISK",
-    },
+  // Legal — obligations vs live ops, export control, IP/liability/reg matters
+  // (LEGAL.2). BMW 99.5% SLA at-risk from the autonomy regression · DLV-3312
+  // EAR99 export hold · ECO-318 patent + INC-201 liability linked to their source.
+  await db.obligation.createMany({
+    data: [
+      {
+        account: "BMW",
+        obligation: "MSA · 99.5% fleet SLA",
+        actual: "Site-3 98.1% (autonomy regression)",
+        state: "AT_RISK",
+      },
+      {
+        account: "Maersk",
+        obligation: "RaaS · 30-day delivery warranty",
+        actual: "On track",
+        state: "MET",
+      },
+      {
+        account: "Tesla",
+        obligation: "MSA · $14M liability cap",
+        actual: "Within cap",
+        state: "MET",
+      },
+      {
+        account: "Kawasaki",
+        obligation: "Supply · spares SLA 5 days",
+        actual: "RMA-441 aging",
+        state: "REVIEW",
+      },
+    ],
   });
-  await db.exportLicense.create({
-    data: {
-      destination: "Osaka, JP",
-      code: `EAR99-${CODES.delivery}`,
-      state: "HOLD",
-    },
+  await db.exportLicense.createMany({
+    data: [
+      {
+        destination: "Kawasaki · Osaka, JP",
+        code: `EAR99-${CODES.delivery}`, // EAR99-DLV-3312
+        state: "HOLD",
+      },
+      {
+        destination: "Tesla · Austin, US",
+        code: "DLV-3305 · no license",
+        state: "CLEAR",
+      },
+      {
+        destination: "Siemens · Munich, DE",
+        code: "Dual-use review",
+        state: "PENDING",
+      },
+      {
+        destination: "Maersk · Rotterdam, NL",
+        code: "EU intra · exempt",
+        state: "CLEAR",
+      },
+    ],
   });
-  await db.legalMatter.create({
-    data: {
-      type: "IP",
-      title: "ECO-318 torque-comp patent",
-      linkedTo: CODES.eco,
-      status: "DRAFTING",
-    },
+  await db.legalMatter.createMany({
+    data: [
+      {
+        type: "LIABILITY",
+        title: "INC-201 proximity near-miss — exposure review",
+        linkedTo: CODES.incident, // INC-201 → autonomy
+        status: "MONITORING",
+      },
+      {
+        type: "IP",
+        title: "Harmonic-drive tolerance patent (ECO-318)",
+        linkedTo: CODES.eco, // ECO-318 → engineering
+        status: "DRAFTING",
+      },
+      {
+        type: "REG",
+        title: "EU Machinery Regulation 2027 conformity",
+        linkedTo: CODES.ncr, // NCR-118 → quality
+        status: "IN_PROGRESS",
+      },
+      {
+        type: "CONTRACT",
+        title: "BMW MSA redline — net-60 + SLA terms",
+        linkedTo: "INV-7741", // → finance
+        status: "EXECUTING",
+      },
+      {
+        type: "EXPORT",
+        title: "DLV-3312 EAR99 license application",
+        linkedTo: CODES.delivery, // DLV-3312 → fulfillment
+        status: "FILED",
+      },
+    ],
   });
-  await db.legalMatter.create({
-    data: {
-      type: "LIABILITY",
-      title: "INC-201 near-miss review",
-      linkedTo: CODES.incident,
-      status: "OPEN",
-    },
+
+  // A real legal-orchestrator run so the AGENT TRACE block is populated (LEGAL.2).
+  const legalAgent = await db.agent.findFirst({
+    where: { moduleKey: "legal" },
+    orderBy: { code: "asc" },
   });
+  if (legalAgent) {
+    await db.agentRun.create({
+      data: {
+        agentId: legalAgent.id,
+        input: {
+          prompt: "Watch obligations vs live ops and clear export holds.",
+        },
+        status: "SUCCEEDED",
+        trace: [
+          {
+            ts: d("-90m").toISOString(),
+            kind: "watch",
+            text: "47 contracts · SLA + warranty terms",
+          },
+          {
+            ts: d("-90m").toISOString(),
+            kind: "breach-risk",
+            text: "BMW 99.5% SLA vs Site-3 98.1% → risk",
+          },
+          {
+            ts: d("-90m").toISOString(),
+            kind: "export",
+            text: `${CODES.delivery} EAR99 license → file (Fulfillment hold)`,
+          },
+          {
+            ts: d("-90m").toISOString(),
+            kind: "liability",
+            text: "INC-201 near-miss → log · monitor exposure",
+          },
+          {
+            ts: d("-90m").toISOString(),
+            kind: "reg",
+            text: "EU Machinery Reg 2027 conformity → on track",
+          },
+        ],
+      },
+    });
+  }
 }

@@ -59,6 +59,7 @@ const MODULE_BY_PREFIX: Record<string, string> = {
   PO: "procurement",
   WO: "field-service",
   CVE: "security",
+  INV: "finance",
 };
 function moduleOf(linkedTo: string): string | null {
   const prefix = linkedTo.split("-")[0]?.toUpperCase() ?? "";
