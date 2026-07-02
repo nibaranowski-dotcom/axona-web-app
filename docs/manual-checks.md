@@ -686,3 +686,28 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 **Notes**
 - Read/API only over Robot/TelemetryPoint (no schema change, no mutations — the map/telemetry screen is FLEET.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; caps (robots 200, telemetry 1000/list 100). Continues the narrative SN-2196 thermal → hands to Field Service. `alert` = status WATCH/FAULT; telemetry grouped by robot+metric (oldest→newest); rollup = avg uptime + counts by status + OTA firmware spread; predictive alerts carry the latest telemetry signal as `reason`.
+
+---
+
+## FLEET.2 — Fleet screen
+
+**Automated**
+- `pnpm verify:fleet-2` — route + components (FleetView/FleetHealth/DeploymentMap/FirmwarePanel/LiveUnits); renders getFleetData; deployment map projects lat/lng markers (signature artifact); live units render a telemetry sparkline; read-only (no mutations); no red/emoji/raw hex; SN-2196 on the map (WATCH) + predictive-alert list; fleet renders full (≥3 sites, ≥3 statuses).
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001/fleet)**
+- [ ] Matches Fleet.dc.html on the v2 shell — fleet-health distribution, then the **deployment map** (site markers by lat/lng; **Site-3 · Osaka** reads lime for SN-2196's WATCH) + the OTA firmware panel, then live units (uptime bar + telemetry sparkline + status), then the trace. No red.
+- [ ] SN-2196 surfaces flagged (WATCH) at Osaka + in the predictive path (hands to Field Service via the alert).
+- [ ] Fleet agents appear in the module-aware pane; "Schedule rollout" seeds the OTA agent.
+- [ ] accessibility-review 0 violations.
+
+**Notes / flags**
+- Read-only over FLEET.1 getFleetData (org-scoped). Enriched seed (FND.12, idempotent): 9 robots across Site-1 Detroit / Site-2 Rotterdam / Site-3 Osaka spanning ACTIVE/WATCH/FAULT/OFFLINE + firmware v4.2.1/v4.2.0/v4.1.0/v4.0.2; per-unit telemetry for the sparklines (SN-2196 thermal climb); a real flt-orchestrator AgentRun for the trace.
+- **Design deviations flagged (data-shape mismatch — not substituted silently):**
+  1. The live-units **"Battery"** column + health **"avg battery"** metric need a battery-charge field the Robot model doesn't carry → the unit bars + a metric show **uptime** instead. Adding battery telemetry as a first-class field = schema change (deferred).
+  2. **City** ("Site-3 · Osaka") isn't a Robot field → a small display map (Site-1 Detroit / Site-2 Rotterdam / Site-3 Osaka) labels the three known sites; markers position from real lat/lng.
+- "Schedule rollout" seeds the copilot (OTA agent proposes); a real rollout is a **gated write** (deferred — propose→approve like PROC.2/ENG.2).
+
+### Deferred decisions (FLEET.2)
+- (a) Robot battery-charge field → the live-units "Battery" column + health "avg battery" metric (currently uptime). Schema change (Robot has no charge field); deferred.
+- (b) Schedule-rollout gated write (propose → approve, like PROC.2/ENG.2). Story addition; deferred (currently seeds the OTA agent).

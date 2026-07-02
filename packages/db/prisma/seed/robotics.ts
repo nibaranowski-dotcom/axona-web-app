@@ -55,56 +55,175 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
     },
   });
 
-  // Fleet robots — SN-2196 (BMW, Site-3) flagged WATCH for thermal anomaly
+  // Fleet — deployed units across 3 sites (Detroit / Rotterdam / Osaka). SN-2196
+  // (BMW, Site-3 Osaka) is WATCH for a thermal anomaly → hands to Field Service.
+  // Site coords: Site-1 Detroit, Site-2 Rotterdam, Site-3 Osaka.
+  const DET = { lat: 42.331, lng: -83.046 };
+  const ROT = { lat: 51.924, lng: 4.478 };
+  const OSA = { lat: 34.694, lng: 135.502 };
   const sn2196 = await db.robot.create({
     data: {
-      serial: CODES.robot,
+      serial: CODES.robot, // SN-2196
       model: CODES.product,
       customer: "BMW",
       site: "Site-3",
       uptimePct: 96.4,
       firmware: "v4.2.1",
       status: "WATCH",
-      lat: 34.6937,
-      lng: 135.5023,
+      ...OSA,
     },
   });
-  await db.robot.create({
-    data: {
-      serial: "SN-2188",
-      model: CODES.product,
-      customer: "BMW",
-      site: "Site-3",
-      uptimePct: 99.2,
-      firmware: "v4.2.1",
-      status: "ACTIVE",
-      lat: 34.69,
-      lng: 135.5,
-    },
-  });
-  await db.robot.create({
-    data: {
-      serial: "SN-2050",
-      model: CODES.product,
-      customer: "Kawasaki",
-      site: "Site-1",
-      uptimePct: 99.6,
-      firmware: "v4.2.0",
-      status: "ACTIVE",
-      lat: 34.6,
-      lng: 135.2,
-    },
+  await db.robot.createMany({
+    data: [
+      {
+        serial: "SN-2208",
+        model: CODES.product,
+        customer: "BMW",
+        site: "Site-2",
+        uptimePct: 99.4,
+        firmware: "v4.2.1",
+        status: "ACTIVE",
+        ...ROT,
+      },
+      {
+        serial: "SN-2188",
+        model: CODES.product,
+        customer: "BMW",
+        site: "Site-3",
+        uptimePct: 99.2,
+        firmware: "v4.2.1",
+        status: "ACTIVE",
+        ...OSA,
+      },
+      {
+        serial: "SN-2184",
+        model: "HX-1",
+        customer: "Kawasaki",
+        site: "Site-1",
+        uptimePct: 99.7,
+        firmware: "v4.2.1",
+        status: "ACTIVE",
+        ...DET,
+      },
+      {
+        serial: "SN-2150",
+        model: CODES.product,
+        customer: "BMW",
+        site: "Site-3",
+        uptimePct: 97.1,
+        firmware: "v4.0.2",
+        status: "WATCH",
+        ...OSA,
+      },
+      {
+        serial: "SN-2133",
+        model: "HX-1",
+        customer: "Kawasaki",
+        site: "Site-1",
+        uptimePct: 85.3,
+        firmware: "v4.2.1",
+        status: "OFFLINE",
+        ...DET,
+      },
+      {
+        serial: "SN-2120",
+        model: "HX-1",
+        customer: "Kawasaki",
+        site: "Site-2",
+        uptimePct: 91.0,
+        firmware: "v4.1.0",
+        status: "FAULT",
+        ...ROT,
+      },
+      {
+        serial: "SN-2101",
+        model: CODES.product,
+        customer: "BMW",
+        site: "Site-2",
+        uptimePct: 99.0,
+        firmware: "v4.2.1",
+        status: "ACTIVE",
+        ...ROT,
+      },
+      {
+        serial: "SN-2050",
+        model: CODES.product,
+        customer: "Kawasaki",
+        site: "Site-1",
+        uptimePct: 99.6,
+        firmware: "v4.2.0",
+        status: "ACTIVE",
+        ...DET,
+      },
+    ],
   });
 
-  // Telemetry — a thermal climb on SN-2196
+  // Telemetry — a per-unit recent series for the sparklines; SN-2196 carries the
+  // thermal climb (its predictive-alert signal). n points over the last n days.
+  const fleet = await db.robot.findMany({ select: { id: true, serial: true } });
+  const idOf = (sn: string) => fleet.find((r) => r.serial === sn)?.id;
+  const series = (id: string, metric: string, vals: number[]) =>
+    vals.map((value, i) => ({
+      robotId: id,
+      ts: d(`-${vals.length - 1 - i}d`),
+      metric,
+      value,
+    }));
   await db.telemetryPoint.createMany({
-    data: [3, 2, 1, 0].map((daysAgo, i) => ({
-      robotId: sn2196.id,
-      ts: d(`-${daysAgo}d`),
-      metric: "battery_temp_c",
-      value: 38 + i * 4,
-    })),
+    data: [
+      ...series(sn2196.id, "battery_temp_c", [38, 42, 46, 50]),
+      ...series(idOf("SN-2150")!, "battery_pct", [66, 63, 60, 58, 56]),
+      ...series(idOf("SN-2120")!, "battery_pct", [30, 22, 14, 8, 4]),
+      ...series(idOf("SN-2208")!, "battery_pct", [80, 82, 81, 83, 82]),
+      ...series(idOf("SN-2188")!, "battery_pct", [90, 91, 90, 92, 91]),
+      ...series(idOf("SN-2184")!, "battery_pct", [66, 67, 66, 68, 67]),
+      ...series(idOf("SN-2101")!, "battery_pct", [77, 78, 77, 79, 78]),
+      ...series(idOf("SN-2050")!, "battery_pct", [95, 96, 95, 96, 95]),
+      ...series(idOf("SN-2133")!, "battery_pct", [4, 3, 2, 1, 0]),
+    ],
   });
+
+  // A real flt-orchestrator run so the AGENT TRACE block is populated (FLEET.2).
+  const fltAgent = await db.agent.findFirst({
+    where: { moduleKey: "fleet" },
+    orderBy: { code: "asc" },
+  });
+  if (fltAgent) {
+    await db.agentRun.create({
+      data: {
+        agentId: fltAgent.id,
+        input: { prompt: `Watch ${CODES.robot} thermal and protect site SLA.` },
+        status: "SUCCEEDED",
+        trace: [
+          {
+            ts: d("-1h").toISOString(),
+            kind: "ingest",
+            text: "telemetry · 9 units · signals/min",
+          },
+          {
+            ts: d("-1h").toISOString(),
+            kind: "predict",
+            text: `${CODES.robot} cell-4 ΔV → degradation (36h to limit)`,
+          },
+          {
+            ts: d("-1h").toISOString(),
+            kind: "confidence",
+            text: "predict failure · 0.91",
+          },
+          {
+            ts: d("-1h").toISOString(),
+            kind: "recovery",
+            text: `safe-stop ${CODES.robot} · thermal guard`,
+          },
+          {
+            ts: d("-1h").toISOString(),
+            kind: "dispatch",
+            text: "tech → Site-3 · ETA 3h · spare cached",
+          },
+        ],
+      },
+    });
+  }
 
   // Field service — battery swap on SN-2196, SLA clock running, routed to Osei
   await db.workOrderField.create({
