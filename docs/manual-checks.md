@@ -604,3 +604,29 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 **Notes**
 - Read/API only over existing ECO/FirmwareRelease/CompatCell (no schema change, no mutations — the ECO board + compat matrix screen is ENG.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; caps (ECOs 200, firmware 100, compat 400/list 100). Continues the seeded narrative NCR-118 → ECO-318. compatMatrix derives distinct hwRevs (sorted) + fwVersions (newest first) as the grid axes.
+
+---
+
+## ENG.2 — Engineering screen
+
+**Automated**
+- `pnpm verify:eng-2` — route + components (EngineeringView/EcoBoard/EcoCard/CompatMatrix/FirmwareReleases); renders getEngineeringData; ECO board 4 stages; compat matrix axes + cell states (no red); advanceEco requireRole(["ENGINEER","ADMIN"]) FIRST + org-scoped + revalidatePath + AUDIT.3 seam; RELEASE is the human step (APPROVED→RELEASED); no red/emoji/raw hex; ECO-318 in REVIEW column; matrix has axes+cells.
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001/engineering)**
+- [ ] Matches Engineering.dc.html on the v2 shell — the **ECO stage board** (Draft→Review→Approved→Released) + the **HW↔firmware compat matrix** lead (signature artifacts). ECO-318 card in Review ("Supersede SERVO-204 → SERVO-205 (torque-comp)"; affected: SERVO-204; NCR-118; BMW order; HX-2).
+- [ ] Compat matrix: HX-1/HX-2 × v4.2.2-rc/v4.2.1; cert = green, compatible = neutral, in-test = lime. No red.
+- [ ] Firmware releases: v4.2.2-rc (RC — awaiting HX-1 cert before Fleet OTA), v4.2.1 (Released).
+- [ ] As ENGINEER/ADMIN, an ECO card shows Submit/Approve/Release → advances a stage (RELEASE is the human step; attributed via trace line). As VIEWER the button is hidden (server action requireRole-throws — defense in depth).
+- [ ] Engineering agents (change / compatibility / firmware-release / impact / requirements / CAD-config) appear in the module-aware pane; "New ECO" seeds the agent.
+- [ ] accessibility-review 0 violations.
+
+**Notes**
+- Read paths org-scoped via QUAL/ENG-style getEngineeringData; the ECO board is stage-grouped (ENG.1). advanceEco = server action `requireRole(["ENGINEER","ADMIN"])` line 1 → `dbForOrg` scoped `updateMany` → `revalidatePath`, transitions DRAFT→REVIEW→APPROVED→RELEASED; `/// TODO AUDIT.3` seam; RBAC.4 formalizes the state machine. Compat/firmware/ECO status carried by ink/lime/green dots with ink text (AA-safe). Dark agent-trace from the latest real engineering AgentRun (org-scoped), hidden if none.
+
+### ENG.2 — reconciled to Engineering.dc.html (table + design stats + enriched seed)
+- Change orders is now a **TABLE** (ECO · Change · Type · Affected · Stage + role-gated advance), not a kanban board. Stats strip = Open ECOs · In review · Current HW rev · Released firmware (real data; "avg change cycle" needs ECO timestamps we don't model — In review fills that slot).
+- Enriched seed (FND.12, idempotent): ECO-318 (HW, Review) + ECO-316 (FW, Review) + ECO-314 (HW, Approved); firmware v4.2.2-rc (RC) · v4.2.1 (Released) · v4.1.0 (Maint); compat matrix HX-2 r4/r3 · HX-1 r5/r4 × v4.0.2/v4.1.0/v4.2.1/v4.2.2; a real eng-orchestrator AgentRun so the AGENT TRACE block renders.
+
+### Deferred decisions
+- ECO `createdAt`/`updatedAt` → compute "avg change cycle" (Engineering stat). Schema change (ENG model has no timestamps); deferred.

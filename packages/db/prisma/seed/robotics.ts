@@ -120,38 +120,115 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
     },
   });
 
-  // Engineering — ECO-318 from NCR-118 supersedes -204 with -205; firmware torque-comp
+  // Engineering — the NCR-118 → ECO-318 change thread, plus the surrounding ECO
+  // board, firmware ladder, and HW↔firmware compat matrix (Engineering.dc.html).
   await db.eCO.create({
     data: {
-      code: CODES.eco,
-      title: `Supersede ${CODES.servoOld} → ${CODES.servoNew} (torque-comp)`,
-      changeType: "SUPERSEDE",
-      affected: `${CODES.servoOld}; ${CODES.ncr}; BMW order; ${CODES.product}`,
+      code: CODES.eco, // ECO-318
+      title: `Supersede ${CODES.servoOld} → -205 (tighter tolerance)`,
+      changeType: "HW",
+      affected: `${CODES.lot} · 3 units · ${CODES.ncr} · BMW order`,
       stage: "REVIEW",
     },
   });
+  await db.eCO.create({
+    data: {
+      code: "ECO-316",
+      title: "Firmware v4.2.2 — actuator torque compensation",
+      changeType: "FW",
+      affected: "fleet-wide",
+      stage: "REVIEW",
+    },
+  });
+  await db.eCO.create({
+    data: {
+      code: "ECO-314",
+      title: "Harness connector keying (mis-mate fix)",
+      changeType: "HW",
+      affected: "in production",
+      stage: "APPROVED",
+    },
+  });
+
   await db.firmwareRelease.create({
     data: {
-      version: CODES.firmware,
-      note: "Torque-comp; awaiting HX-1 cert before Fleet OTA",
+      version: CODES.firmware, // v4.2.2-rc
+      note: "Torque compensation · in test",
       state: "RC",
     },
   });
   await db.firmwareRelease.create({
     data: {
       version: "v4.2.1",
-      note: "Current fleet firmware",
+      note: "Current · 44 of 48 units",
       state: "RELEASED",
     },
   });
+  await db.firmwareRelease.create({
+    data: { version: "v4.1.0", note: "Maintenance only", state: "MAINT" },
+  });
+
+  // Compat matrix — HW revs × firmware; pairs not listed render as n/a (ENG.2).
   await db.compatCell.createMany({
     data: [
-      { hwRev: "HX-1", fwVersion: CODES.firmware, state: "in-test" },
-      { hwRev: "HX-2", fwVersion: CODES.firmware, state: "cert" },
-      { hwRev: "HX-1", fwVersion: "v4.2.1", state: "compatible" },
-      { hwRev: "HX-2", fwVersion: "v4.2.1", state: "compatible" },
+      { hwRev: "HX-2 r4", fwVersion: "v4.0.2", state: "compatible" },
+      { hwRev: "HX-2 r4", fwVersion: "v4.1.0", state: "compatible" },
+      { hwRev: "HX-2 r4", fwVersion: "v4.2.1", state: "cert" },
+      { hwRev: "HX-2 r4", fwVersion: "v4.2.2", state: "in-test" },
+      { hwRev: "HX-2 r3", fwVersion: "v4.0.2", state: "compatible" },
+      { hwRev: "HX-2 r3", fwVersion: "v4.1.0", state: "cert" },
+      { hwRev: "HX-2 r3", fwVersion: "v4.2.1", state: "cert" },
+      { hwRev: "HX-2 r3", fwVersion: "v4.2.2", state: "in-test" },
+      { hwRev: "HX-1 r5", fwVersion: "v4.0.2", state: "compatible" },
+      { hwRev: "HX-1 r5", fwVersion: "v4.1.0", state: "compatible" },
+      { hwRev: "HX-1 r5", fwVersion: "v4.2.1", state: "cert" },
+      { hwRev: "HX-1 r5", fwVersion: "v4.2.2", state: "in-test" },
+      { hwRev: "HX-1 r4", fwVersion: "v4.0.2", state: "cert" },
+      { hwRev: "HX-1 r4", fwVersion: "v4.1.0", state: "compatible" },
     ],
   });
+
+  // A real eng-orchestrator run so the AGENT TRACE block is populated (ENG.2).
+  const engAgent = await db.agent.findFirst({
+    where: { moduleKey: "engineering" },
+    orderBy: { code: "asc" },
+  });
+  if (engAgent) {
+    await db.agentRun.create({
+      data: {
+        agentId: engAgent.id,
+        input: { prompt: `Assess ${CODES.ncr} and drive the change order.` },
+        status: "SUCCEEDED",
+        trace: [
+          {
+            ts: d("-3h").toISOString(),
+            kind: "ingest",
+            text: `${CODES.ncr} (Quality) · ${CODES.servoOld} torque`,
+          },
+          {
+            ts: d("-3h").toISOString(),
+            kind: "draft",
+            text: `${CODES.eco} supersede -204 → -205`,
+          },
+          {
+            ts: d("-3h").toISOString(),
+            kind: "impact",
+            text: `3 units · ${CODES.lot} · 2 BOMs · BMW order`,
+          },
+          {
+            ts: d("-3h").toISOString(),
+            kind: "firmware",
+            text: "ECO-316 v4.2.2 torque-comp · RC",
+          },
+          {
+            ts: d("-3h").toISOString(),
+            kind: "compat",
+            text: "certify HX-2 r4,r3 · HX-1 in test",
+          },
+        ],
+      },
+    });
+  }
 
   // Autonomy — Site-3 p-13 canary regression → INC-201; policy versions
   await db.policyVersion.create({

@@ -9,17 +9,13 @@ import { dbForOrg, paginateArgs, pageResult } from "@axona/db";
 // RBAC.4; here stage is a plain status).
 export const ECO_STAGES = ["DRAFT", "REVIEW", "APPROVED", "RELEASED"] as const;
 
-export interface EcoCard {
+export interface Eco {
   id: string;
   code: string;
   title: string;
   changeType: string;
   affected: string;
   stage: string;
-}
-export interface EcoStageGroup {
-  stage: string;
-  ecos: EcoCard[];
 }
 export interface FirmwareRelease {
   id: string;
@@ -39,16 +35,17 @@ export interface CompatMatrix {
   cells: CompatCell[];
 }
 export interface EngineeringData {
-  ecoBoard: EcoStageGroup[];
+  ecos: Eco[];
   firmwareReleases: FirmwareRelease[];
   compatMatrix: CompatMatrix;
 }
 
 /**
  * Everything the Engineering screen (ENG.2) needs, org-scoped and read-only:
- * - ecoBoard: ECOs grouped into the four change-control stages (DRAFT → RELEASED).
- * - firmwareReleases: releases newest-first (v4.2.2-rc awaiting HX-1 cert).
- * - compatMatrix: HW↔firmware cells + the distinct hwRevs / fwVersions axes.
+ * - ecos: the change-order table (newest first); each carries its stage.
+ * - firmwareReleases: releases newest-first (v4.2.2-rc / v4.2.1 / v4.1.0).
+ * - compatMatrix: HW↔firmware cells + the axes — hwRevs newest-first (rows),
+ *   fwVersions oldest-first (columns), matching Engineering.dc.html.
  */
 export async function getEngineeringData(
   orgId: string,
@@ -57,7 +54,7 @@ export async function getEngineeringData(
 
   const [ecos, firmwareReleases, cells] = await Promise.all([
     db.eCO.findMany({
-      orderBy: { code: "asc" },
+      orderBy: { code: "desc" },
       take: 200,
       select: {
         id: true,
@@ -74,24 +71,17 @@ export async function getEngineeringData(
       select: { id: true, version: true, note: true, state: true },
     }),
     db.compatCell.findMany({
-      orderBy: [{ hwRev: "asc" }, { fwVersion: "desc" }],
+      orderBy: [{ hwRev: "desc" }, { fwVersion: "asc" }],
       take: 400,
       select: { id: true, hwRev: true, fwVersion: true, state: true },
     }),
   ]);
 
-  const ecoBoard: EcoStageGroup[] = ECO_STAGES.map((stage) => ({
-    stage,
-    ecos: ecos.filter((e) => e.stage === stage),
-  }));
-
-  const hwRevs = [...new Set(cells.map((c) => c.hwRev))].sort();
-  const fwVersions = [...new Set(cells.map((c) => c.fwVersion))]
-    .sort()
-    .reverse(); // newest first
+  const hwRevs = [...new Set(cells.map((c) => c.hwRev))].sort().reverse(); // rows: newest platform first
+  const fwVersions = [...new Set(cells.map((c) => c.fwVersion))].sort(); // cols: oldest → newest
 
   return {
-    ecoBoard,
+    ecos,
     firmwareReleases,
     compatMatrix: { hwRevs, fwVersions, cells },
   };

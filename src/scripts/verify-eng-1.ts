@@ -69,31 +69,33 @@ async function run(): Promise<void> {
     } else {
       const data = await getEngineeringData(org.id);
 
-      await check(
-        "ecoBoard grouped by stage (DRAFT/REVIEW/APPROVED/RELEASED)",
-        () =>
-          data.ecoBoard.length === 4 &&
-          data.ecoBoard.map((g) => g.stage).join(",") ===
-            "DRAFT,REVIEW,APPROVED,RELEASED",
-      );
+      await check("ecos incl ECO-316 + ECO-314 beside ECO-318", () => {
+        const codes = data.ecos.map((e) => e.code);
+        return ["ECO-318", "ECO-316", "ECO-314"].every((c) =>
+          codes.includes(c),
+        );
+      });
       await check("ECO-318 in REVIEW, references NCR-118", () => {
-        const review = data.ecoBoard.find((g) => g.stage === "REVIEW");
-        const eco = review?.ecos.find((e) => e.code === "ECO-318");
-        return !!eco && /NCR-118/.test(eco.affected);
+        const eco = data.ecos.find((e) => e.code === "ECO-318");
+        return !!eco && eco.stage === "REVIEW" && /NCR-118/.test(eco.affected);
       });
       await check(
-        "firmwareReleases present (v4.2.2-rc awaiting HX-1 cert)",
+        "firmwareReleases present (v4.2.2-rc RC · v4.2.1 · v4.1.0)",
         () =>
           data.firmwareReleases.some(
-            (f) => f.version === "v4.2.2-rc" && /HX-1 cert/.test(f.note),
-          ),
+            (f) => f.version === "v4.2.2-rc" && f.state === "RC",
+          ) &&
+          data.firmwareReleases.some((f) => f.version === "v4.2.1") &&
+          data.firmwareReleases.some((f) => f.version === "v4.1.0"),
       );
-      await check("compatMatrix has axes + cells", () => {
+      await check("compatMatrix 4×4 axes + cells", () => {
         const m = data.compatMatrix;
         return (
-          m.hwRevs.length >= 2 &&
-          m.fwVersions.length >= 2 &&
-          m.cells.length >= 4 &&
+          m.hwRevs.length >= 4 &&
+          m.fwVersions.length >= 4 &&
+          m.cells.length >= 12 &&
+          m.hwRevs[0] === "HX-2 r4" && // rows newest-first
+          m.fwVersions[0] === "v4.0.2" && // cols oldest-first
           m.cells.some((c) => c.state === "cert") &&
           m.cells.some((c) => c.state === "in-test")
         );
@@ -102,7 +104,7 @@ async function run(): Promise<void> {
         const empty = await getEngineeringData("org_does_not_exist");
         return (
           empty.compatMatrix.cells.length === 0 &&
-          empty.ecoBoard.every((g) => g.ecos.length === 0) &&
+          empty.ecos.length === 0 &&
           empty.firmwareReleases.length === 0
         );
       });

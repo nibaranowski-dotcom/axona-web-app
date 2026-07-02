@@ -52,6 +52,18 @@ part of the DoD, checked per story — never a later pass.
   (the handoff prose said 232px but the actual `.dc.html` `<aside>` is 240px — the file wins).
 - Build gotcha: `Sales & CRM.dc.html` must be hand-edited (its `&` breaks the design's find/replace scripts).
 
+**Wire-up blocks DEFER to the design — don't re-specify visuals (learned on ENG.2).** A UI story's block adds
+only the *data source, actions, verify, DoD*. The `.dc.html` is the sole truth for layout, structure, the
+stat-strip metrics, copy, artifact choice (table vs board vs chart), and content-shape. Do NOT hand Claude
+Code an element/metric list from interpretation — that's how ENG.2 got a kanban + wrong stats vs its table
+design. If a block and the design conflict, the design wins; the block should say "match `<Screen>.dc.html`
+1:1" and stop there on visuals. **Match the design like a dev pixel-perfecting an approved frontend —
+never diverge unilaterally.** If Cowork sees a genuine reason to diverge (better artifact, UX gap in the
+design), it FLAGS it to Nicolas and gets agreement *before* encoding it in a block/PRD — discussion first,
+then the PRD. (The ENG.2 kanban was an unflagged divergence — the failure mode this rule prevents.) **Seed richness = mock richness:** seed enough per module that each screen
+renders as *populated* as its mock (the mock's exact numbers are illustrative, but its fullness — multiple
+ECOs, a full compat grid, agent chats, a populated trace — is the target). Thin seed → thin screen.
+
 ## Stack (from build spec §2 — pin/verify at scaffold)
 Monorepo (pnpm + Turborepo) · TypeScript · Next.js (App Router) + React · Tailwind + CSS-var tokens ·
 TanStack Query + Zustand · Prisma + PostgreSQL (multi-tenant by `orgId`) · BullMQ (Redis) agents/workflows ·
