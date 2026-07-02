@@ -671,3 +671,18 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - (a) Delivery dispatch/order dates → "installs this week" + "avg lead time" metrics. Schema change (Delivery has no order/dispatch timestamps); deferred.
 - (b) Richer Shipment/Commissioning model (carrier legs, per-unit commissioning checklist) → the detail panels. Schema + story additions; deferred.
 - (c) Schedule-delivery gated write (propose → approve, like PROC.2/ENG.2). Story addition; deferred (currently seeds the copilot).
+
+---
+
+## FLEET.1 — Fleet data/API
+
+**Automated**
+- `pnpm verify:fleet-1` — routes (robots/telemetry); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getFleetData returns robots (SN-2196 WATCH · HX-2 · BMW · Site-3 · alert), per-robot telemetry series (SN-2196 thermal, ordered), fleet rollup (avg uptime · byStatus · firmware), the predictive-alert list (incl. SN-2196); org isolation (unknown org → empty).
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001)**
+- [ ] `curl 'http://localhost:3001/api/fleet/robots?status=WATCH'` returns SN-2196 (HX-2, BMW, Site-3, uptime, firmware, lat/lng).
+- [ ] `curl 'http://localhost:3001/api/fleet/telemetry?robotId=<SN-2196 id>'` returns the battery_temp_c climb.
+
+**Notes**
+- Read/API only over Robot/TelemetryPoint (no schema change, no mutations — the map/telemetry screen is FLEET.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; caps (robots 200, telemetry 1000/list 100). Continues the narrative SN-2196 thermal → hands to Field Service. `alert` = status WATCH/FAULT; telemetry grouped by robot+metric (oldest→newest); rollup = avg uptime + counts by status + OTA firmware spread; predictive alerts carry the latest telemetry signal as `reason`.
