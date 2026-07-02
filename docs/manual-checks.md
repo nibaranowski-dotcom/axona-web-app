@@ -630,3 +630,18 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 ### Deferred decisions
 - ECO `createdAt`/`updatedAt` → compute "avg change cycle" (Engineering stat). Schema change (ENG model has no timestamps); deferred.
+
+---
+
+## FUL.1 — Fulfillment data/API
+
+**Automated**
+- `pnpm verify:ful-1` — route (deliveries); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getFulfillmentData returns deliveries with stage/committed-vs-eta/risk, DLV-3312 in CUSTOMS (BMW · Osaka · EAR99 hold · atRisk), the 7-stage pipeline rollup (ALLOC→ACTIVE), the holds list; org isolation (unknown org → empty).
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001)**
+- [ ] `curl 'http://localhost:3001/api/fulfillment/deliveries?stage=CUSTOMS'` returns DLV-3312 (BMW, Osaka JP, 24× HX-2, EAR99 customs hold).
+- [ ] `curl http://localhost:3001/api/fulfillment/deliveries` returns DLV-3312 + DLV-3309 (Kawasaki, Freight, on-track).
+
+**Notes**
+- Read/API only over the existing Delivery model (no schema change, no mutations — the delivery-pipeline screen is FUL.2). All via getCurrentUser → dbForOrg; paginated with paginateArgs/pageResult; cap 200 (list 50). Continues the narrative ECO-318 → BMW order → DLV-3312 Osaka customs hold. `atRisk` = riskState not empty/"on-track"; `late` = etaDate after committedDate; pipeline = count per DeliveryStage (all 7).
