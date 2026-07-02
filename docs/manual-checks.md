@@ -810,3 +810,27 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 ### Deferred decisions (FIN.1)
 - Cash-balance / burn model → "cash" + "runway" metrics (currently rollup.cash / rollup.runwayMonths return null; netIncome is the derivable rollup). Schema addition; deferred.
+
+---
+
+## FIN.2 — Finance screen
+
+**Automated**
+- `pnpm verify:fin-2` — route + components (FinanceView/RevenueChart/WorkingCapital/UnitEconomics/Receivables); renders getFinanceData; two-revenue-engine chart (hardware + RaaS, signature); per-unit economics + AR-aging tables; read-only (no mutations); no red/emoji/raw hex; HX-2 −2.1pt + BMW net-60 + Kawasaki overdue; chart full (≥6 periods, both engines); tables full (≥3 products, ≥3 invoices).
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001/finance)**
+- [ ] Matches Finance.dc.html on the v2 shell — the **two-engine recognized-revenue chart** (hardware ink / RaaS lime, stacked per month), **per-unit economics** (HX-2 margin bar + ▼ −2.1pt · ECO-318), **AR-aging receivables** (BMW net-60 "Current", Kawasaki "62d overdue" ink). No red.
+- [ ] HX-2 −2.1pt shows in the topbar pill + the unit-economics trend; BMW + Kawasaki surface in AR.
+- [ ] Finance agents appear in the module-aware pane; "Run month-end close" seeds the fin agent.
+- [ ] accessibility-review 0 violations.
+
+**Notes / flags**
+- Read-only reads over FIN.1 getFinanceData (org-scoped) — extended with `revenueByPeriod` (hardware+RaaS per period) for the chart. Enriched seed (FND.12, idempotent): 8-month P&L ledger + 4 products (HX-2 −2.1pt kept) + 4 AR invoices (BMW/Kawasaki kept, +Maersk due-soon, +Tesla current) + a real fin-orchestrator AgentRun.
+- **Design deviations flagged (data-shape mismatch — not substituted silently):**
+  1. The design's **Cash & runway** panel + Cash/Runway stats need a treasury/burn feed the ledger doesn't carry (`rollup.cash`/`runwayMonths` = null) → the right card is replaced with the derivable **Working capital** view (AR open, overdue, net income); stats show **ARR (RaaS×12)** + **Net income** instead of Cash/Runway. A cash/burn model = schema addition (deferred, per FIN.1).
+  2. **"Run month-end close"** seeds the fin agent (proposes); the real close (revenue recognition + period lock) is a **gated write** needing a period-close model (no `status` field on a period to transition without a schema change) — deferred. Kept read-only per the "no new columns" guardrail.
+
+### Deferred decisions (FIN.2)
+- (a) Treasury / cash-burn model → the design's "Cash & runway" panel + Cash/Runway stats (currently the derivable Working-capital view + ARR/Net-income stats). Schema addition; deferred.
+- (b) Period-close model → month-end-close gated write (recognize revenue + period lock). Currently "Run month-end close" seeds the fin agent (proposes). Schema addition; deferred.

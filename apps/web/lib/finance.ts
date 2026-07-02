@@ -33,6 +33,12 @@ export interface RevenueSplit {
   raas: number;
   streams: RevenueStream[];
 }
+export interface RevenuePeriod {
+  period: string;
+  hardware: number; // lumpy — recognized at commissioning
+  raas: number; // ratable
+  total: number;
+}
 export interface UnitEcon {
   id: string;
   product: string;
@@ -67,6 +73,7 @@ export interface FinanceRollup {
 }
 export interface FinanceData {
   revenueSplit: RevenueSplit;
+  revenueByPeriod: RevenuePeriod[]; // chronological — the two-engine chart
   unitEconomics: UnitEcon[];
   invoices: FinanceInvoice[];
   rollup: FinanceRollup;
@@ -174,6 +181,24 @@ export async function getFinanceData(orgId: string): Promise<FinanceData> {
     .filter((s) => s.recognition === "ratable")
     .reduce((s, x) => s + x.amount, 0);
 
+  // Revenue by period — hardware (lumpy) + RaaS (ratable) per period, for the
+  // two-engine recognition chart.
+  const periodMap = new Map<
+    string,
+    { hardware: number; raas: number; total: number }
+  >();
+  for (const l of revenueRows) {
+    const e = periodMap.get(l.period) ?? { hardware: 0, raas: 0, total: 0 };
+    const rec = recognitionOf(l.account);
+    if (rec === "lumpy") e.hardware += l.amount;
+    else if (rec === "ratable") e.raas += l.amount;
+    e.total += l.amount;
+    periodMap.set(l.period, e);
+  }
+  const revenueByPeriod: RevenuePeriod[] = [...periodMap.entries()]
+    .map(([period, v]) => ({ period, ...v }))
+    .sort((a, b) => a.period.localeCompare(b.period));
+
   const cogs = Math.abs(
     ledgerRows
       .filter((l) => l.kind.toUpperCase() === "COGS")
@@ -202,6 +227,7 @@ export async function getFinanceData(orgId: string): Promise<FinanceData> {
 
   return {
     revenueSplit: { total, hardware, raas, streams },
+    revenueByPeriod,
     unitEconomics,
     invoices,
     rollup: {

@@ -6,65 +6,158 @@ import { CODES, d } from "./constants";
 // DLV-3312 EAR99 export license hold; ECO-318 patent + INC-201 legal matters.
 
 export async function seedBackOffice(db: OrgScopedDb): Promise<void> {
-  // Finance — ledger, unit economics, invoices
+  // Finance — monthly P&L ledger (two revenue engines: lumpy hardware recognized
+  // at commissioning + ratable RaaS), unit economics, AR invoices (FIN.2).
+  const MONTHS: { p: string; hw: number; raas: number }[] = [
+    { p: "2025-11", hw: 2.1, raas: 0.8 },
+    { p: "2025-12", hw: 3.6, raas: 0.9 },
+    { p: "2026-01", hw: 1.4, raas: 1.0 },
+    { p: "2026-02", hw: 2.8, raas: 1.05 },
+    { p: "2026-03", hw: 4.1, raas: 1.1 },
+    { p: "2026-04", hw: 2.2, raas: 1.15 },
+    { p: "2026-05", hw: 3.3, raas: 1.2 },
+    { p: "2026-06", hw: 4.9, raas: 1.23 },
+  ];
+  const M = 1_000_000;
   await db.ledgerEntry.createMany({
+    data: MONTHS.flatMap((m) => [
+      {
+        period: m.p,
+        account: "Hardware revenue",
+        amount: m.hw * M,
+        kind: "REVENUE",
+      },
+      {
+        period: m.p,
+        account: "RaaS revenue",
+        amount: m.raas * M,
+        kind: "REVENUE",
+      },
+      {
+        period: m.p,
+        account: "COGS",
+        amount: -(m.hw + m.raas) * 0.58 * M,
+        kind: "COGS",
+      },
+      { period: m.p, account: "Opex", amount: -1.3 * M, kind: "OPEX" },
+    ]),
+  });
+
+  await db.unitEconomic.createMany({
     data: [
       {
-        period: "2026-Q2",
-        account: "Hardware revenue",
-        amount: 3_600_000,
-        kind: "REVENUE",
+        product: CODES.product, // HX-2 — flagship, margin dented by ECO-318
+        asp: 210_000,
+        cogs: 132_000,
+        marginPct: 37.1,
+        trend: `-2.1pt from ${CODES.eco}`,
       },
       {
-        period: "2026-Q2",
-        account: "RaaS revenue",
-        amount: 720_000,
-        kind: "REVENUE",
+        product: "HX-1",
+        asp: 58_000,
+        cogs: 31_000,
+        marginPct: 46.6,
+        trend: "+1.3pt",
       },
-      { period: "2026-Q2", account: "COGS", amount: -2_480_000, kind: "COGS" },
-      { period: "2026-Q2", account: "Opex", amount: -1_310_000, kind: "OPEX" },
+      {
+        product: "RaaS subscription",
+        asp: 36_000,
+        cogs: 12_000,
+        marginPct: 66.7,
+        trend: "flat",
+      },
+      {
+        product: "Spares & service",
+        asp: 14_000,
+        cogs: 5_900,
+        marginPct: 58.0,
+        trend: "+0.6pt",
+      },
     ],
   });
-  await db.unitEconomic.create({
-    data: {
-      product: CODES.product,
-      asp: 200_000,
-      cogs: 154_200,
-      marginPct: 22.9,
-      trend: `-2.1pt from ${CODES.eco}`,
-    },
+
+  await db.invoice.createMany({
+    data: [
+      {
+        code: "INV-7741",
+        account: "BMW",
+        source: "DLV · 24× HX-2 + RaaS",
+        amount: 8_400_000,
+        terms: "net-60",
+        dueDate: d("+38d"),
+        status: "OPEN",
+      },
+      {
+        code: "INV-7728",
+        account: "Maersk",
+        source: "DLV-3301 · commissioned",
+        amount: 1_900_000,
+        terms: "net-30",
+        dueDate: d("+8d"),
+        status: "OPEN",
+      },
+      {
+        code: "INV-7715",
+        account: "Tesla",
+        source: "RaaS · Q2 ratable",
+        amount: 600_000,
+        terms: "net-30",
+        dueDate: d("+21d"),
+        status: "OPEN",
+      },
+      {
+        code: "INV-7702",
+        account: "Kawasaki",
+        source: "Spares · RMA-441",
+        amount: 500_000,
+        terms: "net-45",
+        dueDate: d("-62d"),
+        status: "OVERDUE",
+      },
+    ],
   });
-  await db.unitEconomic.create({
-    data: {
-      product: "HX-1",
-      asp: 165_000,
-      cogs: 120_400,
-      marginPct: 27.0,
-      trend: "flat",
-    },
+
+  // A real fin-orchestrator run so the AGENT TRACE block is populated (FIN.2).
+  const finAgent = await db.agent.findFirst({
+    where: { moduleKey: "finance" },
+    orderBy: { code: "asc" },
   });
-  await db.invoice.create({
-    data: {
-      code: "INV-7741",
-      account: "BMW",
-      source: "hardware",
-      amount: 1_200_000,
-      terms: "net-60",
-      dueDate: d("+38d"),
-      status: "OPEN",
-    },
-  });
-  await db.invoice.create({
-    data: {
-      code: "INV-7702",
-      account: "Kawasaki",
-      source: "RaaS",
-      amount: 96_000,
-      terms: "net-30",
-      dueDate: d("-9d"),
-      status: "OVERDUE",
-    },
-  });
+  if (finAgent) {
+    await db.agentRun.create({
+      data: {
+        agentId: finAgent.id,
+        input: { prompt: "Run the month-end revenue recognition + AR review." },
+        status: "SUCCEEDED",
+        trace: [
+          {
+            ts: d("-2h").toISOString(),
+            kind: "recognize",
+            text: "DLV-3301 commissioned → $1.9M hardware",
+          },
+          {
+            ts: d("-2h").toISOString(),
+            kind: "raas",
+            text: "44 active subs → $1.23M ratable Jun",
+          },
+          {
+            ts: d("-2h").toISOString(),
+            kind: "cost-roll",
+            text: `${CODES.eco} +$140/unit → HX-2 margin -2.1pt`,
+          },
+          {
+            ts: d("-2h").toISOString(),
+            kind: "ar",
+            text: "BMW INV-7741 net-60 · not yet due · $8.4M",
+          },
+          {
+            ts: d("-2h").toISOString(),
+            kind: "close",
+            text: "312 JEs · 3-way matched → 98% auto",
+          },
+        ],
+      },
+    });
+  }
 
   // People — open requisitions (field-team-vs-fleet growth)
   await db.requisition.createMany({
