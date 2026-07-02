@@ -711,3 +711,18 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ### Deferred decisions (FLEET.2)
 - (a) Robot battery-charge field → the live-units "Battery" column + health "avg battery" metric (currently uptime). Schema change (Robot has no charge field); deferred.
 - (b) Schedule-rollout gated write (propose → approve, like PROC.2/ENG.2). Story addition; deferred (currently seeds the OTA agent).
+
+---
+
+## FIELD.1 — Field Service data/API
+
+**Automated**
+- `pnpm verify:field-1` — routes (work-orders/technicians); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getFieldServiceData returns work orders with a live SLA countdown (WO-5521 SN-2196 battery swap, Site-3), technicians with the cert matrix (M. Osei HV/battery expiring → certExpiring), the per-tech dispatch board (Osei's column carries WO-5521), the SLA rollup (open/dueSoon/breached); org isolation (unknown org → empty).
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001)**
+- [ ] `curl 'http://localhost:3001/api/field/work-orders?status=DISPATCH'` returns WO-5521 (SN-2196 battery swap, Site-3, slaDueAt, severity MAJOR) with slaMsLeft/slaBreached/dueSoon.
+- [ ] `curl http://localhost:3001/api/field/technicians` returns M. Osei (Site-3, HV/battery cert EXPIRING) + R. Caldwell (VALID).
+
+**Notes**
+- Read/API only over WorkOrderField/Technician (no schema change, no mutations — the dispatch board is FIELD.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; caps (200 / list 50). Closes the robotics thread SN-2196 thermal (Fleet) → WO-5521 battery-swap dispatch gated by Osei's HV/battery cert. SLA: `slaMsLeft` = time to slaDueAt (negative = breached), `dueSoon` within 12h; cert `expiring` = state EXPIRING or within 30d; the board is per-tech (assigned work orders).
