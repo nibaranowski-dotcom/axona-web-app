@@ -790,3 +790,23 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ### Deferred decisions (AUTO.2)
 - (a) Task counter + incident time-window → "tasks today" + "safety events · 24h" metrics (currently sites-monitored + open-incident counts). Schema change; deferred.
 - (b) Sim-validate-before-promote gate on policy promotion (RBAC.4 formalizes the promotion/rollback state machine). Story addition; deferred (promote/rollback currently transitions state directly, role-gated, with the AUDIT.3 seam).
+
+---
+
+## FIN.1 — Finance data/API
+
+**Automated**
+- `pnpm verify:fin-1` — routes (ledger/invoices/unit-economics); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getFinanceData returns the revenue split (lumpy hardware vs ratable RaaS), unit economics (HX-2 margin −2.1pt from ECO-318, parsed marginDeltaPt), invoices with a derived AR-aging bucket (BMW net-60 current + Kawasaki overdue), the rollup (recognized revenue, AR total + overdue, netIncome; cash/runway flagged null); org isolation (unknown org → empty).
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001)**
+- [ ] `curl 'http://localhost:3001/api/finance/ledger?period=2026-Q2'` returns the Q2 ledger (Hardware/RaaS revenue, COGS, Opex).
+- [ ] `curl 'http://localhost:3001/api/finance/invoices?status=OVERDUE'` returns Kawasaki INV-7702 (overdue, agingBucket 1-30).
+- [ ] `curl http://localhost:3001/api/finance/unit-economics` returns HX-2 (marginPct 22.9, marginDeltaPt −2.1) + HX-1.
+
+**Notes / flags**
+- Read/API only over LedgerEntry/Invoice/UnitEconomic (no schema change, no mutations — the P&L / unit-economics / AR screen is FIN.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; aggregates computed in JS over org-scoped findMany (small data; keeps the dbForOrg org-scope guarantee — no raw SQL that could bypass it); caps (ledger/invoices 500, UE 200 / lists 50–100). Continues the BMW thread: HX-2 −2.1pt from ECO-318 · BMW net-60 (current) + Kawasaki (overdue). `recognition` = lumpy (hardware, recognized at commissioning) vs ratable (RaaS); AR `agingBucket` = current / 1-30 / 31-60 / 61-90 / 90+ / paid from days-past-`dueDate`.
+- **Flag: cash / runway are not derivable from the ledger** (no cash-balance or burn entries) → `rollup.cash` / `rollup.runwayMonths` return `null`; `netIncome` (revenue − COGS − Opex) is the derivable rollup. A cash/burn model = schema addition (deferred to FIN.2 notes).
+
+### Deferred decisions (FIN.1)
+- Cash-balance / burn model → "cash" + "runway" metrics (currently rollup.cash / rollup.runwayMonths return null; netIncome is the derivable rollup). Schema addition; deferred.
