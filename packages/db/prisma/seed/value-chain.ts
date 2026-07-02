@@ -236,29 +236,125 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
     },
   });
 
-  // Fulfillment: DLV-3312 Osaka customs (EAR99) holding the BMW shipment
-  await db.delivery.create({
-    data: {
-      code: CODES.delivery,
-      account: "BMW",
-      destination: "Osaka, JP",
-      units: `24× ${CODES.product}`,
-      stage: "CUSTOMS",
-      committedDate: d("+21d"),
-      etaDate: d("+42d"),
-      riskState: "EAR99 customs hold",
-    },
+  // Fulfillment: the delivery pipeline (ALLOC → ACTIVE). DLV-3312 is the BMW
+  // Osaka shipment held at customs (EAR99) — the ECO-318 → BMW order → hold
+  // thread. The rest span the pipeline so it renders full (FUL.2).
+  await db.delivery.createMany({
+    data: [
+      {
+        code: CODES.delivery, // DLV-3312 — BMW Osaka, held at customs (EAR99)
+        account: "BMW",
+        destination: "Osaka, JP",
+        units: `24× ${CODES.product}`,
+        stage: "CUSTOMS",
+        committedDate: d("+21d"),
+        etaDate: d("+42d"),
+        riskState: "EAR99 customs hold",
+      },
+      {
+        code: "DLV-3315",
+        account: "Kawasaki",
+        destination: "Nagoya, JP",
+        units: `4× ${CODES.product}`,
+        stage: "ALLOC",
+        committedDate: d("+35d"),
+        etaDate: d("+33d"),
+        riskState: "on-track",
+      },
+      {
+        code: "DLV-3311",
+        account: "BMW",
+        destination: "Munich, DE",
+        units: `2× ${CODES.product}`,
+        stage: "CRATE",
+        committedDate: d("+28d"),
+        etaDate: d("+27d"),
+        riskState: "on-track",
+      },
+      {
+        code: "DLV-3309",
+        account: "Kawasaki",
+        destination: "Kobe, JP",
+        units: `6× ${CODES.product}`,
+        stage: "FREIGHT",
+        committedDate: d("+14d"),
+        etaDate: d("+12d"),
+        riskState: "on-track",
+      },
+      {
+        code: "DLV-3306",
+        account: "BMW",
+        destination: "Munich, DE",
+        units: `1× ${CODES.product}`,
+        stage: "ONSITE",
+        committedDate: d("+9d"),
+        etaDate: d("+8d"),
+        riskState: "on-track",
+      },
+      {
+        code: "DLV-3304",
+        account: "Kawasaki",
+        destination: "Kobe, JP",
+        units: `3× ${CODES.product}`,
+        stage: "COMMISSION",
+        committedDate: d("+4d"),
+        etaDate: d("+3d"),
+        riskState: "on-track",
+      },
+      {
+        code: "DLV-3301",
+        account: "BMW",
+        destination: "Munich, DE",
+        units: `8× ${CODES.product}`,
+        stage: "ACTIVE",
+        committedDate: d("-10d"),
+        etaDate: d("-12d"),
+        riskState: "on-track",
+      },
+    ],
   });
-  await db.delivery.create({
-    data: {
-      code: "DLV-3309",
-      account: "Kawasaki",
-      destination: "Kobe, JP",
-      units: `6× ${CODES.product}`,
-      stage: "FREIGHT",
-      committedDate: d("+14d"),
-      etaDate: d("+12d"),
-      riskState: "on-track",
-    },
+
+  // A real ful-orchestrator run so the AGENT TRACE block is populated (FUL.2).
+  const fulAgent = await db.agent.findFirst({
+    where: { moduleKey: "fulfillment" },
+    orderBy: { code: "asc" },
   });
+  if (fulAgent) {
+    await db.agentRun.create({
+      data: {
+        agentId: fulAgent.id,
+        input: {
+          prompt: "Clear the DLV-3312 customs hold and keep installs on track.",
+        },
+        status: "SUCCEEDED",
+        trace: [
+          {
+            ts: d("-2h").toISOString(),
+            kind: "allocate",
+            text: "6 finished units → open orders",
+          },
+          {
+            ts: d("-2h").toISOString(),
+            kind: "customs",
+            text: `${CODES.delivery} HELD · export license (Osaka)`,
+          },
+          {
+            ts: d("-2h").toISOString(),
+            kind: "file",
+            text: "EAR99 classification · re-submit",
+          },
+          {
+            ts: d("-2h").toISOString(),
+            kind: "freight",
+            text: "hold air slot · recovers ETA",
+          },
+          {
+            ts: d("-2h").toISOString(),
+            kind: "install",
+            text: "DLV-3304 on-site · commission 50%",
+          },
+        ],
+      },
+    });
+  }
 }

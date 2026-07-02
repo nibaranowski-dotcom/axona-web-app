@@ -645,3 +645,29 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 **Notes**
 - Read/API only over the existing Delivery model (no schema change, no mutations — the delivery-pipeline screen is FUL.2). All via getCurrentUser → dbForOrg; paginated with paginateArgs/pageResult; cap 200 (list 50). Continues the narrative ECO-318 → BMW order → DLV-3312 Osaka customs hold. `atRisk` = riskState not empty/"on-track"; `late` = etaDate after committedDate; pipeline = count per DeliveryStage (all 7).
+
+---
+
+## FUL.2 — Fulfillment screen
+
+**Automated**
+- `pnpm verify:ful-2` — route + components (FulfillmentView/DeliveryPipeline/DeliveryCard/ShipmentPanel/CommissioningPanel); renders getFulfillmentData; delivery pipeline signature artifact (7 stations, blocked/at-risk); read-only (no mutations); no red/emoji/raw hex; DLV-3312 at CUSTOMS (EAR99, at-risk); pipeline spans ≥5 stages; a commissioning delivery exists.
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001/fulfillment)**
+- [ ] Matches Fulfillment.dc.html on the v2 shell — the **delivery pipeline** leads; each card shows the ALLOC→ACTIVE station track. **DLV-3312 (BMW · Osaka)** sits at **Customs, blocked (ink + cut-out square), ink progress fill, "At risk"** — the EAR99 hold. Others span ALLOC/CRATE/FREIGHT/ONSITE/COMMISSION/ACTIVE. No red.
+- [ ] Shipment panel (DLV-3312, real fields; hold/late rows in ink) + Commissioning panel (an on-site/commission delivery, real stage progress).
+- [ ] The Fulfillment agents appear in the module-aware pane; "Schedule delivery" seeds the agent.
+- [ ] accessibility-review 0 violations.
+
+**Notes / flags**
+- Read-only over FUL.1 getFulfillmentData (org-scoped). Enriched seed (FND.12, idempotent): 7 deliveries spanning ALLOC→ACTIVE (keeps DLV-3312 CUSTOMS/EAR99 + DLV-3309 FREIGHT) + a real ful-orchestrator AgentRun for the trace.
+- **Design deviations flagged (data-shape mismatch — not substituted silently):**
+  1. Stats "Installs this week" / "Avg lead time" need a dispatch/order date the Delivery model doesn't carry → showed real **On-site** (count) + **At risk** (count) instead. Adding delivery timestamps = schema change (deferred).
+  2. Shipment/Commissioning panels: the design's per-leg carrier detail + per-unit commissioning checklist aren't Delivery fields → panels render the **real** delivery fields (shipment k/v; stage-progress bar) instead of a fabricated carrier route / checklist. A richer shipment/commissioning model is a future schema addition.
+- "Schedule delivery" seeds the copilot (agent proposes); creating/scheduling a real delivery is a **gated write** (deferred — same propose→approve pattern as PROC.2/ENG.2).
+
+### Deferred decisions (FUL.2)
+- (a) Delivery dispatch/order dates → "installs this week" + "avg lead time" metrics. Schema change (Delivery has no order/dispatch timestamps); deferred.
+- (b) Richer Shipment/Commissioning model (carrier legs, per-unit commissioning checklist) → the detail panels. Schema + story additions; deferred.
+- (c) Schedule-delivery gated write (propose → approve, like PROC.2/ENG.2). Story addition; deferred (currently seeds the copilot).
