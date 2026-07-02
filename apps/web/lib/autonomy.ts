@@ -11,6 +11,10 @@ const METRIC_CAP = 500;
 const INCIDENT_CAP = 200;
 const POLICY_CAP = 100;
 const CLOSED = new Set(["CLOSED", "RESOLVED", "DONE"]);
+// A regression is a MEANINGFUL move (not day-to-day noise): autonomy down > 1pt
+// or takeovers/1k up > 1 across the window.
+const REGRESSION_RATE_DROP = 1;
+const REGRESSION_TAKEOVER_RISE = 1;
 
 export interface AutonomyPoint {
   ts: Date;
@@ -75,8 +79,7 @@ export async function getAutonomyData(orgId: string): Promise<AutonomyData> {
       },
     }),
     db.safetyIncident.findMany({
-      where: { status: { notIn: [...CLOSED] } },
-      orderBy: [{ severity: "desc" }, { code: "asc" }],
+      orderBy: [{ severity: "desc" }, { code: "desc" }],
       take: INCIDENT_CAP,
       select: {
         id: true,
@@ -114,8 +117,9 @@ export async function getAutonomyData(orgId: string): Promise<AutonomyData> {
       const regression =
         !!first &&
         !!last &&
-        (last.autonomyRate < first.autonomyRate ||
-          last.takeoversPer1k > first.takeoversPer1k);
+        (first.autonomyRate - last.autonomyRate > REGRESSION_RATE_DROP ||
+          last.takeoversPer1k - first.takeoversPer1k >
+            REGRESSION_TAKEOVER_RISE);
       return { site, points, regression };
     },
   );
@@ -133,14 +137,18 @@ export async function getAutonomyData(orgId: string): Promise<AutonomyData> {
   const canaryVersion =
     policyRows.find((p) => p.state.toLowerCase() === "canary")?.version ?? null;
 
+  const openIncidents = incidentRows.filter(
+    (i) => !CLOSED.has(i.status.toUpperCase()),
+  ).length;
+
   return {
     autonomySeries,
-    safetyIncidents: incidentRows,
+    safetyIncidents: incidentRows, // all logged (the table shows closed too)
     policyVersions: policyRows,
     rollup: {
       avgAutonomyRate,
       avgTakeoversPer1k,
-      openIncidents: incidentRows.length,
+      openIncidents,
       canaryVersion,
     },
   };

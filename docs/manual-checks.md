@@ -768,3 +768,25 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 **Notes**
 - Read/API only over AutonomyMetric/SafetyIncident/PolicyVersion (no schema change, no mutations — the trend + policy screen is AUTO.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; caps (metrics 500, incidents 200, policies 100 / lists 50–100). Continues the Site-3 thread: the p-13 canary regression → INC-201. `regression` = autonomy declined or takeovers rose across the window; rollup = avg autonomy rate + takeovers/1k (latest per site) + open-incident count + the canary policy version. Policy rollback/promotion is a gated action (RBAC.4) — surfaced here read-only.
+
+---
+
+## AUTO.2 — Autonomy screen
+
+**Automated**
+- `pnpm verify:auto-2` — route + components (AutonomyView/AutonomyTrend/PolicyPanel/SafetyIncidents); renders getAutonomyData; autonomy-rate trend highlights the p-13 cohort (signature); advancePolicy requireRole(["ENGINEER","ADMIN"]) FIRST + org-scoped + revalidatePath + AUDIT.3 seam; promote/rollback role-gated in the UI; no red/emoji/raw hex; Site-3 regression series + p-13 canary + INC-201; renders full (≥2 series, ≥3 incidents).
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001/autonomy)**
+- [ ] Matches Autonomy.dc.html on the v2 shell — the **autonomy-rate trend** (bars; the **p-13 cohort dips in lime** on Site-3) + the **policy panel** (p-13 Canary with a role-gated **Promote / Rollback**) + the safety-incident log (INC-201 near-miss). No red.
+- [ ] As ENGINEER/ADMIN, Promote (canary→current) or Rollback (canary→standby) transitions p-13; attributed via a trace line. As VIEWER the buttons are hidden (server action requireRole-throws).
+- [ ] Autonomy agents appear in the module-aware pane; "Safety review" seeds the agent.
+- [ ] accessibility-review 0 violations.
+
+**Notes / flags**
+- Read-only reads over AUTO.1 getAutonomyData (org-scoped); advancePolicy = server action `requireRole(["ENGINEER","ADMIN"])` line 1 → `dbForOrg` scoped `updateMany` → `revalidatePath`; `/// TODO AUDIT.3` seam; RBAC.4 formalizes the promotion/rollback state machine. **Sim-validate-before-promote is a future gate (deferred).** Enriched seed (FND.12, idempotent): 3 site series (Site-1/Site-2 stable, Site-3 p-13 regression) + 4 safety incidents (keep INC-201) + a real auto-orchestrator AgentRun.
+- **Design deviations flagged (data-shape mismatch — not substituted silently):** stats "Tasks today" / "Safety events · 24h" need a task count + a time window the model doesn't carry → real **Sites monitored** + **Open incidents** counts fill those slots. Adding task counters / incident timestamps = schema change (deferred).
+
+### Deferred decisions (AUTO.2)
+- (a) Task counter + incident time-window → "tasks today" + "safety events · 24h" metrics (currently sites-monitored + open-incident counts). Schema change; deferred.
+- (b) Sim-validate-before-promote gate on policy promotion (RBAC.4 formalizes the promotion/rollback state machine). Story addition; deferred (promote/rollback currently transitions state directly, role-gated, with the AUDIT.3 seam).

@@ -502,25 +502,119 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
     });
   }
 
-  // Autonomy — Site-3 p-13 canary regression → INC-201; policy versions
-  await db.policyVersion.create({
-    data: { version: "p-12", note: "Stable baseline", state: "current" },
+  // Autonomy — the p-13 canary regressing on Site-3 → INC-201; policy versions
+  // + the safety-incident log + per-site autonomy series (AUTO.2).
+  await db.policyVersion.createMany({
+    data: [
+      {
+        version: "p-12",
+        note: "Current · 90% of fleet · stable",
+        state: "current",
+      },
+      {
+        version: CODES.policy,
+        note: "Canary · 10% (Site-3) · +interventions",
+        state: "canary",
+      }, // p-13
+      { version: "p-11", note: "Previous · rollback ready", state: "standby" },
+    ],
   });
-  await db.policyVersion.create({
-    data: { version: CODES.policy, note: "Canary on Site-3", state: "canary" },
+
+  // Per-site autonomy series: Site-1 / Site-2 stable, Site-3 regresses on p-13.
+  const stableSeries = (site: string, base: number, to: number) =>
+    [0, 1, 2, 3, 4, 5].map((i) => ({
+      site,
+      ts: d(`-${6 - i}d`),
+      autonomyRate: base + (i % 2 === 0 ? 0.1 : -0.1),
+      takeoversPer1k: to + (i % 2 === 0 ? -0.1 : 0.1),
+      policyVersion: "p-12",
+    }));
+  await db.autonomyMetric.createMany({
+    data: [
+      ...autonomySeries(), // Site-3 p-13 regression
+      ...stableSeries("Site-1", 99.1, 0.9),
+      ...stableSeries("Site-2", 98.7, 1.3),
+    ],
   });
-  await db.policyVersion.create({
-    data: { version: "p-11", note: "Prior baseline", state: "standby" },
+
+  await db.safetyIncident.createMany({
+    data: [
+      {
+        code: "INC-204",
+        type: "Safe-stop · thermal guard",
+        robotSerial: CODES.robot,
+        site: "Site-2",
+        severity: "CRITICAL",
+        status: "CONTAINED",
+      },
+      {
+        code: CODES.incident,
+        type: "Proximity near-miss",
+        robotSerial: CODES.robot,
+        site: "Site-3",
+        severity: "MAJOR",
+        status: "REVIEW",
+      }, // INC-201
+      {
+        code: "INC-198",
+        type: "Safety-zone violation",
+        robotSerial: "SN-2133",
+        site: "Site-1",
+        severity: "MINOR",
+        status: "CLOSED",
+      },
+      {
+        code: "INC-195",
+        type: "Unexpected stop",
+        robotSerial: "SN-2184",
+        site: "Site-1",
+        severity: "MINOR",
+        status: "CLOSED",
+      },
+    ],
   });
-  await db.autonomyMetric.createMany({ data: autonomySeries() });
-  await db.safetyIncident.create({
-    data: {
-      code: CODES.incident,
-      type: "near-miss",
-      robotSerial: CODES.robot,
-      site: "Site-3",
-      severity: "MAJOR",
-      status: "REVIEW",
-    },
+
+  // A real auto-orchestrator run so the AGENT TRACE block is populated (AUTO.2).
+  const autoAgent = await db.agent.findFirst({
+    where: { moduleKey: "autonomy" },
+    orderBy: { code: "asc" },
   });
+  if (autoAgent) {
+    await db.agentRun.create({
+      data: {
+        agentId: autoAgent.id,
+        input: {
+          prompt: `Investigate the Site-3 takeover regression on ${CODES.policy}.`,
+        },
+        status: "SUCCEEDED",
+        trace: [
+          {
+            ts: d("-45m").toISOString(),
+            kind: "monitor",
+            text: "12,480 tasks · 98.6% autonomous",
+          },
+          {
+            ts: d("-45m").toISOString(),
+            kind: "intervention",
+            text: "Site-3 takeovers up → regression",
+          },
+          {
+            ts: d("-45m").toISOString(),
+            kind: "correlate",
+            text: `${CODES.policy} canary cohort`,
+          },
+          {
+            ts: d("-45m").toISOString(),
+            kind: "safety",
+            text: `${CODES.incident} proximity near-miss · review`,
+          },
+          {
+            ts: d("-45m").toISOString(),
+            kind: "recommend",
+            text: "rollback Site-3 → p-12",
+          },
+        ],
+      },
+    });
+  }
 }
