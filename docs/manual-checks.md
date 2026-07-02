@@ -588,3 +588,19 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 **Notes**
 - Read-only over QUAL.1 getQualityData (org-scoped); no schema change, no mutations. SPC breach = INK (critical = ink, never red); severity + cert status carried by ink/lime/green dots with ink text (AA-safe — green text on paper fails contrast). The dark agent-trace block renders the latest real quality AgentRun (org-scoped), hidden if none.
+
+---
+
+## ENG.1 — Engineering data/API
+
+**Automated**
+- `pnpm verify:eng-1` — routes (ecos/firmware/compat); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getEngineeringData returns the stage-grouped ecoBoard (DRAFT/REVIEW/APPROVED/RELEASED) with ECO-318 in REVIEW referencing NCR-118, firmwareReleases (v4.2.2-rc awaiting HX-1 cert), compatMatrix with axes (hwRevs/fwVersions) + cells; org isolation (unknown org → empty).
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001)**
+- [ ] `curl 'http://localhost:3001/api/engineering/ecos?stage=REVIEW'` returns ECO-318 (Supersede SERVO-204 → SERVO-205; affected: SERVO-204; NCR-118; BMW order; HX-2).
+- [ ] `curl http://localhost:3001/api/engineering/firmware` returns v4.2.2-rc (RC) + v4.2.1 (RELEASED).
+- [ ] `curl http://localhost:3001/api/engineering/compat` returns HX-1/HX-2 × v4.2.2-rc/v4.2.1 cells (cert / compatible / in-test).
+
+**Notes**
+- Read/API only over existing ECO/FirmwareRelease/CompatCell (no schema change, no mutations — the ECO board + compat matrix screen is ENG.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; caps (ECOs 200, firmware 100, compat 400/list 100). Continues the seeded narrative NCR-118 → ECO-318. compatMatrix derives distinct hwRevs (sorted) + fwVersions (newest first) as the grid axes.
