@@ -726,3 +726,29 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 **Notes**
 - Read/API only over WorkOrderField/Technician (no schema change, no mutations — the dispatch board is FIELD.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; caps (200 / list 50). Closes the robotics thread SN-2196 thermal (Fleet) → WO-5521 battery-swap dispatch gated by Osei's HV/battery cert. SLA: `slaMsLeft` = time to slaDueAt (negative = breached), `dueSoon` within 12h; cert `expiring` = state EXPIRING or within 30d; the board is per-tech (assigned work orders).
+
+---
+
+## FIELD.2 — Field Service screen
+
+**Automated**
+- `pnpm verify:field-2` — route + components (FieldServiceView/DispatchBoard/WorkOrderQueue); renders getFieldServiceData; per-tech dispatch board + cert gate (signature artifact); work-order queue with a live SLA countdown; read-only (no mutations); no red/emoji/raw hex; WO-5521 on Osei's column (SLA + cert-expiring); board + queue full (≥5 techs, ≥5 WOs); queue spans statuses incl. an unassigned WO.
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001/field-service)**
+- [ ] Matches Field Service.dc.html on the v2 shell — the **dispatch board** (per-tech lanes; **M. Osei carries a lime "cert" flag** = the expiring HV/battery gate) + the **SLA-tracked work-order queue** (WO-5521 SN-2196 battery swap on Osei, live countdown). No red.
+- [ ] WO-5521 + Osei surface (SLA ticking, cert gate); an unassigned WO shows "Unassigned"; a breached SLA reads in ink.
+- [ ] Field Service agents appear in the module-aware pane; "Work order" seeds the dispatch agent.
+- [ ] accessibility-review 0 violations.
+
+**Notes / flags**
+- Read-only over FIELD.1 getFieldServiceData (org-scoped). Enriched seed (FND.12, idempotent): 6 technicians (Osei + Sato cert-expiring) + a 7-WO queue across DISPATCH/EN_ROUTE/ON_SITE/OPEN/SCHEDULED/CLOSED, severities, and SLA windows (dueSoon/breached/scheduled), some unassigned; a real fs-orchestrator AgentRun for the trace.
+- **Design deviations flagged (data-shape mismatch — not substituted silently):**
+  1. Stats "Mean time to repair" / "First-time fix" need opened/closed timestamps + repair outcomes the WorkOrderField model doesn't carry → real **SLA at risk** + **Techs** counts fill those slots. Adding WO timestamps/outcomes = schema change (deferred).
+  2. The dispatch board's precise clock-positioned time-blocks need a scheduled start/end per WO (not modeled) → blocks are the tech's **queue ordered by SLA urgency**, colored by real status; the hour-grid is the design aesthetic.
+- "+ Work order" seeds the dispatch agent (proposes); creating/assigning a real WO is a **gated write** (deferred — propose→approve like PROC.2/ENG.2).
+
+### Deferred decisions (FIELD.2)
+- (a) WorkOrderField opened/closed timestamps + repair outcomes → "mean time to repair" + "first-time fix" metrics (currently SLA-at-risk + tech counts). Schema change; deferred.
+- (b) Scheduled start/end per WO → clock-positioned dispatch-board blocks (currently a queue ordered by SLA urgency). Schema change; deferred.
+- (c) Create/assign work order gated write (propose → approve, like PROC.2/ENG.2). Story addition; deferred (currently seeds the dispatch agent).

@@ -54,6 +54,47 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       },
     },
   });
+  // The rest of the field-service crew (FIELD.2 dispatch board).
+  await db.technician.createMany({
+    data: [
+      {
+        name: "A. Brandt",
+        initials: "AB",
+        site: "Site-3",
+        status: "ON_SITE",
+        certs: {
+          hvBattery: { state: "VALID", expiresAt: d("+10m").toISOString() },
+        },
+      },
+      {
+        name: "J. Rivera",
+        initials: "JR",
+        site: "Site-2",
+        status: "ON_SITE",
+        certs: {
+          hvBattery: { state: "VALID", expiresAt: d("+6m").toISOString() },
+        },
+      },
+      {
+        name: "K. Tanaka",
+        initials: "KT",
+        site: "Site-1",
+        status: "AVAILABLE",
+        certs: {
+          hvBattery: { state: "VALID", expiresAt: d("+14m").toISOString() },
+        },
+      },
+      {
+        name: "L. Sato",
+        initials: "LS",
+        site: "Site-2",
+        status: "SCHEDULED",
+        certs: {
+          hvBattery: { state: "EXPIRING", expiresAt: d("+21d").toISOString() },
+        },
+      },
+    ],
+  });
 
   // Fleet — deployed units across 3 sites (Detroit / Rotterdam / Osaka). SN-2196
   // (BMW, Site-3 Osaka) is WATCH for a thermal anomaly → hands to Field Service.
@@ -225,19 +266,131 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
     });
   }
 
-  // Field service — battery swap on SN-2196, SLA clock running, routed to Osei
-  await db.workOrderField.create({
-    data: {
-      code: "WO-5521",
-      robotSerial: CODES.robot,
-      site: "Site-3",
-      issue: "Thermal anomaly — battery swap",
-      slaDueAt: d("+6h"),
-      techId: osei.id,
-      status: "DISPATCH",
-      severity: "MAJOR",
-    },
+  // Field service — the SN-2196 battery swap (routed to Osei, whose HV/battery
+  // cert is expiring → dispatch gate) plus the surrounding work-order queue and
+  // dispatch board (FIELD.2). SLA clocks run live off slaDueAt.
+  const crew = await db.technician.findMany({
+    select: { id: true, name: true },
   });
+  const tid = (name: string) => crew.find((t) => t.name === name)?.id ?? null;
+  await db.workOrderField.createMany({
+    data: [
+      {
+        code: "WO-5521",
+        robotSerial: CODES.robot, // SN-2196
+        site: "Site-3",
+        issue: "Thermal anomaly — battery swap",
+        slaDueAt: d("+2h"),
+        techId: osei.id,
+        status: "DISPATCH",
+        severity: "MAJOR",
+      },
+      {
+        code: "WO-5518",
+        robotSerial: "SN-2150",
+        site: "Site-3",
+        issue: "Actuator recalibration",
+        slaDueAt: d("+5h"),
+        techId: tid("A. Brandt"),
+        status: "ON_SITE",
+        severity: "MAJOR",
+      },
+      {
+        code: "WO-5515",
+        robotSerial: "SN-2184",
+        site: "Site-1",
+        issue: "Skin panel gap > 1.2 mm",
+        slaDueAt: d("+28h"),
+        techId: null,
+        status: "OPEN",
+        severity: "MINOR",
+      },
+      {
+        code: "WO-5510",
+        robotSerial: "Fleet PM",
+        site: "Site-1",
+        issue: "Quarterly preventive maintenance",
+        slaDueAt: null,
+        techId: tid("K. Tanaka"),
+        status: "SCHEDULED",
+        severity: "MINOR",
+      },
+      {
+        code: "WO-5508",
+        robotSerial: "SN-2120",
+        site: "Site-2",
+        issue: "Fault triage — motor controller",
+        slaDueAt: d("+1h"),
+        techId: tid("J. Rivera"),
+        status: "EN_ROUTE",
+        severity: "CRITICAL",
+      },
+      {
+        code: "WO-5505",
+        robotSerial: "SN-2208",
+        site: "Site-2",
+        issue: "Firmware reflash v4.2.1",
+        slaDueAt: d("-1d"),
+        techId: tid("J. Rivera"),
+        status: "CLOSED",
+        severity: "MINOR",
+      },
+      {
+        code: "WO-5502",
+        robotSerial: "SN-2101",
+        site: "Site-2",
+        issue: "Sensor calibration",
+        slaDueAt: d("+2d"),
+        techId: null,
+        status: "OPEN",
+        severity: "MINOR",
+      },
+    ],
+  });
+
+  // A real fs-orchestrator run so the AGENT TRACE block is populated (FIELD.2).
+  const fsAgent = await db.agent.findFirst({
+    where: { moduleKey: "field-service" },
+    orderBy: { code: "asc" },
+  });
+  if (fsAgent) {
+    await db.agentRun.create({
+      data: {
+        agentId: fsAgent.id,
+        input: {
+          prompt: `Dispatch the ${CODES.robot} battery swap within SLA.`,
+        },
+        status: "SUCCEEDED",
+        trace: [
+          {
+            ts: d("-30m").toISOString(),
+            kind: "intake",
+            text: `WO-5521 · ${CODES.robot} thermal fault (from Fleet)`,
+          },
+          {
+            ts: d("-30m").toISOString(),
+            kind: "triage",
+            text: "critical · SLA 2h",
+          },
+          {
+            ts: d("-30m").toISOString(),
+            kind: "parts",
+            text: "reserve PK-48 · edge cache",
+          },
+          {
+            ts: d("-30m").toISOString(),
+            kind: "dispatch",
+            text: "route M. Osei · ETA 48m · battery-cert",
+          },
+          {
+            ts: d("-30m").toISOString(),
+            kind: "knowledge",
+            text: "push swap procedure → tablet",
+          },
+        ],
+      },
+    });
+  }
 
   // Engineering — the NCR-118 → ECO-318 change thread, plus the surrounding ECO
   // board, firmware ladder, and HW↔firmware compat matrix (Engineering.dc.html).
