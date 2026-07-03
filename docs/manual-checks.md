@@ -1072,3 +1072,24 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ### Deferred decisions (MKT.1)
 - (a) **No attribution model** → pipeline-by-channel derived over Campaign + reconciled to SALES.1 (`getSalesData`); a first-class attribution model (touch-weighted, multi-touch) = schema addition; deferred.
 - (b) **No demand-funnel / lead model** → leads estimated from MQLs via a labelled top-of-funnel rate (`LEAD_TO_MQL_RATE`); SQL/pipeline reconciled to Sales. A real lead/funnel model = schema addition; deferred.
+
+---
+
+## MKT.2 — Marketing screen
+
+**Automated**
+- `pnpm verify:mkt-2` — route + components (MarketingView/DemandFunnel/ChannelAttribution/CampaignsTable); renders getMarketingData; funnel + channel-attribution panels bind; campaigns table binds the underperforming flag; read-only (no mutations); no red/emoji/raw hex; funnel + attribution full; events reads dominant on-screen; underperforming paid campaign flagged (ink).
+- CI gate green · `accessibility-review` 0 · MKT.1/SALES.1 stay green.
+
+**Manual (./dev.sh, http://localhost:3001/marketing)**
+- [ ] Matches Marketing.dc.html on the v2 shell — the **demand funnel** (Leads→MQL→SQL→Pipeline) + **pipeline by channel** (Events lime = dominant) + **campaigns table** (Paid search Q3 ink "Underperforming"). No invented reds.
+- [ ] Events reads dominant (54%); Paid search Q3 flagged underperforming; the topbar "% pipeline sourced" = coverage reconciled to Sales; "New campaign" seeds the mkt agent; Marketing agents pane populated.
+- [ ] accessibility-review 0 violations.
+
+**Notes / flags**
+- Read-only reads over MKT.1 getMarketingData (org-scoped) — attribution reconciled to SALES.1. No new seed (MKT.1 enriched the 7-campaign set + the mkt-orchestrator run). Budget reallocation / SQL hand-off / launch-pause are **agent-DRAFTED only** — `/// RBAC.4` + `/// AUDIT.3` seams (in the MKT.1 lib); no live write; no event-log/confidence/approver columns.
+- **Design deviations flagged (data-shape mismatch — not fabricated):**
+  1. Stats **MQL→SQL rate / cost-per-MQL** + funnel **Visitors** need a web-analytics / spend model → real **MQLs / Sourced pipeline / SQLs→Sales / Underperforming** fill the strip; the funnel starts at Leads (estimated from MQLs).
+  2. The **enterprise funnel narrows sharply** (many MQLs → few large deals, SQL = Sales deal count) → funnel bars carry a min-width for visibility; the drop is real, not a rendering bug.
+  3. **No attribution model** → pipeline-by-channel derived over Campaign + reconciled to SALES.1; **no lead model** → leads via the labelled `LEAD_TO_MQL_RATE`.
+  4. **"New campaign" / reallocate / hand-off** seed the mkt agent (propose); real writes are gated (RBAC.4) — deferred, kept read-only.
