@@ -1093,3 +1093,22 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
   2. The **enterprise funnel narrows sharply** (many MQLs → few large deals, SQL = Sales deal count) → funnel bars carry a min-width for visibility; the drop is real, not a rendering bug.
   3. **No attribution model** → pipeline-by-channel derived over Campaign + reconciled to SALES.1; **no lead model** → leads via the labelled `LEAD_TO_MQL_RATE`.
   4. **"New campaign" / reallocate / hand-off** seed the mkt agent (propose); real writes are gated (RBAC.4) — deferred, kept read-only.
+
+---
+
+## MACH.1 — Machines screen + read model
+
+**Automated**
+- `pnpm verify:mach-1` — route + component + API routes exist; lib org-scoped (dbForOrg) + paginated (FND.11); moat RBAC.4 + AUDIT.3 seams; read-only (no mutations); screen renders both groups + the needs-service filter; groups Fixed + Mobile both populated; needs-service flag + rollup bind; machines carry telemetry signals; listMachines paginates + filters by kind; org isolation.
+- CI gate green · `accessibility-review` 0 · siblings stay green.
+
+**Manual (./dev.sh, http://localhost:3001/machines)**
+- [ ] Matches Machines.dc.html on the v2 shell — the register table grouped **Fixed plant / Mobile units** with per-row **status / utilization / health / telemetry** cells; the inline stat strip (Machines / Running now / In maintenance / Avg utilization); the **Needs service** filter toggle (TEST-01 fault + SMT-01 re-cal due surface). Fault/critical in ink, never red.
+- [ ] The needs-service filter narrows to the flagged machines; Maintenance agents populate the pane (trace references TEST-01 / SMT-01); "Register machine" seeds the agent.
+- [ ] accessibility-review 0 violations.
+
+**Notes / flags**
+- Read-only over Machine + MachineSignal (no schema change). getMachinesData groups Fixed/Mobile, derives **needsService** (healthLevel WATCH/BAD or status FAULT), surfaces the latest signal per machine, and rolls up (counts by status, running/maintenance/idle, needs-service, avg utilization, telemetry-online). Seed (FND.12) = 21 machines (8 Fixed + 13 Mobile) with signals + a real maintenance-orchestrator AgentRun. Service/PM actions are **agent-DRAFTED only** — `/// RBAC.4` + `/// AUDIT.3` seams; no live write; no event-log/confidence/approver columns.
+- **Design adaptations flagged:**
+  1. The design places the **"All machines / Needs service"** scope in the agent-pane chips; the shared pane is generic infra, so the needs-service scope is surfaced as a **table filter toggle** on the screen (per the story). The pane still auto-loads the Maintenance agents + the seeded maintenance-orchestrator trace.
+  2. No OEE/availability feed in the model → the stat strip uses the derivable **Avg utilization** (not OEE); a real OEE feed = telemetry/schema addition (deferred, as in MFG).

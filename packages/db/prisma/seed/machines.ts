@@ -151,5 +151,51 @@ export async function seedMachines(
       })),
     });
   }
+
+  // A real maintenance-orchestrator run so the Machines agent pane has context
+  // referencing the needs-service machines (TEST-01 fault, SMT-01 re-cal due).
+  const machAgent = await db.agent.findFirst({
+    where: { moduleKey: "machines" },
+    orderBy: { code: "asc" },
+  });
+  if (machAgent) {
+    await db.agentRun.create({
+      data: {
+        agentId: machAgent.id,
+        input: {
+          prompt: "Scan machine telemetry and flag what needs service.",
+        },
+        status: "SUCCEEDED",
+        trace: [
+          {
+            ts: d("-2h").toISOString(),
+            kind: "scan",
+            text: "21 machines · telemetry + maintenance history",
+          },
+          {
+            ts: d("-2h").toISOString(),
+            kind: "flag",
+            text: "TEST-01 torque sensor drift → fault (blocks torque checks)",
+          },
+          {
+            ts: d("-2h").toISOString(),
+            kind: "flag",
+            text: "SMT-01 re-cal due in 4d",
+          },
+          {
+            ts: d("-2h").toISOString(),
+            kind: "predict",
+            text: "need service · bundle into off-shift window",
+          },
+          {
+            ts: d("-2h").toISOString(),
+            kind: "propose",
+            text: "draft PM schedule · human approves (RBAC.4)",
+          },
+        ],
+      },
+    });
+  }
+
   return { total: all.length, fixed: FIXED.length };
 }

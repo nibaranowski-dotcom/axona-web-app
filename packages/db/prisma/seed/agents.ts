@@ -313,6 +313,35 @@ const ROSTER: Record<string, { prefix: string; agents: AgentDef[] }> = {
       { role: "IP", description: "Manages IP/patent matters." },
     ],
   },
+  machines: {
+    prefix: "mach",
+    agents: [
+      {
+        role: "MAINTENANCE",
+        description: "Flags what needs service and drafts PM schedules.",
+      },
+      {
+        role: "PREDICTIVE",
+        description: "Predicts failures from machine telemetry.",
+      },
+      {
+        role: "SCHEDULER",
+        description: "Books service into off-shift windows.",
+      },
+      {
+        role: "TELEMETRY",
+        description: "Ingests and monitors machine signals.",
+      },
+      {
+        role: "CALIBRATION",
+        description: "Tracks re-cal due dates and drift.",
+      },
+      {
+        role: "UTILIZATION",
+        description: "Tracks utilization across the floor.",
+      },
+    ],
+  },
 };
 
 export async function seedAgents(db: OrgScopedDb): Promise<number> {
