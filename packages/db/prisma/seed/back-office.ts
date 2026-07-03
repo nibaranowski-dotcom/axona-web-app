@@ -212,23 +212,93 @@ export async function seedBackOffice(db: OrgScopedDb): Promise<void> {
     });
   }
 
-  // Security — CVEs affecting deployed units; one tied to the firmware patch
-  await db.cVE.create({
-    data: {
-      code: "CVE-2026-3187",
-      severity: "MAJOR",
-      affectedUnits: 42,
-      status: "TRIAGE",
-    },
+  // Security — the connected-robot attack surface (SEC.2). A CVE list with a
+  // severity/status mix + real affected-deployed-unit counts. The load-bearing
+  // one, CVE-2026-3187, affects deployed units and its fix is the signed-firmware
+  // patch v4.2.2-rc (Engineering) that must clear the cert gate before rollout.
+  // Device posture is derived over the seeded fleet (no DevicePosture model).
+  await db.cVE.createMany({
+    data: [
+      {
+        code: "CVE-2026-3187",
+        severity: "CRITICAL",
+        affectedUnits: 42,
+        status: "PATCH_DRAFTED",
+      }, // fix = v4.2.2-rc, gated by ENG cert gate
+      {
+        code: "CVE-2026-3402",
+        severity: "MAJOR",
+        affectedUnits: 18,
+        status: "TRIAGE",
+      },
+      {
+        code: "CVE-2026-3298",
+        severity: "MAJOR",
+        affectedUnits: 6,
+        status: "PATCH_DRAFTED",
+      },
+      {
+        code: "CVE-2026-3155",
+        severity: "MINOR",
+        affectedUnits: 3,
+        status: "MITIGATED",
+      },
+      {
+        code: "CVE-2026-2991",
+        severity: "MINOR",
+        affectedUnits: 11,
+        status: "MITIGATED",
+      },
+      {
+        code: "CVE-2026-2860",
+        severity: "CRITICAL",
+        affectedUnits: 0,
+        status: "TRIAGE",
+      }, // component CVE, no deployed units yet
+    ],
   });
-  await db.cVE.create({
-    data: {
-      code: "CVE-2026-2991",
-      severity: "MINOR",
-      affectedUnits: 11,
-      status: "MITIGATED",
-    },
+
+  // A real sec-orchestrator run so the AGENT TRACE block is populated (SEC.2).
+  const secAgent = await db.agent.findFirst({
+    where: { moduleKey: "security" },
+    orderBy: { code: "asc" },
   });
+  if (secAgent) {
+    await db.agentRun.create({
+      data: {
+        agentId: secAgent.id,
+        input: { prompt: "Triage CVEs on deployed units and stage the patch." },
+        status: "SUCCEEDED",
+        trace: [
+          {
+            ts: d("-5h").toISOString(),
+            kind: "scan",
+            text: "6 CVEs · 80 unit-exposures across the fleet",
+          },
+          {
+            ts: d("-5h").toISOString(),
+            kind: "triage",
+            text: `CVE-2026-3187 CRITICAL · 42 deployed ${CODES.product} units`,
+          },
+          {
+            ts: d("-5h").toISOString(),
+            kind: "patch",
+            text: `draft signed firmware ${CODES.firmware} → fixes CVE-2026-3187`,
+          },
+          {
+            ts: d("-5h").toISOString(),
+            kind: "cert-gate",
+            text: `${CODES.firmware} in-test · awaiting Engineering cert gate`,
+          },
+          {
+            ts: d("-5h").toISOString(),
+            kind: "propose",
+            text: "rollout drafted · human approves (RBAC.4)",
+          },
+        ],
+      },
+    });
+  }
 
   // Legal — obligations vs live ops, export control, IP/liability/reg matters
   // (LEGAL.2). BMW 99.5% SLA at-risk from the autonomy regression · DLV-3312

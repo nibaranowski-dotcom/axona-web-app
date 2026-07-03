@@ -965,3 +965,25 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
   1. Stat **"Headcount" (org-wide 142)** has no first-class people/org model → approximated by the **requisition fill** (sum of filled); **"Cert compliance"** is derived from the matrix (current held certs / all held).
   2. The design's **Headcount by function** implies an org-structure tree the model lacks → the panel derives headcount from the **requisition roles** (function ≈ role). A first-class org model = schema addition (deferred).
   3. **"Open requisition"** seeds the ppl agent (proposes); opening a req / booking a recert is a **gated write** needing a requisition-workflow model — deferred, kept read-only.
+
+---
+
+## SEC.1 — Security data/API
+
+**Automated**
+- `pnpm verify:sec-1` — routes (cves/posture); lib org-scoped (dbForOrg) + paginated (FND.11); composes over FLEET.1 + ENG.1 (reuses shared libs); moat RBAC.4 + AUDIT.3 seams (agent-drafted only); read-only (no mutations); getSecurityData rollup binds (severity/status/units/posture/rollouts); CVE-2026-3187 affects deployed units (PATCH_DRAFTED); signed-firmware patch v4.2.2-rc resolves through the ENG cert gate (in-test, forCve CVE-2026-3187); device posture spreads over the fleet; org isolation.
+- `pnpm typecheck` clean · `verify-fleet-1` / `verify-eng-1` / `verify-ppl-1` stay green.
+
+**Manual (./dev.sh, http://localhost:3001)**
+- [ ] `curl 'http://localhost:3001/api/security/cves?status=PATCH_DRAFTED'` returns CVE-2026-3187 (CRITICAL, 42 units) + CVE-2026-3298.
+- [ ] `curl http://localhost:3001/api/security/posture` returns the device-posture spread (Hardened/Needs patch/Degraded), the v4.2.2-rc patch rollout (certGate in-test, gated), and the rollup.
+
+**Notes**
+- Read/API only over the existing CVE model (no schema change, no mutations — the screen is SEC.2). CVE list via getCurrentUser → dbForOrg + paginated; the derived posture/rollout summary via getSecurityData. Composes over **FLEET.1** (`getFleetData` — device posture over robot firmware/status) + **ENG.1** (`getEngineeringData` — firmware releases + the cert gate from CompatCell). **Through-line preserved:** CVE-2026-3187 (CRITICAL, 42 deployed HX-2 units) → fix = signed firmware **v4.2.2-rc** → must clear **Engineering's cert gate** (CompatCell `in-test`) before rollout. Posture buckets: Degraded (fault/offline) · Needs patch (behind latest released fw) · Hardened.
+- **MOAT / gating:** patch rollout + access changes are **agent-DRAFTED/proposed only** — `/// RBAC.4` (Engineering's cert gate = approval owner) + `/// AUDIT.3` (inputs·output·model·confidence·approver) seams left; no event-log/confidence/approver columns added.
+
+### Deferred decisions (SEC.1)
+- (a) **No DevicePosture model** → posture derived over the Robot fleet (firmware vs latest released + fault/offline). A first-class posture/attestation model = schema addition; deferred.
+- (b) **No Patch/rollout model** → patch rollout derived from the ENG RC firmware release + the cert gate (CompatCell). A first-class rollout state machine (targets, waves, ack) = schema addition; deferred (RBAC.4 owns the approval).
+- (c) **No CVE↔firmware link** on the CVE model → the fix is joined by convention (RC firmware fixes the largest PATCH_DRAFTED deployed-unit CVE). A `fixedBy`/`patchVersion` column would make it explicit; deferred (derive-or-flag, no new column now).
+- (d) **No Access-management model** → access-management (identity, keys, sessions) is not in SEC.1; SEC.2 flags it / defers to a dedicated model.
