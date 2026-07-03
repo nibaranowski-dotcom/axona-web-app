@@ -166,6 +166,68 @@ export async function getSecurityData(orgId: string): Promise<SecurityData> {
   };
 }
 
+export interface AccessGrant {
+  kind: "HUMAN" | "AGENT" | "SVC";
+  name: string;
+  scope: string;
+  flag: string; // Verified / Scoped / Signed / Revoked
+  ok: boolean;
+}
+
+/**
+ * Fleet-command access grants — who/what can issue commands to the fleet. There
+ * is NO Access-management model (identity/keys/sessions), so this is a DERIVED
+ * stand-in over real seed (command-capable users, a scoped field-service agent,
+ * the signed OTA/firmware push) plus one flagged stale-token entry. Read-only —
+ * revoke/rotate/grant are agent-proposed only (/// RBAC.4 · /// AUDIT.3). The
+ * real Access model is deferred (SEC.2 notes).
+ */
+export async function getAccessGrants(orgId: string): Promise<AccessGrant[]> {
+  const db = dbForOrg(orgId);
+  const [commandUsers, fsAgent] = await Promise.all([
+    db.user.findMany({
+      where: { role: { in: ["ADMIN", "OPS"] } },
+      select: { id: true },
+    }),
+    db.agent.findFirst({
+      where: { moduleKey: "field-service" },
+      orderBy: { code: "asc" },
+      select: { name: true },
+    }),
+  ]);
+  return [
+    {
+      kind: "HUMAN",
+      name: `Ops engineers (${commandUsers.length})`,
+      scope: "Command · MFA + hardware key",
+      flag: "Verified",
+      ok: true,
+    },
+    {
+      kind: "AGENT",
+      name: fsAgent?.name ?? "Field-Service dispatch",
+      scope: "Scoped · safe-stop only",
+      flag: "Scoped",
+      ok: true,
+    },
+    {
+      kind: "SVC",
+      name: "OTA update service",
+      scope: "Signed firmware push",
+      flag: "Signed",
+      ok: true,
+    },
+    {
+      // Flagged stand-in (no Access model): a stale token the agent proposes to revoke.
+      kind: "AGENT",
+      name: "analytics-ro · stale token",
+      scope: "Read-only · 92d idle",
+      flag: "Revoked",
+      ok: false,
+    },
+  ];
+}
+
 /** Paginated CVE list (read-only), optionally filtered by status / severity. */
 export async function listCves(
   orgId: string,

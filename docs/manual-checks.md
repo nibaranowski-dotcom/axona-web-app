@@ -987,3 +987,26 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - (b) **No Patch/rollout model** → patch rollout derived from the ENG RC firmware release + the cert gate (CompatCell). A first-class rollout state machine (targets, waves, ack) = schema addition; deferred (RBAC.4 owns the approval).
 - (c) **No CVE↔firmware link** on the CVE model → the fix is joined by convention (RC firmware fixes the largest PATCH_DRAFTED deployed-unit CVE). A `fixedBy`/`patchVersion` column would make it explicit; deferred (derive-or-flag, no new column now).
 - (d) **No Access-management model** → access-management (identity, keys, sessions) is not in SEC.1; SEC.2 flags it / defers to a dedicated model.
+
+---
+
+## SEC.2 — Security screen
+
+**Automated**
+- `pnpm verify:sec-2` — route + components (SecurityView/PosturePanel/AccessPanel/VulnerabilitiesTable); renders getSecurityData + getAccessGrants; CVE-triage table binds the cert-gate remediation; posture + access panels bind SEC.1 data; read-only (no mutations); no red/emoji/raw hex; CVE triage + posture full; CVE-2026-3187 → v4.2.2-rc resolves through the ENG cert gate on-screen (in-test, gated); access panel renders (derived stand-in, no live write).
+- `pnpm typecheck` clean · `verify-sec-1` / `verify-fleet-1` / `verify-eng-1` stay green · `accessibility-review` 0.
+
+**Manual (./dev.sh, http://localhost:3001/security)**
+- [ ] Matches Security.dc.html on the v2 shell — **fleet endpoint posture** (Hardened/Needs-patch/Degraded spread over the fleet) + **fleet command access** (HUMAN/AGENT/SVC grants; stale token "Revoked" ink) + the **vulnerabilities** CVE-triage table (CVE-2026-3187 CRITICAL 42 units · remediation **v4.2.2-rc · in-test** = the cert gate). Critical renders in ink, not red.
+- [ ] CVE-2026-3187 → v4.2.2-rc cert-gate through-line reads in the Remediation column; "Push patch" seeds the sec agent; agents pane populated (Security agents).
+- [ ] accessibility-review 0 violations.
+
+**Notes / flags**
+- Read-only reads over SEC.1 getSecurityData + getAccessGrants (org-scoped). No new seed (SEC.1 enriched CVEs + the sec-orchestrator run; posture/access are derived). Patch deploy / access revoke-rotate-grant are **agent-DRAFTED only** — `/// RBAC.4` (Engineering's cert gate owns patch approval) + `/// AUDIT.3` seams; no live human write; no event-log/confidence/approver columns.
+- **Design deviations flagged (data-shape mismatch — not fabricated):**
+  1. Stats **MFA coverage / mean patch time** need an access / patch-timing model → real **Open rollouts** + **Units affected** fill those slots; **Endpoints** counts deployed robots (gateways / IT endpoints not modeled).
+  2. Posture panel: the design's **signed-firmware / TLS-cert / OT-segmented** controls need an **endpoint-attestation model** → rendered the derivable **firmware-posture spread** (Hardened/Needs-patch/Degraded) over the fleet.
+  3. **No Access-management model** → the access panel is a **derived stand-in** (command-capable users + a scoped field-service agent + the signed OTA push + one flagged stale-token) — deferred to a real Access model.
+  4. **CVE has no component field** → the Component column shows a **derived scope** (deployed fleet vs component library); per-CVE component names deferred.
+  5. **No CVE↔firmware fixedBy link** → remediation joined by convention (RC firmware fixes the largest PATCH_DRAFTED deployed-unit CVE), as in SEC.1.
+  6. **"Push patch"** seeds the sec agent (proposes); the real patch deploy is a **gated write owned by Engineering's cert gate** — deferred, kept read-only.
