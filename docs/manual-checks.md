@@ -1010,3 +1010,24 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
   4. **CVE has no component field** → the Component column shows a **derived scope** (deployed fleet vs component library); per-CVE component names deferred.
   5. **No CVE↔firmware fixedBy link** → remediation joined by convention (RC firmware fixes the largest PATCH_DRAFTED deployed-unit CVE), as in SEC.1.
   6. **"Push patch"** seeds the sec agent (proposes); the real patch deploy is a **gated write owned by Engineering's cert gate** — deferred, kept read-only.
+
+---
+
+## SALES.1 — Sales data/API
+
+**Automated**
+- `pnpm verify:sales-1` — routes (deals/forecast); lib org-scoped (dbForOrg) + paginated (FND.11); deliverability composes over FUL.1 + MFG.1 (reuses libs); moat RBAC.4 + AUDIT.3 seams (agent-drafted only); read-only (no mutations); getSalesData funnel binds across all 5 stages; weighted forecast + pipeline value bind; BMW deliverability resolves AT_RISK through FUL + MFG; deliverability spread + at-risk count; listDeals paginates + filters by stage; org isolation.
+- `pnpm typecheck` clean · `verify-ful-1` / `verify-mfg-1` / `verify-proc-1` stay green.
+
+**Manual (./dev.sh, http://localhost:3001)**
+- [ ] `curl 'http://localhost:3001/api/sales/deals?stage=COMMIT'` returns the BMW deal (HX-2 ×24, $4.8M).
+- [ ] `curl http://localhost:3001/api/sales/forecast` returns the funnel (all 5 stages), weighted forecast, deliverability spread; BMW deliverability AT_RISK with a reason referencing DLV-3312 + the HX-2 line hold.
+
+**Notes**
+- Read/API only over the existing Deal model (no schema change, no mutations — the pipeline screen is SALES.2). Deal list via getCurrentUser → dbForOrg + paginated; the funnel/forecast summary via getSalesData. The **DELIVERABILITY badge is DERIVED, not the stored string**: getSalesData composes **FUL.1** (`getFulfillmentData` — the deal account's delivery hold/late) + **MFG.1** (`getManufacturingData` — a line hold on the deal's product). **Through-line preserved:** BMW → DLV-3312 EAR99 hold (FUL) + HX2-0208 line hold (MFG, ECO-318/lot-88421) → **AT_RISK +3w**. Deals with no ops commitment yet fall back to the stored agent-checked feasibility. Weighted forecast = Σ(value × stage-probability) [QUALIFY .1 · DEMO .25 · PROPOSAL .5 · NEGOTIATION .7 · COMMIT .9].
+- **MOAT / gating:** CPQ config, contracts, forecast commits are **agent-DRAFTED/proposed only** — `/// RBAC.4` + `/// AUDIT.3` seams; no event-log/confidence/approver columns.
+
+### Deferred decisions (SALES.1)
+- (a) **No CPQ / quote model** → `Deal.config` is a string ("HX-2 ×24"); a real CPQ (line items, options, pricing rules) = schema addition; deferred.
+- (b) **No forecast model** → the weighted Q3 forecast is derived (value × stage-probability); a first-class forecast/quota model = schema addition; deferred.
+- (c) **Deliverability has no model** → derived over FUL.1 + MFG.1 per deal; a stored deliverability check (with confidence/approver) = the AUDIT.3 event-log layer; deferred.

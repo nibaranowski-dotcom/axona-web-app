@@ -322,27 +322,122 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
     },
   });
 
-  // Sales: BMW 24-unit deal at-risk +3w (feasibility flagged by ops)
-  await db.deal.create({
-    data: {
-      account: "BMW",
-      config: `${CODES.product} ×24`,
-      value: 4_800_000,
-      stage: "COMMIT",
-      closeDate: d("+30d"),
-      feasibility: "AT_RISK",
-    },
+  // Sales: the enterprise pipeline across all 5 stages (SALES.2). BMW 24-unit deal
+  // is AT_RISK +3w — its deliverability resolves through Fulfillment (DLV-3312
+  // EAR99 hold) + Manufacturing (HX2-0208 hold at Test, ECO-318/lot-88421), not a
+  // hardcoded flag. Feasibility mix across the rest.
+  await db.deal.createMany({
+    data: [
+      {
+        account: "BMW",
+        config: `${CODES.product} ×24`,
+        value: 4_800_000,
+        stage: "COMMIT",
+        closeDate: d("+30d"),
+        feasibility: "AT_RISK",
+      },
+      {
+        account: "Kawasaki",
+        config: `${CODES.product} ×6`,
+        value: 1_200_000,
+        stage: "NEGOTIATION",
+        closeDate: d("+60d"),
+        feasibility: "ON_TIME",
+      },
+      {
+        account: "Tesla",
+        config: "HX-1 ×30",
+        value: 1_740_000,
+        stage: "NEGOTIATION",
+        closeDate: d("+50d"),
+        feasibility: "ON_TIME",
+      },
+      {
+        account: "Foxconn",
+        config: `${CODES.product} ×40`,
+        value: 8_000_000,
+        stage: "PROPOSAL",
+        closeDate: d("+85d"),
+        feasibility: "NOT_CHECKED",
+      },
+      {
+        account: "Maersk",
+        config: `${CODES.product} ×12`,
+        value: 2_400_000,
+        stage: "PROPOSAL",
+        closeDate: d("+75d"),
+        feasibility: "NOT_CHECKED",
+      },
+      {
+        account: "Siemens",
+        config: `${CODES.product} ×8`,
+        value: 1_600_000,
+        stage: "DEMO",
+        closeDate: d("+90d"),
+        feasibility: "NOT_CHECKED",
+      },
+      {
+        account: "Hyundai",
+        config: "HX-1 ×20",
+        value: 1_160_000,
+        stage: "QUALIFY",
+        closeDate: d("+120d"),
+        feasibility: "NOT_CHECKED",
+      },
+      {
+        account: "Boeing",
+        config: "HX-1 ×15",
+        value: 870_000,
+        stage: "QUALIFY",
+        closeDate: d("+110d"),
+        feasibility: "NOT_CHECKED",
+      },
+    ],
   });
-  await db.deal.create({
-    data: {
-      account: "Kawasaki",
-      config: `${CODES.product} ×6`,
-      value: 1_200_000,
-      stage: "NEGOTIATION",
-      closeDate: d("+60d"),
-      feasibility: "ON_TIME",
-    },
+
+  // A real sales-orchestrator run so the AGENT TRACE block is populated (SALES.2).
+  const salesAgent = await db.agent.findFirst({
+    where: { moduleKey: "sales" },
+    orderBy: { code: "asc" },
   });
+  if (salesAgent) {
+    await db.agentRun.create({
+      data: {
+        agentId: salesAgent.id,
+        input: {
+          prompt: "Work the funnel and deliverability-check the pipeline.",
+        },
+        status: "SUCCEEDED",
+        trace: [
+          {
+            ts: d("-6h").toISOString(),
+            kind: "funnel",
+            text: "8 deals · $21.8M pipeline across 5 stages",
+          },
+          {
+            ts: d("-6h").toISOString(),
+            kind: "forecast",
+            text: "Q3 weighted forecast $9.4M",
+          },
+          {
+            ts: d("-6h").toISOString(),
+            kind: "deliverability",
+            text: `BMW ${CODES.product}×24 → check ops build+deliver`,
+          },
+          {
+            ts: d("-6h").toISOString(),
+            kind: "at-risk",
+            text: `DLV-3312 hold + HX2-0208 line hold → BMW slips +3w`,
+          },
+          {
+            ts: d("-6h").toISOString(),
+            kind: "propose",
+            text: "flag BMW deliverability AT_RISK · notify AE (RBAC.4)",
+          },
+        ],
+      },
+    });
+  }
 
   // Marketing: events dominant; one underperforming paid campaign flagged
   await db.campaign.create({
