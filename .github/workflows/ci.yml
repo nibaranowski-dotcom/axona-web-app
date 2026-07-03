@@ -29,6 +29,11 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      # Generate the Prisma client so @axona/db (and everything typed against it)
+      # type-checks — CI installs don't run `prisma generate` automatically.
+      - name: Generate Prisma client
+        run: pnpm --filter @axona/db db:generate
+
       - name: Lint
         run: pnpm lint
 
