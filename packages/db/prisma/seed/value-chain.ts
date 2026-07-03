@@ -125,34 +125,164 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
     },
   });
 
-  // Manufacturing genealogy — HX-2 builds; one carries the affected lot 88421
-  await db.workOrderMfg.create({
-    data: {
-      serial: "HX2-0418",
-      product: CODES.product,
-      station: "Final Assembly",
-      status: "HOLD",
-      startedAt: d("-12d"),
-    },
+  // Manufacturing — the MES line across 6 stations (MFG.2). Units flow Frame
+  // Build → Drive Integration → Actuators → Firmware → Test → Pack-out. Two units
+  // carry a MULTI-station as-built trace (the genealogy anchor = serial):
+  //   HX2-0221 — clean build on the SERVO-205 drive (post-ECO-318): full pass.
+  //   HX2-0208 — carries the SERVO-204 / lot-88421 defect → HOLD at Test (the
+  //              NCR-118 source). The parts·serials·firmware graph is ONT.2.
+  const STATIONS = [
+    "Frame Build",
+    "Drive Integration",
+    "Actuators",
+    "Firmware",
+    "Test",
+    "Pack-out",
+  ];
+  // A full/partial build trace for one serial: DONE up to the last station, which
+  // takes `lastStatus`. startedAt increases down the line (Frame is oldest).
+  const buildTrace = (
+    serial: string,
+    product: string,
+    stations: number,
+    lastStatus: string,
+  ) =>
+    STATIONS.slice(0, stations).map((station, i) => ({
+      serial,
+      product,
+      station,
+      status: i < stations - 1 ? "DONE" : lastStatus,
+      startedAt: d(`-${(stations - i) * 2}d`),
+    }));
+
+  await db.workOrderMfg.createMany({
+    data: [
+      // Multi-station as-built traces (getGenealogy shows the full history)
+      ...buildTrace("HX2-0221", CODES.product, 6, "DONE"), // clean SERVO-205 unit
+      ...buildTrace("HX2-0208", CODES.product, 5, "HOLD"), // SERVO-204 / lot-88421 defect → HOLD at Test
+      // Units currently in flow across the stations (one per current station)
+      {
+        serial: "HX2-0230",
+        product: CODES.product,
+        station: "Frame Build",
+        status: "WIP",
+        startedAt: d("-1d"),
+      },
+      {
+        serial: "HX2-0228",
+        product: CODES.product,
+        station: "Drive Integration",
+        status: "WIP",
+        startedAt: d("-2d"),
+      },
+      {
+        serial: "HX2-0226",
+        product: CODES.product,
+        station: "Drive Integration",
+        status: "WIP",
+        startedAt: d("-3d"),
+      },
+      {
+        serial: "HX2-0224",
+        product: CODES.product,
+        station: "Actuators",
+        status: "WIP",
+        startedAt: d("-4d"),
+      },
+      {
+        serial: "HX2-0222",
+        product: CODES.product,
+        station: "Firmware",
+        status: "WIP",
+        startedAt: d("-5d"),
+      },
+      {
+        serial: "HX2-0219",
+        product: CODES.product,
+        station: "Test",
+        status: "WIP",
+        startedAt: d("-6d"),
+      },
+      {
+        serial: "HX2-0216",
+        product: CODES.product,
+        station: "Pack-out",
+        status: "WIP",
+        startedAt: d("-7d"),
+      },
+      {
+        serial: "HX2-0214",
+        product: CODES.product,
+        station: "Pack-out",
+        status: "DONE",
+        startedAt: d("-8d"),
+      },
+      // HX-1 line units
+      {
+        serial: "HX1-0330",
+        product: "HX-1",
+        station: "Frame Build",
+        status: "WIP",
+        startedAt: d("-1d"),
+      },
+      {
+        serial: "HX1-0326",
+        product: "HX-1",
+        station: "Actuators",
+        status: "WIP",
+        startedAt: d("-3d"),
+      },
+      {
+        serial: "HX1-0322",
+        product: "HX-1",
+        station: "Test",
+        status: "WIP",
+        startedAt: d("-5d"),
+      },
+    ],
   });
-  await db.workOrderMfg.create({
-    data: {
-      serial: "HX2-0419",
-      product: CODES.product,
-      station: "Drive Integration",
-      status: "WIP",
-      startedAt: d("-9d"),
-    },
+
+  // A real mfg-orchestrator run so the AGENT TRACE block is populated (MFG.2).
+  const mfgAgent = await db.agent.findFirst({
+    where: { moduleKey: "manufacturing" },
+    orderBy: { code: "asc" },
   });
-  await db.workOrderMfg.create({
-    data: {
-      serial: "HX2-0420",
-      product: CODES.product,
-      station: "Test",
-      status: "WIP",
-      startedAt: d("-6d"),
-    },
-  });
+  if (mfgAgent) {
+    await db.agentRun.create({
+      data: {
+        agentId: mfgAgent.id,
+        input: { prompt: "Monitor the lines and hold the on-time date." },
+        status: "SUCCEEDED",
+        trace: [
+          {
+            ts: d("-3h").toISOString(),
+            kind: "monitor",
+            text: "stations F→Pack · 15 units in build",
+          },
+          {
+            ts: d("-3h").toISOString(),
+            kind: "test-fail",
+            text: "HX2-0208 station-5 payload test → fail (torque +4%)",
+          },
+          {
+            ts: d("-3h").toISOString(),
+            kind: "halt",
+            text: `hold HX2-0208 · open ${CODES.ncr}`,
+          },
+          {
+            ts: d("-3h").toISOString(),
+            kind: "re-route",
+            text: "re-sequence 6 work orders · on-time held",
+          },
+          {
+            ts: d("-3h").toISOString(),
+            kind: "genealogy",
+            text: "log HX2-0221 as-built (SERVO-205)",
+          },
+        ],
+      },
+    });
+  }
 
   // Quality: torque drifting over UCL on SERVO-204 → NCR-118 → lot 88421
   await db.spcSample.createMany({ data: torqueSeries() });

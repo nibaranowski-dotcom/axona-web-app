@@ -898,3 +898,33 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ### Deferred decisions (MFG.1)
 - (a) Cycle-time / availability / yield feed → OEE metric (currently throughput.oeePct returns null). Telemetry/schema addition; deferred.
 - (b) Routing / station-order model → the line build sequence (currently a canonical STATION_ORDER in code). Schema addition; deferred.
+
+---
+
+## MFG.2 — Manufacturing screen
+
+**Automated**
+- `pnpm verify:mfg-2` — route + components (MfgView/LineFlowBoard/BuildGenealogy/ThroughputPanel); renders getManufacturingData + getGenealogy; line-flow station pipeline (signature); build-genealogy as-built trace + ONT.2 pointer; read-only (no mutations); no red/emoji/raw hex; line full (units across ≥4 stations, ≥10 in build); HX2-0221 clean SERVO-205 full multi-station as-built trace (all DONE); HX2-0208 lot-88421 defect trace ends HOLD at Test.
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001/manufacturing)**
+- [ ] Matches Manufacturing.dc.html on the v2 shell — the **line-flow board** (6-station pipeline Frame → Drive → Actuators → Firmware → Test → Pack, units at each node) + **build genealogy** (HX2-0208 as-built station trace, HOLD at Test) + throughput/bottlenecks + the scheduler-agent flag. No red.
+- [ ] `?serial=HX2-0221` shows the clean SERVO-205 unit's full pass; default shows the held defect unit.
+- [ ] Manufacturing agents appear in the module-aware pane; "Work order" / "Apply" seed the mfg agent.
+- [ ] accessibility-review 0 violations.
+
+**Notes / flags**
+- **MOAT:** `serial` is the as-built genealogy anchor — the genealogy panel shows the as-built **station** trace (captured as-built, never reconstructed). Enriched seed (FND.12, idempotent): 15 units across the 6 stations + 2 multi-station traces — **HX2-0221** clean build on the **SERVO-205** drive (post-ECO-318, full pass) and **HX2-0208** carrying the **SERVO-204 / lot-88421** defect (→ HOLD at Test = the NCR-118 source) + a real mfg-orchestrator AgentRun.
+- **Design deviations flagged (data-shape mismatch — not substituted silently):**
+  1. Stats **on-time build / first-pass yield / units-day / takt** need an OEE / cycle-time feed the MES model lacks → real **In build / In progress / Built / On hold** counts fill the strip (OEE deferred, per MFG.1).
+  2. The design's **3 production lines (Line 1/2/3)** have no per-line grouping in the model → the plant renders as **one station pipeline** with units at their current station. A first-class Line/routing model = schema addition (deferred).
+  3. The **build-genealogy tree is part-level** (Chassis/Actuator/SERVO-204/Controller/Firmware) = **ONT.2**; MFG.2 shows the station-level as-built trace + a `/// → ONT.2` pointer. The parts·serials·firmware graph is not fabricated here.
+  4. The **"In-line tests"** panel needs a test-results / quality feed (SPC lives in QUAL) → replaced with the derivable **Throughput & bottlenecks** panel (deferred).
+  5. **"+ Work order" / "Apply"** (the scheduler re-sequence) seed the mfg agent (propose); the real re-sequence/create is a **gated write** needing a scheduling/routing model — deferred, kept read-only.
+
+### Deferred decisions (MFG.2)
+- (a) OEE / cycle-time feed → on-time-build / first-pass-yield / units-day / takt metrics (currently In-build/In-progress/Built/On-hold counts). Telemetry/schema addition; deferred.
+- (b) Per-line model → multiple production lines (currently one plant station pipeline). Schema addition; deferred.
+- (c) Test / quality feed → in-line tests (SPC lives in Quality) (currently the Throughput & bottlenecks panel). Schema addition; deferred.
+- (d) Scheduling model → work-order create / re-sequence gated write (currently "Work order"/"Apply" seed the mfg agent). Schema addition; deferred.
+- (e) Parts-tree genealogy (parts · serials · firmware) → ONT.2 (currently the station-level as-built trace + a /// pointer). Deferred to ONT.2.

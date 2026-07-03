@@ -23,10 +23,13 @@ const IN_PROGRESS = new Set(["WIP", "IN_PROGRESS", "RUNNING", "STARTED"]);
 const STATION_ORDER = [
   "Frame Build",
   "Drive Integration",
-  "Final Assembly",
+  "Actuators",
+  "Firmware",
   "Test",
   "Pack-out",
 ];
+/** The canonical line stations in build order (for the MFG.2 pipeline UI). */
+export const LINE_STATIONS = STATION_ORDER;
 const stationRank = (station: string) => {
   const i = STATION_ORDER.indexOf(station);
   return i === -1 ? STATION_ORDER.length : i;
@@ -100,9 +103,23 @@ export async function getManufacturingData(
     select: WO_SELECT,
   });
 
-  // Group into line stations, ordered by build sequence.
-  const byStation = new Map<string, MfgWorkOrder[]>();
+  // A unit (serial) may carry multiple rows — its as-built history across
+  // stations. The line-flow + throughput reflect each unit's CURRENT position
+  // (its furthest station); the full per-serial history is getGenealogy. This
+  // keeps completed units from appearing at every station they passed through.
+  const currentBySerial = new Map<string, MfgWorkOrder>();
   for (const w of rows) {
+    const cur = currentBySerial.get(w.serial);
+    if (!cur || stationRank(w.station) > stationRank(cur.station)) {
+      currentBySerial.set(w.serial, w);
+    }
+  }
+  const current = [...currentBySerial.values()];
+  const lastStation = STATION_ORDER[STATION_ORDER.length - 1];
+
+  // Group current unit positions into line stations, ordered by build sequence.
+  const byStation = new Map<string, MfgWorkOrder[]>();
+  for (const w of current) {
     const list = byStation.get(w.station) ?? [];
     list.push(w);
     byStation.set(w.station, list);
@@ -117,9 +134,12 @@ export async function getManufacturingData(
     }))
     .sort((a, b) => a.order - b.order || a.station.localeCompare(b.station));
 
-  const built = rows.filter((w) => isDone(w.status)).length;
-  const inProgress = rows.filter((w) => isWip(w.status)).length;
-  const onHold = rows.filter(
+  // Unit-level throughput: a unit is built once it completes the final station.
+  const built = current.filter(
+    (w) => w.station === lastStation && isDone(w.status),
+  ).length;
+  const inProgress = current.filter((w) => isWip(w.status)).length;
+  const onHold = current.filter(
     (w) => !isDone(w.status) && !isWip(w.status),
   ).length;
 
@@ -134,7 +154,7 @@ export async function getManufacturingData(
       built,
       inProgress,
       onHold,
-      total: rows.length,
+      total: current.length, // distinct units in build (not history rows)
       oeePct: null, // no cycle-time / availability / quality feed in the model — flagged
     },
     bottlenecks,
