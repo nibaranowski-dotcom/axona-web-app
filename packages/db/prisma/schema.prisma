@@ -192,21 +192,31 @@ model WorkflowRun {
   id         String    @id @default(cuid())
   workflowId String
   workflow   Workflow  @relation(fields: [workflowId], references: [id])
+  /// WF.1 tenancy: scalar orgId (+ @@index) so run reads org-scope without a
+  /// join, matching the scalar-orgId tenancy pattern everywhere; the engine sets
+  /// it on create. (Previously scoped only via workflowId → Workflow.orgId.)
+  orgId      String
   status     RunStatus
   /// Freeform run trace (scan/correlate/draft/policy-check/result). The
   /// immutable event log + calibrated `confidence` + `approver` columns land in
   /// ONT.1 / CONF.1 / AUDIT.3 — do not add those columns here yet.
+  /// AUDIT.3: the immutable inputs·output·model·confidence·approver record.
+  /// RBAC.4: a run parked at a guardrail gate (AWAITING_APPROVAL) is resumed by
+  /// the human-approval state machine — never by the autonomous engine.
   trace      Json
   startedAt  DateTime  @default(now())
   endedAt    DateTime?
 
   @@index([workflowId])
+  @@index([orgId])
 }
 
 enum RunStatus {
   RUNNING
   SUCCEEDED
   FAILED
+  /// WF.1: parked at a guardrail/approval gate — resumed by RBAC.4, never the engine.
+  AWAITING_APPROVAL
 }
 
 model AgentRun {

@@ -1131,3 +1131,24 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Design deviations flagged:**
   1. **The per-project file MATRIX (opening a project → AI-extracted columns) is MTX.2** — a separate later story blocked on the files pipeline. PROJ.1 shows the file COUNT only; a project row seeds the Axona agent to summarize (no navigation to a matrix, no extraction built).
   2. The design's pane "Ask about: All projects / Blocked only" scope chips are pane-specific content; the shared pane is generic infra, so it auto-loads the **Axona agent (GA.1)** with cross-project scope (the scope chips aren't replicated).
+
+---
+
+## WF.1 — Workflow DAG model + BullMQ run engine
+
+**Automated**
+- `pnpm verify:wf-1` (11 checks, PRD §10) — engine files exist; run endpoint requireRole-gated + org-scoped enqueue; executor guardrail → AWAITING_APPROVAL + halt; Zod validates a good graph & rejects malformed (bad ref / no trigger / decision w/o condition); decision gate branches (lt/​in); executor end-to-end → SUCCEEDED w/ non-empty TraceLine[]; procurement run parks AWAITING_APPROVAL w/ **no PO auto-placed**; decision onFalse → escalate output → SUCCEEDED; forced error → FAILED w/ partial trace; org scoping (org A's run invisible to org B); ≥3 seeded workflows incl. a parked run.
+- Pure-logic checks always run; engine checks gated on `DATABASE_URL`. **Redis is NOT required** — the executor runs in-process with `FakeModelClient` (mirrors the DB-gated skip).
+- CI gate green · siblings stay green.
+
+**Manual (enqueue a run locally)**
+- Schema additions applied to the dev DB via `prisma db push` (WorkflowRun.orgId + RunStatus.AWAITING_APPROVAL); the migration file `…_wf1_workflowrun_orgid_awaiting_approval` is the artifact for fresh/prod (`prisma migrate deploy`).
+- With Redis: set `REDIS_URL`, run the worker (`pnpm --filter @axona/worker start`), then `POST /api/workflows/:id/run` with `{ "triggerPayload": { "value": 48000 } }` → returns `{ runId }`; the worker executes it. Without Redis the API runs the engine in-process and still returns the runId.
+- Expected: the **Procurement reorder** workflow with `value < 50000` walks source → RFQ → decision(onTrue) → draft PO → **guardrail gate → AWAITING_APPROVAL** (no PO placed). With `value ≥ 50000` it branches onFalse → escalate → SUCCEEDED. **NCR-118 → ECO-318** and **Predictive maintenance → dispatch** run to SUCCEEDED.
+- `GET /api/workflows/:id/runs` (run list) and `GET /api/workflow-runs/:runId` (status + full trace) are org-scoped reads (feed WFL.1/WFL.2). No SSE — live streaming is WF.2.
+
+**Notes / flags**
+- Two bounded schema additions (PRD §4): `WorkflowRun.orgId` (scalar + `@@index`; added to `TENANT_MODELS` so dbForOrg scopes it) and `RunStatus += AWAITING_APPROVAL`. `/// RBAC.4` (resume-from-gate) + `/// AUDIT.3` (immutable inputs·output·model·confidence·approver) seams on WorkflowRun — no event-log/confidence/approver columns added.
+- **Propose→approve→audit:** guardrail gates (and any gated tool a step proposes) emit `AWAITING_APPROVAL` and HALT — money/safety/contract is never auto-executed; RBAC.4 resumes. Every DB touch via `dbForOrg(orgId)`; a run for org A is invisible to org B.
+- **Reuses the ART.1/ART.2 runtime** — agent nodes call `runAgent` + the existing `TraceCollector`/`TraceLine` (no second trace shape). The engine (graph + executor) lives in `@axona/agents` so the enqueue API (in-process), the `apps/worker` BullMQ consumer, and verify all share it.
+- **Deferred (non-goals):** live SSE (WF.2), gate-DSL hardening (WF.2), approval-resume (WF.3/RBAC.4), ART.3 event routing, immutable event log (ONT.1/AUDIT.3). Flagged in-code.

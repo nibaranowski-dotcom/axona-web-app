@@ -15,6 +15,7 @@ import { seedRobotics } from "./seed/robotics";
 import { seedBackOffice } from "./seed/back-office";
 import { seedProjects } from "./seed/projects";
 import { seedMachines } from "./seed/machines";
+import { seedWorkflows } from "./seed/workflows";
 
 /** Delete the demo org's tenant rows, children before parents, scoped to its
  *  orgId. NEVER a bare deleteMany — other tenants must be untouched. The Org row
@@ -113,6 +114,7 @@ async function main(): Promise<void> {
   await seedBackOffice(db);
   const projects = await seedProjects(db);
   const machines = await seedMachines(db);
+  const workflows = await seedWorkflows(db);
 
   // 5. Second org (isolation contrast)
   await seedSecondOrg(dbForOrg(SECOND_ORG_ID));
@@ -123,7 +125,8 @@ async function main(): Promise<void> {
   const modules = await prisma.module.count();
   console.log(
     `Seed complete — modules: ${modules}, users: ${users}, agents: ${agents}, ` +
-      `projects: ${projects}, machines: ${machines.total} (${machines.fixed} fixed).`,
+      `projects: ${projects}, machines: ${machines.total} (${machines.fixed} fixed), ` +
+      `workflows: ${workflows.workflows} (${workflows.runs} runs).`,
   );
 }
 

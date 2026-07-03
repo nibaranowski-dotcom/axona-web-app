@@ -93,4 +93,28 @@ export {
   getStock,
 } from "./tools";
 
+// WF.1 — the workflow DAG schema + run engine (BullMQ consumer in apps/worker;
+// in-process path for the enqueue API + verify when there is no Redis).
+export {
+  WorkflowGraph,
+  TriggerNode,
+  AgentNode,
+  GateNode,
+  OutputNode,
+  WorkflowNode,
+  parseGraph,
+  safeParseGraph,
+  evalCondition,
+  type GateCondition,
+  type GateOp,
+} from "./workflow/graph";
+export {
+  WORKFLOW_QUEUE,
+  createWorkflowRun,
+  runWorkflow,
+  executeWorkflowRun,
+  type WorkflowRunJob,
+  type RunOutcome,
+} from "./workflow/executor";
+
 export const AGENTS_PACKAGE = "@axona/agents" as const;

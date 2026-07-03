@@ -16,15 +16,17 @@ if (process.env.NODE_ENV !== "production") g.__axonaPrisma = prisma;
 
 /**
  * Tenant-owned models that carry a real `orgId` column. Children that inherit
- * tenancy via a parent FK (Message/AgentRun/WorkflowRun/File/MatrixColumn/
- * MachineSignal) are deliberately excluded — scope them through their parent.
- * `Module` is global and never scoped.
+ * tenancy via a parent FK (Message/AgentRun/File/MatrixColumn/MachineSignal) are
+ * deliberately excluded — scope them through their parent. `Module` is global and
+ * never scoped. `WorkflowRun` gained a scalar `orgId` in WF.1 (the engine sets it
+ * on create) → it is scoped directly here.
  */
 const TENANT_MODELS = new Set<string>([
   "User",
   "Agent",
   "Chat",
   "Workflow",
+  "WorkflowRun",
   "Project",
   "Machine",
   "Supplier",
