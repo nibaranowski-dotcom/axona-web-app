@@ -1,22 +1,18 @@
 import { dbForOrg, paginateArgs, pageResult } from "@axona/db";
 import type { Severity } from "@axona/db";
+import { parseCerts, type TechCert } from "./certs";
 
 // FIELD.1 — Field Service read/API layer (build-spec §4.17, §6). Read-only over
 // the existing WorkOrderField / Technician models: no schema change, no mutations
 // (the dispatch board is FIELD.2). Org-scoped via dbForOrg; lists paginated with
 // the FND.11 helpers. Closes the robotics thread: SN-2196 thermal (Fleet) →
 // WO-5521 battery-swap dispatch, gated by M. Osei's HV/battery cert.
+// Cert parsing is shared with PPL.1 (people) via lib/certs.
 
 const DUE_SOON_MS = 12 * 3600 * 1000; // "due soon" SLA window
-const CERT_WINDOW_MS = 30 * 24 * 3600 * 1000; // cert-expiring window
 const CLOSED = new Set(["CLOSED", "DONE", "COMPLETE", "COMPLETED"]);
 
-export interface TechCert {
-  key: string;
-  state: string;
-  expiresAt: Date | null;
-  expiring: boolean; // state EXPIRING or within the cert window
-}
+export type { TechCert };
 export interface FieldTech {
   id: string;
   name: string;
@@ -54,20 +50,6 @@ export interface FieldServiceData {
   technicians: FieldTech[];
   board: DispatchColumn[]; // per-tech dispatch board
   sla: SlaRollup;
-}
-
-function parseCerts(certs: unknown): TechCert[] {
-  if (!certs || typeof certs !== "object") return [];
-  const now = Date.now();
-  return Object.entries(
-    certs as Record<string, { state?: string; expiresAt?: string }>,
-  ).map(([key, v]) => {
-    const expiresAt = v?.expiresAt ? new Date(v.expiresAt) : null;
-    const expiring =
-      (v?.state ?? "").toUpperCase() === "EXPIRING" ||
-      (!!expiresAt && expiresAt.getTime() - now <= CERT_WINDOW_MS);
-    return { key, state: v?.state ?? "UNKNOWN", expiresAt, expiring };
-  });
 }
 
 function shapeWO(

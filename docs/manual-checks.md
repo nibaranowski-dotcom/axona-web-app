@@ -928,3 +928,19 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - (c) Test / quality feed → in-line tests (SPC lives in Quality) (currently the Throughput & bottlenecks panel). Schema addition; deferred.
 - (d) Scheduling model → work-order create / re-sequence gated write (currently "Work order"/"Apply" seed the mfg agent). Schema addition; deferred.
 - (e) Parts-tree genealogy (parts · serials · firmware) → ONT.2 (currently the station-level as-built trace + a /// pointer). Deferred to ONT.2.
+
+---
+
+## PPL.1 — People data/API
+
+**Automated**
+- `pnpm verify:ppl-1` — routes (technicians/requisitions); lib org-scoped (dbForOrg) + paginated (FND.11); cert-parsing shared with FIELD.1 via lib/certs; read-only (no mutations); getPeopleData returns the cert matrix (techs × certKeys, M. Osei's HV/battery EXPIRING = dispatch gate), the field-team roster, requisitions (filled/target/open), the rollup (certs expiring / headcount / field-team size); org isolation (unknown org → empty).
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001)**
+- [ ] `curl http://localhost:3001/api/people/technicians` returns the roster with parsed certs (M. Osei hvBattery EXPIRING).
+- [ ] `curl http://localhost:3001/api/people/requisitions` returns headcount (Field Service Technician 8/12, Autonomy Engineer 3/5, Quality Inspector 4/4).
+
+**Notes**
+- Read/API only over Technician/Requisition (no schema change, no mutations — the cert-matrix screen is PPL.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; caps (techs 500, reqs 200 / lists 50). **Closes the Osei thread:** the cert matrix that GATES field dispatch — M. Osei's HV/battery cert is EXPIRING (ties back to FIELD.2's dispatch gate). Cert-parsing extracted to **lib/certs.ts** and shared by FIELD.1 (field-service) + PPL.1 (people) — a cert is `expiring` when state EXPIRING or within the 30d window. `certKeys` = union of cert keys → the tech × cert grid columns; requisition `open` = target − filled.
+- **Seed-richness note for PPL.2:** all 6 techs currently carry a single cert type (`hvBattery`), so the matrix is techs × 1 column. PPL.2 will enrich the seed (more cert types → a fuller grid) keeping Osei's expiring HV/battery.
