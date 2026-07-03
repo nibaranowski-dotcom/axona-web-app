@@ -1031,3 +1031,24 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - (a) **No CPQ / quote model** → `Deal.config` is a string ("HX-2 ×24"); a real CPQ (line items, options, pricing rules) = schema addition; deferred.
 - (b) **No forecast model** → the weighted Q3 forecast is derived (value × stage-probability); a first-class forecast/quota model = schema addition; deferred.
 - (c) **Deliverability has no model** → derived over FUL.1 + MFG.1 per deal; a stored deliverability check (with confidence/approver) = the AUDIT.3 event-log layer; deferred.
+
+---
+
+## SALES.2 — Sales & CRM screen
+
+**Automated**
+- `pnpm verify:sales-2` — route + components (SalesView/PipelineFunnel/ForecastPanel/DealsTable); renders getSalesData; deals table binds the derived deliverability badge + reason; funnel + forecast panels bind; CPQ/new-deal is agent-proposed (no live write); no red/emoji/raw hex; funnel full (5 stages, weighted < pipeline); BMW deliverability AT_RISK resolves through FUL/MFG on-screen; deliverability spread has a mix.
+- CI gate (`pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm verify:all`) green · `accessibility-review` 0 · SALES.1/FUL.1/MFG.1 stay green.
+
+**Manual (./dev.sh, http://localhost:3001/sales)**
+- [ ] Matches Sales & CRM.dc.html on the v2 shell — the **pipeline funnel** (5 stages, Commit lime) + **Q3 forecast** (weighted commit vs best-case, BMW the swing) + the **top-deals table** with the agent-checked **deliverability badge** (BMW **At risk** ink, reason "DLV-3312 EAR99 customs hold · HX-2 line hold"). AT_RISK in ink, never red.
+- [ ] BMW deliverability AT_RISK reads on-screen (derived through FUL/MFG, not a hardcoded badge); "New deal" seeds the crm agent; Sales agents pane populated.
+- [ ] accessibility-review 0 violations.
+
+**Notes / flags**
+- Read-only reads over SALES.1 getSalesData (org-scoped) — deliverability derived over FUL.1 + MFG.1. No new seed (SALES.1 enriched the 8-deal pipeline + the sales-orchestrator run). CPQ config / quote / contract / forecast commit are **agent-DRAFTED only** — `/// RBAC.4` + `/// AUDIT.3` seams (in the SALES.1 lib); no live write; no event-log/confidence/approver columns.
+- **Design deviations flagged (data-shape mismatch — not fabricated):**
+  1. Stats **win rate / avg cycle** + the topbar **% to target** need a won-lost / cycle-time / quota model → real **Deals** + **At risk** counts (+ the at-risk pill) fill those slots.
+  2. Forecast panel's fixed **quota/target marker** needs a forecast/quota model → the bar shows **weighted coverage of the best case** (pipeline) instead.
+  3. **No CPQ / quote model** (`Deal.config` is a string) → the design has no CPQ panel; CPQ is the **CPQ agent** (pane + trace), agent-drafted, no live write — a real CPQ (line items, pricing rules) is deferred.
+  4. **"New deal" / CPQ configure / generate contract** seed the crm agent (propose); real writes are gated (RBAC.4) — deferred, kept read-only.
