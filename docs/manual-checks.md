@@ -874,3 +874,27 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ### Deferred decisions (LEGAL.2)
 - (a) Contract model → "Active contracts" metric (currently "Obligations tracked"). Schema addition; deferred.
 - (b) Legal gated writes (clear export hold: ExportLicense.state HOLD→CLEARED · new matter: create LegalMatter) → gate FINANCE/ADMIN per RBAC §8 + `/// TODO AUDIT.3` seam (no LEGAL role in the enum). Currently "New matter" seeds the legal agent (proposes). Story addition; deferred.
+
+---
+
+## MFG.1 — Manufacturing data/API
+
+**Automated**
+- `pnpm verify:mfg-1` — routes (work-orders/genealogy); lib org-scoped (dbForOrg) + paginated (FND.11); moat ONT.2 pointer + as-built/never-reconstructed; read-only (no mutations); getManufacturingData returns lineFlow grouped by station in build order (each with count + inProgress + workOrders), throughput (built/in-progress/on-hold; OEE flagged null), bottlenecks (stations by in-progress backlog); getGenealogy(serial) returns a per-serial ordered station trace; org isolation (unknown org → empty).
+- `pnpm typecheck` clean.
+
+**Manual (./dev.sh, http://localhost:3001)**
+- [ ] `curl 'http://localhost:3001/api/manufacturing/work-orders?station=Test'` returns the Test-station WOs.
+- [ ] `curl 'http://localhost:3001/api/manufacturing/genealogy?serial=HX2-0419'` returns that serial's ordered build trace.
+
+**Notes / flags**
+- **MOAT (load-bearing):** `WorkOrderMfg.serial` is the as-built genealogy anchor — capture stays **as-built, never reconstructed** (capture fidelity caps the moat). MFG.1 exposes the serial→work-order **station** trace only; the FULL **parts·serials·firmware** genealogy graph (SERVO-204/-205, lot 88421, firmware) is **ONT.2** — `/// pointer` left in the lib; ONT.2 extends this, it does not replace it.
+- Read/API only over WorkOrderMfg (no schema change, no mutations — the line-flow + genealogy screen is MFG.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; caps (WO 1000, genealogy 200 / list 100).
+- **Flags (data-shape mismatch — not fabricated):**
+  1. **OEE is not derivable** from the model (no cycle-time / availability / quality-yield feed) → `throughput.oeePct` returns `null`. A real OEE feed = telemetry/schema addition (deferred to MFG.2 notes).
+  2. **Line-station build order** has no order column in the model → a canonical `STATION_ORDER` sequence (Frame Build → Drive Integration → Final Assembly → Test → Pack-out) ranks the stations; unknown stations sort last. A first-class station/routing model is a schema addition (deferred).
+  3. **Per-serial genealogy is currently a single-station trace** — the seed has one WorkOrderMfg per serial (each unit at its current station). `getGenealogy` already returns *all* records for a serial ordered by build sequence, so a multi-station "full build history" populates as soon as MFG.2's seed enriches a unit moving Drive Integration → Final Assembly → Test (no lib change needed).
+
+### Deferred decisions (MFG.1)
+- (a) Cycle-time / availability / yield feed → OEE metric (currently throughput.oeePct returns null). Telemetry/schema addition; deferred.
+- (b) Routing / station-order model → the line build sequence (currently a canonical STATION_ORDER in code). Schema addition; deferred.
