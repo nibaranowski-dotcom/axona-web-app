@@ -31,7 +31,16 @@ function autonomySeries(): {
 }
 
 export async function seedRobotics(db: OrgScopedDb): Promise<void> {
-  // Technicians first (WorkOrderField.techId references Technician)
+  // Technicians first (WorkOrderField.techId references Technician). Each carries
+  // a cert matrix across 5 cert types — hx2Service · hx1Service · hvBattery ·
+  // safetyLoto · commissioning — with a VALID / EXPIRING / TRAINING / (missing)
+  // mix (PPL.2). M. Osei's hvBattery is EXPIRING (12d) — the Field Service
+  // dispatch gate. A missing key = "not held". (TRAINING certs sit far out so the
+  // 30d expiring-window doesn't flag them.)
+  const cert = (state: string, when: string) => ({
+    state,
+    expiresAt: d(when).toISOString(),
+  });
   const osei = await db.technician.create({
     data: {
       name: "M. Osei",
@@ -39,7 +48,11 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       site: "Site-3",
       status: "ON_JOB",
       certs: {
-        hvBattery: { state: "EXPIRING", expiresAt: d("+12d").toISOString() },
+        hx2Service: cert("VALID", "+9m"),
+        hx1Service: cert("VALID", "+9m"),
+        hvBattery: cert("EXPIRING", "+12d"), // the dispatch gate
+        safetyLoto: cert("VALID", "+7m"),
+        commissioning: cert("VALID", "+10m"),
       },
     },
   });
@@ -50,7 +63,10 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       site: "Site-1",
       status: "AVAILABLE",
       certs: {
-        hvBattery: { state: "VALID", expiresAt: d("+8m").toISOString() },
+        hx2Service: cert("VALID", "+8m"),
+        hx1Service: cert("TRAINING", "+6m"),
+        hvBattery: cert("VALID", "+8m"),
+        safetyLoto: cert("VALID", "+11m"),
       },
     },
   });
@@ -63,7 +79,11 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
         site: "Site-3",
         status: "ON_SITE",
         certs: {
-          hvBattery: { state: "VALID", expiresAt: d("+10m").toISOString() },
+          hx2Service: cert("VALID", "+10m"),
+          hx1Service: cert("VALID", "+10m"),
+          hvBattery: cert("VALID", "+10m"),
+          safetyLoto: cert("VALID", "+9m"),
+          commissioning: cert("TRAINING", "+6m"),
         },
       },
       {
@@ -72,7 +92,10 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
         site: "Site-2",
         status: "ON_SITE",
         certs: {
-          hvBattery: { state: "VALID", expiresAt: d("+6m").toISOString() },
+          hx2Service: cert("VALID", "+6m"),
+          hx1Service: cert("VALID", "+6m"),
+          safetyLoto: cert("VALID", "+7m"),
+          commissioning: cert("VALID", "+12m"),
         },
       },
       {
@@ -81,7 +104,10 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
         site: "Site-1",
         status: "AVAILABLE",
         certs: {
-          hvBattery: { state: "VALID", expiresAt: d("+14m").toISOString() },
+          hx2Service: cert("VALID", "+14m"),
+          hx1Service: cert("VALID", "+14m"),
+          hvBattery: cert("VALID", "+14m"),
+          safetyLoto: cert("VALID", "+12m"),
         },
       },
       {
@@ -90,7 +116,10 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
         site: "Site-2",
         status: "SCHEDULED",
         certs: {
-          hvBattery: { state: "EXPIRING", expiresAt: d("+21d").toISOString() },
+          hx2Service: cert("TRAINING", "+6m"),
+          hx1Service: cert("VALID", "+9m"),
+          hvBattery: cert("EXPIRING", "+21d"),
+          safetyLoto: cert("VALID", "+8m"),
         },
       },
     ],

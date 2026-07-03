@@ -159,14 +159,58 @@ export async function seedBackOffice(db: OrgScopedDb): Promise<void> {
     });
   }
 
-  // People — open requisitions (field-team-vs-fleet growth)
+  // People — headcount requisitions (field-team-vs-fleet growth, PPL.2)
   await db.requisition.createMany({
     data: [
-      { role: "Field Service Technician", filled: 8, target: 12 },
-      { role: "Autonomy Engineer", filled: 3, target: 5 },
-      { role: "Quality Inspector", filled: 4, target: 4 },
+      { role: "Field Service Technician", filled: 18, target: 21 },
+      { role: "Commissioning Engineer", filled: 6, target: 8 },
+      { role: "Production Assembly", filled: 42, target: 44 },
+      { role: "Autonomy / SW", filled: 19, target: 24 },
+      { role: "Go-to-market", filled: 14, target: 18 },
     ],
   });
+
+  // A real ppl-orchestrator run so the AGENT TRACE block is populated (PPL.2).
+  const pplAgent = await db.agent.findFirst({
+    where: { moduleKey: "people" },
+    orderBy: { code: "asc" },
+  });
+  if (pplAgent) {
+    await db.agentRun.create({
+      data: {
+        agentId: pplAgent.id,
+        input: { prompt: "Watch cert expiries and field-team capacity." },
+        status: "SUCCEEDED",
+        trace: [
+          {
+            ts: d("-4h").toISOString(),
+            kind: "scan",
+            text: "6 field techs · 5 cert types",
+          },
+          {
+            ts: d("-4h").toISOString(),
+            kind: "cert-gate",
+            text: `M. Osei HV/battery cert expires 12d → gates ${CODES.robot} work`,
+          },
+          {
+            ts: d("-4h").toISOString(),
+            kind: "recert",
+            text: "book recert slot · notify Field Service",
+          },
+          {
+            ts: d("-4h").toISOString(),
+            kind: "capacity",
+            text: "field team : fleet → hire ahead 1:4",
+          },
+          {
+            ts: d("-4h").toISOString(),
+            kind: "req",
+            text: "FS-Tech ×3 · pipeline 14 candidates",
+          },
+        ],
+      },
+    });
+  }
 
   // Security — CVEs affecting deployed units; one tied to the firmware patch
   await db.cVE.create({

@@ -944,3 +944,24 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 **Notes**
 - Read/API only over Technician/Requisition (no schema change, no mutations — the cert-matrix screen is PPL.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; caps (techs 500, reqs 200 / lists 50). **Closes the Osei thread:** the cert matrix that GATES field dispatch — M. Osei's HV/battery cert is EXPIRING (ties back to FIELD.2's dispatch gate). Cert-parsing extracted to **lib/certs.ts** and shared by FIELD.1 (field-service) + PPL.1 (people) — a cert is `expiring` when state EXPIRING or within the 30d window. `certKeys` = union of cert keys → the tech × cert grid columns; requisition `open` = target − filled.
 - **Seed-richness note for PPL.2:** all 6 techs currently carry a single cert type (`hvBattery`), so the matrix is techs × 1 column. PPL.2 will enrich the seed (more cert types → a fuller grid) keeping Osei's expiring HV/battery.
+
+---
+
+## PPL.2 — People screen
+
+**Automated**
+- `pnpm verify:ppl-2` — route + components (PeopleView/CertMatrix/FieldTeamGrowth/HeadcountPanel); renders getPeopleData; cert matrix is a tech × cert grid (signature); read-only (no mutations); no red/emoji/raw hex; matrix full (≥4 cert types × ≥5 techs); Osei HV/battery expiring dispatch gate; state mix (valid/expiring/training/missing); requisitions/headcount (≥4 roles, target ≥ filled).
+- `pnpm typecheck` clean · `verify-field-1` stays 8/8 (shared cert seed).
+
+**Manual (./dev.sh, http://localhost:3001/people)**
+- [ ] Matches People.dc.html on the v2 shell — the **certification matrix** (techs × HX-2 svc / HX-1 svc / HV·batt / Safety LOTO / Commission; green = certified, **ink = expiring < 30d**, lime = in-training, skeleton = not-held) with **M. Osei's HV/battery cell ink "12d"** (the dispatch gate) + field-team-growth + headcount. No invented reds.
+- [ ] Osei's expiring cert is flagged; legend renders; "Open requisition" seeds the ppl agent.
+- [ ] People agents appear in the module-aware pane.
+- [ ] accessibility-review 0 violations.
+
+**Notes / flags**
+- Read-only reads over PPL.1 getPeopleData (org-scoped). Enriched seed (FND.12, idempotent): 6 techs × 5 cert types (hx2Service · hx1Service · hvBattery · safetyLoto · commissioning) with a VALID/EXPIRING/TRAINING/missing mix (Osei + Sato hvBattery EXPIRING kept) + 5 headcount requisitions + a real ppl-orchestrator AgentRun. FIELD.1/FIELD.2 stay green (shared lib/certs; certExpiring unchanged for the dispatch board).
+- **Design deviations flagged (data-shape mismatch — not substituted silently):**
+  1. Stat **"Headcount" (org-wide 142)** has no first-class people/org model → approximated by the **requisition fill** (sum of filled); **"Cert compliance"** is derived from the matrix (current held certs / all held).
+  2. The design's **Headcount by function** implies an org-structure tree the model lacks → the panel derives headcount from the **requisition roles** (function ≈ role). A first-class org model = schema addition (deferred).
+  3. **"Open requisition"** seeds the ppl agent (proposes); opening a req / booking a recert is a **gated write** needing a requisition-workflow model — deferred, kept read-only.
