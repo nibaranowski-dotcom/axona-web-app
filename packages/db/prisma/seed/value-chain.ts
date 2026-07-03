@@ -439,27 +439,114 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
     });
   }
 
-  // Marketing: events dominant; one underperforming paid campaign flagged
-  await db.campaign.create({
-    data: {
-      name: "Automate 2026 (events)",
-      channel: "events",
-      mqls: 320,
-      pipeline: 5_400_000,
-      roi: 6.2,
-      status: "ACTIVE",
-    },
+  // Marketing: a multi-channel campaign set (MKT.2). Events dominate the pipeline
+  // attribution; "Paid search Q3" is the flagged underperformer (roi < 1). Sourced
+  // pipeline reconciles to the Sales pipeline (SALES.1) — not hardcoded.
+  await db.campaign.createMany({
+    data: [
+      {
+        name: "Automate 2026 (events)",
+        channel: "events",
+        mqls: 320,
+        pipeline: 5_400_000,
+        roi: 6.2,
+        status: "ACTIVE",
+      },
+      {
+        name: "Humanoid Summit (events)",
+        channel: "events",
+        mqls: 180,
+        pipeline: 3_100_000,
+        roi: 5.4,
+        status: "ACTIVE",
+      },
+      {
+        name: "LinkedIn ABM — enterprise",
+        channel: "abm",
+        mqls: 95,
+        pipeline: 4_200_000,
+        roi: 4.8,
+        status: "ACTIVE",
+      },
+      {
+        name: "Robotics whitepaper",
+        channel: "content",
+        mqls: 140,
+        pipeline: 1_600_000,
+        roi: 3.1,
+        status: "ACTIVE",
+      },
+      {
+        name: "Nurture sequence",
+        channel: "email",
+        mqls: 210,
+        pipeline: 900_000,
+        roi: 2.4,
+        status: "ACTIVE",
+      },
+      {
+        name: "Retargeting",
+        channel: "paid",
+        mqls: 60,
+        pipeline: 400_000,
+        roi: 1.1,
+        status: "PAUSED",
+      },
+      {
+        name: "Paid search Q3",
+        channel: "paid",
+        mqls: 41,
+        pipeline: 220_000,
+        roi: 0.7,
+        status: "UNDERPERFORMING",
+      }, // flagged
+    ],
   });
-  await db.campaign.create({
-    data: {
-      name: "Paid search Q3",
-      channel: "paid",
-      mqls: 41,
-      pipeline: 220_000,
-      roi: 0.7,
-      status: "UNDERPERFORMING",
-    },
+
+  // A real marketing-orchestrator run so the AGENT TRACE block is populated (MKT.2).
+  const mktAgent = await db.agent.findFirst({
+    where: { moduleKey: "marketing" },
+    orderBy: { code: "asc" },
   });
+  if (mktAgent) {
+    await db.agentRun.create({
+      data: {
+        agentId: mktAgent.id,
+        input: {
+          prompt:
+            "Watch the demand funnel and reallocate underperforming spend.",
+        },
+        status: "SUCCEEDED",
+        trace: [
+          {
+            ts: d("-7h").toISOString(),
+            kind: "funnel",
+            text: "1046 MQLs → hand SQLs to Sales",
+          },
+          {
+            ts: d("-7h").toISOString(),
+            kind: "attribution",
+            text: "events dominant · $8.5M sourced pipeline",
+          },
+          {
+            ts: d("-7h").toISOString(),
+            kind: "flag",
+            text: "Paid search Q3 roi 0.7 → underperforming",
+          },
+          {
+            ts: d("-7h").toISOString(),
+            kind: "reallocate",
+            text: "propose shift paid budget → ABM (roi 4.8)",
+          },
+          {
+            ts: d("-7h").toISOString(),
+            kind: "handoff",
+            text: "SQLs → Sales · reconcile to pipeline (RBAC.4)",
+          },
+        ],
+      },
+    });
+  }
 
   // Fulfillment: the delivery pipeline (ALLOC → ACTIVE). DLV-3312 is the BMW
   // Osaka shipment held at customs (EAR99) — the ECO-318 → BMW order → hold

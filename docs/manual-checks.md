@@ -1052,3 +1052,23 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
   2. Forecast panel's fixed **quota/target marker** needs a forecast/quota model → the bar shows **weighted coverage of the best case** (pipeline) instead.
   3. **No CPQ / quote model** (`Deal.config` is a string) → the design has no CPQ panel; CPQ is the **CPQ agent** (pane + trace), agent-drafted, no live write — a real CPQ (line items, pricing rules) is deferred.
   4. **"New deal" / CPQ configure / generate contract** seed the crm agent (propose); real writes are gated (RBAC.4) — deferred, kept read-only.
+
+---
+
+## MKT.1 — Marketing data/API
+
+**Automated**
+- `pnpm verify:mkt-1` — routes (campaigns/funnel); lib org-scoped (dbForOrg) + paginated (FND.11); attribution reconciles to SALES.1 (reuses getSalesData); moat RBAC.4 + AUDIT.3 seams; read-only (no mutations); demand funnel binds (leads→MQL→SQL→pipeline); events channel dominant in attribution; attribution reconciles to Sales pipeline (coverage %); underperforming paid campaign flagged; listCampaigns paginates + filters by channel; org isolation.
+- CI gate green · SALES.1 / FUL.1 stay green.
+
+**Manual (./dev.sh, http://localhost:3001)**
+- [ ] `curl 'http://localhost:3001/api/marketing/campaigns?channel=events'` returns the 2 events campaigns (Automate 2026, Humanoid Summit).
+- [ ] `curl http://localhost:3001/api/marketing/funnel` returns the demand funnel, the channel attribution (events dominant), the coverage % vs Sales pipeline, and the underperforming count (Paid search Q3 flagged).
+
+**Notes**
+- Read/API only over the existing Campaign model (no schema change, no mutations — the screen is MKT.2). Campaign list via getCurrentUser → dbForOrg + paginated; the funnel/attribution summary via getMarketingData. The **attribution reconciles to Sales**: getMarketingData reuses **SALES.1** (`getSalesData`) — the funnel's SQL = Sales deal count, the funnel pipeline + coverage % = the Sales pipeline (`rollup.pipelineValue`), not hardcoded. **Through-line preserved:** events dominant (Automate 2026 + Humanoid Summit = $8.5M sourced), **Paid search Q3 flagged underperforming** (roi 0.7). `underperforming` = status UNDERPERFORMING or roi < 1.0.
+- **MOAT / gating:** budget reallocation + SQL hand-off to Sales are **agent-DRAFTED/proposed only** — `/// RBAC.4` + `/// AUDIT.3` seams; no event-log/confidence/approver columns.
+
+### Deferred decisions (MKT.1)
+- (a) **No attribution model** → pipeline-by-channel derived over Campaign + reconciled to SALES.1 (`getSalesData`); a first-class attribution model (touch-weighted, multi-touch) = schema addition; deferred.
+- (b) **No demand-funnel / lead model** → leads estimated from MQLs via a labelled top-of-funnel rate (`LEAD_TO_MQL_RATE`); SQL/pipeline reconciled to Sales. A real lead/funnel model = schema addition; deferred.
