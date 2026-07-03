@@ -10,7 +10,7 @@ export { paginateArgs, pageResult } from "./pagination";
 export type { PageArgs } from "./pagination";
 
 // Unified search (SRCH.1) — FTS now, semantic dormant until FILE.2.
-export { reindex } from "./search/reindex";
+export { reindex, ensureSearchIndexSchema } from "./search/reindex";
 export { search, semanticSearch, countByType } from "./search/query";
 export type { SearchHit, SearchResult, SearchScope } from "./search/query";
 

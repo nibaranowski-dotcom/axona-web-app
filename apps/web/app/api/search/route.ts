@@ -59,16 +59,34 @@ export async function GET(request: Request): Promise<Response> {
     });
   }
 
-  const [result, counts] = await Promise.all([
-    search(user.orgId, q, { scope, limit }),
-    countByType(user.orgId, q),
-  ]);
+  // A DB/FTS failure must be a clean JSON 503 the client can distinguish from a
+  // legitimate no-match (200 + empty) — never an unhandled 500 that renders as a
+  // non-JSON body and masks the cause. (SRCH.4)
+  try {
+    const [result, counts] = await Promise.all([
+      search(user.orgId, q, { scope, limit }),
+      countByType(user.orgId, q),
+    ]);
 
-  return Response.json({
-    query: q,
-    scope,
-    hits: result.hits,
-    byType: result.byType,
-    counts,
-  });
+    return Response.json({
+      query: q,
+      scope,
+      hits: result.hits,
+      byType: result.byType,
+      counts,
+    });
+  } catch (err) {
+    console.error("[/api/search] failed:", err);
+    return Response.json(
+      {
+        query: q,
+        scope,
+        hits: [],
+        byType: {},
+        counts: { ALL: 0 },
+        error: "search_failed",
+      },
+      { status: 503 },
+    );
+  }
 }

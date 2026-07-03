@@ -1152,3 +1152,25 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Propose→approve→audit:** guardrail gates (and any gated tool a step proposes) emit `AWAITING_APPROVAL` and HALT — money/safety/contract is never auto-executed; RBAC.4 resumes. Every DB touch via `dbForOrg(orgId)`; a run for org A is invisible to org B.
 - **Reuses the ART.1/ART.2 runtime** — agent nodes call `runAgent` + the existing `TraceCollector`/`TraceLine` (no second trace shape). The engine (graph + executor) lives in `@axona/agents` so the enqueue API (in-process), the `apps/worker` BullMQ consumer, and verify all share it.
 - **Deferred (non-goals):** live SSE (WF.2), gate-DSL hardening (WF.2), approval-resume (WF.3/RBAC.4), ART.3 event routing, immutable event log (ONT.1/AUDIT.3). Flagged in-code.
+
+---
+
+## SRCH.4 — Fix broken universal search (bugfix)
+
+**Root cause** — WF.1 applied its schema change to the push-managed dev DB via `prisma db push`; push drops raw-SQL objects not modeled in `schema.prisma`, silently removing `SearchDoc.tsv` (the FTS generated column) + `searchdoc_tsv_gin`. `search()`/`countByType()`'s `$queryRaw` over `"tsv"` then threw `42703` → `/api/search` returned an unhandled 500 (non-JSON) → the client's `.then(r=>r.json())` threw → `.catch` showed **"Search unavailable"** for every query.
+
+**Fix (read-only; no schema.prisma change)**
+1. **Self-heal** — `ensureSearchIndexSchema()` (idempotent `ADD COLUMN IF NOT EXISTS "tsv"` + `CREATE INDEX IF NOT EXISTS "searchdoc_tsv_gin"`) runs at the start of a full `reindex()`, so every `pnpm db:seed` repairs the FTS objects a `db push` may have dropped. Fresh/prod DBs still get them from the `add_searchdoc_fts` migration.
+2. **Route** — `/api/search` wraps `search()`/`countByType()` in try/catch → on failure logs + returns a clean **JSON 503** `{error:"search_failed", hits:[], …}` (never an unhandled 500).
+3. **Client** — `use-search.ts` checks `r.ok`: a 5xx/transport error → **"Search unavailable"**; a 200 with zero hits → the palette's **"No matches for …"** empty state (no longer masked as an error).
+
+**Automated**
+- `pnpm verify:srch-4` — route returns clean 503 + logs; client checks r.ok; reindex self-heals; procur → Procurement MODULE hit near top; sales/fleet module names resolve; garbage → empty (no throw); counts populate; **self-heal: drop tsv → search throws → ensure repairs it → procur works**.
+- CI gate green · SRCH.1/2/3 stay green · `accessibility-review` 0 on /search.
+
+**Manual (./dev.sh, http://localhost:3001/search or ⌘K)**
+- [ ] Type `procur` → **Procurement** appears as a MODULE result at/near the top; other module names (sales → Sales & CRM, fleet → Fleet) resolve too; scope tabs show live counts.
+- [ ] Type gibberish (`zzqxwv`) → **"No matches for …"** (NOT "Search unavailable").
+- [ ] "Search unavailable" now appears only on a genuine 5xx/transport failure.
+
+**Notes** — No new deps, no schema.prisma change. Reinforces the WF.1 flag: the dev DB needs its Prisma migration history baselined so `db push` stops clobbering hand-authored FTS/pgvector DDL; `ensureSearchIndexSchema` is the interim guard for the search index specifically.

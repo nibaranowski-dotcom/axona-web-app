@@ -43,8 +43,36 @@ async function prune(type: SearchType, liveRefIds: string[]): Promise<void> {
   });
 }
 
+/**
+ * Repair the FTS objects the SearchDoc index depends on, idempotently — the
+ * generated `tsv` column + its GIN index (the add_searchdoc_fts migration).
+ * `prisma db push` (used for the dev DB, which has no migration history) drops
+ * raw-SQL objects that schema.prisma doesn't model, so a push can silently
+ * remove `tsv` and make `/api/search` 500 on every query. Running this before a
+ * full reindex makes the index self-heal. No-op when the objects already exist
+ * (IF NOT EXISTS). Fresh/prod DBs get these from the migration; this is the
+ * belt-and-suspenders for the push-managed dev DB. (SRCH.4)
+ */
+export async function ensureSearchIndexSchema(): Promise<void> {
+  await prisma.$executeRawUnsafe(
+    `ALTER TABLE "SearchDoc" ADD COLUMN IF NOT EXISTS "tsv" tsvector ` +
+      `GENERATED ALWAYS AS (` +
+      `setweight(to_tsvector('english', coalesce("title", '')), 'A') || ` +
+      `setweight(to_tsvector('english', coalesce("subtitle", '')), 'B') || ` +
+      `setweight(to_tsvector('english', coalesce("body", '')), 'C')` +
+      `) STORED`,
+  );
+  await prisma.$executeRawUnsafe(
+    `CREATE INDEX IF NOT EXISTS "searchdoc_tsv_gin" ON "SearchDoc" USING gin ("tsv")`,
+  );
+}
+
 export async function reindex(orgId?: string): Promise<void> {
   const where = orgId ? { orgId } : {};
+
+  // Self-heal the FTS objects before a full rebuild so search never 500s on a
+  // missing `tsv` (e.g. after a `db push` dropped it). Full reindex only.
+  if (!orgId) await ensureSearchIndexSchema();
 
   // GLOBAL: modules (orgId NULL) — only on a full reindex
   if (!orgId) {

@@ -38,7 +38,13 @@ export function useSearch(query: string, scope: SearchScope): SearchState {
         `/api/search?q=${encodeURIComponent(q)}&scope=${encodeURIComponent(scope)}`,
         { signal: ctrl.signal },
       )
-        .then((r) => r.json())
+        // Only a real transport/5xx failure is "unavailable". A 200 with zero
+        // hits is a legitimate no-match (the palette shows a No-results state) —
+        // never masked as an error. (SRCH.4)
+        .then((r) => {
+          if (!r.ok) throw new Error(`search failed: ${r.status}`);
+          return r.json();
+        })
         .then((data) =>
           setState({
             loading: false,
