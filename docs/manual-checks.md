@@ -1112,3 +1112,22 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Design adaptations flagged:**
   1. The design places the **"All machines / Needs service"** scope in the agent-pane chips; the shared pane is generic infra, so the needs-service scope is surfaced as a **table filter toggle** on the screen (per the story). The pane still auto-loads the Maintenance agents + the seeded maintenance-orchestrator trace.
   2. No OEE/availability feed in the model → the stat strip uses the derivable **Avg utilization** (not OEE); a real OEE feed = telemetry/schema addition (deferred, as in MFG).
+
+---
+
+## PROJ.1 — Projects list screen + read model
+
+**Automated**
+- `pnpm verify:proj-1` — route + component + API routes; lib org-scoped (dbForOrg) + paginated (FND.11); moat RBAC.4 + AUDIT.3 seams + file matrix deferred to MTX.2; read-only (no mutations); GA.1 Axona agent in the pane (no projects roster); groups module-separated; member breakdown + file count + status + last-activity bind; rollup binds; cross-module through-line project present (ECO-318/NCR-118); listProjects paginates + filters by module; org isolation.
+- CI gate green · `accessibility-review` 0 · siblings stay green.
+
+**Manual (./dev.sh, http://localhost:3001/projects)**
+- [ ] Matches Projects.dc.html on the v2 shell — projects **grouped module-separated** (Engineering / Quality / Sales / …), each row with name+description, **file count**, **member avatars** (agent glyphs + human initials), **status badge + last-activity**. The inline stat strip (Projects / Modules / Files / Need attention). Blocked in ink, never red.
+- [ ] The side pane is the **Axona agent (GA.1)** — cross-project scope (Core module → no per-module roster). "New project" / a project row seeds the agent (propose). ECO-318 / NCR-118 / DLV-3312 projects present.
+- [ ] accessibility-review 0 violations.
+
+**Notes / flags**
+- Read-only over Project + File (no schema change). getProjectsData groups module-separated, parses the members Json (agent count + human names), surfaces the **file COUNT** + last activity + a derived **needs-attention** flag (BLOCKED / IN_REVIEW), and rolls up. Seed (FND.12) = 14 projects across modules, member mixes varied (1–2 agents + 1–3 humans), files present, statuses varied, tied to the ECO-318/NCR-118/SERVO-205/BMW·DLV-3312 through-line. Create-project / add-file / assign are **agent-DRAFTED only** — `/// RBAC.4` + `/// AUDIT.3` seams; no live write.
+- **Design deviations flagged:**
+  1. **The per-project file MATRIX (opening a project → AI-extracted columns) is MTX.2** — a separate later story blocked on the files pipeline. PROJ.1 shows the file COUNT only; a project row seeds the Axona agent to summarize (no navigation to a matrix, no extraction built).
+  2. The design's pane "Ask about: All projects / Blocked only" scope chips are pane-specific content; the shared pane is generic infra, so it auto-loads the **Axona agent (GA.1)** with cross-project scope (the scope chips aren't replicated).

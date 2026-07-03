@@ -185,18 +185,35 @@ const PROJECTS: Seed[] = [
   },
 ];
 
+// A small human pool so member mixes vary per project (agents + humans).
+const HUMANS = [
+  "Dana Reyes",
+  "Priya Nair",
+  "Sam Cole",
+  "Lena Frost",
+  "Marco Diaz",
+  "Ava Lin",
+];
+
 export async function seedProjects(db: OrgScopedDb): Promise<number> {
-  for (const p of PROJECTS) {
+  for (let i = 0; i < PROJECTS.length; i++) {
+    const p = PROJECTS[i]!;
+    // Vary the member mix: 1–2 agents + 1–3 humans, deterministic by index.
+    const agents =
+      i % 3 === 0
+        ? [`${p.moduleKey}-01`, `${p.moduleKey}-02`]
+        : [`${p.moduleKey}-01`];
+    const humans = Array.from(
+      { length: 1 + (i % 3) },
+      (_, k) => HUMANS[(i + k) % HUMANS.length]!,
+    );
     const project = await db.project.create({
       data: {
         moduleKey: p.moduleKey,
         name: p.name,
         description: p.description,
         status: p.status,
-        members: {
-          humans: ["Dana Reyes", "Priya Nair"],
-          agents: [`${p.moduleKey}-01`],
-        },
+        members: { humans, agents },
       },
     });
     for (const f of p.files) {
