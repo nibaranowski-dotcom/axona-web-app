@@ -1289,3 +1289,24 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
   3. **Finished goods** via the `*-UNIT` sku convention (excluded from the build critical-parts table); a real part-classification field → deferred.
   4. **Returns & RMA** (design's "14 open") — **deferred**, no returns model; not fabricated. A minimal RMA model lands with INV.2/a later story.
 - **Through-line preserved:** SERVO-204 below reorder → incoming PO (PROC.1); Osaka edge cache below-min ties to the DLV-3312 fleet; LOT-88421 quarantine ties to NCR-118. Seed: 5 extra parts + 16 stock rows across 4 echelons/3 edge caches + an inv-orchestrator AgentRun.
+
+---
+
+## INV.2 — Inventory screen
+
+**Automated**
+- `pnpm verify:inv-2` — route + component + format; binds getInventoryData + shared StatStrip; renders the four artifacts (stock-by-location · critical parts · edge caches · inv-orchestrator trace); read-only (no mutations, no fabricated RMA numbers); no invented reds; critical-parts/stock/spares/rollup bind; **SERVO-204 shows REORDER → incoming PO**; **Osaka reads REPLENISH**; inv-orchestrator trace present.
+- CI gate green · INV.1 + siblings stay green · accessibility-review 0 on /inventory.
+
+**Manual (./dev.sh, http://localhost:3001/inventory)**
+- [ ] Matches Inventory.dc.html on the v2 shell — stat strip (Inventory value / Critical SKUs / Below cover / Reserved); **Stock by location** echelon bars (Central · Line-side · Field edge caches · Finished goods, with the legend); **Critical parts · cover vs build schedule** table (Part · On hand · Reserved · Days of cover bar · Status); **Field edge caches** (Osaka = Replenish) + **Returns & RMA** (deferred card); the dark **inv-orchestrator trace**.
+- [ ] SERVO-204 = **Reorder** (ink) with "→ PO-… · Procurement"; LOT-88421 = **Quarantine** (dimmed row); Osaka = **Replenish** (ink). Healthy/Stocked in green; nothing red. Inventory agents populate the pane.
+- [ ] accessibility-review 0.
+
+**Notes / data-shape flags**
+- Read-only module screen bound to INV.1 `getInventoryData` + the latest inventory `AgentRun` trace (replayed via TraceConsole). Reorder is Procurement's gated write; transfer/RMA are agent-drafted (`/// RBAC.4` + `/// AUDIT.3`).
+- **Deviations from the mock (data-honest):**
+  1. **Returns & RMA** — the mock shows a 4-stage pipeline (“14 open”); there's no returns model (INV.1 deferred), so the card renders a **labelled deferred state**, not fabricated numbers.
+  2. **Count accuracy** stat (mock's 4th) isn't modeled (no cycle-count data) → replaced with the real **Reserved** total; count-accuracy stays deferred.
+  3. **Days of cover** is the labelled **stand-in** (`onHand ÷ Part.dailyUse`) from INV.1; the bar/labels read in days, not the mock's mixed "builds/days".
+  4. Real rollup numbers differ from the mock's illustrative ones ($3.7M vs $18.4M, 7 SKUs vs 312) — real seeded data.
