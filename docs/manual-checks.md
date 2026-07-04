@@ -1208,3 +1208,22 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 **Automated** — `pnpm verify:ux-2` (3 checks): suppresses on /agents via usePathname→null; guard sits after the hooks + before render; global pane/rail intact for other routes. accessibility-review 0 on /agents; tsc/lint clean; CI gate green (verify-ux-1 stays green).
 
 **Manual** — [ ] `/agents` shows exactly one chat pane (the screen's own), no far-right Axona duplicate, no empty column/border. [ ] `/quality` (and any other route) still shows the global Axona pane intact.
+
+---
+
+## WFL.1 — Workflows list screen + read model
+
+**Automated**
+- `pnpm verify:wfl-1` — route + component + API routes; lib org-scoped (dbForOrg) + paginated (FND.11) + **reuses WF.1's WorkflowGraph** (safeParseGraph); moat RBAC.4 + AUDIT.3 seams (run is WFL.2); screen uses shared **StatStrip (inline variant)**; read-only; groups module-separated + populated; step-count/agent-chain/modules-touched bind from the graph; rollup agents-orchestrated = distinct chain codes; **last-run binds from the real run — procurement reads AWAITING_APPROVAL**, a draft has no run; listWorkflows paginates + filters; org isolation.
+- CI gate green · siblings (verify-wf-1/ux-1/ux-2) stay green · accessibility-review 0 on /workflows.
+
+**Manual (./dev.sh, http://localhost:3001/workflows)**
+- [ ] Matches Workflows.dc.html on the v2 shell — workflows **grouped module-separated**, each row: name+desc · **agent-chain glyph preview + "N steps"** · **modules touched** (mono) · status badge + **last-run** column. The inline stat strip (Workflows / Active / Runs·30d / Agents orchestrated).
+- [ ] The **Procurement reorder** row's last-run shows **Awaiting approval** (the parked WF.1 run, in ink — not red); the Manufacturing draft shows "—". A row opens the Axona agent (propose). Global Axona pane present (Core route — not suppressed).
+- [ ] accessibility-review 0.
+
+**Notes / flags**
+- Read-only over Workflow + WorkflowRun (no schema change). `getWorkflowsData` reuses WF.1's `WorkflowGraph` (`safeParseGraph`) to derive step count, the agent-chain preview (ordered agent-node codes), and the modules touched; surfaces the latest run's status (incl. **AWAITING_APPROVAL**) + relative time. Grouped module-separated; rollup = total / active / runs·30d / distinct agents orchestrated.
+- **Seed enriched to 9 workflows** (the 3 WF.1 through-line ones + 6 across Manufacturing/Sales/Fulfillment/Security/Autonomy/Finance), each a real WorkflowGraph + a last run (2 drafts; Manufacturing has no run) → the module-separated list renders as populated as the mock. Run timestamps are recent + varied for realistic last-run times.
+- **StatStrip gained an `inline` variant** (16px bar) so Workflows/Machines/Projects and the 12 card screens share one primitive (the mock uses the inline strip here, not the 22px card).
+- Running a workflow (Run button + live console) is **WFL.2**; any trigger stays agent/RBAC-gated (WF.1 enqueue API · RBAC.4). Rows browse+open only.

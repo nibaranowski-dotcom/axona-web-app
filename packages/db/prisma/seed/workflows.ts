@@ -219,44 +219,256 @@ const fleetTrace = [
   { ts: ts(4), kind: "result", text: "field visit scheduled for SN-2196" },
 ];
 
+// A linear agent chain → output, built to WF.1's WorkflowGraph shape. Keeps the
+// enrichment workflows real (valid graphs the executor could run) without hand-
+// authoring each. `agentCode` values are real seeded codes (prefix-0N).
+type Step = { code: string; action: string };
+function linearGraph(event: string, steps: Step[], outputLabel: string) {
+  const nodes: unknown[] = steps.map((s, i) => ({
+    id: `a${i + 1}`,
+    type: "agent",
+    agentCode: s.code,
+    action: s.action,
+    next: i < steps.length - 1 ? `a${i + 2}` : "out",
+  }));
+  nodes.push({ id: "out", type: "output", label: outputLabel });
+  return {
+    trigger: {
+      id: "t",
+      type: "trigger",
+      event,
+      next: steps.length ? "a1" : "out",
+    },
+    nodes,
+  };
+}
+function chainTrace(
+  name: string,
+  event: string,
+  steps: Step[],
+  result: string,
+): unknown[] {
+  const lines: unknown[] = [
+    { ts: ts(0), kind: "scan", text: `workflow "${name}" · trigger ${event}` },
+  ];
+  steps.forEach((s, i) =>
+    lines.push({
+      ts: ts(i + 1),
+      kind: "draft",
+      text: `${s.code} · ${s.action}`,
+    }),
+  );
+  lines.push({ ts: ts(steps.length + 1), kind: "result", text: result });
+  return lines;
+}
+
 interface Spec {
   moduleKey: string;
   name: string;
   description: string;
+  status: "ACTIVE" | "DRAFT" | "PAUSED";
   graph: { trigger: unknown; nodes: unknown[] };
-  runStatus: "SUCCEEDED" | "AWAITING_APPROVAL";
-  trace: unknown[];
+  // The latest run to persist (null = never run, e.g. a fresh draft).
+  run: {
+    status: "SUCCEEDED" | "AWAITING_APPROVAL" | "FAILED";
+    trace: unknown[];
+    minsAgo: number;
+  } | null;
 }
 
+// mfg exception → reschedule (a draft, never run)
+const mfgSteps: Step[] = [
+  { code: "mfg-01", action: "rebalance the line schedule around the stoppage" },
+  { code: "inv-01", action: "re-kit affected work orders" },
+  { code: "ful-01", action: "notify delivery of the new dates" },
+];
+// sales deal → deliverability
+const salesSteps: Step[] = [
+  {
+    code: "sales-01",
+    action: "check build feasibility for the configured quote",
+  },
+  { code: "legal-01", action: "draft the contract terms" },
+  { code: "fin-01", action: "schedule the revenue recognition" },
+];
+// fulfillment delivery recovery (a draft that has been run)
+const fulSteps: Step[] = [
+  { code: "ful-01", action: "clear the export/customs hold" },
+  { code: "field-01", action: "schedule the on-site install" },
+  { code: "fin-01", action: "resync the delivery SLA" },
+];
+// security CVE response
+const secSteps: Step[] = [
+  { code: "sec-01", action: "verify the patch certification" },
+  { code: "eng-01", action: "stage isolate-or-push for the fleet" },
+  { code: "fleet-01", action: "write the audit-log entry" },
+];
+// autonomy incident → policy review
+const autoSteps: Step[] = [
+  { code: "auto-01", action: "replay the near-miss in sim" },
+  { code: "auto-02", action: "validate the candidate fix" },
+];
+// finance invoice → 3-way match
+const finSteps: Step[] = [
+  { code: "fin-01", action: "3-way match the invoice to PO + receipt" },
+  { code: "fin-02", action: "auto-clear or flag the exception" },
+];
+
 const SPECS: Spec[] = [
+  // The three WF.1 through-line workflows (kept).
   {
     moduleKey: "procurement",
     name: "Procurement reorder",
     description:
       "Reorder-point hit → source, RFQ, and draft a PO; the PO approval parks for a human (RBAC.4).",
+    status: "ACTIVE",
     graph: procurementReorder,
-    runStatus: "AWAITING_APPROVAL",
-    trace: procurementTrace,
+    run: { status: "AWAITING_APPROVAL", trace: procurementTrace, minsAgo: 29 },
   },
   {
     moduleKey: "quality",
     name: "NCR-118 → ECO-318",
     description:
       "NCR opened → root-cause the torque drift and draft the ECO to supersede the drive.",
+    status: "ACTIVE",
     graph: ncrToEco,
-    runStatus: "SUCCEEDED",
-    trace: ncrTrace,
+    run: { status: "SUCCEEDED", trace: ncrTrace, minsAgo: 120 },
   },
   {
     moduleKey: "fleet",
     name: "Predictive maintenance → dispatch",
     description:
       "Predictive telemetry alert → assess remaining life and dispatch a certified technician.",
+    status: "ACTIVE",
     graph: fleetToDispatch,
-    runStatus: "SUCCEEDED",
-    trace: fleetTrace,
+    run: { status: "SUCCEEDED", trace: fleetTrace, minsAgo: 180 },
+  },
+  // Enrichment — a workflow per remaining module so the module-separated list
+  // renders as populated as the mock (real graphs + a last run each).
+  {
+    moduleKey: "manufacturing",
+    name: "Build exception → reschedule",
+    description:
+      "Line stoppage → rebalance the schedule → re-kit → notify delivery.",
+    status: "DRAFT",
+    graph: linearGraph(
+      "manufacturing.line_exception",
+      mfgSteps,
+      "schedule rebalanced; delivery notified",
+    ),
+    run: null,
+  },
+  {
+    moduleKey: "sales",
+    name: "Robot deal → deliverability",
+    description:
+      "Quote configured → feasibility → contract → revenue schedule.",
+    status: "ACTIVE",
+    graph: linearGraph(
+      "sales.quote_configured",
+      salesSteps,
+      "deal deliverable; revenue scheduled",
+    ),
+    run: {
+      status: "SUCCEEDED",
+      trace: chainTrace(
+        "Robot deal → deliverability",
+        "sales.quote_configured",
+        salesSteps,
+        "deal deliverable; revenue scheduled",
+      ),
+      minsAgo: 60,
+    },
+  },
+  {
+    moduleKey: "fulfillment",
+    name: "Robot delivery recovery",
+    description:
+      "Delivery at risk → clear customs → expedite install → resync SLA.",
+    status: "DRAFT",
+    graph: linearGraph(
+      "fulfillment.delivery_at_risk",
+      fulSteps,
+      "delivery recovered; SLA resynced",
+    ),
+    run: {
+      status: "SUCCEEDED",
+      trace: chainTrace(
+        "Robot delivery recovery",
+        "fulfillment.delivery_at_risk",
+        fulSteps,
+        "delivery recovered; SLA resynced",
+      ),
+      minsAgo: 480,
+    },
+  },
+  {
+    moduleKey: "security",
+    name: "Fleet CVE response",
+    description:
+      "Critical CVE → verify patch cert → isolate or push → audit log.",
+    status: "ACTIVE",
+    graph: linearGraph(
+      "security.critical_cve",
+      secSteps,
+      "patch staged; audit-log written",
+    ),
+    run: {
+      status: "SUCCEEDED",
+      trace: chainTrace(
+        "Fleet CVE response",
+        "security.critical_cve",
+        secSteps,
+        "patch staged; audit-log written",
+      ),
+      minsAgo: 180,
+    },
+  },
+  {
+    moduleKey: "autonomy",
+    name: "Safety incident → policy review",
+    description: "Near-miss → replay in sim → validate fix → stage rollback.",
+    status: "ACTIVE",
+    graph: linearGraph(
+      "autonomy.near_miss",
+      autoSteps,
+      "fix validated; rollback staged",
+    ),
+    run: {
+      status: "SUCCEEDED",
+      trace: chainTrace(
+        "Safety incident → policy review",
+        "autonomy.near_miss",
+        autoSteps,
+        "fix validated; rollback staged",
+      ),
+      minsAgo: 300,
+    },
+  },
+  {
+    moduleKey: "finance",
+    name: "Invoice → 3-way match → pay",
+    description: "Supplier invoice → match PO + receipt → auto-clear or flag.",
+    status: "ACTIVE",
+    graph: linearGraph(
+      "finance.invoice_received",
+      finSteps,
+      "invoice matched; cleared for pay",
+    ),
+    run: {
+      status: "SUCCEEDED",
+      trace: chainTrace(
+        "Invoice → 3-way match → pay",
+        "finance.invoice_received",
+        finSteps,
+        "invoice matched; cleared for pay",
+      ),
+      minsAgo: 20,
+    },
   },
 ];
+
+const NOW = Date.now();
 
 export async function seedWorkflows(
   db: OrgScopedDb,
@@ -268,21 +480,26 @@ export async function seedWorkflows(
         moduleKey: s.moduleKey,
         name: s.name,
         description: s.description,
-        status: "ACTIVE",
+        status: s.status,
         trigger: json(s.graph.trigger),
         steps: json(s.graph),
       },
     });
-    // dbForOrg injects orgId on WorkflowRun (tenant model).
-    await db.workflowRun.create({
-      data: {
-        workflowId: wf.id,
-        status: s.runStatus,
-        trace: json(s.trace),
-        endedAt: new Date(T0 + 6 * 60_000),
-      },
-    });
-    runs++;
+    if (s.run) {
+      // dbForOrg injects orgId on WorkflowRun (tenant model). startedAt drives
+      // the list's last-run relative time; keep it recent + varied.
+      const started = new Date(NOW - s.run.minsAgo * 60_000);
+      await db.workflowRun.create({
+        data: {
+          workflowId: wf.id,
+          status: s.run.status,
+          trace: json(s.run.trace),
+          startedAt: started,
+          endedAt: new Date(started.getTime() + 6 * 60_000),
+        },
+      });
+      runs++;
+    }
   }
   return { workflows: SPECS.length, runs };
 }
