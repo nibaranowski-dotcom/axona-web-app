@@ -1269,3 +1269,23 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 **Manual**
 - Fresh DB: `prisma migrate reset --force --skip-seed && pnpm --filter @axona/db run db:seed` → `migrate status` clean; `curl /api/search?q=procur` → 200 with a Procurement MODULE hit.
 - Never run `prisma db push` on this repo. Schema change = `migrate dev` (author) → commit the migration → `migrate deploy` (apply).
+
+---
+
+## INV.1 — Inventory data/API
+
+**Automated**
+- `pnpm verify:inv-1` — lib + API routes exist; org-scoped (dbForOrg) + paginated (FND.11) + read-only (no mutations); moat RBAC.4 + AUDIT.3 seams; days-of-cover is a LABELLED stand-in (Part.dailyUse); stock-by-location across kinds (edge caches + finished goods); critical parts carry days-of-cover + reserved + status (finished units excluded); reorder-needed ties to an incoming Procurement PO; spares-near-fleet + reserved totals bind + Osaka below-min; listInventory paginates + filters by location; org isolation.
+- `prisma migrate status` clean after the new migration; CI gate green; siblings stay green.
+
+**Manual** — `GET /api/inventory/summary` returns critical parts / stock-by-location / edge caches / rollup; `GET /api/inventory?location=Osaka` filters. (INV.2 is the screen, 1:1 to Inventory.dc.html.)
+
+**Notes / data-shape flags**
+- **Schema (bounded, via `migrate dev` — NEVER db push):** new `InventoryStock { orgId, partId, location, kind(CENTRAL|LINE_SIDE|EDGE_CACHE|FINISHED_GOODS|PLANT), onHand, reserved, minLevel, valueUsd }` (+ `@@index([orgId])`/`@@index([partId])`); `Part.dailyUse Int @default(1)`. Migration `…_inv1_inventory_stock`; `migrate status` clean.
+- **`getInventoryData`** composes over Part + PurchaseOrder + InventoryStock: critical parts (onHand, Σreserved, **days-of-cover**, status REORDER/WATCH/QUARANTINE/HEALTHY, `reorderNeeded` + incoming PROC.1 PO), stock-by-location (by kind, value + %), edge caches (below-min → REPLENISH), rollup. Reorder is Procurement's agent-drafted job — surfaced here, never written.
+- **DEFERRED-LEDGER (labelled stand-ins, not fabricated):**
+  1. **Days of cover** = `onHand ÷ Part.dailyUse` (seeded consumption constant). Real rate = build-schedule / BOM-explosion feed → deferred.
+  2. **Quarantine** status via the `LOT-*` sku convention (ties to Quality NCR-118); a real `Part.class`/quarantine flag → deferred.
+  3. **Finished goods** via the `*-UNIT` sku convention (excluded from the build critical-parts table); a real part-classification field → deferred.
+  4. **Returns & RMA** (design's "14 open") — **deferred**, no returns model; not fabricated. A minimal RMA model lands with INV.2/a later story.
+- **Through-line preserved:** SERVO-204 below reorder → incoming PO (PROC.1); Osaka edge cache below-min ties to the DLV-3312 fleet; LOT-88421 quarantine ties to NCR-118. Seed: 5 extra parts + 16 stock rows across 4 echelons/3 edge caches + an inv-orchestrator AgentRun.

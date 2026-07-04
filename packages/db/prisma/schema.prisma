@@ -381,10 +381,42 @@ model Part {
   onHand       Int
   reorderPoint Int
   leadDays     Int
+  /// INV.1 days-of-cover STAND-IN: a seeded daily-consumption constant (units/day)
+  /// so cover = onHand ÷ dailyUse is real, not fabricated. The true rate comes from
+  /// the build-schedule/BOM-explosion feed (deferred — see docs deferred-ledger).
+  dailyUse     Int    @default(1)
 
   purchaseOrders PurchaseOrder[]
 
   @@index([orgId])
+}
+
+/// INV.1 — multi-echelon stock: real per-location on-hand/reserved/value that the
+/// Part.onHand total can't express (central · line-side · edge caches · finished
+/// goods). Scalar orgId tenancy (+ FK indexes, no formal relations — FND.11).
+/// Read-only in INV; replenishment/transfer/RMA actions are agent-drafted,
+/// gated by RBAC.4 with an AUDIT.3 record — no event-log columns here.
+model InventoryStock {
+  id       String        @id @default(cuid())
+  orgId    String
+  partId   String
+  location String // "Central warehouse" | "Line-side" | "Rotterdam" | "Osaka" | "Detroit" | "Finished goods"
+  kind     InventoryKind
+  onHand   Int
+  reserved Int           @default(0)
+  minLevel Int           @default(0) // edge-cache "below min" threshold
+  valueUsd Int           @default(0) // stock valuation, whole USD
+
+  @@index([orgId])
+  @@index([partId])
+}
+
+enum InventoryKind {
+  CENTRAL
+  LINE_SIDE
+  EDGE_CACHE
+  FINISHED_GOODS
+  PLANT
 }
 
 model PurchaseOrder {

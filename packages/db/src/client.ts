@@ -32,6 +32,7 @@ const TENANT_MODELS = new Set<string>([
   "Supplier",
   "Part",
   "PurchaseOrder",
+  "InventoryStock",
   "WorkOrderMfg",
   "NCR",
   "SpcSample",

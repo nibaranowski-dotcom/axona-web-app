@@ -11,6 +11,7 @@ import { seedModules } from "./seed/modules";
 import { seedUsers } from "./seed/users";
 import { seedAgents } from "./seed/agents";
 import { seedValueChain } from "./seed/value-chain";
+import { seedInventory } from "./seed/inventory";
 import { seedRobotics } from "./seed/robotics";
 import { seedBackOffice } from "./seed/back-office";
 import { seedProjects } from "./seed/projects";
@@ -32,6 +33,7 @@ async function clearDemoOrg(): Promise<void> {
   await prisma.telemetryPoint.deleteMany({ where: { orgId } });
   await prisma.machineSignal.deleteMany({ where: { machine: { orgId } } });
   await prisma.workOrderField.deleteMany({ where: { orgId } });
+  await prisma.inventoryStock.deleteMany({ where: { orgId } });
   await prisma.purchaseOrder.deleteMany({ where: { orgId } });
   await prisma.file.deleteMany({ where: { project: { orgId } } });
   await prisma.matrixColumn.deleteMany({
@@ -110,6 +112,7 @@ async function main(): Promise<void> {
   const users = await seedUsers(db);
   const agents = await seedAgents(db);
   await seedValueChain(db);
+  const inventory = await seedInventory(db);
   await seedRobotics(db);
   await seedBackOffice(db);
   const projects = await seedProjects(db);
@@ -126,7 +129,8 @@ async function main(): Promise<void> {
   console.log(
     `Seed complete — modules: ${modules}, users: ${users}, agents: ${agents}, ` +
       `projects: ${projects}, machines: ${machines.total} (${machines.fixed} fixed), ` +
-      `workflows: ${workflows.workflows} (${workflows.runs} runs).`,
+      `workflows: ${workflows.workflows} (${workflows.runs} runs), ` +
+      `inventory: ${inventory.stock} stock rows.`,
   );
 }
 
