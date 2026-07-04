@@ -1,6 +1,6 @@
 import { dbForOrg, paginateArgs, pageResult } from "@axona/db";
 import type { RunStatus, WorkflowStatus } from "@axona/db";
-import { safeParseGraph } from "@axona/agents";
+import { safeParseGraph, type TraceLine } from "@axona/agents";
 
 // WFL.1 — Workflows read model (build-spec §4.5). Agent orchestration by module.
 // Read-only over the existing Workflow + WorkflowRun models (WF.1): no schema
@@ -241,4 +241,176 @@ export async function listWorkflows(
   });
   const { items, nextCursor } = pageResult(rows, take);
   return { items: items.map(shape), nextCursor };
+}
+
+// ---------------------------------------------------------------------------
+// WFL.2 — Workflow detail (build-spec §4.6). The parsed step-flow + the ordered
+// runs with their persisted traces, so the detail screen renders the flow canvas
+// (trigger → agents → gates → output) and replays a run's trace through the
+// TraceConsole. Read-only; running a workflow goes through WF.1's RBAC-gated
+// enqueue API (guardrail gates park AWAITING_APPROVAL — never auto-executed).
+// /// RBAC.4: approval/resume state machine. /// AUDIT.3: immutable run record.
+// /// WF.2: live SSE streaming of an in-flight run replaces the replay-on-refetch.
+// ---------------------------------------------------------------------------
+
+export type StepKind =
+  | "trigger"
+  | "agent"
+  | "decision"
+  | "guardrail"
+  | "output";
+export interface WorkflowStep {
+  id: string;
+  kind: StepKind;
+  title: string;
+  module?: string; // short label (agent steps)
+  action: string;
+  branches?: string[]; // decision-gate branch labels
+}
+export interface DetailRun {
+  id: string;
+  status: RunStatus;
+  at: Date;
+  endedAt: Date | null;
+  trace: TraceLine[];
+}
+export interface WorkflowDetail {
+  id: string;
+  moduleKey: string;
+  module: string;
+  name: string;
+  description: string;
+  status: WorkflowStatus;
+  triggerEvent: string;
+  steps: WorkflowStep[];
+  stats: {
+    stepCount: number;
+    moduleCount: number;
+    avgRunMs: number | null;
+    runs: number;
+  };
+  runs: DetailRun[]; // ordered newest-first
+  latestRun: DetailRun | null;
+}
+
+/** One workflow's parsed step-flow + its runs (with traces). Org-scoped. */
+export async function getWorkflowDetail(
+  orgId: string,
+  workflowId: string,
+): Promise<WorkflowDetail | null> {
+  const wf = await dbForOrg(orgId).workflow.findFirst({
+    where: { id: workflowId },
+    select: {
+      id: true,
+      moduleKey: true,
+      name: true,
+      description: true,
+      status: true,
+      steps: true,
+      runs: {
+        orderBy: { startedAt: "desc" },
+        take: 20,
+        select: {
+          id: true,
+          status: true,
+          startedAt: true,
+          endedAt: true,
+          trace: true,
+        },
+      },
+    },
+  });
+  if (!wf) return null;
+
+  const parsed = safeParseGraph(wf.steps);
+  const graph = parsed.success ? parsed.data : null;
+
+  const steps: WorkflowStep[] = [];
+  if (graph) {
+    steps.push({
+      id: graph.trigger.id,
+      kind: "trigger",
+      title: graph.trigger.event,
+      action: "Event that starts the orchestration.",
+    });
+    for (const n of graph.nodes) {
+      if (n.type === "agent") {
+        steps.push({
+          id: n.id,
+          kind: "agent",
+          title: n.agentCode,
+          module: shortOf(moduleOfCode(n.agentCode)),
+          action: n.action,
+        });
+      } else if (n.type === "gate") {
+        if (n.kind === "guardrail") {
+          steps.push({
+            id: n.id,
+            kind: "guardrail",
+            title: "Approval gate",
+            action:
+              "Money/safety/contract action — proposes and parks for human approval (RBAC.4); never auto-executed.",
+          });
+        } else {
+          steps.push({
+            id: n.id,
+            kind: "decision",
+            title: "Decision gate",
+            action: n.condition
+              ? `Branch on ${n.condition.field} ${n.condition.op} ${JSON.stringify(n.condition.value)}.`
+              : "Branch on the run context.",
+            branches: [
+              `onTrue → ${n.onTrue ?? "—"}`,
+              `onFalse → ${n.onFalse ?? "—"}`,
+            ],
+          });
+        }
+      } else {
+        steps.push({
+          id: n.id,
+          kind: "output",
+          title: n.label,
+          action: "Terminal outcome of this branch.",
+        });
+      }
+    }
+  }
+
+  const moduleShorts = new Set<string>([shortOf(wf.moduleKey)]);
+  for (const s of steps) if (s.module) moduleShorts.add(s.module);
+
+  const runs: DetailRun[] = wf.runs.map((r) => ({
+    id: r.id,
+    status: r.status,
+    at: r.startedAt,
+    endedAt: r.endedAt,
+    trace: (r.trace as unknown as TraceLine[]) ?? [],
+  }));
+  const completed = runs.filter((r) => r.endedAt);
+  const avgRunMs = completed.length
+    ? completed.reduce(
+        (n, r) =>
+          n + (new Date(r.endedAt!).getTime() - new Date(r.at).getTime()),
+        0,
+      ) / completed.length
+    : null;
+
+  return {
+    id: wf.id,
+    moduleKey: wf.moduleKey,
+    module: moduleLabel(wf.moduleKey),
+    name: wf.name,
+    description: wf.description,
+    status: wf.status,
+    triggerEvent: graph?.trigger.event ?? "",
+    steps,
+    stats: {
+      stepCount: graph?.nodes.length ?? 0,
+      moduleCount: moduleShorts.size,
+      avgRunMs,
+      runs: runs.length,
+    },
+    runs,
+    latestRun: runs[0] ?? null,
+  };
 }

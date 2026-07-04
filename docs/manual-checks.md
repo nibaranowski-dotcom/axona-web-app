@@ -1227,3 +1227,25 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Seed enriched to 9 workflows** (the 3 WF.1 through-line ones + 6 across Manufacturing/Sales/Fulfillment/Security/Autonomy/Finance), each a real WorkflowGraph + a last run (2 drafts; Manufacturing has no run) → the module-separated list renders as populated as the mock. Run timestamps are recent + varied for realistic last-run times.
 - **StatStrip gained an `inline` variant** (16px bar) so Workflows/Machines/Projects and the 12 card screens share one primitive (the mock uses the inline strip here, not the 22px card).
 - Running a workflow (Run button + live console) is **WFL.2**; any trigger stays agent/RBAC-gated (WF.1 enqueue API · RBAC.4). Rows browse+open only.
+
+---
+
+## WFL.2 — Workflow detail screen (step-flow + run console)
+
+**Automated**
+- `pnpm verify:wfl-2` — route + component + detail API route; `getWorkflowDetail` org-scoped + reuses WorkflowGraph; moat seams RBAC.4 + AUDIT.3 + WF.2 (live SSE deferred); run console replays via TraceConsole + Run posts to the WF.1 enqueue API; detail route read-only; detail returns the parsed step-flow (trigger→agent→decision→guardrail→output); decision gate exposes branch labels; runs carry persisted TraceLine[] (replayable); procurement detail replays the AWAITING_APPROVAL parked run (guardrail proposal line); Run is RBAC-gated + never auto-executes a gated action; org isolation.
+- CI gate green · siblings (WFL.1/WF.1/UX.*) stay green · accessibility-review 0 on /workflows/:id.
+
+**Manual (./dev.sh, http://localhost:3001/workflows → click a workflow)**
+- [ ] Matches Workflow.dc.html on the v2 shell — header (name + status + description), stats (Steps / Modules / Avg run / Runs·30d), the **step-flow canvas** (trigger → agent glyphs → decision gate w/ branches → **approval gate in ink** → output, markers + connectors), and the **run console** (Trigger + Run button + Execution log + Recent runs).
+- [ ] Open the **Procurement reorder** detail → the run console **replays the parked run**: scan → … → policy-check → draft PO → **the guardrail "AWAITING_APPROVAL (RBAC.4)" line**; the approval-gate step renders in ink (never red).
+- [ ] Click **Run workflow** → it enqueues via the RBAC-gated WF.1 API, then replays the resulting persisted run. A money/safety workflow parks at AWAITING_APPROVAL (a "Parked — proposed, awaiting approval; no action auto-executed" note shows) — never auto-executes.
+- [ ] Global Axona pane still present (Core route). accessibility-review 0.
+
+**Notes / flags**
+- Read-only over Workflow + WorkflowRun (no schema change). `getWorkflowDetail` reuses WF.1's `WorkflowGraph` (`safeParseGraph`) to build the step-flow (trigger/agent/decision/guardrail/output) + returns the ordered runs with their persisted `TraceLine[]` traces. GET `/api/workflows/:id` (detail) added; runs replay through `TraceConsole`.
+- **Run button** → WF.1's `POST /api/workflows/:id/run` (requireRole line 1), then refetch `GET /api/workflow-runs/:runId` and replay — **no live SSE** (that's WF.2, `/// WF.2` seam). Sends a demo `triggerPayload {value: 48000}` so the procurement guardrail stays on its parked branch (propose→approve→audit; never auto-executes). `/// RBAC.4` + `/// AUDIT.3` seams; no event-log/confidence/approver columns.
+- **Design deviations flagged:**
+  1. The design's run console is a resizable **right panel**; to keep the global Axona pane (task requirement, Core route) the console is a **column within main** beside the step canvas (`lg:grid-cols-[1.5fr_1fr]`) — same elements (Trigger, Run, Execution log, Recent runs), not a third shell pane.
+  2. The detail **stats** are the design's compact label/value header row (Steps/Modules/Avg run/Runs·30d), not the full-width StatStrip bar — the design uses this micro-layout here. "Avg run" = mean of `endedAt − startedAt` over completed runs (seed sets ~35s).
+  3. WFL.1 rows now **link to `/workflows/:id`** (were seeding the copilot) so the detail is reachable — the design's list rows link to the detail.

@@ -495,7 +495,8 @@ export async function seedWorkflows(
           status: s.run.status,
           trace: json(s.run.trace),
           startedAt: started,
-          endedAt: new Date(started.getTime() + 6 * 60_000),
+          // ~35s run — a realistic orchestration duration (drives WFL.2 "Avg run").
+          endedAt: new Date(started.getTime() + 35_000),
         },
       });
       runs++;

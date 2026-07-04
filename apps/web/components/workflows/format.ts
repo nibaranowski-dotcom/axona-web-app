@@ -1,5 +1,7 @@
 import type { RunStatus, WorkflowStatus } from "@axona/db";
-import type { LastRun } from "@/lib/workflows";
+import type { TraceLine } from "@axona/agents";
+import type { LastRun, StepKind } from "@/lib/workflows";
+import type { TraceLine as ConsoleLine } from "@/components/shell/TraceConsole";
 
 // Workflows display helpers (WFL.1). Active = green (live), draft = neutral,
 // paused = lime. Brand palette only; a parked/critical run renders in ink (never
@@ -55,4 +57,78 @@ export function lastRunLabel(
   return w
     ? { text: `${w} · ${t}`, emphasis: true }
     : { text: t, emphasis: false };
+}
+
+// --- WFL.2 detail ---
+
+// Step-flow marker per node kind. Trigger = lime, agent = neutral glyph, decision
+// = hairline, guardrail/approval = ink (the parked gate — never red), output =
+// green (a reached terminal). Colours are token classes.
+export const STEP_MARKER: Record<
+  StepKind,
+  { ring: string; icon: string; label: string }
+> = {
+  trigger: { ring: "bg-accent text-accent-ink", icon: "zap", label: "Trigger" },
+  agent: { ring: "bg-panel-2 text-ink", icon: "glyph", label: "Agent" },
+  decision: {
+    ring: "bg-paper border border-line-strong text-ink",
+    icon: "fork",
+    label: "Decision",
+  },
+  guardrail: {
+    ring: "bg-ink-strong text-on-dark",
+    icon: "shield",
+    label: "Approval",
+  },
+  output: {
+    ring: "bg-success-tint text-success",
+    icon: "check",
+    label: "Output",
+  },
+};
+
+/** Run duration → "35s" / "2m 05s" (drives the "Avg run" stat). */
+export function fmtDuration(ms: number | null): string {
+  if (ms == null || ms <= 0) return "—";
+  const s = Math.round(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  const rem = s % 60;
+  return `${m}m ${String(rem).padStart(2, "0")}s`;
+}
+
+const timeOf = (iso?: string): string => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : d.toISOString().slice(11, 19);
+};
+
+/** Map a persisted WorkflowRun.trace to TraceConsole lines (kind · text). */
+export function toConsoleLines(trace: TraceLine[]): ConsoleLine[] {
+  return trace.map((l) => ({
+    ts: timeOf(l.ts),
+    text: `${l.kind.padEnd(12)} · ${l.text}`,
+  }));
+}
+
+// Recent-run dot: succeeded = green, parked/awaiting = ink, failed = ink,
+// running = lime. Never red.
+export const RUN_DOT: Record<RunStatus, string> = {
+  SUCCEEDED: "bg-success",
+  AWAITING_APPROVAL: "bg-ink-strong",
+  FAILED: "bg-ink-strong",
+  RUNNING: "bg-accent",
+};
+
+export function runOutcome(status: RunStatus): string {
+  switch (status) {
+    case "SUCCEEDED":
+      return "Completed";
+    case "AWAITING_APPROVAL":
+      return "Awaiting approval";
+    case "FAILED":
+      return "Failed";
+    case "RUNNING":
+      return "Running";
+  }
 }

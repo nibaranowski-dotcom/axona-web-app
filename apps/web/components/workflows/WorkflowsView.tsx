@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Plus } from "lucide-react";
 import type { WorkflowRow, WorkflowsData } from "@/lib/workflows";
 import { useUi } from "@/lib/ui-store";
@@ -100,16 +101,7 @@ export function WorkflowsView({
                   <span aria-hidden className="h-px flex-1 bg-line" />
                 </div>
                 {g.workflows.map((w) => (
-                  <WorkflowRowView
-                    key={w.id}
-                    w={w}
-                    now={data.now}
-                    onOpen={() =>
-                      propose(
-                        `Summarize the ${w.name} workflow — its steps, agents, and last run`,
-                      )
-                    }
-                  />
+                  <WorkflowRowView key={w.id} w={w} now={data.now} />
                 ))}
               </div>
             ))}
@@ -120,24 +112,16 @@ export function WorkflowsView({
   );
 }
 
-function WorkflowRowView({
-  w,
-  now,
-  onOpen,
-}: {
-  w: WorkflowRow;
-  now: number;
-  onOpen: () => void;
-}) {
+function WorkflowRowView({ w, now }: { w: WorkflowRow; now: number }) {
   const badge = STATUS_BADGE[w.status];
   const last = lastRunLabel(w.lastRun, now);
   const shown = w.agentChain.slice(0, CHAIN_CAP);
   const extra = w.agentChain.length - shown.length;
 
+  // WFL.2: a row opens the workflow detail (step-flow + run console).
   return (
-    <button
-      type="button"
-      onClick={onOpen}
+    <Link
+      href={`/workflows/${w.id}`}
       className={`${COLS} mb-2 w-full rounded-card border border-line bg-paper px-3.5 py-[13px] text-left transition-colors hover:border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent`}
     >
       <div className="min-w-0">
@@ -201,6 +185,6 @@ function WorkflowRowView({
           {last.text}
         </span>
       </div>
-    </button>
+    </Link>
   );
 }
