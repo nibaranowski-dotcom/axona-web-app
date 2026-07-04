@@ -186,6 +186,20 @@ async function run(): Promise<void> {
       const findWf = (name: string) =>
         db.workflow.findFirst({ where: { name } });
 
+      // MIGRATE.1: snapshot the seeded runs so we can self-clean — the checks
+      // below enqueue real runs on the seeded workflows, which would otherwise
+      // leave the procurement workflow's LATEST run non-parked for verify:all
+      // (flagged on WFL.1/WFL.2). Everything not in this set is deleted on exit,
+      // restoring the seeded state (incl. the parked AWAITING_APPROVAL run).
+      const seededRunIds = new Set(
+        (
+          await prisma.workflowRun.findMany({
+            where: { orgId },
+            select: { id: true },
+          })
+        ).map((r) => r.id),
+      );
+
       // --- check 2: end-to-end SUCCEEDED with a non-empty TraceLine[] ---
       await check(
         "executor runs a seeded workflow → SUCCEEDED, trace non-empty",
@@ -325,6 +339,25 @@ async function run(): Promise<void> {
           });
           const wfCount = await db.workflow.count();
           return wfCount >= 3 && !!parked;
+        },
+      );
+
+      // MIGRATE.1 self-clean: delete every run this verify created, restoring the
+      // seeded state so verify:all never pollutes the parked-run fixtures.
+      await prisma.workflowRun.deleteMany({
+        where: { orgId, id: { notIn: [...seededRunIds] } },
+      });
+      await check(
+        "self-clean: seeded runs restored (procurement latest still parked)",
+        async () => {
+          const proc = await db.workflow.findFirst({
+            where: { name: "Procurement reorder" },
+          });
+          const latest = await db.workflowRun.findFirst({
+            where: { workflowId: proc!.id },
+            orderBy: { startedAt: "desc" },
+          });
+          return latest?.status === "AWAITING_APPROVAL";
         },
       );
     }

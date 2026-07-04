@@ -129,6 +129,7 @@ another module.
 | 13 | FND.13 | App shell: sidebar (wordmark, ⌘K, CORE/VALUE CHAIN/ROBOTICS/BACK OFFICE nav), resizable+collapsible agent pane, trace-console slot | P0 | L | 5 | FND.2 | todo |
 | 14 | FND.14 | Data-component library: DataTable, StatusBadge, ProgressBar, Funnel, SpcChart, StageTimeline, CompatMatrix | P0 | L | 5 | FND.2 | todo |
 | 15 | FND.15 | Agent primitives: AgentGlyph (static 12-dot ring), AgentCard, ChatThread, Suggestions | P0 | M | 3 | FND.2 | todo |
+| 15b | MIGRATE.1 | Baseline Prisma migration history; capture FTS + pgvector raw-SQL DDL in a drift-proof trailing migration; forbid `prisma db push`; make verify runs self-clean | P0 | S | 2 | FND.11 | done |
 
 ## E1 — Auth, Onboarding & Identity · Track: Platform
 

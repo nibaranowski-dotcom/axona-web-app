@@ -76,6 +76,13 @@ don't reconcile the two; this app follows the build spec.
 (§3.7). 3. API (§6) + agent runtime (§5). 4. Frontend shell (§7) → screens in §4 order (Core first).
 Each screen: **Purpose → Data → User stories → Components → Agents.** Build order/milestones in §9.
 
+**Schema changes — NEVER `prisma db push` (MIGRATE.1).** `db push` silently drops the hand-authored
+raw-SQL DDL that Prisma can't model (SearchDoc FTS `tsv`+GIN, File/SearchDoc pgvector `vector(1536)`+HNSW)
+— it caused the `/search` 500 and a P3005 that blocked `./dev.sh`. The ONLY schema path is
+`prisma migrate dev` (author) / `prisma migrate deploy` (apply); all raw-SQL objects live in committed
+migrations (the trailing `…_migrate1_ensure_raw_sql_ddl` re-asserts them idempotently). `migrate status`
+must stay clean. Verify scripts that enqueue/execute runs must self-clean (restore the seeded state).
+
 ## The moat (don't dilute)
 Every module runs ~6 specialized agents under a module orchestrator; a general **Axona agent** reads
 across modules. Agents **draft/monitor/act; humans approve** (money/safety/contract gated by a state

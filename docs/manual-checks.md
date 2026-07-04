@@ -1249,3 +1249,23 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
   1. The design's run console is a resizable **right panel**; to keep the global Axona pane (task requirement, Core route) the console is a **column within main** beside the step canvas (`lg:grid-cols-[1.5fr_1fr]`) — same elements (Trigger, Run, Execution log, Recent runs), not a third shell pane.
   2. The detail **stats** are the design's compact label/value header row (Steps/Modules/Avg run/Runs·30d), not the full-width StatStrip bar — the design uses this micro-layout here. "Avg run" = mean of `endedAt − startedAt` over completed runs (seed sets ~35s).
   3. WFL.1 rows now **link to `/workflows/:id`** (were seeding the copilot) so the detail is reachable — the design's list rows link to the detail.
+
+---
+
+## MIGRATE.1 — Baseline migration history; protect FTS/pgvector DDL; forbid db push; self-clean verify
+
+**Root cause** — `prisma db push` (and an ordering quirk) left the hand-authored raw-SQL DDL in an inconsistent state: it silently dropped the SearchDoc FTS (`tsv` + `searchdoc_tsv_gin`) and File pgvector (`embedding vector(1536)` + `file_embedding_hnsw`) objects — the cause of the `/search` 500 and a P3005 that blocked `./dev.sh`. Even a clean `migrate reset` didn't recreate `file_embedding_hnsw` (its `enable_pgvector_ann` `CREATE INDEX` didn't persist on fresh apply, while the later SearchDoc HNSW did).
+
+**Fix**
+1. **Trailing ensure-migration** `…_migrate1_ensure_raw_sql_ddl` re-asserts EVERY hand-authored object idempotently (`ADD COLUMN IF NOT EXISTS "tsv" …`, `CREATE INDEX IF NOT EXISTS` for `searchdoc_tsv_gin` / `searchdoc_embedding_hnsw` / `file_embedding_hnsw`) as the last deploy step — so a fresh `migrate deploy` reproduces all raw-SQL DDL exactly, drift-proof.
+2. **Baseline reconciled** — `prisma migrate reset` re-applies all migrations from the files; `_prisma_migrations` records all as applied; `migrate status` = "up to date"; no drift. `migrate dev`/`migrate deploy` is the only schema path (dev.sh + CI already use them; no `db push` anywhere).
+3. **Never `db push`** — documented here + in CLAUDE.md build section. It drops raw-SQL DDL Prisma can't model.
+4. **Verify self-clean** — `verify-wf-1` snapshots the seeded `WorkflowRun` ids, then deletes any run it enqueues during the checks (`deleteMany where id notIn seededRunIds`), restoring the seeded state so `verify:all` never leaves the procurement workflow's latest run non-parked.
+
+**Automated**
+- `pnpm verify:migrate-1` — FTS + pgvector DDL live in committed migrations; the trailing ensure-migration re-asserts every object; no `db push` in scripts/dev.sh/CI; verify-wf-1 self-cleans; migration history clean (every on-disk migration applied, none rolled back); (a) SearchDoc.tsv present + FTS "procur" → Module hit; (b) File.embedding vector(1536) + HNSW index present; parked fixture intact (procurement latest run AWAITING_APPROVAL).
+- CI gate green; `verify:all` green (self-clean keeps siblings green).
+
+**Manual**
+- Fresh DB: `prisma migrate reset --force --skip-seed && pnpm --filter @axona/db run db:seed` → `migrate status` clean; `curl /api/search?q=procur` → 200 with a Procurement MODULE hit.
+- Never run `prisma db push` on this repo. Schema change = `migrate dev` (author) → commit the migration → `migrate deploy` (apply).
