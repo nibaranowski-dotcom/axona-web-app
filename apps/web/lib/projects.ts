@@ -192,3 +192,38 @@ export async function listProjects(
   const { items, nextCursor } = pageResult(rows, take);
   return { items: items.map(shape), nextCursor };
 }
+
+// ---------------------------------------------------------------------------
+// FILE.1 — the file list for a project (feeds the project view + MTX.2). Org-
+// scoped explicitly via `project.orgId` (File has no orgId of its own — it
+// inherits tenancy through Project, so every File read must join on it).
+// Read-only; `extracted`/`embedding` stay untouched (FILE.2 / MEM.1 seams).
+// ---------------------------------------------------------------------------
+export interface ProjectFile {
+  id: string;
+  name: string;
+  ext: string;
+  sizeBytes: number;
+  type: string;
+  linkedTo: string | null;
+  modifiedAt: Date;
+}
+
+export async function getProjectFiles(
+  orgId: string,
+  projectId: string,
+): Promise<ProjectFile[]> {
+  return dbForOrg(orgId).file.findMany({
+    where: { projectId, project: { orgId } },
+    orderBy: { modifiedAt: "desc" },
+    select: {
+      id: true,
+      name: true,
+      ext: true,
+      sizeBytes: true,
+      type: true,
+      linkedTo: true,
+      modifiedAt: true,
+    },
+  });
+}

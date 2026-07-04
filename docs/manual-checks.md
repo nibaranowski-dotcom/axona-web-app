@@ -1310,3 +1310,23 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
   2. **Count accuracy** stat (mock's 4th) isn't modeled (no cycle-count data) → replaced with the real **Reserved** total; count-accuracy stays deferred.
   3. **Days of cover** is the labelled **stand-in** (`onHand ÷ Part.dailyUse`) from INV.1; the bar/labels read in days, not the mock's mixed "builds/days".
   4. Real rollup numbers differ from the mock's illustrative ones ($3.7M vs $18.4M, 7 SKUs vs 312) — real seeded data.
+
+---
+
+## FILE.1 — S3/MinIO blob store + File lifecycle
+
+**Automated**
+- `pnpm verify:file-1` — storage client (put/get/presign/delete, path-style, @aws-sdk/client-s3); upload requireRole line 1 + org-scoped (project→orgId) + **org-prefixed key** + File.create; FILE.2 seam (extracted untouched); download org-scoped via project.orgId join; delete RBAC-gated (ADMIN) + soft-delete flagged; getProjectFiles joins project.orgId. **Live (S3+DB-gated, self-cleaning):** put→get roundtrip; File record + getProjectFiles; cross-org read blocked; seeded blobs backfilled.
+- **CI has no MinIO** — the live checks SKIP when `S3_ENDPOINT` unset; static checks always run. `verify:all` green without MinIO. `migrate status` clean (no schema change).
+
+**Manual (docker compose up -d, MinIO on :9000)**
+- `pnpm db:seed && pnpm db:seed:blobs` — backfills placeholder objects for every seeded File (idempotent).
+- Upload: `curl -X POST localhost:3001/api/projects/<id>/files -F file=@x.txt -F type=Data` → 201 + File record; the MinIO object lands at `orgId/projectId/uuid.ext`.
+- Download: `curl localhost:3001/api/files/<fileId>/content` → the bytes. `GET /api/projects/<id>/files` lists them.
+- Verified end-to-end: upload → 201 + record + MinIO object (org-prefixed key); download → exact bytes.
+
+**Notes / flags**
+- New `apps/web/lib/storage.ts` over `@aws-sdk/client-s3` + `@aws-sdk/s3-request-presigner` (added to apps/web deps); `forcePathStyle:true` + `S3_ENDPOINT` for MinIO; server-only. `getProjectFiles(orgId, projectId)` in `lib/projects.ts`.
+- **Routes:** `POST /api/projects/:id/files` (upload, requireRole, org-prefixed key, no auto-extract), `GET /api/files/:id/content` (stream bytes, org-scoped), `GET /api/projects/:id/files` (list), `DELETE /api/files/:id` (**ADMIN-gated hard delete** of object + record).
+- **No schema change.** File has no `orgId` (tenancy via `project.orgId` — every File read joins on it) and no `deletedAt`.
+- **DEFERRED:** (1) **soft-delete** — the delete route hard-deletes; a `File.deletedAt` + filtered reads is preferred but needs a schema change (deferred, flagged in the route). (2) **extract + embed on upload** — FILE.2 (the queue job); `extracted={}`/`embedding` untouched, `/// FILE.2` seam left.
