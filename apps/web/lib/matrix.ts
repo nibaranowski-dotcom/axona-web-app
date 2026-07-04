@@ -17,8 +17,11 @@ export interface MatrixCell {
 export interface MatrixRow {
   fileId: string;
   name: string;
+  ext: string;
+  sizeBytes: number;
   type: string;
   linkedTo: string | null;
+  modifiedAt: Date;
   hasText: boolean;
   answers: Record<string, MatrixCell>; // keyed by columnId
 }
@@ -57,8 +60,11 @@ export async function getProjectMatrix(
       select: {
         id: true,
         name: true,
+        ext: true,
+        sizeBytes: true,
         type: true,
         linkedTo: true,
+        modifiedAt: true,
         text: true,
         extracted: true,
       },
@@ -80,8 +86,11 @@ export async function getProjectMatrix(
     return {
       fileId: f.id,
       name: f.name,
+      ext: f.ext,
+      sizeBytes: f.sizeBytes,
       type: f.type,
       linkedTo: f.linkedTo,
+      modifiedAt: f.modifiedAt,
       hasText: !!f.text && f.text.length > 0,
       answers,
     };

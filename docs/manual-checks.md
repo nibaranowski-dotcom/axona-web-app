@@ -1374,3 +1374,23 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Routes:** POST /columns (create + enqueue, returns immediately), /columns/:columnId/rerun, GET /matrix (`lib/matrix.ts` `getProjectMatrix`), DELETE /api/columns/:id (RBAC-gated, removes the column + its `File.extracted` key).
 - **Moat:** each cell is an agent-drafted **proposal** with citation + calibrated `confidence` — never marked approved. `/// RBAC.4` (approve) + `/// AUDIT.3` (immutable log) + `/// CONF.1` (calibration) + `/// MEM.1` (learning loop) seams. Never fabricates a source (n/a when unaddressed). Per-tenant isolation throughout.
 - **Deferred:** the matrix screen (MTX.2); cross-file/multi-hop reasoning; a FILE.2→MTX.1 auto-hook on future uploads (backfill/re-run provided); approval/audit UIs.
+
+---
+
+## MTX.2 — Project Files matrix screen (the last screen)
+
+**Automated**
+- `pnpm verify:mtx-2` — route + component + format; binds the matrix (files×columns×answers) + ask-across-files bar (POST /columns); cells render confidence + citation, low-confidence flagged in **INK** (no red); **PROJ.1 rows link to /projects/:id**; cells never "approved"; matrix binds files × columns × cited answers; a **low-confidence review-flag cell present**; rows carry file metadata (ext/size/modified); cross-org project → empty.
+- CI gate green · MTX.1/FILE.2/PROJ.1 + siblings stay green · accessibility-review 0 on /projects/:id.
+
+**Manual (./dev.sh → /projects → click a project)**
+- [ ] Matches "Project Files.dc.html" on the v2 shell — breadcrumb (Projects / module) + project name; the **ask-across-files bar** ("Ask a question across all N documents — it becomes a column…" + Add column); the **sticky-header matrix** (Document · Type · Linked to · the AI-extracted columns · Modified). Each extracted cell shows the **value + a confidence dot + the citation** (mono, quoted); a **low-confidence cell shows a "Review" pill in ink** (the two seeded flags: Agent flag on ECO-318 = 0.34, on SERVO-205 spec = 0.15).
+- [ ] Type a question → **Add column** → a new column appears in an **extracting…** state, then answers fill in (poll refetch). Global Axona pane present (Core route). accessibility-review 0.
+
+**Notes / data-shape flags**
+- Read-only render bound to MTX.1 `getProjectMatrix` (extended with ext/size/modifiedAt for the table). Route `/projects/[id]`; **PROJ.1's /projects rows now Link here** (fixing PROJ.1's deferred flag).
+- The ask bar's **Add column** POSTs `/api/projects/:id/columns` (RBAC-gated, `requireRole`) — a normal contributor action; answers are **agent-drafted proposals** (value + citation + confidence), **never "approved"** (`/// RBAC.4` approve UI is a later story). Poll-refetch, no live SSE.
+- **Design adaptations (flagged):**
+  1. The design's right pane is a bespoke citation-aware project agent; per the story the **global Axona pane (GA.1)** stays (Core route) — same citation-aware role, not a third shell pane.
+  2. The design hardcodes "Cost / spec impact" + "Agent flag" columns; our matrix is **dynamic** MatrixColumns (the seed provides exactly those + Owner) rendered uniformly as value + confidence + citation cells.
+  3. Real seeded values differ from the mock's illustrative ones (3 files/3 columns vs 8/…); through-line data (ECO-318 set) — not fabricated.

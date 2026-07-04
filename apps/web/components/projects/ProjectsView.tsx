@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { FileText, Plus } from "lucide-react";
 import type { ProjectRow, ProjectsData } from "@/lib/projects";
 import { useUi } from "@/lib/ui-store";
@@ -110,16 +112,7 @@ export function ProjectsView({
                   <span aria-hidden className="h-px flex-1 bg-line" />
                 </div>
                 {g.projects.map((p) => (
-                  <ProjectRowView
-                    key={p.id}
-                    p={p}
-                    now={data.now}
-                    onOpen={() =>
-                      propose(
-                        `Summarize the ${p.name} project — its files, status, and next action`,
-                      )
-                    }
-                  />
+                  <ProjectRowView key={p.id} p={p} now={data.now} />
                 ))}
               </div>
             ))}
@@ -130,22 +123,13 @@ export function ProjectsView({
   );
 }
 
-function ProjectRowView({
-  p,
-  now,
-  onOpen,
-}: {
-  p: ProjectRow;
-  now: number;
-  onOpen: () => void;
-}) {
+function ProjectRowView({ p, now }: { p: ProjectRow; now: number }) {
   const badge = STATUS_BADGE[p.status];
   const humans = p.humanMembers.slice(0, 3);
   const extraHumans = p.humanMembers.length - humans.length;
   return (
-    <button
-      type="button"
-      onClick={onOpen}
+    <Link
+      href={`/projects/${p.id}`}
       className={`${COLS} mb-2 w-full rounded-card border border-line bg-paper px-3.5 py-[13px] text-left transition-colors hover:border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent`}
     >
       <div className="min-w-0">
@@ -202,6 +186,6 @@ function ProjectRowView({
           {fmtAgo(p.updatedAt, now)}
         </span>
       </div>
-    </button>
+    </Link>
   );
 }
