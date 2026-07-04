@@ -12,6 +12,9 @@ import {
   WORKFLOW_QUEUE,
   runWorkflow,
   type WorkflowRunJob,
+  MATRIX_EXTRACT_QUEUE,
+  runColumnExtraction,
+  type MatrixExtractJob,
 } from "@axona/agents";
 import {
   FILE_EXTRACT_QUEUE,
@@ -59,8 +62,20 @@ function main(): void {
     ),
   );
 
+  const matrix = new Worker<MatrixExtractJob>(
+    MATRIX_EXTRACT_QUEUE,
+    async (job) => runColumnExtraction(job.data),
+    { connection },
+  );
+  matrix.on("failed", (job, err) =>
+    console.error(
+      `[axona-worker] matrix ${job?.data.columnId} failed:`,
+      err.message,
+    ),
+  );
+
   console.log(
-    `[axona-worker] online — ${WORKFLOW_QUEUE} + ${FILE_EXTRACT_QUEUE}`,
+    `[axona-worker] online — ${WORKFLOW_QUEUE} + ${FILE_EXTRACT_QUEUE} + ${MATRIX_EXTRACT_QUEUE}`,
   );
 }
 

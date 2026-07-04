@@ -15,6 +15,7 @@ import { seedInventory } from "./seed/inventory";
 import { seedRobotics } from "./seed/robotics";
 import { seedBackOffice } from "./seed/back-office";
 import { seedProjects } from "./seed/projects";
+import { seedMatrix } from "./seed/matrix";
 import { seedMachines } from "./seed/machines";
 import { seedWorkflows } from "./seed/workflows";
 
@@ -116,6 +117,7 @@ async function main(): Promise<void> {
   await seedRobotics(db);
   await seedBackOffice(db);
   const projects = await seedProjects(db);
+  const matrix = await seedMatrix(db);
   const machines = await seedMachines(db);
   const workflows = await seedWorkflows(db);
 
@@ -130,7 +132,8 @@ async function main(): Promise<void> {
     `Seed complete — modules: ${modules}, users: ${users}, agents: ${agents}, ` +
       `projects: ${projects}, machines: ${machines.total} (${machines.fixed} fixed), ` +
       `workflows: ${workflows.workflows} (${workflows.runs} runs), ` +
-      `inventory: ${inventory.stock} stock rows.`,
+      `inventory: ${inventory.stock} stock rows, ` +
+      `matrix: ${matrix.columns} cols (${matrix.cells} cells).`,
   );
 }
 

@@ -1353,3 +1353,24 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Storage centralized:** the FILE.1 S3 client moved to `@axona/db` (`apps/web/lib/storage.ts` re-exports) so the worker + in-process path + verify share it. Parser + aws-sdk deps live in `@axona/db` (lazy-imported) — a deliberate reconciliation of the PRD's "parser deps in worker" with the no-Redis in-process requirement.
 - **semanticSearch activated** + `/api/search` hybrid (FTS ∪ vector, FTS priority). Per-tenant isolation on text + vectors (org-filtered). `/// MEM.1` seam left; no memory graph.
 - **Deferred:** per-chunk/multi-vector embeddings (MTX.1/MEM.1); column extraction into `File.extracted` (MTX.1); operational-memory graph (MEM.1).
+
+---
+
+## MTX.1 — Ask-across-files column extraction
+
+**Automated**
+- `pnpm verify:mtx-1` (7 checks, PRD §10) — routes exist; POST /columns RBAC-gated + org-scoped + answers never "approved"; **extractColumn → valid ColumnAnswer**, forced failure → low-conf fallback (no throw); **fan-out answers every file under columnId, other columns untouched** (idempotent merge); **empty File.text → low-confidence n/a**; **GET /matrix rows×columns×answers with citations, cross-org empty**; re-run replaces only that column + a **seeded low-confidence flag exists**.
+- **CI-safe:** uses the **FakeExtractionModel** (no key); live checks SKIP without `DATABASE_URL`; `verify:all` green. `migrate status` clean (**no schema change**).
+
+**Manual (docker compose up -d)**
+- `pnpm db:seed` seeds 3 columns (Cost / spec impact · Agent flag · Owner) on the ECO-318 project with per-file answers + citations + a low-confidence flag (Agent flag on ECO-318 = 0.34; on SERVO-205 spec = 0.15).
+- `pnpm db:seed:blobs && pnpm db:embed:backfill` populate File.text so a new column extracts real spans.
+- `POST /api/projects/:id/columns { "question": "..." }` → 201 + column; answers fan out async. `GET /api/projects/:id/matrix` → files × columns × answers. `POST …/columns/:columnId/rerun`, `DELETE /api/columns/:id`.
+
+**Notes / architecture**
+- **No schema change** — reuses `MatrixColumn` + `File.extracted` (keyed by columnId). `ColumnAnswer = { value, citation, confidence 0-1 }` (Zod) in `@axona/agents/matrix/extract.ts`.
+- **`extractColumn(fileText, question, {model})`** — one structured-output call via the ART.1 ModelClient DI: system prompt answers from ONLY the file text, quotes the span, returns `n/a` + low confidence when unaddressed, never invents. try/catch → low-conf fallback per file. **`FakeExtractionModel`** (implements ModelClient) derives a deterministic grounded answer offline; `AnthropicModelClient` when `ANTHROPIC_API_KEY` is set.
+- **Fan-out** (`matrix-extract` queue / `runColumnExtraction`): `Promise.allSettled` per file, **idempotent-merge** each answer into `File.extracted[columnId]` (never clobbers other columns); empty text → n/a. Org-scoped via project.orgId. apps/worker consumer + in-process path (no Redis) like FILE.2.
+- **Routes:** POST /columns (create + enqueue, returns immediately), /columns/:columnId/rerun, GET /matrix (`lib/matrix.ts` `getProjectMatrix`), DELETE /api/columns/:id (RBAC-gated, removes the column + its `File.extracted` key).
+- **Moat:** each cell is an agent-drafted **proposal** with citation + calibrated `confidence` — never marked approved. `/// RBAC.4` (approve) + `/// AUDIT.3` (immutable log) + `/// CONF.1` (calibration) + `/// MEM.1` (learning loop) seams. Never fabricates a source (n/a when unaddressed). Per-tenant isolation throughout.
+- **Deferred:** the matrix screen (MTX.2); cross-file/multi-hop reasoning; a FILE.2→MTX.1 auto-hook on future uploads (backfill/re-run provided); approval/audit UIs.

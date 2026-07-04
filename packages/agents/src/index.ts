@@ -117,4 +117,22 @@ export {
   type RunOutcome,
 } from "./workflow/executor";
 
+// MTX.1 — ask-across-files column extraction (structured ColumnAnswer over
+// File.text + the fan-out job; BullMQ consumer in apps/worker + in-process path).
+export {
+  ColumnAnswer,
+  extractColumn,
+  getExtractionModel,
+  FakeExtractionModel,
+  LOW_CONF_FALLBACK,
+  EMPTY_TEXT_ANSWER,
+} from "./matrix/extract";
+export {
+  MATRIX_EXTRACT_QUEUE,
+  runColumnExtraction,
+  removeColumnAnswers,
+  type MatrixExtractJob,
+  type MatrixExtractResult,
+} from "./matrix/job";
+
 export const AGENTS_PACKAGE = "@axona/agents" as const;
