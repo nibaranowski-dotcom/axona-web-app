@@ -4,13 +4,14 @@ import { getCurrentUser } from "@/lib/session";
 import { requireRole } from "@/lib/rbac";
 import { getProjectFiles } from "@/lib/projects";
 import { ensureBucket, putObject, s3Configured } from "@/lib/storage";
+import { enqueueFileExtract } from "@/lib/file-queue";
 
 // GET  /api/projects/:id/files — org-scoped file list for a project.
 // POST /api/projects/:id/files — upload (multipart `file`): requireRole line 1,
 //   org-scoped via project→orgId (never client orgId), stream to MinIO under a
 //   deterministic org-prefixed key, then create the File record. No auto-extract
 //   here — the extract+embed job is FILE.2. Uploads only through this handler.
-/// FILE.2: enqueue the extraction/embedding job after create (leave extracted={} ).
+
 export const dynamic = "force-dynamic";
 
 // Everyone but VIEWER can add files (per-module policy hardens in RBAC.3).
@@ -94,5 +95,7 @@ export async function POST(
       modifiedAt: true,
     },
   });
+  // FILE.2: async extract + embed (non-blocking; the upload returns 201 now).
+  enqueueFileExtract(record.id, user.orgId);
   return Response.json({ file: record }, { status: 201 });
 }

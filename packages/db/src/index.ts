@@ -5,14 +5,47 @@
  * extension); the bare `prisma` is for migrations/seed/system tasks only.
  */
 export { prisma, dbForOrg } from "./client";
+export {
+  s3Configured,
+  ensureBucket,
+  putObject,
+  getObjectBytes,
+  presignedGetUrl,
+  deleteObject,
+  S3_BUCKET,
+} from "./storage";
 export type { OrgScopedDb } from "./client";
 export { paginateArgs, pageResult } from "./pagination";
 export type { PageArgs } from "./pagination";
 
-// Unified search (SRCH.1) — FTS now, semantic dormant until FILE.2.
-export { reindex, ensureSearchIndexSchema } from "./search/reindex";
-export { search, semanticSearch, countByType } from "./search/query";
+// Unified search (SRCH.1 + FILE.2 hybrid) — FTS ∪ vector.
+export { reindex, ensureSearchIndexSchema, upsertDoc } from "./search/reindex";
+export {
+  search,
+  semanticSearch,
+  hybridSearch,
+  countByType,
+} from "./search/query";
 export type { SearchHit, SearchResult, SearchScope } from "./search/query";
+
+// FILE.2 — text-extraction + embedding pipeline (Embedder DI, extraction, the
+// extract-embed processor). Shared by apps/worker (BullMQ) + the in-process
+// upload path + verify.
+export {
+  EMBED_DIM,
+  FakeEmbedder,
+  RealEmbedder,
+  getEmbedder,
+  toVectorLiteral,
+  type Embedder,
+} from "./embed/embedder";
+export { extractText, type ExtractResult } from "./embed/extract";
+export {
+  FILE_EXTRACT_QUEUE,
+  processFile,
+  type FileExtractJob,
+  type ProcessResult,
+} from "./embed/process";
 
 // Re-export Prisma's generated types/enums so consumers import from one place.
 export * from "@prisma/client";

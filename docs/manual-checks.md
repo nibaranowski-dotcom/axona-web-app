@@ -1330,3 +1330,26 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Routes:** `POST /api/projects/:id/files` (upload, requireRole, org-prefixed key, no auto-extract), `GET /api/files/:id/content` (stream bytes, org-scoped), `GET /api/projects/:id/files` (list), `DELETE /api/files/:id` (**ADMIN-gated hard delete** of object + record).
 - **No schema change.** File has no `orgId` (tenancy via `project.orgId` — every File read joins on it) and no `deletedAt`.
 - **DEFERRED:** (1) **soft-delete** — the delete route hard-deletes; a `File.deletedAt` + filtered reads is preferred but needs a schema change (deferred, flagged in the route). (2) **extract + embed on upload** — FILE.2 (the queue job); `extracted={}`/`embedding` untouched, `/// FILE.2` seam left.
+
+---
+
+## FILE.2 — Text-extraction + embedding pipeline
+
+**Automated**
+- `pnpm verify:file-2` — FakeEmbedder 1536-dim L2-normalized + deterministic; extraction decodes txt/md + skips unknown/binary without throwing; **processor sets File.text + File.embedding + SearchDoc(FILE) embedding, idempotent** (no dup doc); **semanticSearch returns the seeded file + blocks cross-org**; **/api/search hybrid returns the Procurement MODULE hit AND a FILE hit**.
+- **CI-safe:** live checks SKIP without `DATABASE_URL`/`S3_ENDPOINT`; the pipeline runs with the **FakeEmbedder** (no provider key) and no live MinIO/Redis. `verify:all` green. `migrate status` clean.
+
+**Manual (docker compose up -d)**
+- `pnpm db:seed && pnpm db:seed:blobs && pnpm db:embed:backfill` → all 18 seeded files get real text + a 1536-dim embedding + a FILE SearchDoc with its vector.
+- Upload a `.txt`/`.md`/`.pdf` via `POST /api/projects/:id/files` → 201; the file is auto-enqueued (`file-extract`) and appears in `/api/search` (FTS + semantic) shortly after.
+- Verified: ECO-318 file → `File.text` (338 chars) + embedding; `semanticSearch("ECO-318 drive change")` returns it; `hybrid("procurement")` → MODULE:Procurement + FILE hits.
+
+**Notes / architecture**
+- **One bounded schema addition** (via `migrate dev`, never db push): `File.text String?` (extracted plain text; `File.extracted` stays reserved for MTX.1). `File.embedding` written by raw SQL (`$executeRaw … ::vector`). `/// MTX.1` + `/// MEM.1` pointers; `migrate status` clean.
+- **Embedder DI** (`@axona/db/embed/embedder.ts`): `Embedder{ embed, dim:1536 }` + deterministic **FakeEmbedder** (hash→L2-normalized, offline/CI default) + **RealEmbedder** (fetch, OpenAI-compatible 1536-dim, behind `EMBED_API_KEY`); `getEmbedder()` picks by env like `AnthropicModelClient` vs `FakeModelClient`.
+- **Extraction** (`extract.ts`): txt/md/json/csv/… utf8; pdf→pdf-parse; docx→mammoth; a **UTF-8 text fallback** covers text bytes mislabeled pdf/docx (the FILE.1 seed placeholders) + unknown text; binary skipped; never throws.
+- **Processor** (`process.ts`, `FILE_EXTRACT_QUEUE`): org-scoped via project.orgId → getObjectBytes → extract → embed → File.text + File.embedding + upsert SearchDoc(FILE) + its embedding. Idempotent.
+- **Trigger:** upload route enqueues `file-extract` (non-blocking; Redis→BullMQ in apps/worker, else in-process); backfill `pnpm db:embed:backfill`.
+- **Storage centralized:** the FILE.1 S3 client moved to `@axona/db` (`apps/web/lib/storage.ts` re-exports) so the worker + in-process path + verify share it. Parser + aws-sdk deps live in `@axona/db` (lazy-imported) — a deliberate reconciliation of the PRD's "parser deps in worker" with the no-Redis in-process requirement.
+- **semanticSearch activated** + `/api/search` hybrid (FTS ∪ vector, FTS priority). Per-tenant isolation on text + vectors (org-filtered). `/// MEM.1` seam left; no memory graph.
+- **Deferred:** per-chunk/multi-vector embeddings (MTX.1/MEM.1); column extraction into `File.extracted` (MTX.1); operational-memory graph (MEM.1).

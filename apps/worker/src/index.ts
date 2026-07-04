@@ -1,11 +1,10 @@
 /**
- * @axona/worker — long-lived Node process running the BullMQ workflow-run engine.
+ * @axona/worker — long-lived Node process running the BullMQ job engines.
  *
- * WF.1: consumes the "workflow-runs" queue (FND.3 Redis) and executes each job
- * through the shared DAG engine (`runWorkflow` in @axona/agents) — the same engine
- * the enqueue API runs in-process when there is no Redis. Guardrail gates propose-
- * not-execute (park AWAITING_APPROVAL); every DB touch is org-scoped. Agent + ART.3
- * event routing layer on later; this is the run spine.
+ * WF.1: the "workflow-runs" queue → the shared DAG engine (`runWorkflow`).
+ * FILE.2: the "file-extract" queue → the shared extract-embed processor
+ *   (`processFile` in @axona/db) — the same processor the upload route runs
+ *   in-process when there is no Redis. Every DB touch is org-scoped.
  */
 import { Worker, type ConnectionOptions } from "bullmq";
 import IORedis from "ioredis";
@@ -14,14 +13,19 @@ import {
   runWorkflow,
   type WorkflowRunJob,
 } from "@axona/agents";
+import {
+  FILE_EXTRACT_QUEUE,
+  processFile,
+  type FileExtractJob,
+} from "@axona/db";
 
-type Job = WorkflowRunJob & { runId: string };
+type RunJob = WorkflowRunJob & { runId: string };
 
 function main(): void {
   const url = process.env.REDIS_URL;
   if (!url) {
     console.log(
-      "[axona-worker] no REDIS_URL — idle (WF.1 runs in-process via the enqueue API)",
+      "[axona-worker] no REDIS_URL — idle (jobs run in-process via the API/upload path)",
     );
     return;
   }
@@ -30,7 +34,8 @@ function main(): void {
   const connection = new IORedis(url, {
     maxRetriesPerRequest: null,
   }) as unknown as ConnectionOptions;
-  const worker = new Worker<Job>(
+
+  const runs = new Worker<RunJob>(
     WORKFLOW_QUEUE,
     async (job) => {
       const status = await runWorkflow(job.data);
@@ -38,13 +43,25 @@ function main(): void {
     },
     { connection },
   );
-  worker.on("completed", (job) =>
-    console.log(`[axona-worker] run ${job.data.runId} → done`),
-  );
-  worker.on("failed", (job, err) =>
+  runs.on("failed", (job, err) =>
     console.error(`[axona-worker] run ${job?.data.runId} failed:`, err.message),
   );
-  console.log(`[axona-worker] ${WORKFLOW_QUEUE} worker online`);
+
+  const extract = new Worker<FileExtractJob>(
+    FILE_EXTRACT_QUEUE,
+    async (job) => processFile(job.data),
+    { connection },
+  );
+  extract.on("failed", (job, err) =>
+    console.error(
+      `[axona-worker] extract ${job?.data.fileId} failed:`,
+      err.message,
+    ),
+  );
+
+  console.log(
+    `[axona-worker] online — ${WORKFLOW_QUEUE} + ${FILE_EXTRACT_QUEUE}`,
+  );
 }
 
 main();

@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../client";
+import { getEmbedder, toVectorLiteral, type Embedder } from "../embed/embedder";
 
 // Org-scoped full-text search over SearchDoc. All user input is parameterized
 // (websearch_to_tsquery over a bound value — no string-built tsquery); the
@@ -107,9 +108,72 @@ export async function countByType(
  * Returns [] today; no error. The column + HNSW index already exist.
  * TODO FILE.2: embed the query, `ORDER BY embedding <=> $1`, fuse with FTS rank.
  */
+/**
+ * FILE.2 — semantic (vector) search over SearchDoc embeddings. Embeds the query
+ * with the DI embedder (FakeEmbedder offline/CI), then ranks by cosine distance
+ * (`<=>`). Org-filtered (or NULL globals) so a tenant's vectors never surface to
+ * another. Returns [] when no embeddings exist yet (search stays FTS-correct).
+ */
 export async function semanticSearch(
-  _orgId: string,
-  _q: string,
+  orgId: string,
+  q: string,
+  opts: { limit?: number; embedder?: Embedder } = {},
 ): Promise<SearchHit[]> {
-  return [];
+  const term = q.trim();
+  if (!term) return [];
+  const embedder = opts.embedder ?? getEmbedder();
+  const [qvec] = await embedder.embed([term]);
+  if (!qvec) return [];
+  const lit = toVectorLiteral(qvec);
+  const limit = Math.min(Math.max(opts.limit ?? 20, 1), 50);
+  return prisma.$queryRaw<SearchHit[]>`
+    SELECT "type", "refId", "title", "subtitle", "url", "orgId",
+           (1 - (embedding <=> ${lit}::vector))::float8 AS rank
+    FROM "SearchDoc"
+    WHERE embedding IS NOT NULL
+      AND ("orgId" = ${orgId} OR "orgId" IS NULL)
+    ORDER BY embedding <=> ${lit}::vector
+    LIMIT ${limit};
+  `;
+}
+
+/**
+ * FILE.2 hybrid — FTS ∪ vector. FTS hits keep priority (exact keyword wins);
+ * vector hits add recall (files findable by meaning). Deduped by (type, refId).
+ * FTS-only correct when no embeddings exist. Scope-aware: vector recall runs for
+ * ALL / FILE scopes (where embedded docs live).
+ */
+export async function hybridSearch(
+  orgId: string,
+  q: string,
+  opts: { scope?: SearchScope; limit?: number; embedder?: Embedder } = {},
+): Promise<SearchResult> {
+  const scope = opts.scope ?? "ALL";
+  const limit = opts.limit ?? 20;
+  const fts = await search(orgId, q, { scope, limit });
+
+  const wantsVector = scope === "ALL" || scope === "FILE";
+  if (!wantsVector) return fts;
+
+  let vec: SearchHit[] = [];
+  try {
+    vec = await semanticSearch(orgId, q, { limit, embedder: opts.embedder });
+  } catch {
+    vec = []; // vector recall is best-effort; never break FTS
+  }
+  if (scope === "FILE") vec = vec.filter((h) => h.type === "FILE");
+
+  const seen = new Set(fts.hits.map((h) => `${h.type}:${h.refId}`));
+  const hits = [...fts.hits];
+  for (const h of vec) {
+    const key = `${h.type}:${h.refId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    hits.push(h);
+    if (hits.length >= limit) break;
+  }
+
+  const byType: Record<string, SearchHit[]> = {};
+  for (const h of hits) (byType[h.type] ??= []).push(h);
+  return { hits, byType };
 }

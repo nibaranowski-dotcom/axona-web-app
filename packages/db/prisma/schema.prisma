@@ -270,6 +270,11 @@ model File {
   blobKey   String
   type      String // Change, Spec, Quote, Report, Data, Memo, Plan…
   linkedTo  String? // e.g. "Engineering · SERVO-205"
+  /// FILE.2: the extracted plain text (bounded/truncated) — search body + MTX.1's
+  /// per-file Q&A. Distinct from `extracted` (reserved for MTX.1 column answers).
+  /// /// MTX.1 reads this for column extraction; /// MEM.1 consumes text+embedding
+  /// as the operational-memory capture — extend there; no memory/graph columns here.
+  text      String?
   /// AI-extracted column values keyed by columnId (the file-matrix substrate,
   /// MTX.1). This + `embedding` feed operational memory (MEM.1) later — extend
   /// there; do NOT add memory/graph columns here.

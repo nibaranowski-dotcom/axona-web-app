@@ -30,7 +30,10 @@ const read = (p: string) => (existsSync(p) ? readFileSync(p, "utf8") : "");
 async function run(): Promise<void> {
   console.log("\nVerifying FILE.1 — S3/MinIO blob store + File lifecycle\n");
 
-  const storage = read(join(base, "lib/storage.ts"));
+  // Impl moved to @axona/db in FILE.2 (worker + in-process share it); apps/web
+  // re-exports. Check the impl at its home + the re-export seam.
+  const storage = read(join(root, "packages/db/src/storage.ts"));
+  const reexport = read(join(base, "lib/storage.ts"));
   await check(
     "storage client exists w/ put/get/presign/delete + path-style",
     () => {
@@ -40,7 +43,8 @@ async function run(): Promise<void> {
         /presignedGetUrl/.test(storage) &&
         /deleteObject/.test(storage) &&
         /forcePathStyle: true/.test(storage) &&
-        /@aws-sdk\/client-s3/.test(storage)
+        /@aws-sdk\/client-s3/.test(storage) &&
+        /from "@axona\/db"/.test(reexport)
       );
     },
   );

@@ -129,8 +129,12 @@ async function run(): Promise<void> {
         },
       );
       await check(
-        "semanticSearch returns [] (deferred to FILE.2)",
-        async () => (await semanticSearch(demo.id, "anything")).length === 0,
+        "semanticSearch is exported + org-isolated (activated in FILE.2)",
+        async () =>
+          // FILE.2 activated the vector query; the SRCH.1 invariant that remains
+          // is org isolation — an unknown org never returns another tenant's docs.
+          Array.isArray(await semanticSearch(demo.id, "anything")) &&
+          (await semanticSearch("org_does_not_exist", "anything")).length === 0,
       );
     }
     await prisma.$disconnect();

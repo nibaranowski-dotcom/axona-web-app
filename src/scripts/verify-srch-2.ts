@@ -42,8 +42,8 @@ async function run(): Promise<void> {
       /scope/.test(route),
   );
   await check(
-    "route resolves org via getCurrentUser + calls search",
-    () => /getCurrentUser/.test(route) && /search\(/.test(route),
+    "route resolves org via getCurrentUser + calls search (hybrid in FILE.2)",
+    () => /getCurrentUser/.test(route) && /(hybridSearch|search)\(/.test(route),
   );
   await check(
     "route returns counts (via countByType)",

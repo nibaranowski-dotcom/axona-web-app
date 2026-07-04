@@ -1,10 +1,11 @@
-import { countByType, search, type SearchScope } from "@axona/db";
+import { countByType, hybridSearch, type SearchScope } from "@axona/db";
 import { getCurrentUser } from "@/lib/session";
 
 // GET /api/search?q=&scope=&limit=  (build-spec §6)
-// Org-scoped FTS. `counts` are per-type totals across ALL types (ignoring scope
-// + limit) so SRCH.3's scope tabs can show live counts. No auth gate yet — the
-// org comes from getCurrentUser() (FND.13 stub, TODO AUTH.1); RBAC.2 adds gating.
+// Org-scoped HYBRID search (FILE.2): FTS ∪ vector — keyword hits keep priority,
+// embeddings add recall (files findable by meaning). FTS-only correct when no
+// embeddings exist. `counts` stay FTS per-type totals for SRCH.3's scope tabs.
+// The org comes from getCurrentUser() (FND.13 stub, TODO AUTH.1).
 
 export const dynamic = "force-dynamic";
 
@@ -64,7 +65,7 @@ export async function GET(request: Request): Promise<Response> {
   // non-JSON body and masks the cause. (SRCH.4)
   try {
     const [result, counts] = await Promise.all([
-      search(user.orgId, q, { scope, limit }),
+      hybridSearch(user.orgId, q, { scope, limit }),
       countByType(user.orgId, q),
     ]);
 

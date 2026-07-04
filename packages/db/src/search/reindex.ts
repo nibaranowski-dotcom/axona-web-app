@@ -9,7 +9,7 @@ import { prisma } from "../client";
 // Indexed set (build-spec §4.2): Modules (global), Agents, Workflows, Projects,
 // Files, Chats. Value-chain/robotics entities are a documented phase-2 extension.
 
-interface DocInput {
+export interface DocInput {
   orgId: string | null;
   type: SearchType;
   refId: string;
@@ -19,7 +19,7 @@ interface DocInput {
   url: string;
 }
 
-async function upsertDoc(d: DocInput): Promise<void> {
+export async function upsertDoc(d: DocInput): Promise<void> {
   await prisma.searchDoc.upsert({
     where: { type_refId: { type: d.type, refId: d.refId } },
     create: d,
