@@ -30,7 +30,12 @@ export function AgentChat({ agent }: { agent: AgentSummary }) {
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 py-5">
+      <div
+        role="region"
+        aria-label="Conversation"
+        tabIndex={0}
+        className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 py-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+      >
         {proposals.length > 0 && (
           <ul className="flex flex-col gap-2" aria-label="Proposed actions">
             {proposals.map((p, i) => (

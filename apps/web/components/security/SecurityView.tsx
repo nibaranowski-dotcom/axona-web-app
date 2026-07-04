@@ -11,6 +11,7 @@ import {
 import { PosturePanel } from "./PosturePanel";
 import { AccessPanel } from "./AccessPanel";
 import { VulnerabilitiesTable } from "./VulnerabilitiesTable";
+import { StatStrip } from "@/components/shell/StatStrip";
 
 export interface SecurityScreenData extends SecurityData {
   accessGrants: AccessGrant[];
@@ -108,21 +109,7 @@ export function SecurityView({
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto px-6 py-[22px]">
           {/* summary strip */}
-          <div className="flex overflow-hidden rounded-card border border-line bg-paper">
-            {stats.map((s, i) => (
-              <div
-                key={s.l}
-                className={`flex-1 px-[18px] py-[15px] ${i ? "border-l border-line" : ""}`}
-              >
-                <div className="text-[22px] font-bold tracking-[-0.03em] text-ink">
-                  {s.v}
-                </div>
-                <div className="mt-[3px] font-mono text-[9px] uppercase tracking-[0.05em] text-ink-muted">
-                  {s.l}
-                </div>
-              </div>
-            ))}
-          </div>
+          <StatStrip stats={stats} />
 
           <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-[1.25fr_1fr]">
             <PosturePanel posture={data.devicePosture} />

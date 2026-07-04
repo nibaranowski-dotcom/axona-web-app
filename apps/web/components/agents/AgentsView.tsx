@@ -15,9 +15,22 @@ export interface AgentGroup {
   agents: AgentSummary[];
 }
 
+// UX.1: open a sensible agent on load so the chat + reasoning stream render
+// immediately (was an empty "Select an agent…" placeholder). Prefer the Command
+// Center Axona agent (GA.1), else the first roster agent.
+function pickDefaultAgent(groups: AgentGroup[]): AgentSummary | null {
+  const all = groups.flatMap((g) => g.agents);
+  const axona = all.find(
+    (a) => /^axona/i.test(a.code) || /axona agent/i.test(a.name),
+  );
+  return axona ?? all[0] ?? null;
+}
+
 export function AgentsView({ groups }: { groups: AgentGroup[] }) {
   const [needsAttention, setNeedsAttention] = useState(false);
-  const [selected, setSelected] = useState<AgentSummary | null>(null);
+  const [selected, setSelected] = useState<AgentSummary | null>(() =>
+    pickDefaultAgent(groups),
+  );
 
   const total = groups.reduce((n, g) => n + g.agents.length, 0);
   const critical = groups.reduce(

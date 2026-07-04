@@ -12,6 +12,7 @@ import { SpcChart } from "./SpcChart";
 import { DefectPareto } from "./DefectPareto";
 import { CertList } from "./CertList";
 import { NcrTable } from "./NcrTable";
+import { StatStrip } from "@/components/shell/StatStrip";
 
 export interface QualityScreenData extends QualityData {
   traceLines: { ts?: string; kind?: string; text?: string }[];
@@ -124,21 +125,7 @@ export function QualityView({
           className="flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto px-6 py-[22px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
         >
           {/* summary strip */}
-          <div className="flex overflow-hidden rounded-card border border-line bg-paper">
-            {stats.map((s, i) => (
-              <div
-                key={s.l}
-                className={`flex-1 px-[18px] py-[15px] ${i ? "border-l border-line" : ""}`}
-              >
-                <div className="text-[22px] font-bold tracking-[-0.03em] text-ink">
-                  {s.v}
-                </div>
-                <div className="mt-[3px] font-mono text-[9px] uppercase tracking-[0.05em] text-ink-muted">
-                  {s.l}
-                </div>
-              </div>
-            ))}
-          </div>
+          <StatStrip stats={stats} />
 
           {primary && <SpcChart series={primary} />}
 

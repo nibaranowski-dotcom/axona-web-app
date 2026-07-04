@@ -33,8 +33,10 @@ export function TraceConsole({
 
   // TODO ART.5: subscribe to the AgentRun/WorkflowRun SSE stream and append lines.
 
+  // shrink-0 (UX.1): the overflow-hidden card would otherwise collapse in the
+  // parent flex-col scroll region and clip its trace lines.
   return (
-    <section className="overflow-hidden rounded-card border border-line-strong bg-ink-strong">
+    <section className="shrink-0 overflow-hidden rounded-card border border-line-strong bg-ink-strong">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

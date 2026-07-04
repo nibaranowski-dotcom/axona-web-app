@@ -1174,3 +1174,25 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - [ ] "Search unavailable" now appears only on a genuine 5xx/transport failure.
 
 **Notes** — No new deps, no schema.prisma change. Reinforces the WF.1 flag: the dev DB needs its Prisma migration history baselined so `db push` stops clobbering hand-authored FTS/pgvector DDL; `ensureSearchIndexSchema` is the interim guard for the search index specifically.
+
+---
+
+## UX.1 — Screen polish pass (layout bugfixes)
+
+**Root causes**
+- **Stat strip clipped its numbers** — the strip is `flex overflow-hidden rounded-card`; `overflow-hidden` (for the rounded corners) makes the row's flex `min-height` compute to 0, so the parent flex-col scroll region shrank it below its content (cell 31px vs 33px number) and clipped the digits. Same mechanism clipped the `overflow-hidden` TraceConsole. **Fix: `shrink-0`** on both.
+- **/agents empty pane** — AgentsView initialised `selected=null` → "Select an agent…" placeholder.
+
+**Fix (pure UI; no data/API/schema change)**
+1. Extracted a shared **`components/shell/StatStrip.tsx`** (`shrink-0` + the exact v2 22px-bold-value / 9px-mono-label markup) and swapped it into all **12** module Views (Quality, Sales, Marketing, Field Service, Engineering, Autonomy, Finance, Security, Legal, Fulfillment, People, Manufacturing) — so the layout can't drift again. Values/labels/cell-count unchanged (1:1 with each `.dc.html`).
+2. **TraceConsole** section is `shrink-0` → renders all trace lines at natural height, reachable via the scroll region (no bottom clip, no max-height truncation).
+3. **AgentsView** default-selects the Command Center Axona agent (`pickDefaultAgent`, else first roster agent) via the `useState` initializer → chat + reasoning stream load immediately. Manual selection + the "Needs attention" filter unchanged.
+
+**Automated**
+- `pnpm verify:ux-1` (6 checks) — StatStrip exists w/ shrink-0; all 12 Views use it; no View hand-rolls the clipped inline strip; TraceConsole shrink-0 (no max-h); /agents default-selects. tsc/lint clean; CI gate green (all verifies stay green).
+
+**Manual (./dev.sh)**
+- [ ] `/quality`, `/sales`, `/engineering`, `/finance`, etc. — stat numbers + labels fully visible (no top/bottom crop); 240px sidebar / 60px header intact.
+- [ ] `/engineering` (or `/quality`) — scroll to the dark Agent trace: every line renders, nothing clipped at the viewport bottom.
+- [ ] `/agents` — opens with the Axona agent chat already loaded (not "Select an agent…"); clicking another agent still switches; "Needs attention" still filters.
+- [ ] accessibility-review 0 on touched screens.
