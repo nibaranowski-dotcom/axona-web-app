@@ -96,6 +96,12 @@ export function AgentPane({
     [onPointerMove, stopDrag],
   );
 
+  // UX.2: /agents has its own roster + chat surface — suppress the global Axona
+  // pane (and its collapsed rail) there so the agent chat isn't duplicated. All
+  // hooks above run unconditionally (Rules of Hooks); only the render is skipped.
+  // The shell grid's third (auto) column collapses to zero width with no content.
+  if (pathname === "/agents") return null;
+
   // First paint = defaults (avoid hydration mismatch); reflect store once mounted.
   if (mounted && collapsed) return <AgentRail />;
 

@@ -1196,3 +1196,15 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - [ ] `/engineering` (or `/quality`) — scroll to the dark Agent trace: every line renders, nothing clipped at the viewport bottom.
 - [ ] `/agents` — opens with the Axona agent chat already loaded (not "Select an agent…"); clicking another agent still switches; "Needs attention" still filters.
 - [ ] accessibility-review 0 on touched screens.
+
+---
+
+## UX.2 — De-duplicate the agent pane on /agents
+
+**Problem** — /agents showed TWO chat surfaces: the Agents screen's own roster→chat (AgentsView) AND the shell's persistent global Axona copilot pane (`shell/AgentPane.tsx`, GA.1/axona-00). Every other route should keep the global pane; /agents should not double it.
+
+**Fix (pure UI)** — `AgentPane` (client) `usePathname()`; after all hooks run, `if (pathname === "/agents") return null` — suppresses both the pane and its collapsed rail on /agents only. The shell grid `grid-cols-[auto_1fr_auto]` third (auto) column collapses to zero width with no content → no empty column, leftover border (the `border-l` lives on the suppressed `<aside>`), or gap. Unchanged on every other route.
+
+**Automated** — `pnpm verify:ux-2` (3 checks): suppresses on /agents via usePathname→null; guard sits after the hooks + before render; global pane/rail intact for other routes. accessibility-review 0 on /agents; tsc/lint clean; CI gate green (verify-ux-1 stays green).
+
+**Manual** — [ ] `/agents` shows exactly one chat pane (the screen's own), no far-right Axona duplicate, no empty column/border. [ ] `/quality` (and any other route) still shows the global Axona pane intact.
