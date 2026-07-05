@@ -1449,3 +1449,19 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - Open `/` → lands on the **Command Center** (`/core`, with the shell). The dark **Mission Control** launcher is at `/launcher` — reached by clicking the **axona wordmark** (top-left) or the sidebar **Search** bar.
 
 **Notes** — pure routing/UX; no data/schema change. `app/page.tsx` now `redirect("/core")`; the launcher moved verbatim to `app/launcher/page.tsx` (same `Launcher` component + `getNavModules`/`getModuleAlerts` data). Internal "Mission Control" back-link (`[module]/page.tsx`) + the sidebar search + wordmark repointed to `/launcher`.
+
+---
+
+## AUDIT.3 — Record model · confidence · approver on the audit log
+
+**Automated**
+- `pnpm verify:audit-3` — schema has `model/confidence/approverId/approverLabel` (+ CONF.1 seam); `writeAudit` persists them; the migration adds the 4 columns (via `migrate dev`); **an agent entry (workflow.run) carries non-null model + confidence + no approver**; **an approval entry carries a non-null approver + null model/confidence**; **append-only preserved** (UPDATE/DELETE no-op on an enriched row). Self-cleaning.
+- CI gate green; siblings (verify-audit-1, verify-rbac-4) stay green; `migrate status` clean.
+
+**Notes / architecture**
+- **Schema:** 4 nullable columns on `AuditLog` via `prisma migrate dev` — `model String?`, `confidence Float?`, `approverId String?`, `approverLabel String?`. Historical rows keep null. `/// CONF.1` seam: `confidence` is what the agent **emitted** (uncalibrated); calibration + the autonomy gate are CONF.1. Append-only rules (AUDIT.1) + FTS/pgvector intact; `migrate status` clean.
+- **`writeAudit`** extended with optional `{ model, confidence, approver }` — no new call sites, no restructuring:
+  - `workflow.run` (executor): `model` = the ModelClient id (Anthropic model or `fake-model`), `confidence` = mean of trace-line confidences else an outcome nominal (SUCCEEDED 0.9 / AWAITING_APPROVAL 0.5 / FAILED 0.2).
+  - `column.extract` (matrix job): `model` = the extraction model id, `confidence` = mean emitted cell confidence.
+  - `po.approve.*` / `workflow.gate.*` (RBAC.4 `decide`): `approver = { id, label }` of the deciding user; model/confidence null.
+- **Deferred:** confidence **calibration** + confidence-gated autonomy (CONF.1/TRUST.1); the ontology event log (ONT.1).

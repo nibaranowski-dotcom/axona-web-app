@@ -260,6 +260,8 @@ export async function decide(
     target: { type: def.targetType, id: targetId },
     summary: eff.summary,
     output: eff.output,
+    // AUDIT.3 — a human decision records the approver (model/confidence null).
+    approver: { id: by.id, label: by.label },
   });
 
   return {

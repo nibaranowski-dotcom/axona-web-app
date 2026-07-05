@@ -70,8 +70,15 @@ export async function runWorkflow(
   job: WorkflowRunJob & { runId: string },
   opts?: { model?: ModelClient },
 ): Promise<RunOutcome> {
+  const db = dbForOrg(job.orgId);
   const outcome = await walkWorkflow(job, opts);
-  await writeAudit(dbForOrg(job.orgId), {
+  // AUDIT.3 — this is an AGENT entry: record the model + the run's emitted
+  // confidence (mean of trace-line confidences, else an outcome-based nominal).
+  const run = await db.workflowRun.findFirst({
+    where: { id: job.runId },
+    select: { trace: true },
+  });
+  await writeAudit(db, {
     orgId: job.orgId,
     actor: { type: "AGENT", id: null, label: "Workflow orchestrator" },
     action: "workflow.run",
@@ -79,8 +86,35 @@ export async function runWorkflow(
     summary: `workflow run → ${outcome}`,
     output: { status: outcome },
     correlationId: job.runId,
+    model: agentModelId(),
+    confidence: runConfidence(run?.trace, outcome),
   });
   return outcome;
+}
+
+/** The ModelClient id an agent run used — real Anthropic model or the offline fake. */
+function agentModelId(): string {
+  return process.env.ANTHROPIC_API_KEY
+    ? (process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-6")
+    : "fake-model";
+}
+
+/** The run's emitted confidence: mean of trace-line confidences, else outcome nominal. */
+function runConfidence(trace: unknown, outcome: RunOutcome): number {
+  const lines = Array.isArray(trace)
+    ? (trace as { confidence?: number }[])
+    : [];
+  const scored = lines.filter((l) => typeof l?.confidence === "number");
+  if (scored.length > 0) {
+    const mean =
+      scored.reduce((s, l) => s + (l.confidence as number), 0) / scored.length;
+    return Math.round(mean * 100) / 100;
+  }
+  return outcome === "SUCCEEDED"
+    ? 0.9
+    : outcome === "AWAITING_APPROVAL"
+      ? 0.5
+      : 0.2;
 }
 
 /** The DAG walk (the run body); runWorkflow wraps it with the audit write. */

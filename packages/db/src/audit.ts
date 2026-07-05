@@ -25,6 +25,11 @@ export interface WriteAuditInput {
   inputs?: unknown;
   output?: unknown;
   correlationId?: string;
+  // AUDIT.3 — agent entries carry model + emitted confidence; human approval
+  // entries carry the approver. All optional.
+  model?: string;
+  confidence?: number;
+  approver?: { id: string; label: string };
 }
 
 const asJson = (v: unknown): Prisma.InputJsonValue =>
@@ -53,6 +58,10 @@ export async function writeAudit(
         inputs: asJson(e.inputs),
         output: asJson(e.output),
         correlationId: e.correlationId ?? null,
+        model: e.model ?? null,
+        confidence: e.confidence ?? null,
+        approverId: e.approver?.id ?? null,
+        approverLabel: e.approver?.label ?? null,
       },
     });
   } catch (err) {

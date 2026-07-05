@@ -915,7 +915,14 @@ model AuditLog {
   correlationId String? // ties a chain together (a run, an approval thread)
   createdAt     DateTime   @default(now())
 
-  /// AUDIT.3 adds: model · confidence · approver (populate there — do NOT add now).
+  // AUDIT.3 — the propose→approve→audit enrichment.
+  model         String? // the ModelClient id an AGENT entry used (e.g. "claude-…"/"fake")
+  /// CONF.1: `confidence` is what the agent EMITTED (uncalibrated); calibration + the
+  /// autonomy gate are CONF.1 — do not treat this as calibrated here.
+  confidence    Float? // the agent's emitted confidence (run/answer); null for humans
+  approverId    String? // the deciding user on a HUMAN approval entry (RBAC.4)
+  approverLabel String? // denormalized approver display
+
   /// ONT.1 hardens this table into the immutable ontology event log — don't fork it.
   @@index([orgId, createdAt])
   @@index([targetType, targetId])

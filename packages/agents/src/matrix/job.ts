@@ -57,6 +57,7 @@ export async function runColumnExtraction(
   );
 
   let answered = 0;
+  const confidences: number[] = [];
   for (const r of results) {
     if (r.status !== "fulfilled") continue;
     await db.file.updateMany({
@@ -65,10 +66,18 @@ export async function runColumnExtraction(
         extracted: mergeAnswer(r.value.extracted, columnId, r.value.answer),
       },
     });
+    confidences.push(r.value.answer.confidence);
     answered++;
   }
 
-  // AUDIT.1 — the extraction is an agent action; log it (best-effort).
+  // AUDIT.1 + AUDIT.3 — the extraction is an AGENT action: log it with the model +
+  // the mean emitted cell confidence (best-effort; never rolls back the extraction).
+  const meanConfidence =
+    confidences.length > 0
+      ? Math.round(
+          (confidences.reduce((s, c) => s + c, 0) / confidences.length) * 100,
+        ) / 100
+      : undefined;
   await writeAudit(db, {
     orgId,
     actor: { type: "AGENT", id: null, label: "Matrix extraction agent" },
@@ -77,6 +86,10 @@ export async function runColumnExtraction(
     summary: `extracted "${question}" across ${answered}/${files.length} files`,
     inputs: { question },
     output: { files: files.length, answered },
+    model: process.env.ANTHROPIC_API_KEY
+      ? (process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-6")
+      : "fake-extract",
+    confidence: meanConfidence,
   });
 
   return { files: files.length, answered };

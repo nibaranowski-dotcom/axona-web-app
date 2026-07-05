@@ -164,10 +164,16 @@ for (const story of ["ONT.1", "CONF.1", "AUDIT.3"]) {
     fail(`trace /// pointer must reference ${story}`);
   }
 }
+// The moat columns must not be added PREMATURELY to the §3.2 run models (they
+// belong on AuditLog, added by AUDIT.3). Scope the ban to WorkflowRun/AgentRun so
+// AUDIT.3's AuditLog.model/confidence/approver* columns are allowed.
+const runBlocks = [block("model", "WorkflowRun"), block("model", "AgentRun")]
+  .filter(Boolean)
+  .join("\n");
 for (const banned of ["confidence", "approver"]) {
-  if (new RegExp(`^\\s*${banned}\\s+`, "m").test(schema)) {
+  if (new RegExp(`^\\s*${banned}\\s+`, "m").test(runBlocks)) {
     fail(
-      `schema must NOT add a \`${banned}\` column yet (lands in CONF.1/AUDIT.3)`,
+      `WorkflowRun/AgentRun must NOT add a \`${banned}\` column (lands on AuditLog in AUDIT.3)`,
     );
   }
 }
