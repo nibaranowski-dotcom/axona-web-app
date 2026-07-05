@@ -47,8 +47,12 @@ const ADVANCE: Partial<Record<QueuePO["status"], string>> = {
   APPROVED: "Send",
 };
 
+// One template shared by the header AND every row (PO_HEADER_COLS = COLS). The
+// actions column is a FIXED width reserved on all rows (empty when a row has no
+// buttons) so PO · Item · Vendor · Value · Status align vertically regardless of
+// the Approve/Reject buttons (UX.5). fr ratios match Procurement.dc.html.
 const COLS =
-  "grid grid-cols-[0.8fr_2.2fr_1fr_0.9fr_1.1fr_auto] items-center gap-3 px-5";
+  "grid grid-cols-[0.8fr_2.2fr_1fr_0.9fr_1.15fr_160px] items-center gap-3 px-5";
 
 export function PoRow({
   po,

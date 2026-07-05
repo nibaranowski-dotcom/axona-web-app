@@ -1521,3 +1521,20 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Finance credit-note wired (not deferred):** the registry's `creditnote.issue` targets the `Invoice` (status → "credited"); the Receivables/AR panel already renders invoices, so the credit-note issuance is a natural fit — an open receivable is the pending item.
 - **No seed change needed:** the through-line already provides the pending items — ECO-318 (REVIEW), p-13 (canary · Site-3 regression), open invoices (INV-77xx). Each screen renders a real Approve/Reject.
 - **Deferred (flagged):** `policy.promote` (roll a healthy canary forward to *current*) — a future gated kind, out of RBAC.5's "no new approval logic" scope. `/// TRUST.1` + `/// CONF.1` seams left in the registry (confidence-gated auto-approval later).
+
+---
+
+## UX.5 — Two UI bugs (audit sticky-header bleed · procurement column misalignment)
+
+**Automated**
+- `pnpm verify:ux-5` (7 checks) — audit table region is NOT an overflow scroll container (won't trap the sticky header); the column header is `sticky top-[60px]` with a raised z-index + opaque bg; no fixed min-width (responsive `minmax` columns); the ScreenShell topbar is `sticky top-0 z-20 bg-paper` (covers 0→60 above the pinned header); PoRow reserves a **fixed-width** actions column (not `auto`); the PO header uses the identical template; no invented reds/emoji.
+- CI gate green; verify:all green (UX.4 scroll not regressed; RBAC.4/5 approve wiring intact); accessibility-review 0 on /audit + /procurement.
+
+**Manual**
+- **/audit** — scroll the page: the column header (Time · Actor · … · Summary) **stays pinned** just under the 60px topbar at every scroll offset; **no data row renders above or through it**.
+- **/procurement** — the *Awaiting approval* PO (PO-9007, with Reject/Approve) has **PO · Item · Vendor · Value · Status aligned** vertically with the rows above; the buttons occupy the reserved actions column.
+
+**Notes / root cause**
+- **BUG 1:** the audit table region had `overflow-x-auto`. Per CSS, `overflow-x:auto` computes `overflow-y` to `auto`, making the region a scroll container — so the column header's `position:sticky; top:60px` was relative to the (non-scrolling, page-flowing) region, not `<main>`, and it **scrolled away** instead of pinning (a data row then sat directly under the topbar). Fix: the region simply flows (no overflow), the columns are responsive `minmax` (so no horizontal scroll is needed — no scroll container), the header is `sticky top-[60px] z-[15]` with an opaque `bg-panel`, and the ScreenShell topbar (`z-20`, opaque) covers 0→60. Header pins cleanly at every offset. UX.4 vertical page-scroll unaffected.
+- **BUG 2:** `PoRow` used `grid-cols-[…_auto]`. The `auto` actions column sized to content, so rows WITH Approve/Reject buttons consumed width there and their `fr` data columns computed narrower/shifted; rows WITHOUT buttons didn't. Fix: one shared template (`PO_HEADER_COLS = COLS`) with a **fixed `160px`** actions column reserved on every row (empty when there are no buttons) — the `fr` columns now compute identically everywhere. fr ratios match `Procurement.dc.html` (`0.8 2.2 1 0.9 1.15`).
+- Pure UI; no data/logic change; v2 tokens only.

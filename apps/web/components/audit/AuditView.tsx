@@ -191,17 +191,19 @@ export function AuditView({
             )}
           </div>
 
-          {/* table — flows with the page (UX.4); keeps its HORIZONTAL scroll for
-              narrow viewports. Column header pins just below the 60px topbar. */}
+          {/* table — flows with the page (UX.4). The column header pins just below
+              the 60px topbar (UX.5). The region must NOT be an overflow scroll
+              container: overflow-x/y-auto would trap the header's sticky IN the
+              region (it scrolls away instead of pinning). So the columns are
+              responsive (minmax, ROW below) and the region simply flows. */}
           <div
             role="region"
             aria-label="Audit entries"
-            tabIndex={0}
-            className="overflow-x-auto rounded-card border border-line bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+            className="rounded-card border border-line bg-paper"
           >
-            <div className="min-w-[880px]">
+            <div>
               <div
-                className={`${ROW} sticky top-[60px] z-[1] border-b border-line bg-panel py-[11px] font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted`}
+                className={`${ROW} sticky top-[60px] z-[15] border-b border-line bg-panel py-[11px] font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted`}
               >
                 <span>Time</span>
                 <span>Actor</span>
@@ -236,8 +238,10 @@ export function AuditView({
   );
 }
 
+// Responsive template (UX.5) — no fixed min-width, so the table fits the content
+// area without an overflow scroll container (which would trap the sticky header).
 const ROW =
-  "grid grid-cols-[84px_136px_150px_150px_96px_120px_1fr] items-center gap-3 px-4";
+  "grid grid-cols-[76px_minmax(110px,1.1fr)_minmax(120px,1.2fr)_minmax(96px,1fr)_92px_minmax(100px,1fr)_minmax(150px,1.9fr)] items-center gap-3 px-4";
 
 function AuditRow({ e }: { e: AuditEntry }) {
   const approved = /\.approve$/.test(e.action);
