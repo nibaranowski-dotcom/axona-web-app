@@ -50,18 +50,22 @@ async function run(): Promise<void> {
   );
 
   const actions = read(join(base, "app/(shell)/autonomy/actions.ts"));
+  const approvals = read(join(base, "lib/approvals.ts"));
   await check(
-    "advancePolicy: requireRole FIRST, org-scoped, revalidates, AUDIT.3 seam",
+    "policy rollback goes through the RBAC.5 primitive (decide) — no ad-hoc mutation",
     () =>
-      /requireRole\(user, \["ENGINEER", "ADMIN"\]\)/.test(actions) &&
-      /dbForOrg/.test(actions) &&
+      /decide\("policy\.rollback"/.test(actions) &&
       /revalidatePath/.test(actions) &&
-      /AUDIT\.3/.test(actions) &&
-      actions.indexOf("requireRole(") < actions.indexOf("dbForOrg("),
+      !/policyVersion\.(update|updateMany)/.test(actions) && // no direct mutation
+      /requireRole\(user, def\.roles\)/.test(approvals), // decide role-gates first
   );
-  await check("policy promote/rollback is role-gated in the UI", () => {
+  await check("policy rollback approval is role-gated in the UI", () => {
     const t = read(join(base, "components/autonomy/PolicyPanel.tsx"));
-    return /canManage/.test(t) && /advancePolicy/.test(t) && /Rollback/.test(t);
+    return (
+      /canManage/.test(t) &&
+      /approvePolicyRollback/.test(t) &&
+      /rollback/i.test(t)
+    );
   });
 
   await check("no red · no emoji · no raw hex in autonomy components", () => {

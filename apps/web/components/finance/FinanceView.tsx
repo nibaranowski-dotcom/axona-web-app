@@ -18,6 +18,7 @@ import { ScreenShell, ScreenMessage } from "@/components/shell/ScreenShell";
 
 export interface FinanceScreenData extends FinanceData {
   traceLines: { ts?: string; kind?: string; text?: string }[];
+  canIssueCredit?: boolean;
 }
 
 // The Finance & Accounting screen (FIN.2, matching Finance.dc.html on the v2
@@ -126,7 +127,11 @@ export function FinanceView({
 
           <UnitEconomics units={data.unitEconomics} />
 
-          <Receivables invoices={data.invoices} arTotal={data.rollup.arTotal} />
+          <Receivables
+            invoices={data.invoices}
+            arTotal={data.rollup.arTotal}
+            canIssueCredit={data.canIssueCredit}
+          />
 
           {trace.length > 0 && (
             <TraceConsole

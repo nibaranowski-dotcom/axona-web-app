@@ -1,20 +1,20 @@
-import { advanceEco } from "@/app/(shell)/engineering/actions";
+import {
+  advanceEco,
+  approveEcoRelease,
+  rejectEcoRelease,
+} from "@/app/(shell)/engineering/actions";
 import type { Eco } from "@/lib/engineering";
 
 // The change-orders table (Engineering.dc.html) — ECO · Change · Type · Affected
-// · Stage, plus a role-gated advance action. Stage carried by a dot (neutral ·
-// lime in review · green approved) with ink text — AA-safe, brand palette only.
-// RELEASE is the human step (agent proposes; a human releases).
+// · Stage, plus role-gated actions. Stage carried by a dot (neutral · lime in
+// review · green approved) with ink text — AA-safe, brand palette only. RELEASE is
+// the gated human decision: a pre-release ECO (REVIEW/APPROVED) shows Approve
+// release / Reject via the RBAC.5 primitive (audited); a DRAFT just submits.
 const STAGE: Record<string, { dot: string; label: string }> = {
   DRAFT: { dot: "bg-line-strong", label: "Draft" },
   REVIEW: { dot: "bg-accent", label: "Review" },
   APPROVED: { dot: "bg-success", label: "Approved" },
   RELEASED: { dot: "bg-ink-faint", label: "Released" },
-};
-const ADVANCE: Record<string, string> = {
-  DRAFT: "Submit",
-  REVIEW: "Approve",
-  APPROVED: "Release",
 };
 
 const COLS =
@@ -59,7 +59,7 @@ export function EcoTable({
             dot: "bg-line-strong",
             label: e.stage,
           };
-          const advanceLabel = ADVANCE[e.stage];
+          const preRelease = e.stage === "REVIEW" || e.stage === "APPROVED";
           return (
             <div
               key={e.id}
@@ -84,14 +84,33 @@ export function EcoTable({
                   {stage.label}
                 </span>
               </span>
-              <span className="justify-self-end">
-                {canAdvance && advanceLabel ? (
+              <span className="flex items-center justify-end gap-2">
+                {canAdvance && preRelease ? (
+                  <>
+                    <form action={rejectEcoRelease.bind(null, e.id)}>
+                      <button
+                        type="submit"
+                        className="rounded-btn border border-line-strong bg-paper px-3 py-1.5 text-[12px] font-semibold text-ink-muted transition-colors hover:border-ink-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      >
+                        Reject
+                      </button>
+                    </form>
+                    <form action={approveEcoRelease.bind(null, e.id)}>
+                      <button
+                        type="submit"
+                        className="rounded-btn border border-line-strong bg-paper px-3 py-1.5 text-[12px] font-semibold text-ink transition-colors hover:border-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      >
+                        Approve release
+                      </button>
+                    </form>
+                  </>
+                ) : canAdvance && e.stage === "DRAFT" ? (
                   <form action={advanceEco.bind(null, e.id)}>
                     <button
                       type="submit"
                       className="rounded-btn border border-line-strong bg-paper px-3 py-1.5 text-[12px] font-semibold text-ink transition-colors hover:border-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                     >
-                      {advanceLabel}
+                      Submit
                     </button>
                   </form>
                 ) : null}

@@ -68,18 +68,21 @@ async function run(): Promise<void> {
   });
 
   const actions = read(join(base, "app/(shell)/engineering/actions.ts"));
+  const approvals = read(join(base, "lib/approvals.ts"));
   await check(
-    "advanceEco: requireRole FIRST, org-scoped, revalidates, AUDIT.3 seam",
+    "ECO submit is role-gated (requireRole FIRST, org-scoped, revalidates)",
     () =>
       /requireRole\(user, \["ENGINEER", "ADMIN"\]\)/.test(actions) &&
       /dbForOrg/.test(actions) &&
       /revalidatePath/.test(actions) &&
-      /AUDIT\.3/.test(actions) &&
       actions.indexOf("requireRole(") < actions.indexOf("dbForOrg("),
   );
   await check(
-    "release is the human step (APPROVED→RELEASED in the machine)",
-    () => /APPROVED:\s*"RELEASED"/.test(actions),
+    "release is the gated human decision (via decide → eco.release → RELEASED)",
+    () =>
+      /decide\("eco\.release"/.test(actions) && // release goes through the primitive
+      /"eco\.release"/.test(approvals) &&
+      /stage: "RELEASED"/.test(approvals), // the registry effect
   );
 
   await check(

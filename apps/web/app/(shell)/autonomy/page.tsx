@@ -2,6 +2,7 @@ import { dbForOrg } from "@axona/db";
 import { getCurrentUser } from "@/lib/session";
 import { getAutonomyData } from "@/lib/autonomy";
 import { hasRole } from "@/lib/rbac";
+import { approvalRoles } from "@/lib/approvals";
 import {
   AutonomyView,
   type AutonomyScreenData,
@@ -49,7 +50,8 @@ export default async function AutonomyPage() {
         data={{
           ...autonomy,
           traceLines,
-          canManage: hasRole(user, ["ENGINEER", "ADMIN"]),
+          // RBAC.5 — the policy-rollback approval roles come from the registry.
+          canManage: hasRole(user, approvalRoles("policy.rollback")),
         }}
       />
     );

@@ -1,5 +1,7 @@
 import { dbForOrg } from "@axona/db";
 import { getCurrentUser } from "@/lib/session";
+import { hasRole } from "@/lib/rbac";
+import { approvalRoles } from "@/lib/approvals";
 import { getFinanceData } from "@/lib/finance";
 import {
   FinanceView,
@@ -47,7 +49,15 @@ export default async function FinancePage() {
       ? (latestRun.trace as { ts?: string; kind?: string; text?: string }[])
       : [];
 
-    return <FinanceView data={{ ...finance, traceLines }} />;
+    return (
+      <FinanceView
+        data={{
+          ...finance,
+          traceLines,
+          canIssueCredit: hasRole(user, approvalRoles("creditnote.issue")),
+        }}
+      />
+    );
   } catch {
     return <FinanceView data={EMPTY} error />;
   }

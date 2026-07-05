@@ -1500,3 +1500,24 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Fix:** extracted **`components/shell/ScreenShell.tsx`** — `min-h-full` container that GROWS with content, a **`sticky top-0` 60px header** (topbar stays put), and a naturally-flowing body (`px-6 pt-[22px] pb-16 gap-[18px]`, no `flex-1`/`min-h-0`/`overflow-y-auto` cap). The shell's `<main>` is the single scroll container. `ScreenMessage` replaces the old centered `flex-1` empty/error states.
 - **Adopted across all screens:** Security, Fleet, Autonomy, Finance, Field Service, Legal, Quality, Sales, Marketing, Procurement, People, Manufacturing, Fulfillment, Engineering, Inventory, Projects, Workflows (list), Workflow detail, Matrix, and /audit. Command Center fixed in-place (2-col dashboard: `min-h-full` + sticky header, removed the `overflow-hidden` grid cap + per-column `overflow-y-auto`).
 - **Legitimate inner scrolls kept:** the /audit table and the /projects/:id file matrix keep their **horizontal** scroll (`overflow-x-auto`) for wide/dynamic columns while flowing vertically with the page; their column headers pin under the topbar. Panel/board/chart/map artifacts inside child components (dispatch board, SPC chart, compat matrix, delivery pipeline, telemetry) keep their own scroll untouched.
+
+---
+
+## RBAC.5 — Approvals fan-out: ECO release · policy rollback · credit note
+
+**Automated**
+- `pnpm verify:rbac-5` (8 checks) — the three surfaces wire to `decide()` (`eco.release` · `policy.rollback` · `creditnote.issue`); **Autonomy rollback goes exclusively through decide (no ad-hoc mutation)**; **VIEWER forbidden** on eco.release (no state change); **ENGINEER→ECO RELEASED**, **TECH→policy standby**, **FINANCE→invoice credited**, each with an **audited approver**; **cross-org decide blocked**; the new decisions **surface on /audit** (getAuditTrail, with approver). Self-cleaning.
+- CI gate green; siblings (rbac-4, audit-1/2/3, eng-2/auto-2/fin-2 updated for the refactor) stay green; accessibility-review 0 on /engineering, /autonomy, /finance.
+
+**Manual (./dev.sh)**
+- **/engineering:** an ECO at *Review*/*Approved* (e.g. ECO-318) shows **Approve release** + **Reject** (ENGINEER/ADMIN) → decide("eco.release") → the ECO moves to *Released*. A DRAFT ECO shows *Submit* (→ Review).
+- **/autonomy:** the *p-13* canary (Site-3 regression) shows **Approve rollback** + **Reject** (TECH/ADMIN) → decide("policy.rollback") → *Standby*.
+- **/finance → Receivables:** an open invoice shows **Issue credit note** (FINANCE/ADMIN) → decide("creditnote.issue") → the invoice renders a green *Credited* pill.
+- Each decision appends an AuditLog row and appears on **/audit** with the approver (`SELECT action, "approverLabel" FROM "AuditLog" WHERE action LIKE '%.approve' ORDER BY "createdAt" DESC;`).
+
+**Notes / architecture**
+- **No new approval logic** — pure UI wiring over the existing `decide()` primitive + the registered `eco.release`/`policy.rollback`/`creditnote.issue` effects (untouched). Server actions delegate to `decide()` (like PROC.2/RBAC.4): `approveEcoRelease`/`rejectEcoRelease`, `approvePolicyRollback`/`rejectPolicyRollback`, `issueCreditNote`. Role gates in the UI via `hasRole(approvalRoles(kind))`; enforced server-side by `decide` (requireRole line 1).
+- **Refactors (no ad-hoc path left):** Autonomy's `advancePolicy(promote|rollback)` → removed; the rollback now goes through `decide("policy.rollback")`. Engineering's `advanceEco` trimmed to the DRAFT→REVIEW *submit* step; the gated RELEASE is decide-only.
+- **Finance credit-note wired (not deferred):** the registry's `creditnote.issue` targets the `Invoice` (status → "credited"); the Receivables/AR panel already renders invoices, so the credit-note issuance is a natural fit — an open receivable is the pending item.
+- **No seed change needed:** the through-line already provides the pending items — ECO-318 (REVIEW), p-13 (canary · Site-3 regression), open invoices (INV-77xx). Each screen renders a real Approve/Reject.
+- **Deferred (flagged):** `policy.promote` (roll a healthy canary forward to *current*) — a future gated kind, out of RBAC.5's "no new approval logic" scope. `/// TRUST.1` + `/// CONF.1` seams left in the registry (confidence-gated auto-approval later).

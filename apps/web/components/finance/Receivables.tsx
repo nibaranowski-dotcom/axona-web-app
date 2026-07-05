@@ -1,18 +1,22 @@
+import { issueCreditNote } from "@/app/(shell)/finance/actions";
 import type { FinanceInvoice } from "@/lib/finance";
 import { AGING_BADGE, agingLabel, fmtMoney } from "./format";
 
 // Receivables / AR aging (Finance.dc.html) — invoice · account·source · amount ·
-// terms · aging pill (overdue = ink, due-soon = lime, current = neutral-green).
-// BMW net-60 (not due) + Kawasaki overdue surface here. Brand palette only.
+// terms · aging pill (overdue = ink, due-soon = lime, current = neutral-green) ·
+// a gated credit-note action (RBAC.5). BMW net-60 (not due) + Kawasaki overdue
+// surface here. Brand palette only.
 const COLS =
-  "grid grid-cols-[1fr_1.4fr_1fr_0.9fr_1.1fr] items-center gap-3 px-5";
+  "grid grid-cols-[1fr_1.4fr_1fr_0.9fr_1.1fr_auto] items-center gap-3 px-5";
 
 export function Receivables({
   invoices,
   arTotal,
+  canIssueCredit = false,
 }: {
   invoices: FinanceInvoice[];
   arTotal: number;
+  canIssueCredit?: boolean;
 }) {
   const now = Date.now();
   return (
@@ -34,6 +38,7 @@ export function Receivables({
         <span>Amount</span>
         <span>Terms</span>
         <span>Aging</span>
+        <span className="sr-only">Action</span>
       </div>
       {invoices.length === 0 ? (
         <p className="border-t border-line px-5 py-8 text-center text-sm text-ink-muted">
@@ -68,6 +73,26 @@ export function Receivables({
                 >
                   {aging.text}
                 </span>
+              </span>
+              <span className="justify-self-end">
+                {iv.status.toUpperCase() === "CREDITED" ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-pill bg-success-tint px-[9px] py-[3px] text-[10.5px] font-semibold text-ink-strong">
+                    <span
+                      aria-hidden
+                      className="h-[6px] w-[6px] rounded-pill bg-success"
+                    />
+                    Credited
+                  </span>
+                ) : canIssueCredit ? (
+                  <form action={issueCreditNote.bind(null, iv.id)}>
+                    <button
+                      type="submit"
+                      className="rounded-btn border border-line-strong bg-paper px-3 py-1.5 text-[11.5px] font-semibold text-ink transition-colors hover:border-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    >
+                      Issue credit note
+                    </button>
+                  </form>
+                ) : null}
               </span>
             </div>
           );
