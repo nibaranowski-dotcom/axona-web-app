@@ -15,6 +15,14 @@ export {
   S3_BUCKET,
 } from "./storage";
 export type { OrgScopedDb } from "./client";
+
+// AUDIT.1 — the immutable event-log writer (shared: apps/web routes + apps/worker).
+export {
+  writeAudit,
+  AuditActor,
+  type WriteAuditInput,
+  type AuditActorInput,
+} from "./audit";
 export { paginateArgs, pageResult } from "./pagination";
 export type { PageArgs } from "./pagination";
 

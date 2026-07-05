@@ -16,6 +16,7 @@ import { seedRobotics } from "./seed/robotics";
 import { seedBackOffice } from "./seed/back-office";
 import { seedProjects } from "./seed/projects";
 import { seedMatrix } from "./seed/matrix";
+import { seedAudit } from "./seed/audit";
 import { seedMachines } from "./seed/machines";
 import { seedWorkflows } from "./seed/workflows";
 
@@ -37,6 +38,17 @@ async function clearDemoOrg(): Promise<void> {
   await prisma.inventoryStock.deleteMany({ where: { orgId } });
   await prisma.purchaseOrder.deleteMany({ where: { orgId } });
   await prisma.file.deleteMany({ where: { project: { orgId } } });
+  // AUDIT.1 — the append-only rule (audit_no_delete) makes a normal DELETE a no-op,
+  // so the seed (an admin/maintenance path, not the app) briefly disables it to
+  // clear THIS tenant's rows, then re-enables. The app path can never do this — it
+  // has no DDL rights; immutability holds everywhere except this deliberate reseed.
+  await prisma.$executeRawUnsafe(
+    `ALTER TABLE "AuditLog" DISABLE RULE audit_no_delete`,
+  );
+  await prisma.auditLog.deleteMany({ where: { orgId } });
+  await prisma.$executeRawUnsafe(
+    `ALTER TABLE "AuditLog" ENABLE RULE audit_no_delete`,
+  );
   await prisma.matrixColumn.deleteMany({
     where: { projectId: { in: projectIds } },
   });
@@ -120,6 +132,7 @@ async function main(): Promise<void> {
   const matrix = await seedMatrix(db);
   const machines = await seedMachines(db);
   const workflows = await seedWorkflows(db);
+  const audit = await seedAudit(db, DEMO_ORG_ID, Date.now());
 
   // 5. Second org (isolation contrast)
   await seedSecondOrg(dbForOrg(SECOND_ORG_ID));
@@ -133,7 +146,8 @@ async function main(): Promise<void> {
       `projects: ${projects}, machines: ${machines.total} (${machines.fixed} fixed), ` +
       `workflows: ${workflows.workflows} (${workflows.runs} runs), ` +
       `inventory: ${inventory.stock} stock rows, ` +
-      `matrix: ${matrix.columns} cols (${matrix.cells} cells).`,
+      `matrix: ${matrix.columns} cols (${matrix.cells} cells), ` +
+      `audit: ${audit.entries} log entries.`,
   );
 }
 

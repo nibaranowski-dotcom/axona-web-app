@@ -1,4 +1,4 @@
-import { dbForOrg, Prisma, RunStatus } from "@axona/db";
+import { dbForOrg, Prisma, RunStatus, writeAudit } from "@axona/db";
 import { TraceCollector } from "../runtime/trace";
 import { runAgent } from "../runtime/run-agent";
 import {
@@ -61,8 +61,30 @@ export async function createWorkflowRun(job: WorkflowRunJob): Promise<string> {
   return run.id;
 }
 
-/** Walk the DAG for an already-created run, persisting the trace incrementally. */
+/**
+ * Walk the DAG, persist the trace, and append ONE immutable audit row for the run
+ * (AUDIT.1) — actor = the orchestrator agent, correlationId = runId, output = the
+ * final outcome (incl. AWAITING_APPROVAL). The audit write never affects the run.
+ */
 export async function runWorkflow(
+  job: WorkflowRunJob & { runId: string },
+  opts?: { model?: ModelClient },
+): Promise<RunOutcome> {
+  const outcome = await walkWorkflow(job, opts);
+  await writeAudit(dbForOrg(job.orgId), {
+    orgId: job.orgId,
+    actor: { type: "AGENT", id: null, label: "Workflow orchestrator" },
+    action: "workflow.run",
+    target: { type: "WorkflowRun", id: job.runId },
+    summary: `workflow run → ${outcome}`,
+    output: { status: outcome },
+    correlationId: job.runId,
+  });
+  return outcome;
+}
+
+/** The DAG walk (the run body); runWorkflow wraps it with the audit write. */
+async function walkWorkflow(
   job: WorkflowRunJob & { runId: string },
   opts?: { model?: ModelClient },
 ): Promise<RunOutcome> {

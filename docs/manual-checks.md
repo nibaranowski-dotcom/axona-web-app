@@ -1394,3 +1394,24 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
   1. The design's right pane is a bespoke citation-aware project agent; per the story the **global Axona pane (GA.1)** stays (Core route) — same citation-aware role, not a third shell pane.
   2. The design hardcodes "Cost / spec impact" + "Agent flag" columns; our matrix is **dynamic** MatrixColumns (the seed provides exactly those + Owner) rendered uniformly as value + confidence + citation cells.
   3. Real seeded values differ from the mock's illustrative ones (3 files/3 columns vs 8/…); through-line data (ECO-318 set) — not fabricated.
+
+---
+
+## AUDIT.1 — Immutable event log + writer
+
+**Automated**
+- `pnpm verify:audit-1` (7 checks, PRD §9) — writeAudit wired at all 4 base sites (po.advance · workflow.run · column.extract · file.upload); migration is append-only (CREATE RULE audit_no_update + audit_no_delete); **writeAudit inserts org-scoped + a forced failure never throws into the caller** (logged, swallowed); **UPDATE and DELETE on a row are no-ops** (the DB rule holds); a **workflow run writes workflow.run with correlationId=runId**; **cross-org read blocked**; the seed spans the through-line targets. Self-cleaning (removes its rows/runs via the admin disable-rule path).
+- CI gate green · siblings (incl. verify-wf-1) stay green · `migrate status` clean.
+
+**Manual (docker compose up -d)**
+- `pnpm db:seed` seeds ~18 historical entries across NCR-118 → ECO-318 → PO-9001 (agent drafts, the workflow run, PO advances, file uploads, column extractions), spread over the last few days.
+- Advance a PO (`/procurement`) / add a matrix column / upload a file → a new AuditLog row appears (`SELECT action, summary FROM "AuditLog" ORDER BY "createdAt" DESC LIMIT 5;`).
+- Immutability: `UPDATE "AuditLog" SET summary='x' WHERE id=…;` and `DELETE FROM "AuditLog" WHERE id=…;` both report 0 rows — the row is unchanged (the rules make them no-ops).
+
+**Notes / architecture**
+- **Model** (`AuditLog`, via `prisma migrate dev`): actorType/actorId/actorLabel · action (dotted verb) · targetType/targetId · summary · inputs/output Json · correlationId · createdAt; `@@index([orgId, createdAt])` + `@@index([targetType, targetId])`. Tenant model (orgId injected by `dbForOrg`; auto-isolated reads). `/// AUDIT.3` (model·confidence·approver) + `/// ONT.1` seams left — no extra columns now.
+- **Append-only is enforced twice:** the writer only INSERTs, and the DB carries `audit_no_update` / `audit_no_delete` rules (`DO INSTEAD NOTHING`) — raw SQL in the `audit1` migration + re-asserted idempotently (`CREATE OR REPLACE RULE`) in the ensure-raw-sql migration (MIGRATE.1). `migrate status` clean; FTS/pgvector intact.
+- **`writeAudit(db, {orgId, actor, action, target, summary, inputs?, output?, correlationId?})`** (`@axona/db/audit.ts`, re-exported at `apps/web/lib/audit.ts`) — the ONLY writer; org-scoped; try/catch so a logging failure never rolls back the business mutation (logged to console). Core in the db package so apps/worker (the WF.1 executor) shares it.
+- **Wired (one line each, no restructuring):** PO advance (`procurement/actions.ts`, replaced the AUDIT.3 seam), the WF.1 executor (`runWorkflow` wraps the DAG walk, correlationId=runId), the MTX.1 fan-out job, the FILE.1 upload route.
+- **Seed cleanup:** the append-only rule blocks the seed's own tenant DELETE, so `clearDemoOrg` briefly disables `audit_no_delete` (an admin/DDL path the app never has), clears this tenant's rows, re-enables — keeping the reseed idempotent while immutability holds for the app.
+- **Deferred:** model·confidence·approver enrichment (AUDIT.3); the approval state machine (RBAC.4); the audit-trail viewer screen (AUDIT.2); the ontology event log (ONT.1).

@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import { dbForOrg, type POStatus } from "@axona/db";
 import { getCurrentUser } from "@/lib/session";
 import { requireRole } from "@/lib/rbac";
+import { writeAudit } from "@/lib/audit";
 
 // The human half of "AI proposes, human approves" (PROC.2). A drafted PO is
 // advanced by a person only — the agent never auto-sends. Role-gated + org-scoped.
-// The full approval state machine + gates are RBAC.4; the immutable event log is
-// AUDIT.3 (seam left below).
+// Every advance appends an immutable audit row (AUDIT.1); the full approval state
+// machine + gates are RBAC.4, and AUDIT.3 enriches the entry (model/confidence/approver).
 
 const NEXT: Record<string, POStatus> = {
   DRAFTED: "AWAITING_APPROVAL",
@@ -34,9 +35,19 @@ export async function advancePurchaseOrder(poId: string): Promise<void> {
   console.info(
     `[procurement] PO ${po.code} ${po.status} → ${to} by ${user.email} (${user.role})`,
   );
-  // /// TODO AUDIT.3: append an immutable event-log row
-  //   { poId, from: po.status, to, actor: user.id, model: null, ts }.
-  //   RBAC.4 formalizes the full approval state machine + gates.
+
+  // AUDIT.1 — append the immutable event-log row (best-effort; never rolls back
+  // the advance). AUDIT.3 will enrich with model/confidence/approver; RBAC.4 adds
+  // the full approval state machine.
+  await writeAudit(db, {
+    orgId: user.orgId,
+    actor: { type: "HUMAN", id: user.id, label: user.email },
+    action: "po.advance",
+    target: { type: "PurchaseOrder", id: po.id },
+    summary: `PO ${po.code} ${po.status} → ${to}`,
+    inputs: { from: po.status },
+    output: { status: to },
+  });
 
   revalidatePath("/procurement");
 }

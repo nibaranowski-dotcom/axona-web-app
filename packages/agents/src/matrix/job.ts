@@ -1,4 +1,4 @@
-import { dbForOrg, Prisma } from "@axona/db";
+import { dbForOrg, Prisma, writeAudit } from "@axona/db";
 import type { ModelClient } from "../runtime/model-client";
 import { EMPTY_TEXT_ANSWER, extractColumn, type ColumnAnswer } from "./extract";
 
@@ -67,6 +67,18 @@ export async function runColumnExtraction(
     });
     answered++;
   }
+
+  // AUDIT.1 — the extraction is an agent action; log it (best-effort).
+  await writeAudit(db, {
+    orgId,
+    actor: { type: "AGENT", id: null, label: "Matrix extraction agent" },
+    action: "column.extract",
+    target: { type: "MatrixColumn", id: columnId },
+    summary: `extracted "${question}" across ${answered}/${files.length} files`,
+    inputs: { question },
+    output: { files: files.length, answered },
+  });
+
   return { files: files.length, answered };
 }
 

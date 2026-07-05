@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/rbac";
 import { getProjectFiles } from "@/lib/projects";
 import { ensureBucket, putObject, s3Configured } from "@/lib/storage";
 import { enqueueFileExtract } from "@/lib/file-queue";
+import { writeAudit } from "@/lib/audit";
 
 // GET  /api/projects/:id/files — org-scoped file list for a project.
 // POST /api/projects/:id/files — upload (multipart `file`): requireRole line 1,
@@ -95,6 +96,16 @@ export async function POST(
       modifiedAt: true,
     },
   });
+  // AUDIT.1 — the upload is a human mutation; log it (best-effort).
+  await writeAudit(db, {
+    orgId: user.orgId,
+    actor: { type: "HUMAN", id: user.id, label: user.email },
+    action: "file.upload",
+    target: { type: "File", id: record.id },
+    summary: `uploaded ${record.name} to ${project.name}`,
+    output: { name: record.name, ext: record.ext, sizeBytes: record.sizeBytes },
+  });
+
   // FILE.2: async extract + embed (non-blocking; the upload returns 201 now).
   enqueueFileExtract(record.id, user.orgId);
   return Response.json({ file: record }, { status: 201 });

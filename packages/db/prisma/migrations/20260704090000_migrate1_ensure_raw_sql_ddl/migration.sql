@@ -27,3 +27,9 @@ CREATE INDEX IF NOT EXISTS "searchdoc_embedding_hnsw"
   ON "SearchDoc" USING hnsw ("embedding" vector_cosine_ops);
 CREATE INDEX IF NOT EXISTS "file_embedding_hnsw"
   ON "File" USING hnsw ("embedding" vector_cosine_ops);
+
+-- AUDIT.1 append-only rules (re-asserted idempotently; the "AuditLog" table is
+-- created in the preceding audit1 migration). CREATE OR REPLACE RULE is idempotent
+-- — this keeps the immutability guarantee drift-proof under `migrate deploy`.
+CREATE OR REPLACE RULE "audit_no_update" AS ON UPDATE TO "AuditLog" DO INSTEAD NOTHING;
+CREATE OR REPLACE RULE "audit_no_delete" AS ON DELETE TO "AuditLog" DO INSTEAD NOTHING;

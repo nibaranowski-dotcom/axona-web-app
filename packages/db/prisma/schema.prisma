@@ -883,3 +883,37 @@ model SearchDoc {
   @@unique([type, refId])
   @@index([orgId])
 }
+
+// ─── AUDIT.1 — immutable event log (§5/§8) ─────────────────────────────────
+// The first brick of the propose→approve→audit substrate: every gated mutation +
+// agent action lands here as an APPEND-ONLY row (actor · action · target · inputs
+// · output). Immutability is enforced twice — the writer only INSERTs, and the DB
+// carries UPDATE/DELETE rules (audit_no_update / audit_no_delete, raw SQL in the
+// audit1 migration + re-asserted in the ensure-raw-sql migration). Written only via
+// `writeAudit()`. Tenant-scoped (orgId injected by dbForOrg) — a trail never leaks.
+enum AuditActor {
+  HUMAN
+  AGENT
+  SYSTEM
+}
+
+model AuditLog {
+  id            String     @id @default(cuid())
+  orgId         String
+  actorType     AuditActor
+  actorId       String? // userId or agentId (null for SYSTEM)
+  actorLabel    String // denormalized display ("M. Osei" / "Sourcing agent" / "system")
+  action        String // dotted verb: "po.advance" | "workflow.run" | "column.extract" | "file.upload"
+  targetType    String // "PurchaseOrder" | "WorkflowRun" | "MatrixColumn" | "File" | …
+  targetId      String
+  summary       String // one line, human-readable
+  inputs        Json? // what the actor/agent saw
+  output        Json? // what resulted (e.g. { status: "AWAITING_APPROVAL" })
+  correlationId String? // ties a chain together (a run, an approval thread)
+  createdAt     DateTime   @default(now())
+
+  /// AUDIT.3 adds: model · confidence · approver (populate there — do NOT add now).
+  /// ONT.1 hardens this table into the immutable ontology event log — don't fork it.
+  @@index([orgId, createdAt])
+  @@index([targetType, targetId])
+}
