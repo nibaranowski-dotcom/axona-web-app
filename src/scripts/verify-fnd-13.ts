@@ -20,8 +20,12 @@ console.log("\nVerifying FND.13 — app shell\n");
 
 check("shell layout exists", existsSync(join(base, "app/(shell)/layout.tsx")));
 check(
-  "root launchpad page exists (DS.1: Mission Control at /)",
+  "root page exists (UX.3: redirects to /core)",
   existsSync(join(base, "app/page.tsx")),
+);
+check(
+  "launcher page exists (UX.3: Mission Control at /launcher)",
+  existsSync(join(base, "app/launcher/page.tsx")),
 );
 check(
   "shell reachable via a module route (DS.1: (shell)/[module])",
@@ -56,8 +60,12 @@ check(
   /AUTH\.1/.test(read(join(base, "lib/session.ts"))),
 );
 check(
-  "landing renders the Launcher (Mission Control)",
-  /Launcher/.test(read(join(base, "app/page.tsx"))),
+  "root lands on the Command Center (UX.3: redirect to /core)",
+  /redirect\(["']\/core["']\)/.test(read(join(base, "app/page.tsx"))),
+);
+check(
+  "/launcher renders the Launcher (Mission Control)",
+  /Launcher/.test(read(join(base, "app/launcher/page.tsx"))),
 );
 
 // Token hygiene across shell components (no raw hex, no emoji)

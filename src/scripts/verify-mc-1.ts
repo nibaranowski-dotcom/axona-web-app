@@ -28,9 +28,9 @@ async function check(
 async function run(): Promise<void> {
   console.log("\nVerifying MC.1 — Mission Control launcher\n");
 
-  const page = read(join(base, "app/page.tsx")); // DS.1: launcher at root
+  const page = read(join(base, "app/launcher/page.tsx")); // UX.3: launcher at /launcher
   await check(
-    "launcher page replaces placeholder",
+    "launcher page renders the Launcher (UX.3: at /launcher)",
     () => /Launcher/.test(page) && !/TODO MC\.1/.test(page),
   );
   await check(

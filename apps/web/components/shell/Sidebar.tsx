@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import type { NavGroup } from "@/lib/nav";
@@ -32,7 +33,7 @@ export function Sidebar({
   const mounted = useMounted();
 
   // Clicking the search bar lands on Mission Control (pill autofocused there).
-  const goToSearch = () => router.push("/");
+  const goToSearch = () => router.push("/launcher");
 
   const navGroups = groups
     .map((g) => ({
@@ -81,7 +82,11 @@ export function Sidebar({
     >
       {/* Wordmark + asymmetric square mark · collapse-menu button */}
       <div className="flex items-center justify-between gap-2 px-2 pb-[18px] pt-1">
-        <div className="flex items-center gap-2">
+        <Link
+          href="/launcher"
+          aria-label="axona — Mission Control"
+          className="flex items-center gap-2 rounded-[7px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
           <span className="text-[21px] font-bold tracking-[-0.04em] text-ink-strong">
             axona
           </span>
@@ -90,7 +95,7 @@ export function Sidebar({
             className="h-3 w-3 flex-none bg-ink-strong"
             style={{ borderRadius: "0 7px 0 7px" }}
           />
-        </div>
+        </Link>
         <button
           type="button"
           onClick={toggleSidebar}

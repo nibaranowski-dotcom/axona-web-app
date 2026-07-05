@@ -1436,3 +1436,16 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **UI:** PoRow adds a Reject button + a Rejected pill (ink, never a warning color); WorkflowDetailView adds Approve/Reject on a parked run (POST `/api/approvals` → refetch). Role-gated via `hasRole` (UI) + `requireRole` (server, in `decide`).
 - **Moat:** never auto-execute a gated action (no auto path); every decision audited (AUDIT.1); org isolation on load + mutate; VIEWER can never approve. `/// TRUST.1` + `/// CONF.1` seams left (confidence-gated auto-approval is later).
 - **Deferred:** confidence-gated/progressive-trust auto-approval (TRUST.1/CONF.1); model·confidence·approver audit columns (AUDIT.3); ECO/policy/credit-note UI wiring; approval notifications (NOTIF.*).
+
+---
+
+## UX.3 — Land on the Command Center at /
+
+**Automated**
+- `pnpm verify:ux-3` (5 static checks) — `"/"` redirects to `/core` (no launcher render at root); `/core` renders the Command Center; `/launcher` renders the launcher (full-screen, outside the (shell) group); the sidebar wordmark + search both reach `/launcher`; **no dangling `"/"`-as-launcher link** remains (root redirect excepted).
+- accessibility-review = 0 on `/core` + `/launcher`.
+
+**Manual (./dev.sh)**
+- Open `/` → lands on the **Command Center** (`/core`, with the shell). The dark **Mission Control** launcher is at `/launcher` — reached by clicking the **axona wordmark** (top-left) or the sidebar **Search** bar.
+
+**Notes** — pure routing/UX; no data/schema change. `app/page.tsx` now `redirect("/core")`; the launcher moved verbatim to `app/launcher/page.tsx` (same `Launcher` component + `getNavModules`/`getModuleAlerts` data). Internal "Mission Control" back-link (`[module]/page.tsx`) + the sidebar search + wordmark repointed to `/launcher`.

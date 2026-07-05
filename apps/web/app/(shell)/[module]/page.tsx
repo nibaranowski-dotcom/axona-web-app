@@ -40,7 +40,7 @@ export default async function ModulePlaceholder({
 
       <div className="mt-6">
         <Link
-          href="/"
+          href="/launcher"
           className="inline-flex items-center rounded-btn border border-line-strong px-4 py-2 text-sm font-medium text-ink transition-colors duration-200 ease-ease hover:border-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           ← Mission Control

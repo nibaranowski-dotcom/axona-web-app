@@ -72,8 +72,8 @@ check(
 // off the nav.
 const sidebar = read(join(base, "components/shell/Sidebar.tsx"));
 check(
-  "sidebar search bar routes to Mission Control (/)",
-  /router\.push\("\/"\)/.test(sidebar),
+  "sidebar search bar routes to Mission Control (/launcher — UX.3)",
+  /router\.push\("\/launcher"\)/.test(sidebar),
 );
 check(
   "sidebar nav hides mission-control + search",

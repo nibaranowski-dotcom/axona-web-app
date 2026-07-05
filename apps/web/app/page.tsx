@@ -1,18 +1,8 @@
-import { Launcher } from "@/components/core/Launcher";
-import { getModuleAlerts } from "@/lib/module-alerts";
-import { getNavModules } from "@/lib/nav";
-import { getCurrentUser } from "@/lib/session";
+import { redirect } from "next/navigation";
 
-// Mission Control (build-spec §4.1) — the post-login DARK launchpad at "/".
-// Full-screen (no shell), matching the DS prototype (Mission Control.dc.html).
-// Module screens live under the (shell) group with the sidebar/agent-pane.
-export const dynamic = "force-dynamic";
-
-export default async function MissionControl() {
-  const user = await getCurrentUser(); // TODO AUTH.1
-  const [groups, alerts] = await Promise.all([
-    getNavModules(),
-    user ? getModuleAlerts(user.orgId) : Promise.resolve({}),
-  ]);
-  return <Launcher groups={groups} alerts={alerts} />;
+// UX.3 — the app lands on the Command Center. "/" redirects to /core; Mission
+// Control (the dark launcher) moved to /launcher (reachable from the sidebar
+// wordmark + search). Pure routing — no data fetch here.
+export default function RootPage() {
+  redirect("/core");
 }
