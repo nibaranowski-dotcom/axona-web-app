@@ -18,6 +18,7 @@ import {
 export interface WorkflowDetailScreenData {
   detail: WorkflowDetail;
   now: number;
+  canDecide?: boolean;
 }
 
 // The Workflow detail screen (WFL.2, matching Workflow.dc.html on the v2 shell):
@@ -26,7 +27,11 @@ export interface WorkflowDetailScreenData {
 // WF.1's RBAC-gated enqueue API. A guardrail gate parks AWAITING_APPROVAL — never
 // auto-executed (propose→approve→audit). The global Axona pane stays (Core route).
 // /// WF.2: swap the replay-on-refetch for live SSE token streaming.
-export function WorkflowDetailView({ detail, now }: WorkflowDetailScreenData) {
+export function WorkflowDetailView({
+  detail,
+  now,
+  canDecide = false,
+}: WorkflowDetailScreenData) {
   const badge = STATUS_BADGE[detail.status];
   const stats = [
     { l: "Steps", v: String(detail.stats.stepCount) },
@@ -108,7 +113,7 @@ export function WorkflowDetailView({ detail, now }: WorkflowDetailScreenData) {
             ))}
           </section>
 
-          <RunConsole detail={detail} now={now} />
+          <RunConsole detail={detail} now={now} canDecide={canDecide} />
         </div>
       </div>
     </div>
@@ -204,10 +209,66 @@ function StepCard({ step, last }: { step: WorkflowStep; last: boolean }) {
   );
 }
 
-function RunConsole({ detail, now }: { detail: WorkflowDetail; now: number }) {
+function RunConsole({
+  detail,
+  now,
+  canDecide,
+}: {
+  detail: WorkflowDetail;
+  now: number;
+  canDecide: boolean;
+}) {
   const [run, setRun] = useState<DetailRun | null>(detail.latestRun);
   const [running, setRunning] = useState(false);
+  const [deciding, setDeciding] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Refetch + replay a run's persisted trace (shared by run + decide).
+  const refetchRun = async (runId: string): Promise<void> => {
+    const r = await fetch(`/api/workflow-runs/${runId}`);
+    if (!r.ok) throw new Error(`fetch run failed: ${r.status}`);
+    const { run: fresh } = (await r.json()) as {
+      run: {
+        id: string;
+        status: DetailRun["status"];
+        trace: DetailRun["trace"];
+        startedAt: string;
+        endedAt: string | null;
+      };
+    };
+    setRun({
+      id: fresh.id,
+      status: fresh.status,
+      at: new Date(fresh.startedAt),
+      endedAt: fresh.endedAt ? new Date(fresh.endedAt) : null,
+      trace: fresh.trace ?? [],
+    });
+  };
+
+  // RBAC.4 — approve/reject a parked run via the approval primitive, then refetch
+  // so the console shows the resumed/rejected trace. Enforced server-side too.
+  const onDecide = async (decision: "APPROVE" | "REJECT") => {
+    if (!run || deciding) return;
+    setDeciding(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/approvals`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          kind: "workflow.gate",
+          targetId: run.id,
+          decision,
+        }),
+      });
+      if (!res.ok) throw new Error(`decision failed: ${res.status}`);
+      await refetchRun(run.id);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setDeciding(false);
+    }
+  };
 
   const onRun = async () => {
     if (running) return;
@@ -283,10 +344,32 @@ function RunConsole({ detail, now }: { detail: WorkflowDetail; now: number }) {
           </p>
         )}
         {run?.status === "AWAITING_APPROVAL" && (
-          <p className="mt-2 font-mono text-[10px] text-ink">
-            Parked — proposed, awaiting human approval (RBAC.4). No action was
-            auto-executed.
-          </p>
+          <div className="mt-2">
+            <p className="font-mono text-[10px] text-ink">
+              Parked — proposed, awaiting human approval (RBAC.4). No action was
+              auto-executed.
+            </p>
+            {canDecide && (
+              <div className="mt-2.5 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void onDecide("APPROVE")}
+                  disabled={deciding}
+                  className="flex-1 rounded-btn bg-ink-strong py-[9px] text-[12.5px] font-semibold text-on-dark transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
+                >
+                  {deciding ? "Deciding…" : "Approve & resume"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void onDecide("REJECT")}
+                  disabled={deciding}
+                  className="rounded-btn border border-line-strong bg-paper px-3.5 py-[9px] text-[12.5px] font-semibold text-ink-muted transition-colors hover:border-ink-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
+                >
+                  Reject
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
 

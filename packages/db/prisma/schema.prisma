@@ -455,6 +455,9 @@ enum POStatus {
   APPROVED
   SENT
   RECEIVED
+  /// RBAC.4: a human rejected the PO at the approval gate — terminal (no send).
+  /// The only non-forward state; added because none of the above means "rejected".
+  REJECTED
 }
 
 model WorkOrderMfg {

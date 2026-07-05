@@ -1415,3 +1415,24 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Wired (one line each, no restructuring):** PO advance (`procurement/actions.ts`, replaced the AUDIT.3 seam), the WF.1 executor (`runWorkflow` wraps the DAG walk, correlationId=runId), the MTX.1 fan-out job, the FILE.1 upload route.
 - **Seed cleanup:** the append-only rule blocks the seed's own tenant DELETE, so `clearDemoOrg` briefly disables `audit_no_delete` (an admin/DDL path the app never has), clears this tenant's rows, re-enables — keeping the reseed idempotent while immutability holds for the app.
 - **Deferred:** model·confidence·approver enrichment (AUDIT.3); the approval state machine (RBAC.4); the audit-trail viewer screen (AUDIT.2); the ontology event log (ONT.1).
+
+---
+
+## RBAC.4 — Approval state machine for gated actions
+
+**Automated**
+- `pnpm verify:rbac-4` (6 checks, PRD §8) — PO advance/reject go through `decide()` (no ad-hoc mutation); PoRow + workflow detail wire the primitive; **VIEWER forbidden + no state change, OPS approve → APPROVED→SENT with an audited approver**; **reject → REJECTED + audited, a second decide is "already decided"**; **cross-org decide blocked**; **workflow.gate approve resumes a parked run (leaves AWAITING_APPROVAL, trace gains "approved by") + audits**. Self-cleaning (restores the PO status, deletes its runs + audit rows).
+- CI gate green · siblings (verify-audit-1, verify-wf-1, verify-proc-2 updated for the refactor) stay green · `migrate status` clean.
+
+**Manual (./dev.sh)**
+- `/procurement`: a PO at *Awaiting approval* shows **Approve** + **Reject** (OPS/ADMIN only). Approve → *Approved* → *Sent*; Reject → *Rejected* (ink pill). Each decision appends an AuditLog row (`SELECT action, summary, "actorLabel" FROM "AuditLog" WHERE action LIKE 'po.approve.%' ORDER BY "createdAt" DESC;`).
+- `/workflows/:id`: run the procurement workflow → it parks *AWAITING_APPROVAL*. **Approve & resume** → the run console refetches and shows the appended `approved by <user> — resuming past the guardrail gate` + `workflow complete` trace, status SUCCEEDED. Reject → FAILED + `rejected by <user>`. Buttons role-gated (`workflow.gate` roles); enforced server-side.
+
+**Notes / architecture**
+- **The primitive** (`apps/web/lib/approvals.ts`): an `ApprovalDef` registry keyed by kind (`po.approve` · `workflow.gate` · `eco.release` · `policy.rollback` · `creditnote.issue`), each declaring `roles` · `load` (org-scoped) · `isPending` · `onApprove`/`onReject` effect. **`decide(kind, targetId, "APPROVE"|"REJECT", user)`**: `requireRole(def.roles)` FIRST → org-scoped load → assert `isPending` → run the effect → `writeAudit({ action: \`${kind}.${decision}\`, actor: HUMAN(user), target, output, summary })`. Idempotent: a non-pending target → `{ok:false, reason:"already_decided"}`, never a double-execute.
+- **Ships two kinds fully:** `po.approve` (DRAFTED→AWAITING_APPROVAL→APPROVED→SENT one step per approve; reject → REJECTED; OPS/ADMIN) and `workflow.gate` (resume the parked WF.1 run via the executor's `resumeParkedRun` — reuses the trace/persist primitives, doesn't fork the engine; APPROVE→SUCCEEDED, REJECT→FAILED, with a decision trace line). `eco.release`/`policy.rollback`/`creditnote.issue` registered (effects wired; UI is a fan-out follow-up).
+- **PO advance refactored** onto `decide()` — `procurement/actions.ts` has no ad-hoc mutation left; `advancePurchaseOrder`/`rejectPurchaseOrder` delegate to the primitive.
+- **Schema:** one bounded enum value `POStatus.REJECTED` (via `prisma migrate dev` — the only non-forward PO state; none of the existing values meant "rejected"). `migrate status` clean; FTS/pgvector intact.
+- **UI:** PoRow adds a Reject button + a Rejected pill (ink, never a warning color); WorkflowDetailView adds Approve/Reject on a parked run (POST `/api/approvals` → refetch). Role-gated via `hasRole` (UI) + `requireRole` (server, in `decide`).
+- **Moat:** never auto-execute a gated action (no auto path); every decision audited (AUDIT.1); org isolation on load + mutate; VIEWER can never approve. `/// TRUST.1` + `/// CONF.1` seams left (confidence-gated auto-approval is later).
+- **Deferred:** confidence-gated/progressive-trust auto-approval (TRUST.1/CONF.1); model·confidence·approver audit columns (AUDIT.3); ECO/policy/credit-note UI wiring; approval notifications (NOTIF.*).

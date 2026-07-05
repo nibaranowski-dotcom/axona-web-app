@@ -37,22 +37,32 @@ async function run(): Promise<void> {
       ),
   );
 
+  // RBAC.4 refactored the approve path onto the reusable approval primitive:
+  // actions.ts delegates to decide("po.approve"); the role guard + org-scoping +
+  // transition map + audit write live in approvals.ts (decide).
   const actions = read(join(base, "app/(shell)/procurement/actions.ts"));
+  const approvals = read(join(base, "lib/approvals.ts"));
   await check(
-    "approve action: requireRole FIRST, org-scoped, revalidates",
+    "approve action routes through decide() (requireRole FIRST + org-scoped in the primitive)",
     () =>
-      /requireRole\(user, \["OPS", "ADMIN"\]\)/.test(actions) &&
-      /dbForOrg/.test(actions) &&
+      /decide\("po\.approve"/.test(actions) &&
       /revalidatePath/.test(actions) &&
-      // requireRole call precedes the dbForOrg(...) call (not the import)
-      actions.indexOf("requireRole(") < actions.indexOf("dbForOrg("),
+      !/purchaseOrder\.(update|updateMany)/.test(actions) && // no ad-hoc mutation
+      // decide() role-gates before touching the DB, org-scoped via dbForOrg.
+      /requireRole\(user, def\.roles\)/.test(approvals) &&
+      /dbForOrg\(user\.orgId\)/.test(approvals) &&
+      approvals.indexOf("requireRole(") < approvals.indexOf("dbForOrg("),
   );
-  await check("AUDIT.3 seam left for the event log", () =>
-    /AUDIT\.3/.test(actions),
+  await check(
+    "every decision audited (decide → writeAudit); TRUST.1/CONF.1 seam left",
+    () =>
+      /writeAudit\(/.test(approvals) &&
+      /TRUST\.1/.test(approvals) &&
+      /CONF\.1/.test(approvals),
   );
   await check(
     "only human reaches SENT (agent never auto-sends: APPROVED→SENT is the human step)",
-    () => /APPROVED:\s*"SENT"/.test(actions),
+    () => /APPROVED:\s*"SENT"/.test(approvals),
   );
   await check("status pills — no red", () => {
     const t = read(join(base, "components/procurement/PoRow.tsx"));

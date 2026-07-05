@@ -31,17 +31,21 @@ async function run(): Promise<void> {
   console.log("\nVerifying AUDIT.1 — immutable event log + writer\n");
 
   // --- static: writer wired at the four base call sites + the append-only rule ---
-  const poAction = read("apps/web/app/(shell)/procurement/actions.ts");
+  // (RBAC.4 moved the PO audit from actions.ts's inline po.advance into the shared
+  //  decide() primitive, which audits every gated decision as `${kind}.${decision}`.)
+  const approvals = read("apps/web/lib/approvals.ts");
   const executor = read("packages/agents/src/workflow/executor.ts");
   const matrixJob = read("packages/agents/src/matrix/job.ts");
   const fileRoute = read("apps/web/app/api/projects/[id]/files/route.ts");
   const migration = read(
     "packages/db/prisma/migrations/20260704085500_audit1_audit_log/migration.sql",
   );
-  const poWired = /writeAudit/.test(poAction) && /"po\.advance"/.test(poAction);
+  const poWired =
+    /writeAudit\(/.test(approvals) &&
+    /\$\{kind\}\.\$\{decision\.toLowerCase\(\)\}/.test(approvals);
 
   await check(
-    "writeAudit wired at all 4 sites (po/workflow/column/file)",
+    "writeAudit wired at all 4 sites (po-via-decide/workflow/column/file)",
     () => {
       return (
         poWired &&

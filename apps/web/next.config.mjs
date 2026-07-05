@@ -7,7 +7,11 @@ const nextConfig = {
     // FILE.2 text extractors are server-only (worker + API routes) and pull Node
     // built-ins (fs) their bundlers can't satisfy — keep them external so
     // `next build` never bundles them into a route/server graph.
-    serverComponentsExternalPackages: ["pdf-parse", "mammoth"],
+    serverComponentsExternalPackages: [
+      "pdf-parse",
+      "mammoth",
+      "@anthropic-ai/sdk",
+    ],
   },
   webpack: (config, { isServer }) => {
     // The @axona/db barrel transitively references pdf-parse/mammoth (FILE.2). They

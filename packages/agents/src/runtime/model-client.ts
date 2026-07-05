@@ -1,7 +1,14 @@
-import Anthropic from "@anthropic-ai/sdk";
+import type Anthropic from "@anthropic-ai/sdk";
 
 // The loop depends on this interface (DI), never the SDK directly — so the
 // FakeModelClient keeps `pnpm verify:art-1` offline and CI deterministic.
+//
+// The concrete SDK is imported LAZILY (dynamic import inside createMessage), so a
+// static `import` of "@anthropic-ai/sdk" never enters any consumer's bundle graph.
+// This matters because @axona/agents is transpiled into apps/web (RBAC.4 pulls
+// resumeParkedRun through the barrel) — an eager SDK import broke `next build`
+// ("Cannot get final name for export 'AnthropicError'"). The type-only import above
+// is erased at build time; the value loads only on a real API call.
 
 export interface ModelMessage {
   role: "user" | "assistant";
@@ -31,16 +38,26 @@ export interface ModelClient {
 // stale literal in call sites — read it here from env, default below.
 const DEFAULT_MODEL = "claude-sonnet-4-6";
 
-/** Real impl — wraps @anthropic-ai/sdk. Model + key from env. */
+/** Real impl — wraps @anthropic-ai/sdk (loaded lazily). Model + key from env. */
 export class AnthropicModelClient implements ModelClient {
   private readonly model: string;
-  private readonly client: Anthropic;
+  private readonly apiKey: string;
+  private client?: Anthropic;
 
   constructor(opts: { model?: string; apiKey?: string } = {}) {
     const apiKey = opts.apiKey ?? process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");
+    this.apiKey = apiKey;
     this.model = opts.model ?? process.env.ANTHROPIC_MODEL ?? DEFAULT_MODEL;
-    this.client = new Anthropic({ apiKey });
+  }
+
+  // Lazily construct the SDK client on first use (see the module note above).
+  private async getClient(): Promise<Anthropic> {
+    if (!this.client) {
+      const AnthropicSDK = (await import("@anthropic-ai/sdk")).default;
+      this.client = new AnthropicSDK({ apiKey: this.apiKey });
+    }
+    return this.client;
   }
 
   async createMessage(args: {
@@ -48,7 +65,8 @@ export class AnthropicModelClient implements ModelClient {
     messages: ModelMessage[];
     tools: ModelToolSpec[];
   }): Promise<ModelResponse> {
-    const res = await this.client.messages.create({
+    const client = await this.getClient();
+    const res = await client.messages.create({
       model: this.model,
       max_tokens: 1024,
       system: args.system,

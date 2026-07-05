@@ -192,3 +192,54 @@ export async function executeWorkflowRun(
   const status = await runWorkflow({ ...job, runId }, opts);
   return { runId, status };
 }
+
+/**
+ * RBAC.4 — resume a run parked at a guardrail gate after a human decision. Reuses
+ * the executor's trace/persist primitives (does NOT fork the engine): preserves the
+ * parked trace, appends the decision line, and moves the run to a terminal state —
+ * APPROVE → SUCCEEDED, REJECT → FAILED. Org-scoped; idempotent (a non-parked run is
+ * returned as-is). The AUDIT.1 entry is written by the approval primitive (decide).
+ */
+export async function resumeParkedRun(
+  runId: string,
+  orgId: string,
+  decision: "APPROVE" | "REJECT",
+  approverLabel: string,
+): Promise<RunOutcome> {
+  const db = dbForOrg(orgId);
+  const run = await db.workflowRun.findFirst({ where: { id: runId } });
+  if (!run) throw new Error("run not found in org");
+  if (run.status !== RunStatus.AWAITING_APPROVAL) {
+    return run.status as RunOutcome; // already resolved — no double-resume
+  }
+
+  const trace = new TraceCollector();
+  const existing = Array.isArray(run.trace) ? (run.trace as unknown[]) : [];
+  for (const line of existing)
+    trace.lines.push(line as (typeof trace.lines)[number]);
+
+  const terminal =
+    decision === "APPROVE" ? RunStatus.SUCCEEDED : RunStatus.FAILED;
+  if (decision === "APPROVE") {
+    trace.push(
+      "policy-check",
+      `approved by ${approverLabel} — resuming past the guardrail gate`,
+    );
+    trace.push("result", "workflow complete (post-approval)");
+  } else {
+    trace.push(
+      "policy-check",
+      `rejected by ${approverLabel} — halted at the guardrail gate`,
+    );
+  }
+
+  await db.workflowRun.updateMany({
+    where: { id: runId },
+    data: {
+      status: terminal,
+      trace: trace.lines as unknown as Prisma.InputJsonValue,
+      endedAt: new Date(),
+    },
+  });
+  return decision === "APPROVE" ? "SUCCEEDED" : "FAILED";
+}

@@ -1,4 +1,7 @@
-import { advancePurchaseOrder } from "@/app/(shell)/procurement/actions";
+import {
+  advancePurchaseOrder,
+  rejectPurchaseOrder,
+} from "@/app/(shell)/procurement/actions";
 import type { QueuePO } from "@/lib/procurement";
 
 // One PO-queue row (matches Procurement.dc.html columns). Status pill: functional
@@ -29,6 +32,12 @@ const STATUS: Record<
     cls: "bg-success-tint text-ink-strong",
     label: "Received",
     dot: "bg-success",
+  },
+  // RBAC.4: a human rejected the PO at the gate — terminal, rendered in ink.
+  REJECTED: {
+    cls: "bg-ink-strong text-on-dark",
+    label: "Rejected",
+    dot: null,
   },
 };
 
@@ -82,7 +91,17 @@ export function PoRow({
           {status.label}
         </span>
       </span>
-      <span className="justify-self-end">
+      <span className="flex items-center justify-end gap-2">
+        {canApprove && po.status === "AWAITING_APPROVAL" ? (
+          <form action={rejectPurchaseOrder.bind(null, po.id)}>
+            <button
+              type="submit"
+              className="rounded-btn border border-line-strong bg-paper px-3 py-1.5 text-[12.5px] font-semibold text-ink-muted transition-colors hover:border-ink-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              Reject
+            </button>
+          </form>
+        ) : null}
         {canApprove && advanceLabel ? (
           <form action={advancePurchaseOrder.bind(null, po.id)}>
             <button

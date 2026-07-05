@@ -113,6 +113,7 @@ export {
   createWorkflowRun,
   runWorkflow,
   executeWorkflowRun,
+  resumeParkedRun,
   type WorkflowRunJob,
   type RunOutcome,
 } from "./workflow/executor";
