@@ -1483,3 +1483,20 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Screen** (`/audit`): DS.1 primitives — shared `StatStrip` + a brand-matched hairline table (no v2 `.dc.html` for this surface). Cross-cutting route → moduleKey "audit" has no agents → the **global Axona pane** shows automatically. Sidebar "Audit trail" link (Governance — a static entry, not a value-chain module).
 - **Seed enrichment (flagged):** AUDIT.1's seeded rows predated AUDIT.3's columns, so `seed/audit.ts` now derives model+confidence for agent entries and approver for human-decision entries, with one explicit low-confidence entry (compat.check @ 0.31) — so the trail renders fully populated (2 flagged, 5 approvals). Not fabricated activity — the same rows, enriched with the fields real runs now emit.
 - **Deferred:** a ⌘K palette entry (no command palette exists yet — search routes to /launcher; flagged, not built); a dedicated screen for ECO/NCR targets (rendered as plain text until those screens land).
+
+---
+
+## UX.4 — Module screens scroll as one page; nothing vertically cropped
+
+**Automated**
+- `pnpm verify:ux-4` (6 checks) — the shared **ScreenShell** scaffold exists (min-h-full container, sticky 60px header, `pb-16` bottom padding, no `overflow-y-auto`/`h-full` viewport-cap on the body); **no module screen keeps the old `flex h-full flex-col bg-panel` viewport-lock**; **no nested full-height `overflow-y-auto` body wrapper** remains; ScreenShell adopted across ≥ 18 screens incl. /audit; Command Center scrolls (min-h-full, sticky header, no overflow-hidden grid cap); StatStrip + TraceConsole still the flowing first/last children.
+- CI gate green; siblings (verify-ux-1/2/3, verify-audit-2, …) stay green; accessibility-review 0 on the touched screens.
+
+**Manual (./dev.sh — resize the window short, e.g. ~720px tall)**
+- Any module screen (/fleet, /autonomy, /security, /field-service, /audit, /core, …) scrolls as **one page**: the 60px topbar **stays pinned**, and the lower panels (Live units, Vulnerabilities, Safety incidents, …) **and the full agent trace** are reachable by scrolling — none cropped. Bottom padding keeps the last panel off the viewport edge.
+
+**Notes / architecture**
+- **Root cause:** every View was `<div className="flex h-full flex-col">` (viewport-locked) with a nested `overflow-y-auto` body inside the shell's `<main>` (which also scrolls). The double-scroll, both capped to the viewport, trapped lower content — `main.scrollHeight === clientHeight` (page couldn't scroll). Verified before/after: `mainScrolls: false → true` on /security, /autonomy, /fleet, /audit, /core.
+- **Fix:** extracted **`components/shell/ScreenShell.tsx`** — `min-h-full` container that GROWS with content, a **`sticky top-0` 60px header** (topbar stays put), and a naturally-flowing body (`px-6 pt-[22px] pb-16 gap-[18px]`, no `flex-1`/`min-h-0`/`overflow-y-auto` cap). The shell's `<main>` is the single scroll container. `ScreenMessage` replaces the old centered `flex-1` empty/error states.
+- **Adopted across all screens:** Security, Fleet, Autonomy, Finance, Field Service, Legal, Quality, Sales, Marketing, Procurement, People, Manufacturing, Fulfillment, Engineering, Inventory, Projects, Workflows (list), Workflow detail, Matrix, and /audit. Command Center fixed in-place (2-col dashboard: `min-h-full` + sticky header, removed the `overflow-hidden` grid cap + per-column `overflow-y-auto`).
+- **Legitimate inner scrolls kept:** the /audit table and the /projects/:id file matrix keep their **horizontal** scroll (`overflow-x-auto`) for wide/dynamic columns while flowing vertically with the page; their column headers pin under the topbar. Panel/board/chart/map artifacts inside child components (dispatch board, SPC chart, compat matrix, delivery pipeline, telemetry) keep their own scroll untouched.

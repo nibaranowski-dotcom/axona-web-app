@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { FileText, Plus, Sparkles } from "lucide-react";
+import { ScreenShell } from "@/components/shell/ScreenShell";
 import type {
   MatrixCell,
   MatrixColumnDef,
@@ -94,26 +95,28 @@ export function MatrixView({ data }: { data: MatrixScreenData }) {
 
   // Column widths: metadata columns fixed; each extracted column flexes.
   return (
-    <div className="flex h-full flex-col bg-panel">
-      {/* topbar */}
-      <header className="flex h-[60px] flex-none items-center justify-between border-b border-line bg-paper px-6">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.04em] text-ink-muted">
-            <Link
-              href="/projects"
-              className="hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            >
-              Projects
-            </Link>
-            <span aria-hidden>/</span>
-            <span className="text-ink-muted">{data.moduleLabel}</span>
+    <ScreenShell
+      bodyClassName="gap-0 px-0 pt-0"
+      header={
+        <>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.04em] text-ink-muted">
+              <Link
+                href="/projects"
+                className="hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                Projects
+              </Link>
+              <span aria-hidden>/</span>
+              <span className="text-ink-muted">{data.moduleLabel}</span>
+            </div>
+            <h1 className="mt-0.5 truncate text-[18px] font-semibold tracking-[-0.02em] text-ink">
+              {data.projectName}
+            </h1>
           </div>
-          <h1 className="mt-0.5 truncate text-[18px] font-semibold tracking-[-0.02em] text-ink">
-            {data.projectName}
-          </h1>
-        </div>
-      </header>
-
+        </>
+      }
+    >
       {/* ask-across-files bar */}
       <div className="flex flex-none items-center gap-3 border-b border-line bg-paper px-6 py-[13px]">
         <div className="flex flex-1 items-center gap-2.5 rounded-btn border border-line-strong bg-panel px-3">
@@ -158,12 +161,13 @@ export function MatrixView({ data }: { data: MatrixScreenData }) {
         </p>
       )}
 
-      {/* matrix table */}
+      {/* matrix table — flows with the page (UX.4); keeps HORIZONTAL scroll for the
+          wide dynamic columns. */}
       <div
         role="region"
         aria-label={`${data.projectName} file matrix`}
         tabIndex={0}
-        className="min-h-0 flex-1 overflow-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+        className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
       >
         <div className="min-w-max">
           {/* header */}
@@ -252,7 +256,7 @@ export function MatrixView({ data }: { data: MatrixScreenData }) {
           ))}
         </div>
       </div>
-    </div>
+    </ScreenShell>
   );
 }
 

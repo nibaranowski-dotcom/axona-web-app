@@ -55,9 +55,9 @@ export function CommandCenter({
   ).length;
 
   return (
-    <div className="flex h-full flex-col bg-panel">
+    <div className="flex min-h-full flex-col bg-panel">
       {/* Topbar (60px) */}
-      <header className="flex h-[60px] flex-none items-center justify-between border-b border-line bg-paper px-[28px]">
+      <header className="sticky top-0 z-20 flex h-[60px] flex-none items-center justify-between border-b border-line bg-paper px-[28px]">
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">
             Command center · {summary.kpisByModule.length} modules
@@ -96,22 +96,22 @@ export function CommandCenter({
       </header>
 
       {error ? (
-        <div className="flex flex-1 items-center justify-center px-6">
+        <div className="flex min-h-[55vh] flex-1 items-center justify-center px-6">
           <p role="status" className="text-sm text-ink-muted">
             Couldn’t load the rollup. Check the database and refresh.
           </p>
         </div>
       ) : !hasData ? (
-        <div className="flex flex-1 items-center justify-center px-6">
+        <div className="flex min-h-[55vh] flex-1 items-center justify-center px-6">
           <p className="text-sm text-ink-muted">
             No data — run the seed (
             <span className="font-mono">pnpm db:seed</span>).
           </p>
         </div>
       ) : (
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-5 overflow-hidden px-6 py-[22px] lg:grid-cols-[1.55fr_1fr]">
+        <div className="grid grid-cols-1 gap-5 px-6 pb-16 pt-[22px] lg:grid-cols-[1.55fr_1fr]">
           {/* LEFT — company KPIs + system health */}
-          <div className="flex min-w-0 flex-col gap-[18px] overflow-y-auto pr-1">
+          <div className="flex min-w-0 flex-col gap-[18px] pr-1">
             <KpiStrip kpis={summary.company} />
             <div>
               <div className="mb-[13px] flex items-center gap-3">
@@ -128,7 +128,7 @@ export function CommandCenter({
           </div>
 
           {/* RIGHT — copilot + needs attention */}
-          <div className="flex min-w-0 flex-col gap-[18px] overflow-y-auto pr-1">
+          <div className="flex min-w-0 flex-col gap-[18px] pr-1">
             <div className="copilot-surface rounded-card px-[18px] pb-4 pt-[18px]">
               <div className="mb-[13px] flex items-center gap-2">
                 <span

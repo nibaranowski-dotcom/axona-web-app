@@ -6,6 +6,7 @@ import { ChevronLeft, GitFork, Plus, ShieldAlert, Zap } from "lucide-react";
 import type { DetailRun, WorkflowDetail, WorkflowStep } from "@/lib/workflows";
 import { AgentGlyph } from "@/components/agents/AgentGlyph";
 import { TraceConsole } from "@/components/shell/TraceConsole";
+import { ScreenShell } from "@/components/shell/ScreenShell";
 import {
   RUN_DOT,
   STATUS_BADGE,
@@ -41,82 +42,83 @@ export function WorkflowDetailView({
   ];
 
   return (
-    <div className="flex h-full flex-col bg-panel">
-      <header className="flex h-[60px] flex-none items-center justify-between border-b border-line bg-paper px-6">
-        <div>
+    <ScreenShell
+      bodyClassName="gap-0"
+      header={
+        <>
+          <div>
+            <Link
+              href="/workflows"
+              className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <ChevronLeft className="h-3 w-3" strokeWidth={2} aria-hidden />
+              All workflows
+            </Link>
+            <h1 className="mt-0.5 text-[19px] font-semibold tracking-[-0.02em] text-ink">
+              Workflows
+            </h1>
+          </div>
           <Link
             href="/workflows"
-            className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="inline-flex items-center gap-1.5 rounded-btn bg-ink-strong px-4 py-[9px] text-[13.5px] font-semibold text-on-dark transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
-            <ChevronLeft className="h-3 w-3" strokeWidth={2} aria-hidden />
-            All workflows
+            <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
+            New workflow
           </Link>
-          <h1 className="mt-0.5 text-[19px] font-semibold tracking-[-0.02em] text-ink">
-            Workflows
-          </h1>
-        </div>
-        <Link
-          href="/workflows"
-          className="inline-flex items-center gap-1.5 rounded-btn bg-ink-strong px-4 py-[9px] text-[13.5px] font-semibold text-on-dark transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        </>
+      }
+    >
+      {/* workflow header */}
+      <div className="flex items-center gap-[10px]">
+        <h2 className="text-[17px] font-semibold tracking-[-0.02em] text-ink">
+          {detail.name}
+        </h2>
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-pill px-[9px] py-[3px] font-mono text-[9px] font-semibold uppercase tracking-[0.04em] ${badge.cls}`}
         >
-          <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
-          New workflow
-        </Link>
-      </header>
-
-      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-[22px]">
-        {/* workflow header */}
-        <div className="flex items-center gap-[10px]">
-          <h2 className="text-[17px] font-semibold tracking-[-0.02em] text-ink">
-            {detail.name}
-          </h2>
           <span
-            className={`inline-flex items-center gap-1.5 rounded-pill px-[9px] py-[3px] font-mono text-[9px] font-semibold uppercase tracking-[0.04em] ${badge.cls}`}
-          >
-            <span
-              aria-hidden
-              className={`h-1.5 w-1.5 rounded-full ${badge.dot}`}
-            />
-            {badge.label}
-          </span>
-        </div>
-        <p className="mt-1.5 max-w-[74ch] text-[13px] leading-[1.45] text-ink-muted">
-          {detail.description}
-        </p>
-
-        {/* stats */}
-        <div className="mt-[14px] flex flex-wrap gap-x-8 gap-y-3">
-          {stats.map((s) => (
-            <div key={s.l}>
-              <div className="font-mono text-[9px] uppercase tracking-[0.05em] text-ink-muted">
-                {s.l}
-              </div>
-              <div className="mt-0.5 text-[15px] font-semibold text-ink">
-                {s.v}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* step-flow canvas + run console */}
-        <div className="mt-[22px] grid grid-cols-1 gap-[22px] lg:grid-cols-[1.5fr_1fr]">
-          <section aria-label="Step flow">
-            <div className="mb-2 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted">
-              Step flow
-            </div>
-            {detail.steps.map((step, i) => (
-              <StepCard
-                key={step.id}
-                step={step}
-                last={i === detail.steps.length - 1}
-              />
-            ))}
-          </section>
-
-          <RunConsole detail={detail} now={now} canDecide={canDecide} />
-        </div>
+            aria-hidden
+            className={`h-1.5 w-1.5 rounded-full ${badge.dot}`}
+          />
+          {badge.label}
+        </span>
       </div>
-    </div>
+      <p className="mt-1.5 max-w-[74ch] text-[13px] leading-[1.45] text-ink-muted">
+        {detail.description}
+      </p>
+
+      {/* stats */}
+      <div className="mt-[14px] flex flex-wrap gap-x-8 gap-y-3">
+        {stats.map((s) => (
+          <div key={s.l}>
+            <div className="font-mono text-[9px] uppercase tracking-[0.05em] text-ink-muted">
+              {s.l}
+            </div>
+            <div className="mt-0.5 text-[15px] font-semibold text-ink">
+              {s.v}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* step-flow canvas + run console */}
+      <div className="mt-[22px] grid grid-cols-1 gap-[22px] lg:grid-cols-[1.5fr_1fr]">
+        <section aria-label="Step flow">
+          <div className="mb-2 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted">
+            Step flow
+          </div>
+          {detail.steps.map((step, i) => (
+            <StepCard
+              key={step.id}
+              step={step}
+              last={i === detail.steps.length - 1}
+            />
+          ))}
+        </section>
+
+        <RunConsole detail={detail} now={now} canDecide={canDecide} />
+      </div>
+    </ScreenShell>
   );
 }
 

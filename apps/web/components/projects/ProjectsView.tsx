@@ -7,6 +7,7 @@ import type { ProjectRow, ProjectsData } from "@/lib/projects";
 import { useUi } from "@/lib/ui-store";
 import { useCopilotSeed } from "@/lib/copilot-seed";
 import { AgentGlyph } from "@/components/agents/AgentGlyph";
+import { ScreenShell, ScreenMessage } from "@/components/shell/ScreenShell";
 import { STATUS_BADGE, fmtAgo } from "./format";
 
 export interface ProjectsScreenData extends ProjectsData {
@@ -45,42 +46,44 @@ export function ProjectsView({
   ];
 
   return (
-    <div className="flex h-full flex-col bg-panel">
-      {/* Topbar (60px) */}
-      <header className="flex h-[60px] flex-none items-center justify-between border-b border-line bg-paper px-6">
-        <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">
-            Core · workspaces by module
+    <ScreenShell
+      bodyClassName="gap-0 px-0 pt-0"
+      header={
+        <>
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">
+              Core · workspaces by module
+            </div>
+            <h1 className="mt-0.5 text-[19px] font-semibold tracking-[-0.02em] text-ink">
+              Projects
+            </h1>
           </div>
-          <h1 className="mt-0.5 text-[19px] font-semibold tracking-[-0.02em] text-ink">
-            Projects
-          </h1>
-        </div>
-        <button
-          type="button"
-          onClick={() =>
-            propose("Start a new project workspace and add its files")
-          }
-          className="inline-flex items-center gap-1.5 rounded-btn bg-ink-strong px-4 py-[9px] text-[13.5px] font-semibold text-on-dark transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
-          New project
-        </button>
-      </header>
-
+          <button
+            type="button"
+            onClick={() =>
+              propose("Start a new project workspace and add its files")
+            }
+            className="inline-flex items-center gap-1.5 rounded-btn bg-ink-strong px-4 py-[9px] text-[13.5px] font-semibold text-on-dark transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
+            New project
+          </button>
+        </>
+      }
+    >
       {error ? (
-        <div className="flex flex-1 items-center justify-center px-6">
+        <ScreenMessage>
           <p role="status" className="text-sm text-ink-muted">
             Couldn’t load projects. Check the database and refresh.
           </p>
-        </div>
+        </ScreenMessage>
       ) : !hasData ? (
-        <div className="flex flex-1 items-center justify-center px-6">
+        <ScreenMessage>
           <p className="text-sm text-ink-muted">
             No projects — run the seed (
             <span className="font-mono">pnpm db:seed</span>).
           </p>
-        </div>
+        </ScreenMessage>
       ) : (
         <>
           {/* stat strip */}
@@ -95,7 +98,7 @@ export function ProjectsView({
             ))}
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-2">
+          <div className="px-6 pb-6 pt-2">
             {data.groups.map((g) => (
               <div key={g.moduleKey}>
                 <div className="mb-2 mt-[18px] flex items-center gap-3">
@@ -119,7 +122,7 @@ export function ProjectsView({
           </div>
         </>
       )}
-    </div>
+    </ScreenShell>
   );
 }
 

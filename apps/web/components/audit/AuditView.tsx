@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { StatStrip } from "@/components/shell/StatStrip";
+import { ScreenShell, ScreenMessage } from "@/components/shell/ScreenShell";
 import type {
   AuditEntry,
   AuditFilterOptions,
@@ -105,38 +106,44 @@ export function AuditView({
   const hasData = entries.length > 0 || data.rollup.total > 0;
 
   return (
-    <div className="flex h-full flex-col bg-panel">
-      {/* topbar */}
-      <header className="flex h-[60px] flex-none items-center justify-between border-b border-line bg-paper px-6">
-        <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">
-            Governance · immutable record
+    <ScreenShell
+      bodyClassName="gap-3"
+      header={
+        <>
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">
+              Governance · immutable record
+            </div>
+            <h1 className="mt-0.5 text-[19px] font-semibold tracking-[-0.02em] text-ink">
+              Audit trail
+            </h1>
           </div>
-          <h1 className="mt-0.5 text-[19px] font-semibold tracking-[-0.02em] text-ink">
-            Audit trail
-          </h1>
-        </div>
-        <span className="inline-flex items-center gap-1.5 rounded-pill border border-line-strong px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.04em] text-ink-muted">
-          <ShieldCheck className="h-3.5 w-3.5" strokeWidth={1.8} aria-hidden />
-          Append-only · read-only
-        </span>
-      </header>
-
+          <span className="inline-flex items-center gap-1.5 rounded-pill border border-line-strong px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.04em] text-ink-muted">
+            <ShieldCheck
+              className="h-3.5 w-3.5"
+              strokeWidth={1.8}
+              aria-hidden
+            />
+            Append-only · read-only
+          </span>
+        </>
+      }
+    >
       {error ? (
-        <div className="flex flex-1 items-center justify-center px-6">
+        <ScreenMessage>
           <p role="status" className="text-sm text-ink-muted">
             Couldn’t load the audit trail. Check the database and refresh.
           </p>
-        </div>
+        </ScreenMessage>
       ) : !hasData ? (
-        <div className="flex flex-1 items-center justify-center px-6">
+        <ScreenMessage>
           <p className="text-sm text-ink-muted">
             No audit entries — run the seed (
             <span className="font-mono">pnpm db:seed</span>).
           </p>
-        </div>
+        </ScreenMessage>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden px-6 pb-6 pt-4">
+        <>
           <StatStrip stats={stats} />
 
           {/* filters */}
@@ -184,16 +191,17 @@ export function AuditView({
             )}
           </div>
 
-          {/* table */}
+          {/* table — flows with the page (UX.4); keeps its HORIZONTAL scroll for
+              narrow viewports. Column header pins just below the 60px topbar. */}
           <div
             role="region"
             aria-label="Audit entries"
             tabIndex={0}
-            className="min-h-0 flex-1 overflow-auto rounded-card border border-line bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+            className="overflow-x-auto rounded-card border border-line bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
           >
             <div className="min-w-[880px]">
               <div
-                className={`${ROW} sticky top-0 z-[1] border-b border-line bg-panel py-[11px] font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted`}
+                className={`${ROW} sticky top-[60px] z-[1] border-b border-line bg-panel py-[11px] font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted`}
               >
                 <span>Time</span>
                 <span>Actor</span>
@@ -222,9 +230,9 @@ export function AuditView({
               </button>
             )}
           </div>
-        </div>
+        </>
       )}
-    </div>
+    </ScreenShell>
   );
 }
 

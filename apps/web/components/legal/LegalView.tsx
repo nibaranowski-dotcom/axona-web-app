@@ -12,6 +12,7 @@ import { ObligationsPanel } from "./ObligationsPanel";
 import { ExportControl } from "./ExportControl";
 import { MattersTable } from "./MattersTable";
 import { StatStrip } from "@/components/shell/StatStrip";
+import { ScreenShell, ScreenMessage } from "@/components/shell/ScreenShell";
 
 export interface LegalScreenData extends LegalData {
   traceLines: { ts?: string; kind?: string; text?: string }[];
@@ -56,54 +57,55 @@ export function LegalView({
     }));
 
   return (
-    <div className="flex h-full flex-col bg-panel">
-      {/* Topbar (60px) */}
-      <header className="flex h-[60px] flex-none items-center justify-between border-b border-line bg-paper px-6">
-        <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">
-            Back office · contracts · compliance · risk
+    <ScreenShell
+      header={
+        <>
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">
+              Back office · contracts · compliance · risk
+            </div>
+            <h1 className="mt-0.5 text-[19px] font-semibold tracking-[-0.02em] text-ink">
+              Legal &amp; Compliance
+            </h1>
           </div>
-          <h1 className="mt-0.5 text-[19px] font-semibold tracking-[-0.02em] text-ink">
-            Legal &amp; Compliance
-          </h1>
-        </div>
-        <div className="flex items-center gap-[14px]">
-          <span className="inline-flex items-center gap-[7px] rounded-pill border border-line-strong bg-panel px-3 py-[5px] text-[12.5px] font-semibold text-ink">
-            <span
-              aria-hidden
-              className={`h-[7px] w-[7px] rounded-full ${atRisk > 0 ? "bg-ink-strong" : "bg-success"}`}
-            />
-            {atRisk} SLA obligation{atRisk === 1 ? "" : "s"} at risk
-          </span>
-          <button
-            type="button"
-            onClick={() => {
-              setSeed("Open a new legal matter and link it to its source");
-              setCollapsed(false);
-            }}
-            className="inline-flex items-center gap-1.5 rounded-btn bg-ink-strong px-4 py-[9px] text-[13.5px] font-semibold text-on-dark transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          >
-            <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
-            New matter
-          </button>
-        </div>
-      </header>
-
+          <div className="flex items-center gap-[14px]">
+            <span className="inline-flex items-center gap-[7px] rounded-pill border border-line-strong bg-panel px-3 py-[5px] text-[12.5px] font-semibold text-ink">
+              <span
+                aria-hidden
+                className={`h-[7px] w-[7px] rounded-full ${atRisk > 0 ? "bg-ink-strong" : "bg-success"}`}
+              />
+              {atRisk} SLA obligation{atRisk === 1 ? "" : "s"} at risk
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setSeed("Open a new legal matter and link it to its source");
+                setCollapsed(false);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-btn bg-ink-strong px-4 py-[9px] text-[13.5px] font-semibold text-on-dark transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
+              New matter
+            </button>
+          </div>
+        </>
+      }
+    >
       {error ? (
-        <div className="flex flex-1 items-center justify-center px-6">
+        <ScreenMessage>
           <p role="status" className="text-sm text-ink-muted">
             Couldn’t load legal data. Check the database and refresh.
           </p>
-        </div>
+        </ScreenMessage>
       ) : !hasData ? (
-        <div className="flex flex-1 items-center justify-center px-6">
+        <ScreenMessage>
           <p className="text-sm text-ink-muted">
             No legal data — run the seed (
             <span className="font-mono">pnpm db:seed</span>).
           </p>
-        </div>
+        </ScreenMessage>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto px-6 py-[22px]">
+        <>
           {/* summary strip */}
           <StatStrip stats={stats} />
 
@@ -120,8 +122,8 @@ export function LegalView({
               title="Agent trace · legal-orchestrator"
             />
           )}
-        </div>
+        </>
       )}
-    </div>
+    </ScreenShell>
   );
 }

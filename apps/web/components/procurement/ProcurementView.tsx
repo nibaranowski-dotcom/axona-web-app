@@ -11,6 +11,7 @@ import {
 } from "@/components/shell/TraceConsole";
 import { useUi } from "@/lib/ui-store";
 import { useCopilotSeed } from "@/lib/copilot-seed";
+import { ScreenShell, ScreenMessage } from "@/components/shell/ScreenShell";
 import { PoQueue } from "./PoQueue";
 import { ReorderBanner } from "./ReorderBanner";
 
@@ -73,46 +74,49 @@ export function ProcurementView({
     }));
 
   return (
-    <div className="flex h-full flex-col bg-panel">
-      {/* Topbar (60px) */}
-      <header className="flex h-[60px] flex-none items-center justify-between border-b border-line bg-paper px-6">
-        <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">
-            Value chain · {data.pos.length} POs
+    <ScreenShell
+      header={
+        <>
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">
+              Value chain · {data.pos.length} POs
+            </div>
+            <h1 className="mt-0.5 text-[19px] font-semibold tracking-[-0.02em] text-ink">
+              Procurement
+            </h1>
           </div>
-          <h1 className="mt-0.5 text-[19px] font-semibold tracking-[-0.02em] text-ink">
-            Procurement
-          </h1>
-        </div>
-        <div className="flex items-center gap-[14px]">
-          <span className="inline-flex items-center gap-[7px] rounded-pill border border-line-strong bg-panel px-3 py-[5px] text-[12.5px] font-semibold text-ink">
-            <span
-              aria-hidden
-              className="h-[7px] w-[7px] rounded-full bg-accent"
-            />
-            {data.agentCount} agents on shift
-          </span>
-          <button
-            type="button"
-            onClick={() =>
-              seed("Draft a new purchase order for a part below reorder point")
-            }
-            className="inline-flex items-center gap-1.5 rounded-btn bg-ink-strong px-4 py-[9px] text-[13.5px] font-semibold text-on-dark transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          >
-            <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
-            New order
-          </button>
-        </div>
-      </header>
-
+          <div className="flex items-center gap-[14px]">
+            <span className="inline-flex items-center gap-[7px] rounded-pill border border-line-strong bg-panel px-3 py-[5px] text-[12.5px] font-semibold text-ink">
+              <span
+                aria-hidden
+                className="h-[7px] w-[7px] rounded-full bg-accent"
+              />
+              {data.agentCount} agents on shift
+            </span>
+            <button
+              type="button"
+              onClick={() =>
+                seed(
+                  "Draft a new purchase order for a part below reorder point",
+                )
+              }
+              className="inline-flex items-center gap-1.5 rounded-btn bg-ink-strong px-4 py-[9px] text-[13.5px] font-semibold text-on-dark transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
+              New order
+            </button>
+          </div>
+        </>
+      }
+    >
       {error ? (
-        <div className="flex flex-1 items-center justify-center px-6">
+        <ScreenMessage>
           <p role="status" className="text-sm text-ink-muted">
             Couldn’t load procurement. Check the database and refresh.
           </p>
-        </div>
+        </ScreenMessage>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto px-6 py-[22px]">
+        <>
           <ReorderBanner
             candidates={data.reorderCandidates}
             onDraft={() =>
@@ -156,8 +160,8 @@ export function ProcurementView({
               title="Agent trace · proc-orchestrator"
             />
           )}
-        </div>
+        </>
       )}
-    </div>
+    </ScreenShell>
   );
 }
