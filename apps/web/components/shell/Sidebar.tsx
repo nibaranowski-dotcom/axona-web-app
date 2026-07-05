@@ -1,8 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  PanelLeftClose,
+  PanelLeftOpen,
+  Search,
+  ShieldCheck,
+} from "lucide-react";
 import type { NavGroup } from "@/lib/nav";
 import { useMounted, useUi } from "@/lib/ui-store";
 import { NavSection } from "./NavSection";
@@ -28,6 +33,7 @@ export function Sidebar({
   alerts: Record<string, number>;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const collapsed = useUi((s) => s.sidebarCollapsed);
   const toggleSidebar = useUi((s) => s.toggleSidebar);
   const mounted = useMounted();
@@ -141,6 +147,24 @@ export function Sidebar({
             <NavSection key={g.group} group={g} alerts={alerts} />
           ))
         )}
+
+        {/* Governance — the cross-cutting audit trail (AUDIT.2). A static link, not
+            a value-chain module; the immutable record of every gated decision. */}
+        <Link
+          href="/audit"
+          className={`mt-1.5 flex items-center gap-2 rounded-[7px] px-3 py-[7px] text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            pathname === "/audit"
+              ? "bg-panel-2 font-semibold text-ink"
+              : "text-ink-muted hover:bg-panel hover:text-ink"
+          }`}
+        >
+          <ShieldCheck
+            className="h-[15px] w-[15px] flex-none"
+            strokeWidth={1.7}
+            aria-hidden
+          />
+          Audit trail
+        </Link>
       </div>
 
       {/* Stubbed identity until AUTH.1 */}

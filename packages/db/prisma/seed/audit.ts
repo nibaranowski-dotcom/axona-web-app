@@ -21,10 +21,24 @@ interface Entry {
   inputs?: unknown;
   output?: unknown;
   correlationId?: string;
+  // AUDIT.3 — override the derived values when a specific one is wanted (e.g. a
+  // deliberately low-confidence agent entry to seed the review flag).
+  confidence?: number;
 }
 
 const json = (v: unknown): Prisma.InputJsonValue =>
   (v === undefined ? Prisma.JsonNull : v) as Prisma.InputJsonValue;
+
+// Deterministic agent confidence in [0.3, 0.95] from a seed string (no Math.random).
+function deriveConfidence(seed: string): number {
+  let h = 2166136261;
+  for (let k = 0; k < seed.length; k++) {
+    h ^= seed.charCodeAt(k);
+    h = Math.imul(h, 16777619);
+  }
+  const r = (h >>> 0) / 0xffffffff;
+  return Math.round((0.3 + r * 0.65) * 100) / 100;
+}
 
 export async function seedAudit(
   db: OrgScopedDb,
@@ -136,6 +150,7 @@ export async function seedAudit(
       summary: `Compat check for ${CODES.servoNew} — HX-1 r5 cert pending`,
       output: { blocked: ["HX-1 r5"] },
       correlationId: runId,
+      confidence: 0.31, // low — flag for human review (cert pending, uncertain)
     },
     // Sourcing / PO-9001 lifecycle
     {
@@ -250,11 +265,25 @@ export async function seedAudit(
     },
   ];
 
+  // AUDIT.3 enrichment (derived): AGENT entries carry a model + emitted confidence;
+  // HUMAN decision entries (approve/advance/triage/raise) carry the approver.
+  const HUMAN_DECISION = /approve|advance|triage|raise/;
+
   let count = 0;
   for (const e of entries) {
     const createdAt = new Date(
       nowMs - e.daysAgo * 86_400_000 - count * 137_000,
     );
+    const isAgent = e.actorType === "AGENT";
+    const model = isAgent
+      ? e.action === "column.extract"
+        ? "fake-extract"
+        : "claude-sonnet-4-6"
+      : null;
+    const confidence = isAgent
+      ? (e.confidence ?? deriveConfidence(`${e.action}:${count}`))
+      : null;
+    const isApproval = e.actorType === "HUMAN" && HUMAN_DECISION.test(e.action);
     await db.auditLog.create({
       data: {
         orgId,
@@ -268,6 +297,10 @@ export async function seedAudit(
         inputs: json(e.inputs),
         output: json(e.output),
         correlationId: e.correlationId ?? null,
+        model,
+        confidence,
+        approverId: isApproval ? e.actorId : null,
+        approverLabel: isApproval ? e.actorLabel : null,
         createdAt,
       },
     });

@@ -1465,3 +1465,21 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
   - `column.extract` (matrix job): `model` = the extraction model id, `confidence` = mean emitted cell confidence.
   - `po.approve.*` / `workflow.gate.*` (RBAC.4 `decide`): `approver = { id, label }` of the deciding user; model/confidence null.
 - **Deferred:** confidence **calibration** + confidence-gated autonomy (CONF.1/TRUST.1); the ontology event log (ONT.1).
+
+---
+
+## AUDIT.2 — Audit-trail viewer (Governance)
+
+**Automated**
+- `pnpm verify:audit-2` — route + screen + read model + API exist; **read-only** (GET-only route, no `auditLog` mutation in the lib, no edit/delete UI); sidebar links `/audit`; low-confidence flagged in **INK** (no red); **paginates** (disjoint next page); **filters** by actor/action/targetType; **agent entries expose model+confidence, approvals expose approver**; a **low-confidence entry is flagged**; **targets deep-link where derivable** (PurchaseOrder→/procurement, WorkflowRun→/workflows/:id, MatrixColumn/File→/projects/:id; ECO/NCR/Org→plain text); rollup counts; **cross-org empty**.
+- CI gate green; siblings (audit-1/audit-3/rbac-4) stay green; accessibility-review 0 on /audit.
+
+**Manual (./dev.sh → sidebar → Audit trail, or /audit)**
+- The **StatStrip** (Entries · Agent actions · Human decisions · Approvals · Flagged·low-conf) + a hairline table (Time · Actor · Action · Target · Confidence · Approver · Summary), newest first, **Load more** paginated.
+- Agent entries show model + confidence; a **low-confidence cell (< 0.4) shows an ink "Review" pill** (the seeded compat-check @ 0.31). Approval entries show the approver (+ a functional-green dot for approved outcomes). Filter chips (Actor/Action/Target) narrow the trail; deep-linked targets open their source screen. Header badge: **Append-only · read-only** — the log can't be edited (AUDIT.1 rules); the UI offers no edit/delete.
+
+**Notes / architecture**
+- **Read model** (`lib/audit-trail.ts`): `getAuditTrail(orgId, {actor,action,targetType,cursor,take})` (org-scoped, newest-first, cursor-paginated), `getAuditRollup`, `getAuditFilterOptions`; `resolveHrefs` batch-resolves deep-links (WorkflowRun→its workflowId; MatrixColumn/File→their projectId). `GET /api/audit` (org-scoped, read-only). No write path anywhere.
+- **Screen** (`/audit`): DS.1 primitives — shared `StatStrip` + a brand-matched hairline table (no v2 `.dc.html` for this surface). Cross-cutting route → moduleKey "audit" has no agents → the **global Axona pane** shows automatically. Sidebar "Audit trail" link (Governance — a static entry, not a value-chain module).
+- **Seed enrichment (flagged):** AUDIT.1's seeded rows predated AUDIT.3's columns, so `seed/audit.ts` now derives model+confidence for agent entries and approver for human-decision entries, with one explicit low-confidence entry (compat.check @ 0.31) — so the trail renders fully populated (2 flagged, 5 approvals). Not fabricated activity — the same rows, enriched with the fields real runs now emit.
+- **Deferred:** a ⌘K palette entry (no command palette exists yet — search routes to /launcher; flagged, not built); a dedicated screen for ECO/NCR targets (rendered as plain text until those screens land).
