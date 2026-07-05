@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .dotfield{background-color:var(--paper);background-image:radial-gradient(#d9d8d2 1.1px,transparent 1.1px);background-size:18px 18px}
+  .iv-input{transition:border-color .15s,box-shadow .15s}
+  .iv-input:focus-within{border-color:var(--ink-strong);box-shadow:0 0 0 3px var(--accent)}
+  .iv-locked{background:var(--panel-2)!important}
+  .iv-btn{transition:background .15s,transform .05s}
+  .iv-btn:hover{background:#000}
+  .iv-btn:active{transform:translateY(1px)}
+  .iv-link{transition:opacity .15s}
+  .iv-link:hover{opacity:.6}
+  .eye{transition:color .15s;cursor:pointer}
+  .eye:hover{color:var(--ink)}
+</style>
+</helmet>
+<div class="dotfield" style="min-height:100vh;box-sizing:border-box;display:flex;align-items:center;justify-content:center;padding:48px 32px;font-family:var(--font-sans);color:var(--ink);position:relative">
+  <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(244,243,239,0),rgba(244,243,239,.5));pointer-events:none"></div>
+
+  <div style="position:relative;width:440px;max-width:90vw;background:var(--paper);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.07)">
+    <div style="padding:40px 40px 30px">
+
+      <!-- wordmark -->
+      <div style="display:flex;justify-content:center;margin-bottom:26px">
+        <span style="font-size:21px;font-weight:700;letter-spacing:-.045em;color:var(--ink-strong)">axona</span>
+      </div>
+
+      <!-- inviter → org -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="width:40px;height:40px;border-radius:50%;background:var(--panel-2);border:1px solid var(--line-strong);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink-muted)">MO</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+          <span style="width:48px;height:48px;border-radius:12px;background:var(--accent);display:inline-flex;align-items:center;justify-content:center"><span style="width:22px;height:22px;background:var(--ink-strong);border-radius:0 7px 0 7px"></span></span>
+        </div>
+      </div>
+
+      <!-- heading -->
+      <h1 style="font-size:19px;font-weight:600;letter-spacing:-.02em;text-align:center;line-height:1.35;margin:20px 0 0"><span style="font-weight:700">M. Osei</span> invited you to join <span style="font-weight:700">Axona Demo Co</span> on Axona</h1>
+
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:14px 0 24px">
+        <span style="font-size:12.5px;color:var(--ink-muted)">Your role</span>
+        <span style="font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.06em;background:var(--ink-strong);color:#fff;border-radius:999px;padding:3px 10px">OPS</span>
+      </div>
+
+      <!-- fields -->
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">Your name</label>
+        <div class="iv-input" style="background:var(--panel);border:1px solid var(--line-strong);border-radius:9px;padding:0 13px">
+          <input value="" placeholder="First and last name" style="width:100%;box-sizing:border-box;border:none;outline:none;background:transparent;padding:11px 0;font-size:13.5px;font-family:var(--font-sans);color:var(--ink)">
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">Email</label>
+        <div class="iv-input iv-locked" style="display:flex;align-items:center;gap:10px;border:1px solid var(--line-strong);border-radius:9px;padding:0 13px">
+          <input value="omar@axonademo.co" disabled="disabled" style="flex:1;min-width:0;border:none;outline:none;background:transparent;padding:11px 0;font-size:13.5px;font-family:var(--font-sans);color:var(--ink-muted)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><rect width="18" height="11" x="3" y="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        </div>
+      </div>
+
+      <div style="margin-bottom:22px">
+        <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">Set password</label>
+        <div class="iv-input" style="display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line-strong);border-radius:9px;padding:0 13px">
+          <input value="" type="password" placeholder="Create a password" style="flex:1;min-width:0;border:none;outline:none;background:transparent;padding:11px 0;font-size:13.5px;font-family:var(--font-sans);color:var(--ink);letter-spacing:.12em">
+          <span class="eye" style="display:inline-flex;color:var(--ink-faint)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
+        </div>
+      </div>
+
+      <!-- primary -->
+      <button class="iv-btn" style="width:100%;background:var(--ink-strong);color:#fff;border:none;border-radius:9px;padding:13px;font-size:14px;font-weight:600;font-family:var(--font-sans);cursor:pointer">Join Axona Demo Co</button>
+
+      <!-- role explainer -->
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-top:16px;padding:11px 13px;background:var(--panel);border:1px solid var(--line);border-radius:10px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+        <span style="font-size:11.5px;color:var(--ink-muted);line-height:1.45">As <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink)">OPS</span>, you can run modules and workflows, approve actions, and chat with agents — but not manage billing or members.</span>
+      </div>
+
+    </div>
+
+    <!-- footer -->
+    <div style="border-top:1px solid var(--line);background:var(--panel);padding:14px;text-align:center">
+      <span style="font-size:12px;color:var(--ink-faint)">Not you? <a href="#" class="iv-link" style="color:var(--ink-muted);text-decoration:none">Decline invite</a></span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){ return {}; }
+}
+</script>
+</body>
+</html>

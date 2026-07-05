@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .dotfield{background-color:var(--paper);background-image:radial-gradient(#d9d8d2 1.1px,transparent 1.1px);background-size:18px 18px}
+  .lg-input{transition:border-color .15s,box-shadow .15s}
+  .lg-input:focus-within{border-color:var(--ink-strong);box-shadow:0 0 0 3px var(--accent)}
+  .lg-input.err{border-color:var(--ink-strong)}
+  .lg-btn{transition:background .15s,transform .05s}
+  .lg-btn:hover{background:#000}
+  .lg-btn:active{transform:translateY(1px)}
+  .lg-sso{transition:border-color .15s,background .15s}
+  .lg-sso:hover{border-color:var(--ink-strong);background:var(--panel-2)}
+  .lg-link{transition:opacity .15s}
+  .lg-link:hover{opacity:.6}
+  .eye{transition:color .15s;cursor:pointer}
+  .eye:hover{color:var(--ink)}
+</style>
+</helmet>
+<div style="display:flex;gap:40px;flex-wrap:wrap;justify-content:center;align-items:flex-start;padding:48px 32px;min-height:100vh;box-sizing:border-box;font-family:var(--font-sans);color:var(--ink);background:var(--panel)">
+
+  <sc-for list="{{ states }}" as="s" hint-placeholder-count="2">
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--ink-faint);text-transform:uppercase;padding-left:2px">{{ s.stateLabel }}</div>
+
+    <div class="dotfield" style="width:460px;max-width:88vw;border:1px solid var(--line);border-radius:20px;overflow:hidden;position:relative">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(244,243,239,0) 0%,rgba(244,243,239,.55) 100%);pointer-events:none"></div>
+      <div style="position:relative;padding:44px 44px 30px">
+
+        <!-- mark + wordmark -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:30px">
+          <span style="width:34px;height:34px;background:var(--ink-strong);border-radius:0 10px 0 10px"></span>
+          <div style="display:flex;align-items:center;gap:9px">
+            <span style="font-size:25px;font-weight:700;letter-spacing:-.045em;color:var(--ink-strong)">axona</span>
+          </div>
+          <div style="font-size:13.5px;color:var(--ink-muted);text-align:center">Sign in to your workspace</div>
+        </div>
+
+        <!-- error banner -->
+        <sc-if value="{{ s.hasError }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:flex-start;gap:10px;background:var(--ink-strong);border-radius:10px;padding:12px 14px;margin-bottom:16px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+            <div style="line-height:1.4">
+              <div style="font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:.08em;color:var(--accent);text-transform:uppercase;margin-bottom:2px">Sign-in failed</div>
+              <span style="font-size:12.5px;font-weight:500;color:#fff">That email or password doesn't match.</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- email -->
+        <div style="margin-bottom:14px">
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--ink);margin-bottom:6px">Work email</label>
+          <div class="lg-input {{ s.errClass }}" style="display:flex;align-items:center;background:var(--paper);border:1px solid var(--line-strong);border-radius:9px;padding:0 13px">
+            <input value="{{ s.emailVal }}" placeholder="you@company.com" style="flex:1;min-width:0;border:none;outline:none;background:transparent;padding:11px 0;font-size:13.5px;font-family:var(--font-sans);color:var(--ink)">
+          </div>
+        </div>
+
+        <!-- password -->
+        <div style="margin-bottom:8px">
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--ink);margin-bottom:6px">Password</label>
+          <div class="lg-input {{ s.errClass }}" style="display:flex;align-items:center;gap:10px;background:var(--paper);border:1px solid var(--line-strong);border-radius:9px;padding:0 13px">
+            <input value="{{ s.pwVal }}" type="password" placeholder="Enter your password" style="flex:1;min-width:0;border:none;outline:none;background:transparent;padding:11px 0;font-size:13.5px;font-family:var(--font-sans);color:var(--ink);letter-spacing:.12em">
+            <span class="eye" style="display:inline-flex;color:var(--ink-faint)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-bottom:20px">
+          <a href="#" class="lg-link" style="font-size:12px;color:var(--ink-muted);text-decoration:none">Forgot password?</a>
+        </div>
+
+        <!-- primary -->
+        <button class="lg-btn" style="width:100%;background:var(--ink-strong);color:#fff;border:none;border-radius:9px;padding:13px;font-size:14px;font-weight:600;font-family:var(--font-sans);cursor:pointer">Log in</button>
+
+        <!-- divider -->
+        <div style="display:flex;align-items:center;gap:12px;margin:20px 0">
+          <span style="flex:1;height:1px;background:var(--line)"></span>
+          <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--ink-faint);text-transform:uppercase">or</span>
+          <span style="flex:1;height:1px;background:var(--line)"></span>
+        </div>
+
+        <!-- SSO -->
+        <button class="lg-sso" style="width:100%;display:flex;align-items:center;justify-content:center;gap:9px;background:var(--paper);color:var(--ink);border:1px solid var(--line-strong);border-radius:9px;padding:12px;font-size:13.5px;font-weight:600;font-family:var(--font-sans);cursor:pointer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Continue with SSO
+        </button>
+
+      </div>
+
+      <!-- footer strip -->
+      <div style="position:relative;border-top:1px solid var(--line);background:var(--paper);padding:15px 44px;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12.5px;color:var(--ink-muted)">New here? <a href="#" class="lg-link" style="color:var(--ink);font-weight:600;text-decoration:none">Create a workspace</a></span>
+        <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1Z"></path></svg>SOC 2 · SSO</span>
+      </div>
+    </div>
+  </div>
+  </sc-for>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){
+    return {
+      states: [
+        { stateLabel:'Default', hasError:false, errClass:'', emailVal:'', pwVal:'' },
+        { stateLabel:'Inline error', hasError:true, errClass:'err', emailVal:'lauren@factoryx.com', pwVal:'wrongpass' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

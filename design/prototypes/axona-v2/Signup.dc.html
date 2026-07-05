@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .dotfield{background-color:var(--paper);background-image:radial-gradient(#d9d8d2 1.1px,transparent 1.1px);background-size:18px 18px}
+  .su-input{transition:border-color .15s,box-shadow .15s}
+  .su-input:focus-within{border-color:var(--ink-strong);box-shadow:0 0 0 3px var(--accent)}
+  .su-btn{transition:background .15s,transform .05s}
+  .su-btn:hover{background:#000}
+  .su-btn:active{transform:translateY(1px)}
+  .su-link{transition:opacity .15s}
+  .su-link:hover{opacity:.6}
+  .ind{transition:border-color .15s,background .15s,color .15s;cursor:pointer}
+  .ind:hover{border-color:var(--ink-strong)}
+  .eye{transition:color .15s;cursor:pointer}
+  .eye:hover{color:var(--ink)}
+</style>
+</helmet>
+<div class="dotfield" style="min-height:100vh;box-sizing:border-box;display:flex;align-items:center;justify-content:center;padding:40px 32px;font-family:var(--font-sans);color:var(--ink);position:relative">
+  <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(244,243,239,0),rgba(244,243,239,.5));pointer-events:none"></div>
+
+  <div style="position:relative;width:900px;max-width:94vw;background:var(--paper);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.07)">
+
+    <!-- header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:22px 34px;border-bottom:1px solid var(--line)">
+      <div style="display:flex;align-items:center;gap:9px">
+        <span style="width:26px;height:26px;background:var(--ink-strong);border-radius:0 8px 0 8px;flex:none"></span>
+        <span style="font-size:21px;font-weight:700;letter-spacing:-.045em;color:var(--ink-strong)">axona</span>
+      </div>
+      <span style="font-size:12.5px;color:var(--ink-muted)">Already have one? <a href="Login.dc.html" class="su-link" style="color:var(--ink);font-weight:600;text-decoration:none">Log in</a></span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr">
+
+      <!-- pane 1: your account -->
+      <div style="padding:32px 34px;border-right:1px solid var(--line)">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:22px">
+          <span style="font-family:var(--font-mono);font-size:10px;font-weight:600;background:var(--ink-strong);color:#fff;border-radius:999px;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center">1</span>
+          <span style="font-size:14px;font-weight:600">Your account</span>
+        </div>
+
+        <div style="margin-bottom:15px">
+          <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">Full name</label>
+          <div class="su-input" style="background:var(--panel);border:1px solid var(--line-strong);border-radius:9px;padding:0 13px">
+            <input value="Lauren Chen" style="width:100%;box-sizing:border-box;border:none;outline:none;background:transparent;padding:11px 0;font-size:13.5px;font-family:var(--font-sans);color:var(--ink)">
+          </div>
+        </div>
+
+        <div style="margin-bottom:15px">
+          <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">Work email</label>
+          <div class="su-input" style="background:var(--panel);border:1px solid var(--line-strong);border-radius:9px;padding:0 13px">
+            <input value="lauren@axonademo.co" style="width:100%;box-sizing:border-box;border:none;outline:none;background:transparent;padding:11px 0;font-size:13.5px;font-family:var(--font-sans);color:var(--ink)">
+          </div>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">Password</label>
+          <div class="su-input" style="display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line-strong);border-radius:9px;padding:0 13px">
+            <input value="supersecret" type="password" style="flex:1;min-width:0;border:none;outline:none;background:transparent;padding:11px 0;font-size:13.5px;font-family:var(--font-sans);color:var(--ink);letter-spacing:.12em">
+            <span class="eye" style="display:inline-flex;color:var(--ink-faint)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
+          </div>
+          <div style="font-size:11.5px;color:var(--ink-faint);margin-top:7px">At least 10 characters.</div>
+        </div>
+      </div>
+
+      <!-- pane 2: your workspace -->
+      <div style="padding:32px 34px">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:22px">
+          <span style="font-family:var(--font-mono);font-size:10px;font-weight:600;background:var(--ink-strong);color:#fff;border-radius:999px;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center">2</span>
+          <span style="font-size:14px;font-weight:600">Your workspace</span>
+        </div>
+
+        <div style="margin-bottom:15px">
+          <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">Organization name</label>
+          <div class="su-input" style="background:var(--panel);border:1px solid var(--line-strong);border-radius:9px;padding:0 13px">
+            <input value="Axona Demo Co" style="width:100%;box-sizing:border-box;border:none;outline:none;background:transparent;padding:11px 0;font-size:13.5px;font-family:var(--font-sans);color:var(--ink)">
+          </div>
+        </div>
+
+        <div style="margin-bottom:15px">
+          <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">Workspace URL</label>
+          <div class="su-input" style="display:flex;align-items:center;background:var(--panel);border:1px solid var(--line-strong);border-radius:9px;padding:0 13px">
+            <span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-faint)">axona.co/</span>
+            <input value="axona-demo-co" style="flex:1;min-width:0;border:none;outline:none;background:transparent;padding:11px 0;font-size:13px;font-family:var(--font-mono);color:var(--ink)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20 6 9 17l-5-5"></path></svg>
+          </div>
+          <div style="font-size:11.5px;color:var(--ink-faint);margin-top:7px">Auto-suggested from your organization name.</div>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">Vertical</label>
+          <div class="su-input" style="position:relative;background:var(--panel);border:1px solid var(--line-strong);border-radius:9px">
+            <select value="{{ vertical }}" style="width:100%;box-sizing:border-box;border:none;outline:none;background:transparent;padding:11px 38px 11px 13px;font-size:13.5px;font-family:var(--font-sans);color:var(--ink);cursor:pointer;-webkit-appearance:none;appearance:none">
+              <sc-for list="{{ verticals }}" as="v" hint-placeholder-count="5">
+                <option value="{{ v }}">{{ v }}</option>
+              </sc-for>
+            </select>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;right:13px;top:50%;transform:translateY(-50%);pointer-events:none"><path d="m6 9 6 6 6-6"></path></svg>
+          </div>
+          <div style="font-size:11.5px;color:var(--ink-faint);margin-top:7px">Tailors your modules and starter workflows.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- footer / action -->
+    <div style="border-top:1px solid var(--line);background:var(--panel);padding:20px 34px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap">
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <span style="display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ink)"><span style="font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.05em;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:2px 8px">ADMIN</span>You'll be seated as the workspace admin.</span>
+        <span style="font-size:12px;color:var(--ink-muted)">Free while in pilot · no card required.</span>
+      </div>
+      <button class="su-btn" style="background:var(--ink-strong);color:#fff;border:none;border-radius:9px;padding:13px 24px;font-size:14px;font-weight:600;font-family:var(--font-sans);cursor:pointer;white-space:nowrap">Create workspace</button>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){
+    return {
+      vertical: 'Humanoid',
+      verticals: ['Humanoid', 'Mobility & AVs', 'Industrial & manufacturing', 'Defense & aerospace', 'Logistics & warehouse', 'Agriculture', 'Healthcare & surgical', 'Other'],
+    };
+  }
+}
+</script>
+</body>
+</html>

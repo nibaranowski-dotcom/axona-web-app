@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .dotfield{background-color:var(--paper);background-image:radial-gradient(#d9d8d2 1.1px,transparent 1.1px);background-size:18px 18px}
+  .navitem{transition:background .15s,color .15s}
+  .navitem:hover{background:var(--panel)}
+  .navgroup summary{list-style:none}
+  .navgroup summary::-webkit-details-marker{display:none}
+  .navchev{transition:transform .15s;flex:none}
+  .navgroup:not([open]) .navchev{transform:rotate(-90deg)}
+  .subnav{transition:background .15s,color .15s}
+  .subnav:hover{background:var(--panel-2)}
+  .plancard{transition:border-color .15s,transform .12s}
+  .plancard:hover{border-color:var(--ink-strong);transform:translateY(-2px)}
+  .planbtn{transition:background .15s,border-color .15s,color .15s;cursor:pointer}
+  .planbtn.up:hover{background:#000}
+  .planbtn.ghost:hover{border-color:var(--ink-strong);color:var(--ink)}
+  .scarea::-webkit-scrollbar{width:8px}
+  .scarea::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+</style>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden;font-family:var(--font-sans);color:var(--ink);background:var(--panel)">
+
+  <aside style="width:240px;flex:none;background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 14px">
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 8px 18px">
+      <span style="font-size:21px;font-weight:700;letter-spacing:-.04em;color:var(--ink-strong)">axona</span>
+      <span style="width:12px;height:12px;background:var(--ink-strong);border-radius:0 7px 0 7px"></span>
+    </div>
+    <a href="Mission Control.dc.html" style="display:flex;align-items:center;gap:9px;margin:0 4px 10px;padding:8px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--panel);cursor:pointer;text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <span style="flex:1;font-size:13px;color:var(--ink-faint)">Search</span>
+      <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px">⌘K</span>
+    </a>
+    <div class="scarea" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;margin:0 -4px;padding:0 4px">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <details open="open" class="navgroup">
+          <summary style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;padding:14px 10px 6px;cursor:pointer"><span style="flex:1">{{ g.label }}</span><svg class="navchev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--line-strong)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></summary>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+          <a class="navitem" href="{{ it.href }}" style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:8px;cursor:pointer;background:transparent;color:var(--ink-muted);font-size:14px;text-decoration:none">
+            <span style="width:6px;height:6px;border-radius:2px;background:var(--line-strong);flex:none"></span>
+            <span style="flex:1">{{ it.name }}</span>
+            <sc-if value="{{ it.badge }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:10px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 7px;font-weight:600">{{ it.badge }}</span></sc-if>
+          </a>
+        </sc-for>
+        </details>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 8px 2px;border-top:1px solid var(--line);margin-top:8px">
+      <span style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink)">LC</span>
+      <div style="font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Head of Ops</div></div>
+    </div>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="height:60px;flex:none;border-bottom:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:space-between;padding:0 24px">
+      <div style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;color:var(--ink-faint);text-transform:uppercase">
+        <a href="Settings — Billing.dc.html" style="color:var(--ink-faint);text-decoration:none">Billing</a><span>/</span><span style="color:var(--ink-muted)">Plans</span>
+      </div>
+      <span style="display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:10px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Admin only</span>
+    </div>
+
+    <div style="flex:1;min-height:0;display:flex">
+
+      <div style="width:210px;flex:none;border-right:1px solid var(--line);background:var(--paper);padding:20px 12px">
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.07em;color:var(--ink-faint);text-transform:uppercase;padding:4px 10px 8px">Settings</div>
+        <sc-for list="{{ subnav }}" as="s" hint-placeholder-count="6">
+          <a class="subnav" href="{{ s.href }}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;text-decoration:none;background:{{ s.bg }};color:{{ s.fg }};font-weight:{{ s.weight }};font-size:13.5px;margin-bottom:2px">
+            <span style="display:inline-flex;color:{{ s.iconColor }}">{{ s.icon }}</span>
+            <span>{{ s.label }}</span>
+          </a>
+        </sc-for>
+      </div>
+
+      <div class="dotfield scarea" style="flex:1;min-width:0;overflow-y:auto;padding:28px 30px;position:relative">
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(244,243,239,.2),rgba(244,243,239,.55));pointer-events:none"></div>
+        <div style="position:relative;max-width:940px;margin:0 auto;display:flex;flex-direction:column;gap:22px">
+
+          <!-- dunning banner -->
+          <div style="display:flex;align-items:center;gap:12px;background:var(--ink-strong);border-radius:12px;padding:14px 18px;color:#fff">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
+            <div style="flex:1;min-width:0"><span style="font-size:13.5px;font-weight:600">Your pilot ends in 6 days.</span> <span style="font-size:13px;color:var(--on-dark-mut)">Pick a plan to keep your agents running and your data live.</span></div>
+            <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:.05em;color:var(--on-dark-faint);text-transform:uppercase;flex:none">Ends Jul 11</span>
+          </div>
+
+          <!-- heading -->
+          <div style="text-align:center">
+            <h1 style="font-size:clamp(24px,2.8vw,32px);font-weight:600;letter-spacing:-.03em;margin:4px 0 6px">Pick the plan that fits your floor.</h1>
+            <p style="font-size:14px;color:var(--ink-muted);margin:0">One spine, every module. Scale seats and agent runs as you grow.</p>
+          </div>
+
+          <!-- pricing row -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch">
+            <sc-for list="{{ plans }}" as="p" hint-placeholder-count="3">
+              <div class="plancard" style="position:relative;background:{{ p.cardBg }};border:{{ p.border }};border-radius:16px;padding:24px 22px;display:flex;flex-direction:column;box-shadow:{{ p.shadow }}">
+                <sc-if value="{{ p.recommended }}" hint-placeholder-val="{{ false }}">
+                  <span style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.06em;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:4px 12px;text-transform:uppercase;white-space:nowrap">Recommended</span>
+                </sc-if>
+                <div style="font-size:16px;font-weight:700;letter-spacing:-.01em;color:{{ p.nameFg }}">{{ p.name }}</div>
+                <div style="font-size:12.5px;color:{{ p.tagFg }};margin-top:3px;min-height:34px;line-height:1.4">{{ p.tagline }}</div>
+                <div style="display:flex;align-items:baseline;gap:5px;margin-top:12px">
+                  <span style="font-family:var(--font-mono);font-size:26px;font-weight:700;letter-spacing:-.02em;color:{{ p.priceFg }}">{{ p.price }}</span>
+                  <span style="font-size:12px;color:{{ p.tagFg }}">{{ p.per }}</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:10px;margin-top:18px;padding-top:18px;border-top:1px solid {{ p.divider }}">
+                  <sc-for list="{{ p.features }}" as="f" hint-placeholder-count="5">
+                    <div style="display:flex;align-items:flex-start;gap:9px">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{ p.checkColor }}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:2px"><path d="M20 6 9 17l-5-5"></path></svg>
+                      <span style="font-size:12.5px;color:{{ p.featFg }};line-height:1.4">{{ f }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <button class="planbtn {{ p.btnClass }}" style="margin-top:22px;width:100%;font-size:13px;font-weight:600;font-family:var(--font-sans);border-radius:9px;padding:12px;background:{{ p.btnBg }};color:{{ p.btnFg }};border:{{ p.btnBorder }}">{{ p.cta }}</button>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="text-align:center;font-size:12px;color:var(--ink-faint);padding-bottom:8px">All plans include SSO, the full ontology, and agent orchestration. Prices in USD, billed annually.</div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){
+    const R = React.createElement;
+    const ic = (...p) => R('svg', { width:16, height:16, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:1.8, strokeLinecap:'round', strokeLinejoin:'round' }, ...p.map((d,i)=>R('path',{key:i,d})));
+    const icR = (rect, ...p) => R('svg', { width:16, height:16, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:1.8, strokeLinecap:'round', strokeLinejoin:'round' }, R('rect', rect), ...p.map((d,i)=>R('path',{key:i,d})));
+
+    const navGroups = [
+      { label:'Core', items:[ { name:'Command Center', href:'Mission Control.dc.html' }, { name:'Agents', href:'Agents.dc.html' }, { name:'Workflows', href:'Workflows.dc.html' }, { name:'Projects', href:'Projects.dc.html' }, { name:'Machines', href:'Machines.dc.html' } ] },
+      { label:'Value chain', items:[ { name:'Procurement', href:'Procurement.dc.html', badge:'6' }, { name:'Manufacturing', href:'Manufacturing.dc.html' }, { name:'Inventory', href:'Inventory.dc.html' }, { name:'Fulfillment', href:'Fulfillment.dc.html', badge:'3' }, { name:'Quality', href:'Quality.dc.html' }, { name:'Sales & CRM', href:'Sales & CRM.dc.html' }, { name:'Marketing', href:'Marketing.dc.html' } ] },
+      { label:'Robotics', items:[ { name:'Fleet', href:'Fleet.dc.html' }, { name:'Field Service', href:'Field Service.dc.html' }, { name:'Engineering', href:'Engineering.dc.html' }, { name:'Autonomy', href:'Autonomy.dc.html' } ] },
+      { label:'Back office', items:[ { name:'Finance', href:'Finance.dc.html', badge:'6' }, { name:'People', href:'People.dc.html' }, { name:'Security', href:'Security.dc.html' }, { name:'Legal', href:'Legal.dc.html' } ] },
+    ];
+
+    const subRaw = [
+      { label:'Organization', href:'Settings — Organization.dc.html', icon: icR({ width:18, height:18, x:3, y:3, rx:2 }, 'M9 3v18', 'M3 9h18') },
+      { label:'Members', href:'Settings — Members.dc.html', icon: ic('M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2', 'M9 7a4 4 0 1 0 0 .01', 'M22 21v-2a4 4 0 0 0-3-3.87') },
+      { label:'Your profile', href:'Settings — Profile.dc.html', icon: ic('M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2', 'M12 7a4 4 0 1 0 0 .01') },
+      { label:'Notifications', href:'Settings — Notifications.dc.html', icon: ic('M10.268 21a2 2 0 0 0 3.464 0', 'M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326') },
+      { label:'Integrations', href:'Settings — Integrations.dc.html', icon: ic('M6 3v12', 'M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'M15 6a9 9 0 0 0-9 9') },
+      { label:'Billing', active:true, href:'Settings — Billing.dc.html', icon: icR({ width:20, height:14, x:2, y:5, rx:2 }, 'M2 10h20') },
+    ];
+    const subnav = subRaw.map(s => ({
+      label:s.label, href:s.href, icon:s.icon,
+      bg: s.active ? 'var(--panel)' : 'transparent',
+      fg: s.active ? 'var(--ink)' : 'var(--ink-muted)',
+      weight: s.active ? 600 : 400,
+      iconColor: s.active ? 'var(--ink)' : 'var(--ink-faint)',
+    }));
+
+    const base = (o) => ({
+      cardBg:'var(--paper)', border:'1px solid var(--line)', shadow:'0 18px 40px rgba(0,0,0,.05)',
+      nameFg:'var(--ink)', tagFg:'var(--ink-muted)', priceFg:'var(--ink)', featFg:'var(--ink-muted)',
+      divider:'var(--line)', checkColor:'var(--ink-strong)',
+      ...o,
+    });
+    const plans = [
+      base({ name:'Pilot', tagline:'Prove it on one painful domain.', price:'$0', per:'/ 60-day pilot',
+        features:['Up to 10 seats', '10,000 agent runs / mo', '5 modules', 'Community support'],
+        cta:'Current plan', btnClass:'ghost', btnBg:'var(--panel)', btnFg:'var(--ink-muted)', btnBorder:'1px solid var(--line-strong)' }),
+      base({ name:'Scale', tagline:'Run the whole floor on one spine.', price:'$4,200', per:'/ month',
+        recommended:true,
+        cardBg:'var(--paper)', border:'2px solid var(--ink-strong)', shadow:'0 22px 50px rgba(0,0,0,.10)',
+        features:['Up to 50 seats', '60,000 agent runs / mo', 'All 24 modules', 'SSO / SAML', 'Priority support'],
+        cta:'Upgrade to Scale', btnClass:'up', btnBg:'var(--ink-strong)', btnFg:'#fff', btnBorder:'none' }),
+      base({ name:'Enterprise', tagline:'Custom verticals, security, and scale.', price:'Custom', per:'',
+        features:['Unlimited seats', 'Custom agent-run limits', 'Vertical editions', 'Dedicated tenancy + SLA', 'Solutions engineering'],
+        cta:'Talk to us', btnClass:'ghost', btnBg:'var(--paper)', btnFg:'var(--ink)', btnBorder:'1px solid var(--line-strong)' }),
+    ];
+
+    return { navGroups, subnav, plans };
+  }
+}
+</script>
+</body>
+</html>
