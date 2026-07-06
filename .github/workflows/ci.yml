@@ -12,11 +12,12 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    # AUTH.1 — a dummy AUTH_SECRET (Auth.js) + placeholder DATABASE_URL so the build
-    # + typecheck resolve env at CI time (no live DB is queried — pages are dynamic).
+    # AUTH.1 — a dummy AUTH_SECRET for the Auth.js config. DATABASE_URL is
+    # deliberately NOT set: the DB-gated verify checks skip cleanly without it (CI
+    # has no live DB), and the build compiles without it (pages are force-dynamic,
+    # Prisma connects lazily at runtime, never at build).
     env:
       AUTH_SECRET: ci-dummy-secret-not-used-for-real-sessions-0123456789
-      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
     steps:
       - uses: actions/checkout@v4
 
