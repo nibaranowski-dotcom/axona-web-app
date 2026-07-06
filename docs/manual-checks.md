@@ -1582,3 +1582,25 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Screen** `/signup` 1:1 to `Signup.dc.html` (full-screen, dotted-grid, account + workspace groups, live slug, "Free while in pilot · no card required", link to /login). Ink error banner, no invented reds, Lucide icons.
 - **Empty-org reality (flagged):** a new org has NO per-org agents/POs/projects — modules are global so nav populates; screens render their empty states. **Not fabricated** — default per-org agent/module provisioning is deferred (SET.1 / provisioning story); the demo org's data is never copied.
 - **Security:** public but hardened (Zod + bcrypt, no plaintext/logs); new session `orgId` = the new Org; creator is **ADMIN of their own org only**; no path to read/join another org (joining = AUTH.5). **Deferred (flagged):** rate-limiting/anti-abuse, email verification (AUTH.7), SSO signup (AUTH.2), onboarding wizard (AUTH.6), plan selection (BILL.*).
+
+---
+
+## AUTH.6 — Onboarding wizard (+ AUTH.3 routing)
+
+**Dev note:** the demo org is pre-onboarded (`onboardedAt` set, `enabledModules=[]` ⇒ all), so demo logins skip the wizard. A fresh signup (AUTH.4) is a not-yet-onboarded ADMIN → routed to the wizard.
+
+**Automated**
+- `pnpm verify:auth-6` (9 checks) — Org.onboardedAt + enabledModules + migration; **finish action ADMIN-gated, writes enabledModules + onboardedAt, redirects /core**; wizard has 3 steps, team is skip-first (no live invites, AUTH.5 flagged); nav filter + routing server-side; **finish sets onboardedAt + writes chosen modules, re-visit → /core**; **routing (fresh ADMIN → /onboarding, onboarded → /core, non-ADMIN → /core)**; **getNavModules only-enabled (ALL when empty — demo unaffected)**; isModuleEnabled (disabled false, core always, empty ⇒ all); finish ADMIN-gated + org-scoped (VIEWER rejected, own-org only). Self-cleaning.
+- CI gate: install (frozen) · lint · typecheck · verify:all · **`pnpm build` compiles** (middleware header + /onboarding). migrate status clean.
+
+**Manual (./dev.sh)**
+- Sign up (AUTH.4) → land on the **3-step wizard**: **Step 1 Profile** (org name/vertical, prefilled) → Continue; **Step 2 Team** (repeatable email+role rows, prominent **Skip for now** — collect only, no live invites) → Continue/Skip; **Step 3 Modules** (24 modules as toggle tiles grouped Core/Value chain/Robotics/Back office, lime when on, sensible defaults) → **Finish → Command Center**.
+- After finishing, a **module toggled off is hidden from the sidebar**; hitting its route directly shows a graceful **"module not enabled"** state with a link back to /core (never 500). Re-visiting `/onboarding` for the now-onboarded org → `/core`.
+- **Demo login** (`admin@axona-demo.test`) **skips onboarding** (goes straight to /core, all modules visible).
+
+**Notes / architecture**
+- **Schema:** `Org.onboardedAt DateTime?` (routing flag) + `Org.enabledModules String[]` (empty ⇒ ALL — back-compat) via `migrate dev`. `migrate status` clean; FTS intact.
+- **Wizard** (`/onboarding`, 1:1 to `Onboarding.dc.html`): full-screen stepper; `OnboardingWizard` client + server actions (`saveProfile`, `finishOnboarding`) **ADMIN-gated** (`requireRole`) + **org-scoped** (`dbForOrg`, only the acting user's own Org). `/onboarding` page guards: not-ADMIN or already-onboarded → `/core`.
+- **AUTH.3 routing** (server-side, in `(shell)/layout.tsx`): a not-yet-onboarded org's ADMIN → `/onboarding`; everyone else stays on `/core`. Not client-side.
+- **Nav enablement:** `getNavModules(enabledModules)` filters the sidebar; the layout gates a disabled module's route via a **middleware-injected `x-pathname` header** → renders `ModuleNotEnabled` (no 500). `core` is always enabled.
+- **Flags:** Step 2 invites are **collect-only** — real invite send/accept is **AUTH.5**. Enablement editing later reuses `enabledModules` (**SET.1**). Default per-org agent/data provisioning still deferred (a new org stays empty).

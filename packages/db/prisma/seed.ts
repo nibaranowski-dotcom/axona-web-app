@@ -104,18 +104,24 @@ async function seedSecondOrg(db: OrgScopedDb): Promise<void> {
 async function main(): Promise<void> {
   // 1. Orgs (bare prisma; stable ids → idempotent re-seed). AUTH.4: give the
   // seeded orgs a workspace slug (new orgs derive theirs at signup).
+  // AUTH.6: the demo org is already onboarded (skips the wizard) with all modules
+  // enabled (empty enabledModules ⇒ ALL — kept explicit here for clarity).
   await prisma.org.upsert({
     where: { id: DEMO_ORG_ID },
     update: {
       name: "Axona Demo Co",
       slug: "axona-demo-co",
       industry: "Humanoid",
+      onboardedAt: new Date(),
+      enabledModules: [],
     },
     create: {
       id: DEMO_ORG_ID,
       name: "Axona Demo Co",
       slug: "axona-demo-co",
       industry: "Humanoid",
+      onboardedAt: new Date(),
+      enabledModules: [],
     },
   });
   await prisma.org.upsert({

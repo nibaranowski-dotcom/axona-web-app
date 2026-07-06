@@ -27,15 +27,27 @@ function hrefFor(key: string): string {
   return key === "mission-control" ? "/" : `/${key}`;
 }
 
-export async function getNavModules(): Promise<NavGroup[]> {
+// AUTH.6: `enabledModules` filters the nav to the org's enabled set. Null/empty ⇒
+// ALL (back-compat for the demo + pre-existing orgs). `core` + the palette entries
+// (mission-control/search, hidden from the left nav anyway) are always kept.
+export async function getNavModules(
+  enabledModules?: string[] | null,
+): Promise<NavGroup[]> {
   const rows = await prisma.module.findMany({
     orderBy: [{ group: "asc" }, { orderIndex: "asc" }],
   });
+  const all = !enabledModules || enabledModules.length === 0;
+  const keep = (key: string) =>
+    all ||
+    key === "core" ||
+    key === "mission-control" ||
+    key === "search" ||
+    enabledModules!.includes(key);
   return GROUP_ORDER.map((g) => ({
     group: g,
     label: GROUP_LABEL[g] ?? g,
     modules: rows
-      .filter((m) => m.group === g)
+      .filter((m) => m.group === g && keep(m.key))
       .map((m) => ({ key: m.key, name: m.name, href: hrefFor(m.key) })),
   })).filter((grp) => grp.modules.length > 0);
 }

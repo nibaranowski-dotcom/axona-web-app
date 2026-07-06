@@ -31,13 +31,22 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user;
       const isPublic = PUBLIC.some((re) => re.test(path));
 
+      // Allow the request through, carrying the pathname on a request header so
+      // server components (the shell layout) can gate on the current route
+      // (AUTH.6 module enablement) without re-deriving it. Edge-safe.
+      const allow = () => {
+        const headers = new Headers(request.headers);
+        headers.set("x-pathname", path);
+        return NextResponse.next({ request: { headers } });
+      };
+
       if (isPublic) {
         if (isLoggedIn && /^\/login/.test(path)) {
           return NextResponse.redirect(new URL("/", nextUrl));
         }
-        return true;
+        return allow();
       }
-      if (isLoggedIn) return true;
+      if (isLoggedIn) return allow();
 
       const login = new URL("/login", nextUrl);
       login.searchParams.set("next", path + nextUrl.search);
