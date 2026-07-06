@@ -1604,3 +1604,24 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **AUTH.3 routing** (server-side, in `(shell)/layout.tsx`): a not-yet-onboarded org's ADMIN → `/onboarding`; everyone else stays on `/core`. Not client-side.
 - **Nav enablement:** `getNavModules(enabledModules)` filters the sidebar; the layout gates a disabled module's route via a **middleware-injected `x-pathname` header** → renders `ModuleNotEnabled` (no 500). `core` is always enabled.
 - **Flags:** Step 2 invites are **collect-only** — real invite send/accept is **AUTH.5**. Enablement editing later reuses `enabledModules` (**SET.1**). Default per-org agent/data provisioning still deferred (a new org stays empty).
+
+---
+
+## AUTH.5 — Invite + accept-invite (join an existing org)
+
+**Automated**
+- `pnpm verify:auth-5` (7 checks) — Invite model + InviteStatus + token-unique + migration; createInvites ADMIN-gated + accept creates a user at **exactly invite.role** (never escalated), joins **invite.orgId only**, single-use (ACCEPTED), bcrypt, crypto-random 32B token; accept screen + action + /invite/* public; **createInvites → PENDING + ~7d expiry + unique token, existing/dup skipped (batch not aborted)**; **accept valid → user at invited role (bcrypt verifies), ACCEPTED, not reusable**; **expired/revoked → invalid, no user**; **isolation (accepted user in inviting org only, role exact, no cross-org leak)**. Self-cleaning.
+- CI gate: install (frozen) · lint · typecheck · verify:all · **`pnpm build` compiles** (/invite/[token] route + actions). migrate status clean.
+
+**Manual (./dev.sh)**
+- As an org ADMIN (e.g. via the onboarding **Team** step, or after onboarding), add a teammate email + role → invites are created; **copyable links** appear (email delivery is EMAIL.1). Copy the `/invite/:token` link.
+- Open the link in a private window (logged out) → the accept screen: "**{inviter}** invited you to join **{Org}** on Axona", the **role pill**, Your name · Email (locked) · Set password → **Join {Org}** → auto signed-in → **/core** as the invited role (e.g. OPS — approve buttons gated per OPS). The invitee **skips onboarding** (org already onboarded).
+- Re-open the same link (or an expired/revoked one) → clean **"This invite is no longer valid."** state with a link to log in.
+
+**Notes / architecture**
+- **Schema:** `Invite { orgId, email(lowercased), role, token @unique, status PENDING/ACCEPTED/REVOKED/EXPIRED, invitedById, invitedByLabel, createdAt, expiresAt(now+7d), acceptedAt }` + indexes, via `migrate dev`. Invite is **not** a TENANT_MODEL (the accept flow reads by token pre-auth, deriving orgId from the invite) — create/list/revoke scope orgId explicitly.
+- **`lib/invites.ts`** (server-only, shared by actions + verify): `createInvites` (Zod + lowercase, per-row skip for existing-user / already-PENDING, **crypto `randomBytes(32).base64url`** token, 7d expiry, returns `${APP_URL}/invite/:token` links); `listInvites` (PENDING); `revokeInvite`; `loadInvite` (public, valid-PENDING-unexpired only); `acceptInvite` (**one race-safe txn**: re-check PENDING+unexpired → reject if email now a User → create User at **exactly invite.role** in **invite.orgId** → mark ACCEPTED).
+- **Actions:** `createInvitesAction`/`revokeInviteAction` (ADMIN-gated, own-org); `acceptInviteAction` (public → accept + auto sign-in → /core). **AUTH.6 team step wired** to `createInvitesAction` (replaced the collect-only seam) — filled rows create real invites; step 3 shows the copyable links + skip notices.
+- **Accept screen** `/invite/:token` 1:1 to `Accept Invite.dc.html` (inviter→org glyphs, heading, role pill, name/email-locked/password, Join). Invalid/revoked/accepted/expired → clean "no longer valid" state.
+- **Security:** token unguessable (32B) + single-use + 7d expiry; invitee gets **exactly the invited role** (never ADMIN unless invited ADMIN); one invite binds one orgId (no cross-org); email uniqueness respected (no takeover); bcrypt, no plaintext/logs. **`APP_URL`** in `.env.example`.
+- **Flags/deferred:** email delivery (**EMAIL.1** — link copied for now); full members & roles admin screen (**SET.2**); role change/deactivation (**SET.2**); SSO join (**AUTH.2**).

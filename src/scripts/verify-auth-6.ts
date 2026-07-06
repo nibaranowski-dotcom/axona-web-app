@@ -72,15 +72,14 @@ async function run(): Promise<void> {
     },
   );
   await check(
-    "wizard has the 3 steps (Profile · Team · Modules); team is skip-first (no live invites)",
+    "wizard has the 3 steps (Profile · Team · Modules); team is skip-first",
     () => {
       const w = read("apps/web/components/auth/OnboardingWizard.tsx");
       return (
         /Profile/.test(w) &&
         /Team/.test(w) &&
         /Modules/.test(w) &&
-        /Skip for now/.test(w) &&
-        /AUTH\.5/.test(w) // the deferral is flagged
+        /Skip for now/.test(w)
       );
     },
   );

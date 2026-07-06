@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Copy, Plus, Trash2 } from "lucide-react";
 import { saveProfile, finishOnboarding } from "@/app/onboarding/actions";
+import { createInvitesAction } from "@/app/onboarding/invite-actions";
+import type { InviteResult } from "@/lib/invites";
 import { ONBOARDING_GROUPS, DEFAULT_ENABLED } from "@/lib/onboarding";
 import { VERTICALS } from "@/lib/provisioning";
 
@@ -50,6 +52,7 @@ export function OnboardingWizard({
   const [invites, setInvites] = useState<Invite[]>([
     { email: "", role: "OPS" },
   ]);
+  const [inviteResults, setInviteResults] = useState<InviteResult[]>([]);
   const [enabled, setEnabled] = useState<Set<string>>(
     () => new Set(DEFAULT_ENABLED),
   );
@@ -71,7 +74,15 @@ export function OnboardingWizard({
         await saveProfile({ name, industry });
         setStep(1);
       } else if (step === 1) {
-        // Team is collect-only (AUTH.5 wires real invites). Advance.
+        // AUTH.5 — create real invites for any filled rows (per-row skip; email
+        // delivery is EMAIL.1, so we surface copyable links). Then advance.
+        const rows = invites
+          .map((r) => ({ email: r.email.trim(), role: r.role }))
+          .filter((r) => r.email.length > 0);
+        if (rows.length > 0) {
+          const results = await createInvitesAction(rows);
+          setInviteResults(results);
+        }
         setStep(2);
       } else {
         await finishOnboarding([...enabled]); // redirects to /core on success
@@ -181,7 +192,12 @@ export function OnboardingWizard({
               onSkip={() => setStep(2)}
             />
           )}
-          {step === 2 && <ModulesStep enabled={enabled} toggle={toggle} />}
+          {step === 2 && (
+            <>
+              <InviteLinks results={inviteResults} />
+              <ModulesStep enabled={enabled} toggle={toggle} />
+            </>
+          )}
         </div>
       </main>
 
@@ -397,6 +413,77 @@ function TeamStep({
           Skip for now
         </button>
       </div>
+    </div>
+  );
+}
+
+function InviteLinks({ results }: { results: InviteResult[] }) {
+  if (results.length === 0) return null;
+  const created = results.filter((r) => r.status === "created");
+  const skipped = results.filter((r) => r.status.startsWith("skipped"));
+  return (
+    <div className="mx-auto mb-6 max-w-[600px] rounded-[12px] border border-line bg-panel px-5 py-4">
+      <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-faint">
+        Invites created · copy the links to share
+      </div>
+      <p className="mb-3 text-[11.5px] text-ink-muted">
+        Email delivery lands soon (EMAIL.1) — for now, copy each link and send
+        it.
+      </p>
+      <div className="flex flex-col gap-2">
+        {created.map((r) => (
+          <InviteLinkRow
+            key={r.email}
+            email={r.email}
+            role={String(r.role)}
+            link={r.link!}
+          />
+        ))}
+      </div>
+      {skipped.length > 0 && (
+        <p className="mt-2.5 text-[11px] text-ink-muted">
+          Skipped {skipped.map((s) => s.email).join(", ")} — already a member or
+          already invited.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function InviteLinkRow({
+  email,
+  role,
+  link,
+}: {
+  email: string;
+  role: string;
+  link: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="flex items-center gap-2.5 rounded-[9px] border border-line-strong bg-paper px-3 py-2">
+      <span className="min-w-0 flex-1 truncate text-[12.5px] text-ink">
+        {email}
+      </span>
+      <span className="flex-none rounded-pill bg-ink-strong px-2 py-[2px] font-mono text-[9px] font-bold uppercase tracking-[0.06em] text-on-dark">
+        {role}
+      </span>
+      <button
+        type="button"
+        onClick={() => {
+          void navigator.clipboard?.writeText(link);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        }}
+        className="inline-flex flex-none items-center gap-1.5 rounded-btn border border-line-strong bg-paper px-2.5 py-1.5 text-[11.5px] font-semibold text-ink transition-colors hover:border-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      >
+        {copied ? (
+          <Check className="h-[13px] w-[13px]" strokeWidth={2.4} aria-hidden />
+        ) : (
+          <Copy className="h-[13px] w-[13px]" strokeWidth={1.8} aria-hidden />
+        )}
+        {copied ? "Copied" : "Copy link"}
+      </button>
     </div>
   );
 }
