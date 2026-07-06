@@ -214,6 +214,23 @@ model Notification {
   @@index([orgId, userId, createdAt])
 }
 
+// SET.4 — a user's notification preferences (event x channel matrix + master
+// mute + quiet hours). NOTIF.1's in-app feed respects inApp+muted now; email is
+// stored + honored in NOTIF.3.
+model NotificationPref {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  orgId      String
+  /// map of eventKey -> { inApp: bool, email: bool }
+  prefs      Json
+  muted      Boolean  @default(false)
+  quietStart String?
+  quietEnd   String?
+  updatedAt  DateTime @updatedAt
+
+  @@index([orgId])
+}
+
 // AUTH.5 — a token invite to JOIN an existing org at a role. Public accept via
 // /invite/:token. Tokens are crypto-random, single-use (PENDING→ACCEPTED), and
 // expiring (7d). The invitee joins at exactly `role` — never escalated. One invite

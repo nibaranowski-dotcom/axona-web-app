@@ -1738,3 +1738,24 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Shell badge:** `/notifications` is a CORE route (exempt from the AUTH.6 module gate); the sidebar link carries the live unread count.
 - **Guardrails:** org isolation (a user sees only their org's own + broadcasts), read-only content, no invented reds, v2 tokens.
 - **Flags/deferred:** wiring every source (NOTIF.2), per-channel email routing (NOTIF.3 + EMAIL.1), digest email (EMAIL.2).
+
+---
+
+## SET.4 — Notification preferences
+
+**Automated**
+- `pnpm verify:set-4` (6 checks) — NotificationPref model + migration; updatePrefs own-user (upsert by userId) + Zod + screen; **NOTIF.1 getNotifications + unread respect suppressedInAppTypes**; defaults applied when none (approvals/exceptions on); **prefs persist (matrix + mute + quiet), own-user (unique userId)**; **getNotifications suppresses APPROVAL when inApp off + muted suppresses all**. Self-cleaning.
+- CI gate: install (frozen) · lint · typecheck · verify:all (incl. notif-1 still green) · **`pnpm build` compiles**. migrate clean. accessibility-review 0 on /settings/notifications.
+
+**Manual (./dev.sh)**
+- Sidebar Settings → **Notifications** (`/settings/notifications`): a **master mute**, the **event × channel matrix** (Approvals · Exceptions · Run failures · Weekly digest · Mentions rows × **In-app / Email** toggles), and **quiet hours**. Save.
+- Toggle an event's **In-app** off → **Save** → that type is **suppressed from the /notifications feed + the shell unread badge** (verified: approvals-off hides 4 items; **Mute all** → feed shows 0).
+- Email column + quiet hours are **stored** but honored by delivery in **NOTIF.3** (flagged in the copy).
+
+**Notes / architecture**
+- **Schema:** `NotificationPref { userId @unique, orgId, prefs Json (event→{inApp,email}), muted, quietStart?, quietEnd?, updatedAt }` via `migrate dev`. Scoped by the unique `userId` (own-user) — not a TENANT_MODEL (avoids the orgId-injection clash on upsert-by-userId).
+- **Read model** `lib/notification-prefs.ts`: `NOTIFICATION_EVENTS` (event→NOTIF.1 type map), `defaultPrefs` (all in-app on; email on for approvals/exceptions), `getNotificationPrefs` (defaults if none, merged), `suppressedInAppTypes` (muted → all; per-event inApp=false → that type).
+- **NOTIF.1 wiring:** `getNotifications` + `getUnreadCount` now filter out `suppressedInAppTypes(userId)` — the in-app feed + badge honor the prefs immediately.
+- **Action** `(shell)/settings/notifications/actions.ts`: `updatePrefs` own-user (upsert by userId), Zod-validated (channel booleans, HH:MM quiet hours), keeps only known event keys.
+- **Screen** `/settings/notifications` 1:1 to the design via SettingsShell/SettingsNav (replaces the SET.2 placeholder).
+- **Flags/deferred:** per-preference **email routing** (NOTIF.3 + EMAIL.1) — email column + quiet hours are stored now, honored on delivery later; digest email (EMAIL.2).

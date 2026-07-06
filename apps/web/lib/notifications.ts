@@ -1,4 +1,5 @@
 import { prisma, type NotificationType } from "@axona/db";
+import { suppressedInAppTypes } from "./notification-prefs";
 
 // NOTIF.1 — notification writer + read model (server-only). `notify()` is the ONLY
 // writer. The center reads a user's own notifications OR org/role broadcasts
@@ -63,14 +64,19 @@ export async function getNotifications(
   userId: string,
   opts: { filter?: "all" | "unread" | "approvals" } = {},
 ): Promise<NotificationFeed> {
-  const rows = await prisma.notification.findMany({
-    where: {
-      orgId,
-      OR: [{ userId }, { userId: null }], // own + broadcasts
-    },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
+  const [all, suppressed] = await Promise.all([
+    prisma.notification.findMany({
+      where: {
+        orgId,
+        OR: [{ userId }, { userId: null }], // own + broadcasts
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
+    suppressedInAppTypes(userId), // SET.4 — types the user muted in-app
+  ]);
+  // SET.4 — the in-app feed honors the user's inApp/muted preferences.
+  const rows = all.filter((r) => !suppressed.has(r.type));
 
   const unreadCount = rows.filter((r) => !r.readAt).length;
   const approvalCount = rows.filter(
@@ -115,7 +121,13 @@ export async function getUnreadCount(
   orgId: string,
   userId: string,
 ): Promise<number> {
+  const suppressed = await suppressedInAppTypes(userId); // SET.4 in-app prefs
   return prisma.notification.count({
-    where: { orgId, readAt: null, OR: [{ userId }, { userId: null }] },
+    where: {
+      orgId,
+      readAt: null,
+      OR: [{ userId }, { userId: null }],
+      type: { notIn: [...suppressed] },
+    },
   });
 }
