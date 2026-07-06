@@ -102,16 +102,30 @@ async function seedSecondOrg(db: OrgScopedDb): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  // 1. Orgs (bare prisma; stable ids → idempotent re-seed)
+  // 1. Orgs (bare prisma; stable ids → idempotent re-seed). AUTH.4: give the
+  // seeded orgs a workspace slug (new orgs derive theirs at signup).
   await prisma.org.upsert({
     where: { id: DEMO_ORG_ID },
-    update: { name: "Axona Demo Co" },
-    create: { id: DEMO_ORG_ID, name: "Axona Demo Co" },
+    update: {
+      name: "Axona Demo Co",
+      slug: "axona-demo-co",
+      industry: "Humanoid",
+    },
+    create: {
+      id: DEMO_ORG_ID,
+      name: "Axona Demo Co",
+      slug: "axona-demo-co",
+      industry: "Humanoid",
+    },
   });
   await prisma.org.upsert({
     where: { id: SECOND_ORG_ID },
-    update: { name: "Isolation Test Co" },
-    create: { id: SECOND_ORG_ID, name: "Isolation Test Co" },
+    update: { name: "Isolation Test Co", slug: "isolation-test-co" },
+    create: {
+      id: SECOND_ORG_ID,
+      name: "Isolation Test Co",
+      slug: "isolation-test-co",
+    },
   });
 
   // 2. Idempotency — clear demo tenant rows

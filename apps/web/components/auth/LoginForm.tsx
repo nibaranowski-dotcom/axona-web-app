@@ -49,7 +49,8 @@ export function LoginForm() {
   const fieldBorder = error ? "border-ink-strong" : "border-line-strong";
 
   return (
-    <div
+    <main
+      aria-label="Sign in"
       className="flex min-h-dvh items-start justify-center bg-panel px-8 py-12 font-sans text-ink"
       style={{ paddingTop: "clamp(48px, 12vh, 140px)" }}
     >
@@ -82,9 +83,9 @@ export function LoginForm() {
               <span className="text-[25px] font-bold tracking-[-0.045em] text-ink-strong">
                 axona
               </span>
-              <div className="text-center text-[13.5px] text-ink-muted">
+              <h1 className="text-center text-[13.5px] font-normal text-ink-muted">
                 Sign in to your workspace
-              </div>
+              </h1>
             </div>
 
             {/* error banner (ink — never red) */}
@@ -236,6 +237,6 @@ export function LoginForm() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

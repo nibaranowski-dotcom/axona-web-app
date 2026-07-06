@@ -27,6 +27,11 @@ datasource db {
 model Org {
   id        String   @id @default(cuid())
   name      String
+  /// AUTH.4: the workspace URL slug (e.g. "axona-demo-co"), derived from name;
+  /// uniqueness enforced (auto-suffixed on collision at provisioning time).
+  slug      String?  @unique
+  /// AUTH.4: the org's vertical (Humanoid / Mobility & AVs / … / Other). Nullable.
+  industry  String?
   createdAt DateTime @default(now())
 
   // back-relations — one array per tenant-owned model (FND.11)

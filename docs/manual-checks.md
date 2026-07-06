@@ -1561,3 +1561,24 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Login screen** `/login` (full-screen, outside the shell) 1:1 to `Login.dc.html` on v2 tokens; error state in ink (no red); **SSO button present but disabled** (AUTH.2); **Forgot password?** stubbed (AUTH.7); **Create a workspace** → `/signup` (AUTH.4). Sign-out from the sidebar footer.
 - **Schema:** one bounded add `User.passwordHash String?` via `migrate dev`. `passwordHash` never returned/logged.
 - **Scoped out (their stories):** SSO (AUTH.2), signup+provisioning (AUTH.4), invite (AUTH.5), reset/verify (AUTH.7), new-user→onboarding routing (AUTH.3/6), rate-limiting/lockout/2FA (future hardening).
+
+---
+
+## AUTH.4 — Signup + org provisioning
+
+**Automated**
+- `pnpm verify:auth-4` (9 checks) — Org.slug (unique) + industry + migration; signup action provisions + auto sign-in + redirect (server-only); /signup + /onboarding routes, /signup public; password **bcrypt-hashed + Zod-validated, no plaintext store**; **createWorkspace → Org + ADMIN whose hash verifies**; **duplicate email → clean field error, no new Org/User**; **slug collision → unique suffix (-2)**; **isolation: new org empty + cannot read the demo org's data**; Zod rejects weak password / bad email / empty org name. Self-cleaning.
+- CI gate: install (frozen) · lint · typecheck · verify:all · **`pnpm build` compiles** (/signup route + action). migrate status clean.
+
+**Manual (./dev.sh — logged out)**
+- `/signup` (reachable while logged out) → fill Full name · Work email · Password (≥ 8) · Organization name (the **Workspace URL** auto-suggests a slug, editable) · Vertical → **Create workspace** → auto signed-in → **/onboarding → /core** (Command Center) in a **brand-new empty org** (nav populated from global modules; every screen shows its empty state — no demo data).
+- Sign up again with an existing email → inline ink error "An account with this email already exists — log in instead." (no 500).
+- A second signup makes a **separate isolated org** (different slug); it can't see the first org's data.
+
+**Notes / architecture**
+- **Schema:** `Org.slug String? @unique` + `Org.industry String?` via `migrate dev`. **Flagged deviation from the PRD's `slug String @unique`:** made it **nullable-unique** because a non-null unique column on a table with existing rows needs a backfill — nullable-unique still enforces uniqueness on real values, and the seed sets slugs for the demo (`axona-demo-co`) + second (`isolation-test-co`) orgs, so every real org has one.
+- **Provisioning core** (`lib/provisioning.ts`, server-only, shared by the action + verify): Zod `signupSchema` (name/orgName non-empty, valid email, password ≥ 8, industry ∈ VERTICALS), email-uniqueness → clean field error, `slugify` + `uniqueSlug` (auto-suffix), one `$transaction` creating Org + first ADMIN (`bcrypt.hash`), never stores plaintext. Duplicate-email is a structured result, never a 500 (race also caught).
+- **Action** (`app/signup/actions.ts`): `useActionState` server action → `provisionWorkspace` → `signIn("credentials", { redirectTo: "/onboarding" })`. `/onboarding` is a thin redirect to `/core` until **AUTH.6** (flagged `/// AUTH.6`).
+- **Screen** `/signup` 1:1 to `Signup.dc.html` (full-screen, dotted-grid, account + workspace groups, live slug, "Free while in pilot · no card required", link to /login). Ink error banner, no invented reds, Lucide icons.
+- **Empty-org reality (flagged):** a new org has NO per-org agents/POs/projects — modules are global so nav populates; screens render their empty states. **Not fabricated** — default per-org agent/module provisioning is deferred (SET.1 / provisioning story); the demo org's data is never copied.
+- **Security:** public but hardened (Zod + bcrypt, no plaintext/logs); new session `orgId` = the new Org; creator is **ADMIN of their own org only**; no path to read/join another org (joining = AUTH.5). **Deferred (flagged):** rate-limiting/anti-abuse, email verification (AUTH.7), SSO signup (AUTH.2), onboarding wizard (AUTH.6), plan selection (BILL.*).
