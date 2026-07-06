@@ -42,7 +42,11 @@ export default async function ShellLayout({
 
   return (
     <div className="grid h-dvh grid-cols-[auto_1fr_auto] bg-paper text-ink">
-      <Sidebar groups={groups} alerts={alerts} />
+      <Sidebar
+        groups={groups}
+        alerts={alerts}
+        user={user ? { name: user.name, role: user.role } : null}
+      />
       <main aria-label="Main content" className="min-w-0 overflow-y-auto">
         {children}
       </main>

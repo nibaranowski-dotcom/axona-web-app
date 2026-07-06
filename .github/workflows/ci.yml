@@ -12,6 +12,11 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    # AUTH.1 — a dummy AUTH_SECRET (Auth.js) + placeholder DATABASE_URL so the build
+    # + typecheck resolve env at CI time (no live DB is queried — pages are dynamic).
+    env:
+      AUTH_SECRET: ci-dummy-secret-not-used-for-real-sessions-0123456789
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
     steps:
       - uses: actions/checkout@v4
 
@@ -42,3 +47,8 @@ jobs:
 
       - name: Verify scripts
         run: pnpm verify:all
+
+      # AUTH.1 — build must compile: the middleware + auth routes are build-sensitive
+      # (edge bundle, Auth.js). Pages are force-dynamic, so no live DB is hit.
+      - name: Build
+        run: pnpm --filter @axona/web build

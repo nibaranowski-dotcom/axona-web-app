@@ -1538,3 +1538,26 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **BUG 1:** the audit table region had `overflow-x-auto`. Per CSS, `overflow-x:auto` computes `overflow-y` to `auto`, making the region a scroll container — so the column header's `position:sticky; top:60px` was relative to the (non-scrolling, page-flowing) region, not `<main>`, and it **scrolled away** instead of pinning (a data row then sat directly under the topbar). Fix: the region simply flows (no overflow), the columns are responsive `minmax` (so no horizontal scroll is needed — no scroll container), the header is `sticky top-[60px] z-[15]` with an opaque `bg-panel`, and the ScreenShell topbar (`z-20`, opaque) covers 0→60. Header pins cleanly at every offset. UX.4 vertical page-scroll unaffected.
 - **BUG 2:** `PoRow` used `grid-cols-[…_auto]`. The `auto` actions column sized to content, so rows WITH Approve/Reject buttons consumed width there and their `fr` data columns computed narrower/shifted; rows WITHOUT buttons didn't. Fix: one shared template (`PO_HEADER_COLS = COLS`) with a **fixed `160px`** actions column reserved on every row (empty when there are no buttons) — the `fr` columns now compute identically everywhere. fr ratios match `Procurement.dc.html` (`0.8 2.2 1 0.9 1.15`).
 - Pure UI; no data/logic change; v2 tokens only.
+
+---
+
+## AUTH.1 — Real authentication (Auth.js email/password + session + protected routes)
+
+**Dev login credentials** (seeded; dev-only — never a real secret): every role user shares the password **`axona-dev-2026!`**. Emails: `admin@axona-demo.test` (default), `ops@…`, `engineer@…`, `sales@…`, `finance@…`, `tech@…`, `viewer@…` (all `@axona-demo.test`). The plaintext lives ONLY here; the seed stores its bcrypt hash.
+
+**Automated**
+- `pnpm verify:auth-1` (10 checks) — `User.passwordHash` (nullable) + committed migration; Credentials provider verifies via bcryptjs; session carries orgId+role; **passwordHash never enters the return/token/session**; `getCurrentUser` reads the Auth.js session; middleware protects app routes (`/login` + `/api/auth/*` public, unauth → `/login?next=`); AUTH_SECRET documented; **all 7 users have a hash**; authorize **accepts correct** + **rejects wrong password / unknown email**; a **VIEWER** authenticates (RBAC now runs on the real role).
+- CI gate: install (frozen) · lint · typecheck · verify:all · **`pnpm build` compiles** (middleware + auth routes are build-sensitive — added to CI). CI provides a dummy `AUTH_SECRET`. migrate status clean.
+
+**Manual (./dev.sh — real auth is on)**
+- Any deep link while logged out → **`/login?next=<path>`** (verified: `/procurement` → `/login?next=%2Fprocurement`). `/login` + `/api/auth/*` stay public.
+- Log in as `admin@axona-demo.test` / `axona-dev-2026!` → lands on the **Command Center** (`/`→`/core`); the sidebar footer shows **Dana Reyes · Admin** + a sign-out button.
+- Wrong password → stays on `/login` with the **ink inline error** ("That email or password doesn't match.").
+- Log in as `viewer@axona-demo.test` → approve/reject buttons are gated (VIEWER can't mutate — `decide()`/`requireRole` reject server-side). **Sign out** (sidebar) → `/login`.
+
+**Notes / architecture**
+- **Auth.js v5** (`next-auth@5-beta`) + `bcryptjs` (pure-JS — no native build in CI). Split config: `auth.config.ts` (EDGE-SAFE — no prisma/bcrypt; `authorized` redirect logic + jwt/session callbacks) used by `middleware.ts`; `auth.ts` (Node) adds the Credentials provider → `verifyCredentials` (shared `lib/credentials.ts`). Route handler at `app/api/auth/[...nextauth]`. JWT session strategy; `AUTH_SECRET` in `.env.example`.
+- **`getCurrentUser`** now reads `auth()` and returns the SAME shape `{ id, orgId, role, name, email }` (or null) — the shell, screens, `dbForOrg`, `requireRole` are unchanged. The session's **`orgId` is the tenant boundary** (from the signed JWT, never the client). **RBAC is now real** — a VIEWER can't approve.
+- **Login screen** `/login` (full-screen, outside the shell) 1:1 to `Login.dc.html` on v2 tokens; error state in ink (no red); **SSO button present but disabled** (AUTH.2); **Forgot password?** stubbed (AUTH.7); **Create a workspace** → `/signup` (AUTH.4). Sign-out from the sidebar footer.
+- **Schema:** one bounded add `User.passwordHash String?` via `migrate dev`. `passwordHash` never returned/logged.
+- **Scoped out (their stories):** SSO (AUTH.2), signup+provisioning (AUTH.4), invite (AUTH.5), reset/verify (AUTH.7), new-user→onboarding routing (AUTH.3/6), rate-limiting/lockout/2FA (future hardening).

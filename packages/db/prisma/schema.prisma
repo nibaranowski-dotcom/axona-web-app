@@ -68,13 +68,16 @@ model Org {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  orgId     String
-  org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  name      String
-  email     String   @unique
-  role      Role
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  orgId        String
+  org          Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name         String
+  email        String   @unique
+  role         Role
+  /// AUTH.1: bcrypt hash of the password (Credentials provider). Nullable —
+  /// SSO-only users (AUTH.2) won't have one. NEVER returned to the client / logged.
+  passwordHash String?
+  createdAt    DateTime @default(now())
 
   @@index([orgId])
 }

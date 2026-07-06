@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import {
+  LogOut,
   PanelLeftClose,
   PanelLeftOpen,
   Search,
@@ -11,6 +13,11 @@ import {
 import type { NavGroup } from "@/lib/nav";
 import { useMounted, useUi } from "@/lib/ui-store";
 import { NavSection } from "./NavSection";
+
+export interface SidebarUser {
+  name: string;
+  role: string;
+}
 
 // Modules that live only on Mission Control / as the palette — not in the left
 // nav (Command Center.dc.html's Core is exactly CC · Agents · Workflows ·
@@ -28,9 +35,11 @@ const HIDDEN_FROM_NAV = new Set(["mission-control", "search"]);
 export function Sidebar({
   groups,
   alerts,
+  user,
 }: {
   groups: NavGroup[];
   alerts: Record<string, number>;
+  user?: SidebarUser | null;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -167,19 +176,57 @@ export function Sidebar({
         </Link>
       </div>
 
-      {/* Stubbed identity until AUTH.1 */}
+      {/* Identity + sign-out (AUTH.1) — the logged-in user + role. */}
       <div className="mt-2 flex items-center gap-[10px] border-t border-line px-2 pb-0.5 pt-3">
         <span
           aria-hidden
-          className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-accent text-[12px] font-bold text-accent-ink"
+          className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-accent text-[11px] font-bold text-accent-ink"
         >
-          AX
+          {initials(user?.name)}
         </span>
-        <div className="min-w-0 text-[12.5px] leading-[1.3]">
-          <div className="font-semibold text-ink">Demo workspace</div>
-          <div className="text-ink-muted">Head of Ops</div>
+        <div className="min-w-0 flex-1 text-[12.5px] leading-[1.3]">
+          <div className="truncate font-semibold text-ink">
+            {user?.name ?? "Signed in"}
+          </div>
+          <div className="truncate text-ink-muted">{roleLabel(user?.role)}</div>
         </div>
+        <button
+          type="button"
+          onClick={() => void signOut({ callbackUrl: "/login" })}
+          aria-label="Sign out"
+          title="Sign out"
+          className="flex h-7 w-7 flex-none items-center justify-center rounded-[7px] border border-line text-ink-muted transition-colors hover:bg-panel hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          <LogOut className="h-[15px] w-[15px]" strokeWidth={1.7} aria-hidden />
+        </button>
       </div>
     </nav>
   );
+}
+
+// AUTH.1 — display helpers for the identity footer.
+function initials(name?: string): string {
+  if (!name) return "AX";
+  return (
+    name
+      .split(" ")
+      .map((w) => w[0])
+      .filter(Boolean)
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "AX"
+  );
+}
+
+const ROLE_LABEL: Record<string, string> = {
+  ADMIN: "Admin",
+  OPS: "Operations",
+  ENGINEER: "Engineering",
+  SALES: "Sales",
+  FINANCE: "Finance",
+  TECH: "Autonomy",
+  VIEWER: "Viewer",
+};
+function roleLabel(role?: string): string {
+  return role ? (ROLE_LABEL[role] ?? role) : "Member";
 }

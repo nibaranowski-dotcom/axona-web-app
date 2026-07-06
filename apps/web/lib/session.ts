@@ -1,8 +1,19 @@
-import { prisma } from "@axona/db";
+import { auth } from "@/auth";
 
-// TODO AUTH.1: replace with the real Auth.js session (orgId + user from cookie).
-// Until then, the shell + screens render against the seeded demo ADMIN so we can
-// build UI pre-auth. Nav is read-all; action-level RBAC is per-screen (RBAC.2/3).
+// AUTH.1 — the real server-side session read (replaces the ADMIN stub). Returns
+// the same shape the shell/screens/dbForOrg/requireRole already consume:
+// { id, orgId, role, name, email } — or null when logged out. The session's
+// `orgId` is the tenant boundary (from the signed JWT, never the client); the
+// passwordHash is never part of the session.
 export async function getCurrentUser() {
-  return prisma.user.findFirst({ where: { role: "ADMIN" } });
+  const session = await auth();
+  const u = session?.user;
+  if (!u?.id || !u.orgId) return null;
+  return {
+    id: u.id,
+    orgId: u.orgId,
+    role: u.role,
+    name: u.name ?? "",
+    email: u.email ?? "",
+  };
 }
