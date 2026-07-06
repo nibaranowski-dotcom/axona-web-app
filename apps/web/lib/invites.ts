@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma, type Role, type InviteStatus } from "@axona/db";
+import { sendEmail } from "./email/send";
 
 // AUTH.5 — invite creation + accept core (server-only; shared by the actions + the
 // verify script). Tokens are crypto-random (32 bytes, base64url), single-use, and
@@ -96,14 +97,32 @@ export async function createInvites(
         expiresAt: new Date(Date.now() + INVITE_TTL_MS),
       },
     });
-    out.push({
+    const link = `${appUrl()}/invite/${token}`;
+    // EMAIL.1 — send the branded invite email (FakeMailer in dev/CI). Best-effort:
+    // the copyable link is still returned as a fallback, so a send failure is fine.
+    await sendEmail(
+      {
+        kind: "invite",
+        props: {
+          inviterName: invitedBy.label,
+          orgName: await orgName(orgId),
+          role,
+          acceptUrl: link,
+        },
+      },
       email,
-      role,
-      status: "created",
-      link: `${appUrl()}/invite/${token}`,
-    });
+    );
+    out.push({ email, role, status: "created", link });
   }
   return out;
+}
+
+async function orgName(orgId: string): Promise<string> {
+  const org = await prisma.org.findUnique({
+    where: { id: orgId },
+    select: { name: true },
+  });
+  return org?.name ?? "the workspace";
 }
 
 export interface PendingInvite {

@@ -203,8 +203,12 @@ function walk(dir: string, out: string[]): void {
 }
 const files: string[] = [];
 for (const r of SCAN_ROOTS) walk(r, files);
+// EMAIL.1 — email HTML templates MUST use literal hex (email clients don't support
+// CSS variables), so the transactional-email templates are exempt from the token rule.
+const HEX_EXEMPT = join("apps", "web", "lib", "email", "templates");
 for (const rel of files) {
   if (join(root, rel) === TOKENS_ABS) continue;
+  if (rel.includes(HEX_EXEMPT)) continue;
   const content = readFileSync(join(root, rel), "utf8");
   for (const m of content.matchAll(hexRe)) {
     fail(`raw hex ${m[0]} in ${relative(root, join(root, rel))} (use a token)`);

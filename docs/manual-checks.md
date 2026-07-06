@@ -1780,3 +1780,23 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Actions** `(shell)/settings/integrations/actions.ts` (ADMIN-gated, org-scoped, audited): `setIntegrationStatus` (stub), `createApiKey`, `revokeApiKey`, `updateSsoConfig` (config-only).
 - **Seed:** demo → 6 integration statuses + 1 API key (hash only) + a default SsoConfig.
 - **Flags/deferred:** real connector ingest (**CONN.1**), real SSO/SAML auth (**AUTH.2**), webhooks, API-key usage/scoping/enforcement — connect + SSO writes are config-only here.
+
+---
+
+## EMAIL.1 — Transactional email (Resend + React Email)
+
+**Automated**
+- `pnpm verify:email-1` (10 checks) — Mailer interface + Fake/Resend split + getMailer() by env; four templates (invite/verify/reset/receipt); createInvites wired to sendEmail('invite') + still returns the link; .env.example documents RESEND_API_KEY + EMAIL_FROM; **getMailer() → FakeMailer without a key / ResendMailer with a key**; **each template renders HTML with the right props (branded, no emoji)**; **sendEmail via FakeMailer records the send**; **a mailer failure does NOT throw into the caller**; **createInvites triggers an invite send (FakeMailer) + still returns the link**. Runs entirely on FakeMailer (no key, no send).
+- CI gate: install (frozen; adds `resend` + `@react-email/components` + `@react-email/render`) · lint · typecheck · verify:all (FakeMailer, no key) · **`pnpm build` compiles**. migrate clean (no schema change).
+
+**Manual**
+- Without `RESEND_API_KEY` (dev/CI): sending an invite (Members → Invite, or the onboarding team step) logs `[FakeMailer] would send "…" → email` — no network, the copyable `/invite/:token` link still works.
+- **With a real key:** set `RESEND_API_KEY` + `EMAIL_FROM` (a verified Resend domain, e.g. `Axona <no-reply@axonahq.com>`) in `.env`, invite yourself → you receive the branded invite email; the "Join {Org}" button opens the accept screen.
+
+**Notes / architecture**
+- **DI** `lib/email/mailer.ts`: `Mailer` interface; `getMailer()` returns **FakeMailer** when `RESEND_API_KEY` is unset (records to a sink, logs, no send) or **ResendMailer** with a key (lazy-imports the `resend` SDK so CI never loads it). The key is never logged. Mirrors the ModelClient/Embedder DI pattern.
+- **Templates** `lib/email/templates/*` (React Email `@react-email/components`): `InviteEmail` · `VerifyEmail` · `ResetEmail` · `ReceiptEmail` on a shared branded `EmailLayout` (Axona wordmark, paper/ink, ink button, footer — no emoji). `renderEmail` → HTML via `@react-email/render`.
+- **`sendEmail(spec, to)`** `lib/email/send.ts`: render the template → `getMailer().send`; **try/catch swallows failures** (transactional email is best-effort — the caller's action already committed).
+- **Wiring:** `createInvites` (AUTH.5) now calls `sendEmail("invite", …)` per created invite (still returns the copyable link as a fallback).
+- **Config:** `.env.example` gains `RESEND_API_KEY` (blank ⇒ Fake), `EMAIL_FROM`, `APP_URL`. Root `tsconfig.json` gains `jsx: react-jsx` so the verify scripts type-check the `.tsx` templates.
+- **Flags/deferred:** reset/verify **flows** (AUTH.7 wires them; EMAIL.1 provides the send + templates), per-preference routing (NOTIF.3), digest (EMAIL.2), marketing/bulk (out of scope — transactional only, no autonomous sends).
