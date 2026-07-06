@@ -27,6 +27,8 @@ const TENANT_MODELS = new Set<string>([
   "Subscription",
   "InvoiceSaaS",
   "Notification",
+  "Integration",
+  "ApiKey",
   "AuditLog",
   "Agent",
   "Chat",

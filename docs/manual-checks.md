@@ -1759,3 +1759,24 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Action** `(shell)/settings/notifications/actions.ts`: `updatePrefs` own-user (upsert by userId), Zod-validated (channel booleans, HH:MM quiet hours), keeps only known event keys.
 - **Screen** `/settings/notifications` 1:1 to the design via SettingsShell/SettingsNav (replaces the SET.2 placeholder).
 - **Flags/deferred:** per-preference **email routing** (NOTIF.3 + EMAIL.1) — email column + quiet hours are stored now, honored on delivery later; digest email (EMAIL.2).
+
+---
+
+## SET.5 — Integrations, SSO config & API keys
+
+**Automated**
+- `pnpm verify:set-5` (8 checks) — Integration/ApiKey/SsoConfig models + migration; actions ADMIN-gated + audited (apikey.create/revoke, sso.config_change, integration.status_change); **createApiKey stores keyHash (sha256), returns plaintext once, never logs it**; screen exists; **createApiKey → hash+prefix stored (NOT plaintext), getApiKeys masked, revoke + audited**; **no plaintext key stored anywhere**; getIntegrations/getSsoConfig org-scoped + SSO persists+audits; cross-org key not reachable. Self-cleaning.
+- CI gate: install (frozen) · lint · typecheck · verify:all · **`pnpm build` compiles**. migrate clean. accessibility-review 0 on /settings/integrations.
+
+**Manual (./dev.sh — as ADMIN)**
+- Sidebar Settings → **Integrations** (`/settings/integrations`): **Connected systems** grid (ERP/PLM/Telemetry Connected=green · MES Error=ink · Slack/Email Not connected) with **Connect/Disconnect** (stubbed — preview); **SSO/SAML** config (provider · read-only ACS URL · IdP metadata · Enforce toggle — config-only); **API keys** table.
+- **Create key** → the plaintext `ax_live_…` is shown **once** with a copy button + "you won't see it again" warning → the row then shows only the **masked** `ax_live_••••xxxx`. **Revoke** dims it. Toggle an integration + save SSO. All writes land in **/audit** (apikey.create/revoke · sso.config_change · integration.status_change) — the audit records the name/prefix, **never the plaintext**.
+- Non-ADMIN: read-only.
+
+**Notes / architecture**
+- **Schema:** `Integration { orgId, kind (ERP/PLM/MES/SLACK/EMAIL/TELEMETRY), status (NOT_CONNECTED/CONNECTED/ERROR), config?, connectedAt? }` (unique per org+kind), `ApiKey { orgId, name, prefix, keyHash, createdById, lastUsedAt?, revokedAt? }`, `SsoConfig { orgId @unique, provider?, idpMetadata?, enforce }` — via `migrate dev`. Integration/ApiKey are TENANT_MODELS; SsoConfig (orgId-unique upsert) is scoped explicitly.
+- **API keys hashed at rest:** `generateApiKey` mints `ax_live_<48 hex>`, stores **sha256(key)** + a short display prefix; the **plaintext is returned once** by `createApiKey` and never stored/logged (audit records name+prefix only). `getApiKeys` returns masked `ax_live_••••xxxx`.
+- **Read model** `lib/integrations.ts`: `INTEGRATION_CATALOG`, `getIntegrations`, `getApiKeys` (masked), `getSsoConfig` (+ display ACS URL from APP_URL+slug).
+- **Actions** `(shell)/settings/integrations/actions.ts` (ADMIN-gated, org-scoped, audited): `setIntegrationStatus` (stub), `createApiKey`, `revokeApiKey`, `updateSsoConfig` (config-only).
+- **Seed:** demo → 6 integration statuses + 1 API key (hash only) + a default SsoConfig.
+- **Flags/deferred:** real connector ingest (**CONN.1**), real SSO/SAML auth (**AUTH.2**), webhooks, API-key usage/scoping/enforcement — connect + SSO writes are config-only here.

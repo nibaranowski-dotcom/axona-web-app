@@ -19,6 +19,7 @@ import { seedMatrix } from "./seed/matrix";
 import { seedAudit } from "./seed/audit";
 import { seedBilling } from "./seed/billing";
 import { seedNotifications } from "./seed/notifications";
+import { seedIntegrations } from "./seed/integrations";
 import { seedMachines } from "./seed/machines";
 import { seedWorkflows } from "./seed/workflows";
 
@@ -157,6 +158,11 @@ async function main(): Promise<void> {
   const audit = await seedAudit(db, DEMO_ORG_ID, Date.now());
   await seedBilling(db, DEMO_ORG_ID); // BILL.3
   await seedNotifications(db, DEMO_ORG_ID); // NOTIF.1
+  const demoAdmin = await prisma.user.findFirst({
+    where: { orgId: DEMO_ORG_ID, role: "ADMIN" },
+    select: { id: true },
+  });
+  await seedIntegrations(db, DEMO_ORG_ID, demoAdmin?.id ?? "seed"); // SET.5
 
   // 5. Second org (isolation contrast)
   await seedSecondOrg(dbForOrg(SECOND_ORG_ID));
