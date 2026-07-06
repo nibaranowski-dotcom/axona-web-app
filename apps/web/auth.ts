@@ -19,7 +19,14 @@ const nextAuth = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      authorize: (creds) => verifyCredentials(creds?.email, creds?.password),
+      authorize: (creds, request) => {
+        // SET.3 — capture the device/IP for the "Sessions & devices" list.
+        const device = request?.headers?.get("user-agent") ?? undefined;
+        const ip =
+          request?.headers?.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+          undefined;
+        return verifyCredentials(creds?.email, creds?.password, { device, ip });
+      },
     }),
   ],
 });

@@ -11,11 +11,14 @@ export interface SessionUser {
   role: Role;
   name: string;
   email: string;
+  // SET.3 — the stateless-JWT revoke counter carried on the token.
+  tokenVersion: number;
 }
 
 export async function verifyCredentials(
   emailInput: unknown,
   passwordInput: unknown,
+  ctx?: { device?: string; ip?: string },
 ): Promise<SessionUser | null> {
   const email = String(emailInput ?? "")
     .toLowerCase()
@@ -38,11 +41,22 @@ export async function verifyCredentials(
     data: { lastSeenAt: new Date() },
   });
 
+  // SET.3 — record the device/session for the profile "Sessions & devices" list.
+  await prisma.loginSession.create({
+    data: {
+      orgId: user.orgId,
+      userId: user.id,
+      device: ctx?.device?.slice(0, 200) || "Web browser",
+      ip: ctx?.ip?.slice(0, 64) || null,
+    },
+  });
+
   return {
     id: user.id,
     orgId: user.orgId,
     role: user.role,
     name: user.name,
     email: user.email,
+    tokenVersion: user.tokenVersion,
   };
 }

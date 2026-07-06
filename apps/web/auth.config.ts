@@ -58,6 +58,7 @@ export const authConfig = {
         token.id = user.id ?? "";
         token.orgId = user.orgId;
         token.role = user.role;
+        token.tokenVersion = user.tokenVersion; // SET.3
       }
       return token;
     },
@@ -67,6 +68,7 @@ export const authConfig = {
       session.user.id = String(token.id ?? "");
       session.user.orgId = String(token.orgId ?? "");
       session.user.role = token.role as Session["user"]["role"];
+      session.user.tokenVersion = Number(token.tokenVersion ?? 0); // SET.3
       return session;
     },
   },

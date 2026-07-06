@@ -23,6 +23,7 @@ if (process.env.NODE_ENV !== "production") g.__axonaPrisma = prisma;
  */
 const TENANT_MODELS = new Set<string>([
   "User",
+  "LoginSession",
   "AuditLog",
   "Agent",
   "Chat",

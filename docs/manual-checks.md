@@ -1670,3 +1670,26 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Actions** `(shell)/settings/org/actions.ts`: `updateOrgProfile` (name/industry), `updateOrgDefaults` (tz/fiscal/role), `setEnabledModules` (nav revalidated) — all ADMIN-gated (`requireRole` line 1), org-scoped (`where: { id: user.orgId }`), Zod-validated, audited.
 - **Screen** `/settings/org` 1:1 to `Settings - Organization.dc.html` via the reusable **SettingsShell + SettingsNav**. Ink states, functional green, no invented reds, Lucide icons, no emoji.
 - **Flags/deferred:** **logo upload UI deferred** to a follow-up (the `logoKey` column exists; branding accent is locked/non-editable; upload wiring heavier than the design warrants — per PRD allowance). **slug is display-only** (changing it breaks the workspace URL — deferred to a dedicated flow). Other settings: SET.3 (your profile), SET.4 (notifications), SET.5 (integrations), BILL.* (billing).
+
+---
+
+## SET.3 — Your profile & security
+
+**Automated**
+- `pnpm verify:set-3` (9 checks) — User.avatarKey/tokenVersion + LoginSession + migration; profile actions own-user + audited (user.profile_change/password_change/signout_all); **getCurrentUser enforces tokenVersion (stateless-JWT revoke)** + login records device; screen exists; **login records a LoginSession + returns tokenVersion**; **changePassword wrong-current rejected, success re-hashes + bumps tokenVersion, stale token invalid**; **signOutEverywhere bumps tokenVersion + clears sessions**; **revokeSession removes an own row (own-user only)**; own-user only (no cross-user). Self-cleaning.
+- CI gate: install (frozen) · lint · typecheck · verify:all · **`pnpm build` compiles**. migrate status clean. accessibility-review 0 on /settings/profile.
+
+**Manual (./dev.sh)**
+- Sidebar Settings → **Your profile** (`/settings/profile`): **Profile** (name editable · role + email read-only), **Password** (current → new + confirm), **Sessions & devices** (list + Revoke + Sign out everywhere).
+- Change your name → **Save profile** (audited user.profile_change).
+- **Change password:** enter the wrong current → "Your current password is incorrect."; correct current + new (≥8, matching confirm) → **other sessions are invalidated** (tokenVersion bumped) → audited user.password_change. Logging in elsewhere with the old password fails.
+- **Sign out everywhere** → tokenVersion bumped, all device rows cleared, you're returned to /login (audited user.signout_all).
+- **Revoke** a non-current device row → it disappears (best-effort; full JWT revoke needs sign-out-everywhere — noted in the copy).
+
+**Notes / architecture**
+- **Schema:** `User.avatarKey` (deferred upload), `User.tokenVersion Int @default(0)`, `LoginSession { orgId, userId, device, ip, lastSeenAt, createdAt }` (a TENANT_MODEL) via `migrate dev`.
+- **Stateless-JWT revoke:** the JWT carries `tokenVersion` (authorize → jwt → session callbacks). **Enforced in `getCurrentUser`** (the Node session-read boundary every screen/action calls) — a token whose `tokenVersion` ≠ `User.tokenVersion` is treated as logged out. *Flag:* enforced here rather than the edge-safe `session` callback because the check needs a DB read (the middleware can't query Postgres). A password change / sign-out-everywhere bumps the counter → all prior tokens invalid.
+- **Login wiring:** `verifyCredentials` now creates a `LoginSession` (device from user-agent, ip from x-forwarded-for, captured in `authorize`) and returns `tokenVersion`.
+- **Actions** `(shell)/settings/profile/actions.ts` (own-user only, org-scoped, audited): `updateProfile`, `changePassword` (bcrypt-verify current → re-hash + bump tokenVersion), `signOutEverywhere` (bump + clear rows + signOut), `revokeSession` (delete own row).
+- **Screen** `/settings/profile` 1:1 to `Settings - Profile.dc.html` via SettingsShell/SettingsNav. Replaces the SET.2 placeholder.
+- **Flags/deferred:** avatar upload UI (column exists), 2FA/passkeys (later), per-session remote revoke is best-effort under stateless JWT (sign-out-everywhere is the reliable control).

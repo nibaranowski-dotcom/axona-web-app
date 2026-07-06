@@ -99,9 +99,30 @@ model User {
   deactivatedAt DateTime?
   /// SET.2: updated on successful login → powers the members "last active" column.
   lastSeenAt    DateTime?
+  /// SET.3: avatar blob key (FILE.1 storage; upload UI deferred). Nullable.
+  avatarKey     String?
+  /// SET.3: bumped by "sign out everywhere" / password change. The JWT carries it;
+  /// getCurrentUser rejects a token whose version ≠ this (stateless-JWT revoke).
+  tokenVersion  Int       @default(0)
   createdAt     DateTime  @default(now())
 
   @@index([orgId])
+}
+
+/// SET.3 — a signed-in device/session for the profile "Sessions & devices" list.
+/// Created on each successful login. Per-session remote revoke is best-effort under
+/// stateless JWT; the reliable control is "sign out everywhere" (User.tokenVersion).
+model LoginSession {
+  id         String   @id @default(cuid())
+  orgId      String
+  userId     String
+  device     String
+  ip         String?
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([orgId])
+  @@index([userId])
 }
 
 enum Role {
