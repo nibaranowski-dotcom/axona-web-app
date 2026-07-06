@@ -41,11 +41,13 @@ export function MembersView({
   capabilities,
   isAdmin,
   currentUserId,
+  defaultRole = "OPS",
 }: {
   data: MembersData;
   capabilities: RoleCapability[];
   isAdmin: boolean;
   currentUserId: string;
+  defaultRole?: string;
 }) {
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
@@ -136,6 +138,7 @@ export function MembersView({
           <InvitePanel
             onClose={() => setInviteOpen(false)}
             onNotice={setNotice}
+            defaultRole={defaultRole}
           />
         )}
 
@@ -406,12 +409,18 @@ function MemberRowView({
 function InvitePanel({
   onClose,
   onNotice,
+  defaultRole,
 }: {
   onClose: () => void;
   onNotice: (m: string | null) => void;
+  defaultRole: string;
 }) {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<(typeof ROLES)[number]>("OPS");
+  const [role, setRole] = useState<(typeof ROLES)[number]>(
+    (ROLES.includes(defaultRole as (typeof ROLES)[number])
+      ? defaultRole
+      : "OPS") as (typeof ROLES)[number],
+  );
   const [results, setResults] = useState<InviteResult[]>([]);
   const [pending, startTransition] = useTransition();
 

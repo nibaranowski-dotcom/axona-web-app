@@ -25,20 +25,27 @@ datasource db {
 /// The tenant root. Every tenant-owned model hangs off an Org via `orgId`;
 /// onDelete: Cascade means deleting an Org offboards all its data (destructive).
 model Org {
-  id             String    @id @default(cuid())
-  name           String
+  id                   String    @id @default(cuid())
+  name                 String
   /// AUTH.4: the workspace URL slug (e.g. "axona-demo-co"), derived from name;
   /// uniqueness enforced (auto-suffixed on collision at provisioning time).
-  slug           String?   @unique
+  slug                 String?   @unique
   /// AUTH.4: the org's vertical (Humanoid / Mobility & AVs / … / Other). Nullable.
-  industry       String?
+  industry             String?
   /// AUTH.6: null until the onboarding wizard is finished (the AUTH.3 routing flag).
-  onboardedAt    DateTime?
+  onboardedAt          DateTime?
   /// AUTH.6: the enabled module `key`s. Null/EMPTY ⇒ treat as ALL (back-compat for
   /// the demo + any pre-existing org). The wizard writes the chosen subset. SET.1
   /// reuses this for later editing.
-  enabledModules String[]
-  createdAt      DateTime  @default(now())
+  enabledModules       String[]
+  /// SET.1: org branding/config. logoKey → a FILE.1 blob key (upload UI deferred);
+  /// timezone (IANA), fiscalYearStartMonth (1–12), defaultMemberRole prefills new
+  /// invites (ties to SET.2/AUTH.5). All nullable.
+  logoKey              String?
+  timezone             String?
+  fiscalYearStartMonth Int?
+  defaultMemberRole    Role?
+  createdAt            DateTime  @default(now())
 
   // back-relations — one array per tenant-owned model (FND.11)
   users            User[]

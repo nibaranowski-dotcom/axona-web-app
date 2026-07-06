@@ -1649,3 +1649,24 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Screen** `/settings/members` 1:1 to `Settings - Members.dc.html`, in the shell, via a reusable **SettingsShell + SettingsNav** (the other SET.* screens reuse them; unbuilt sections → `SettingsPlaceholder`). Ink for deactivated, functional green for active, no invented reds, Lucide icons, no emoji.
 - **Non-module route fix:** `/settings` (+ /audit, /launcher, /search) are exempted from AUTH.6's module-enablement gate (they aren't modules).
 - **Flags/deferred:** Org profile/branding (SET.1), Your profile & security (SET.3), Notifications (SET.4), Integrations/SSO/API keys (SET.5), email delivery (EMAIL.1), SCIM (later).
+
+---
+
+## SET.1 — Organization settings
+
+**Automated**
+- `pnpm verify:set-1` (9 checks) — Org.logoKey/timezone/fiscalYearStartMonth/defaultMemberRole + migration; org actions ADMIN-gated line 1 + audited (org.profile_change/defaults_change/modules_change); /settings/org + sub-nav points Organization→/settings/org; **Core-stays-on guard**; **getOrgSettings profile+defaults+module grid, org-scoped**; **updateOrgProfile/updateOrgDefaults persist + audit**; **setEnabledModules writes enabledModules (nav reflects) + Core-stays-on + audits**; no cross-org write path. Self-cleaning (restores demo org + removes its org.* audit rows).
+- CI gate: install (frozen) · lint · typecheck · verify:all · **`pnpm build` compiles**. migrate status clean. accessibility-review 0 on /settings/org.
+
+**Manual (./dev.sh — as ADMIN)**
+- Sidebar Settings → **Organization** (`/settings/org`): **Profile** (name · Workspace URL read-only · industry), **Branding** (locked lime accent), **Defaults** (timezone · fiscal-year start · default member role), and the **Modules** toggle table (Module · Group · Enabled).
+- Edit the org name → **Save profile**; set timezone/fiscal/default-role → **Save defaults**; toggle a module off → **Save modules** → it **disappears from the sidebar nav**. All three land in **/audit** (org.profile_change / defaults_change / modules_change) with you as actor/approver.
+- The default member role prefills the **Members → Invite** role select (SET.2).
+- A non-ADMIN sees the page **read-only** (controls disabled; server rejects writes regardless).
+
+**Notes / architecture**
+- **Schema:** `Org.logoKey/timezone/fiscalYearStartMonth/defaultMemberRole` (all nullable) via `migrate dev`. `enabledModules` unchanged (reused from AUTH.6).
+- **Read model** `lib/org-settings.ts`: `getOrgSettings(orgId)` → profile + slug (read-only) + defaults + the module grid (reuses AUTH.6's `ONBOARDING_GROUPS` so SET.1's module management is identical to onboarding's). `normalizeEnabledModules` keeps `ALWAYS_ON` core → the keep-app-usable guard. `TIMEZONES`/`MONTHS` constants.
+- **Actions** `(shell)/settings/org/actions.ts`: `updateOrgProfile` (name/industry), `updateOrgDefaults` (tz/fiscal/role), `setEnabledModules` (nav revalidated) — all ADMIN-gated (`requireRole` line 1), org-scoped (`where: { id: user.orgId }`), Zod-validated, audited.
+- **Screen** `/settings/org` 1:1 to `Settings - Organization.dc.html` via the reusable **SettingsShell + SettingsNav**. Ink states, functional green, no invented reds, Lucide icons, no emoji.
+- **Flags/deferred:** **logo upload UI deferred** to a follow-up (the `logoKey` column exists; branding accent is locked/non-editable; upload wiring heavier than the design warrants — per PRD allowance). **slug is display-only** (changing it breaks the workspace URL — deferred to a dedicated flow). Other settings: SET.3 (your profile), SET.4 (notifications), SET.5 (integrations), BILL.* (billing).

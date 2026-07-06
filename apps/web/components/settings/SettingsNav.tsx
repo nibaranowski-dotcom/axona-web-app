@@ -18,7 +18,7 @@ const ITEMS = [
   {
     key: "organization",
     label: "Organization",
-    href: "/settings/organization",
+    href: "/settings/org",
     Icon: Building2,
   },
   { key: "members", label: "Members", href: "/settings/members", Icon: Users },
