@@ -26,8 +26,17 @@ export async function verifyCredentials(
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user?.passwordHash) return null;
 
+  // SET.2 — a deactivated member can't authenticate (no active seat).
+  if (user.deactivatedAt) return null;
+
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) return null;
+
+  // SET.2 — stamp last-seen on a successful login (powers the "last active" column).
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { lastSeenAt: new Date() },
+  });
 
   return {
     id: user.id,

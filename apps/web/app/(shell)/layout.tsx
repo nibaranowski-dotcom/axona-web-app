@@ -33,10 +33,20 @@ export default async function ShellLayout({
   const enabledModules = onboarding?.enabledModules ?? null;
 
   // The current top-level module segment (from middleware's x-pathname header).
+  // Non-module infra routes (settings, governance, launcher, search) are never
+  // gated by module enablement — only actual module screens are (AUTH.6/SET.2).
+  const NON_MODULE_ROUTES = new Set([
+    "settings",
+    "audit",
+    "launcher",
+    "search",
+  ]);
   const pathname = headers().get("x-pathname") ?? "";
   const seg = pathname.split("/").filter(Boolean)[0] ?? "core";
   const routeDisabled =
-    !!user && !isModuleEnabled(enabledModules, seg === "" ? "core" : seg);
+    !!user &&
+    !NON_MODULE_ROUTES.has(seg) &&
+    !isModuleEnabled(enabledModules, seg === "" ? "core" : seg);
 
   const [groups, ...rest] = await Promise.all([
     getNavModules(enabledModules),

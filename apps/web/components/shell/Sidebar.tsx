@@ -8,6 +8,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Search,
+  Settings,
   ShieldCheck,
 } from "lucide-react";
 import type { NavGroup } from "@/lib/nav";
@@ -173,6 +174,23 @@ export function Sidebar({
             aria-hidden
           />
           Audit trail
+        </Link>
+
+        {/* Settings — members & roles (SET.2) + the org settings area. */}
+        <Link
+          href="/settings/members"
+          className={`flex items-center gap-2 rounded-[7px] px-3 py-[7px] text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            pathname.startsWith("/settings")
+              ? "bg-panel-2 font-semibold text-ink"
+              : "text-ink-muted hover:bg-panel hover:text-ink"
+          }`}
+        >
+          <Settings
+            className="h-[15px] w-[15px] flex-none"
+            strokeWidth={1.7}
+            aria-hidden
+          />
+          Settings
         </Link>
       </div>
 

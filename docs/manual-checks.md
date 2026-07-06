@@ -1625,3 +1625,27 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Accept screen** `/invite/:token` 1:1 to `Accept Invite.dc.html` (inviter→org glyphs, heading, role pill, name/email-locked/password, Join). Invalid/revoked/accepted/expired → clean "no longer valid" state.
 - **Security:** token unguessable (32B) + single-use + 7d expiry; invitee gets **exactly the invited role** (never ADMIN unless invited ADMIN); one invite binds one orgId (no cross-org); email uniqueness respected (no takeover); bcrypt, no plaintext/logs. **`APP_URL`** in `.env.example`.
 - **Flags/deferred:** email delivery (**EMAIL.1** — link copied for now); full members & roles admin screen (**SET.2**); role change/deactivation (**SET.2**); SSO join (**AUTH.2**).
+
+---
+
+## SET.2 — Members & roles administration
+
+**Automated**
+- `pnpm verify:set-2` (9 checks) — User.deactivatedAt/lastSeenAt + migration; every members action is `requireRole(["ADMIN"])` line 1 + writes an audit (member.invite/role_change/deactivate/reactivate/invite_revoke); **verifyCredentials rejects a deactivated user + stamps lastSeenAt**; settings sub-nav (6) + /settings/members exist; **getMembers → users + PENDING invites + rollup, org-scoped**; **changeRole ADMIN updates+audits, last-ADMIN demotion rejected**; **setActive deactivate blocks login + audits, can't deactivate last-ADMIN/self, reactivate restores**; invite/revoke audited; cross-org member not reachable. Self-cleaning (restores roles/activation, removes its audit rows via disable-rule).
+- CI gate: install (frozen) · lint · typecheck · verify:all · **`pnpm build` compiles**. migrate status clean. accessibility-review 0 on /settings/members.
+
+**Manual (./dev.sh — as ADMIN admin@axona-demo.test)**
+- Sidebar **Settings** → `/settings/members`: the roster (Person · Role · Status · Last active · actions) with the settings sub-nav (Organization · **Members** · Your profile · Notifications · Integrations · Billing; the others show a "coming soon" placeholder). Header shows active/invited/deactivated counts + the role→capability legend.
+- **Invite people** → email + role → **Send invite** → a copyable `/invite/:token` link appears (EMAIL.1 delivers later); the invite shows as an **Invited** row.
+- **Change role** (inline select) OPS→ENGINEER; **Deactivate** a member (row dims, they can no longer log in); **Reactivate** restores login; **Revoke** a pending invite. All four land in **/audit** with you as the actor/approver.
+- **Guards:** demoting/deactivating the **last ADMIN** is rejected with a clear message; you **can't deactivate yourself**.
+- Non-ADMIN loads the roster **read-only** (no controls; server rejects writes regardless).
+
+**Notes / architecture**
+- **Schema:** `User.deactivatedAt DateTime?` (set = can't log in) + `User.lastSeenAt DateTime?` (stamped on login) via `migrate dev`.
+- **Login enforcement:** `verifyCredentials` (AUTH.1) now returns null if `deactivatedAt` is set, and updates `lastSeenAt` on success.
+- **Read model** `lib/members.ts`: `getMembers(orgId)` merges Users (ACTIVE/DEACTIVATED) + PENDING invites (AUTH.5 `listInvites`) as INVITED rows + a rollup; `ROLE_CAPABILITIES` static legend.
+- **Actions** `(shell)/settings/members/actions.ts`: `inviteMembers` (reuse createInvites), `changeRole` (last-ADMIN guard), `setActive` (last-ADMIN + self guards), `revokeInvite` — all ADMIN-gated (`requireRole` line 1), org-scoped (`dbForOrg`; Invite lookups scoped by orgId explicitly since Invite isn't a tenant model), and audited via `writeAudit` (actor = ADMIN, approver = ADMIN).
+- **Screen** `/settings/members` 1:1 to `Settings - Members.dc.html`, in the shell, via a reusable **SettingsShell + SettingsNav** (the other SET.* screens reuse them; unbuilt sections → `SettingsPlaceholder`). Ink for deactivated, functional green for active, no invented reds, Lucide icons, no emoji.
+- **Non-module route fix:** `/settings` (+ /audit, /launcher, /search) are exempted from AUTH.6's module-enablement gate (they aren't modules).
+- **Flags/deferred:** Org profile/branding (SET.1), Your profile & security (SET.3), Notifications (SET.4), Integrations/SSO/API keys (SET.5), email delivery (EMAIL.1), SCIM (later).

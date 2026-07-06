@@ -79,16 +79,20 @@ model Org {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  orgId        String
-  org          Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  name         String
-  email        String   @unique
-  role         Role
+  id            String    @id @default(cuid())
+  orgId         String
+  org           Org       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name          String
+  email         String    @unique
+  role          Role
   /// AUTH.1: bcrypt hash of the password (Credentials provider). Nullable —
   /// SSO-only users (AUTH.2) won't have one. NEVER returned to the client / logged.
-  passwordHash String?
-  createdAt    DateTime @default(now())
+  passwordHash  String?
+  /// SET.2: set = deactivated (can't log in, not an active seat). Null = active.
+  deactivatedAt DateTime?
+  /// SET.2: updated on successful login → powers the members "last active" column.
+  lastSeenAt    DateTime?
+  createdAt     DateTime  @default(now())
 
   @@index([orgId])
 }
