@@ -187,6 +187,33 @@ enum Role {
   VIEWER
 }
 
+// NOTIF.1 — in-app notifications. userId null = a whole-org / role broadcast every
+// member sees; otherwise it targets one user. `notify()` is the only writer; the
+// center reads the user's own + broadcasts, grouped Today/Earlier.
+enum NotificationType {
+  APPROVAL
+  EXCEPTION
+  RUN
+  MENTION
+  SYSTEM
+}
+
+model Notification {
+  id         String           @id @default(cuid())
+  orgId      String
+  userId     String? // null = org/role broadcast
+  type       NotificationType
+  title      String
+  body       String
+  targetType String
+  targetId   String
+  url        String // deep-link
+  readAt     DateTime?
+  createdAt  DateTime         @default(now())
+
+  @@index([orgId, userId, createdAt])
+}
+
 // AUTH.5 — a token invite to JOIN an existing org at a role. Public accept via
 // /invite/:token. Tokens are crypto-random, single-use (PENDING→ACCEPTED), and
 // expiring (7d). The invitee joins at exactly `role` — never escalated. One invite

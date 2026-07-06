@@ -10,6 +10,7 @@ import { getNavModules } from "@/lib/nav";
 import { getModuleAlerts } from "@/lib/module-alerts";
 import { getCurrentUser } from "@/lib/session";
 import { getOrgOnboarding, isModuleEnabled } from "@/lib/onboarding";
+import { getUnreadCount } from "@/lib/notifications";
 
 // The app shell — left sidebar, content <main>, right agent pane. Every screen
 // from MC.1 onward renders into <main>.
@@ -40,6 +41,7 @@ export default async function ShellLayout({
     "audit",
     "launcher",
     "search",
+    "notifications",
   ]);
   const pathname = headers().get("x-pathname") ?? "";
   const seg = pathname.split("/").filter(Boolean)[0] ?? "core";
@@ -57,11 +59,13 @@ export default async function ShellLayout({
           orderBy: [{ moduleKey: "asc" }, { code: "asc" }],
         })
       : Promise.resolve([]),
+    user ? getUnreadCount(user.orgId, user.id) : Promise.resolve(0), // NOTIF.1
   ]);
-  const [axona, alerts, allAgents] = rest as [
+  const [axona, alerts, allAgents, unreadCount] = rest as [
     Awaited<ReturnType<typeof getAxonaAgent>> | null,
     Record<string, number>,
     Awaited<ReturnType<ReturnType<typeof dbForOrg>["agent"]["findMany"]>>,
+    number,
   ];
 
   // Group the org's agents by module for the context-aware pane (picked by route
@@ -84,6 +88,7 @@ export default async function ShellLayout({
         groups={groups}
         alerts={alerts}
         user={user ? { name: user.name, role: user.role } : null}
+        unreadCount={unreadCount}
       />
       <main aria-label="Main content" className="min-w-0 overflow-y-auto">
         {routeDisabled ? <ModuleNotEnabled /> : children}

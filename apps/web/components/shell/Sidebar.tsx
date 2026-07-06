@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
+  Bell,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
@@ -37,10 +38,12 @@ export function Sidebar({
   groups,
   alerts,
   user,
+  unreadCount = 0,
 }: {
   groups: NavGroup[];
   alerts: Record<string, number>;
   user?: SidebarUser | null;
+  unreadCount?: number;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -174,6 +177,31 @@ export function Sidebar({
             aria-hidden
           />
           Audit trail
+        </Link>
+
+        {/* Notifications — the in-app activity feed (NOTIF.1) with an unread badge. */}
+        <Link
+          href="/notifications"
+          className={`flex items-center gap-2 rounded-[7px] px-3 py-[7px] text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            pathname === "/notifications"
+              ? "bg-panel-2 font-semibold text-ink"
+              : "text-ink-muted hover:bg-panel hover:text-ink"
+          }`}
+        >
+          <Bell
+            className="h-[15px] w-[15px] flex-none"
+            strokeWidth={1.7}
+            aria-hidden
+          />
+          <span className="flex-1">Notifications</span>
+          {unreadCount > 0 && (
+            <span
+              aria-label={`${unreadCount} unread`}
+              className="min-w-[18px] rounded-pill bg-accent px-1.5 text-center font-mono text-[10px] font-bold text-accent-ink"
+            >
+              {unreadCount}
+            </span>
+          )}
         </Link>
 
         {/* Settings — members & roles (SET.2) + the org settings area. */}

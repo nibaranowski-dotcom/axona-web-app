@@ -1716,3 +1716,25 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Actions** `(shell)/settings/billing/actions.ts` (ADMIN-gated, org-scoped, audited, **STUBBED**): `changePlan`, `addSeats` — update the local Subscription only, every audit records `charged:false`. Axona **never initiates a real charge** here. "Update payment" is a disabled stub.
 - **Screens** `/settings/billing` + `/settings/billing/plans` 1:1 to the designs via SettingsShell/SettingsNav.
 - **Flags/deferred:** live Stripe checkout/webhooks/charges (BILL.1/2), usage-metering enforcement (BILL.4), dunning (BILL.5).
+
+---
+
+## NOTIF.1 — Notification model + in-app notification center
+
+**Automated**
+- `pnpm verify:notif-1` (8 checks) — Notification model + index + migration; notify writer + markRead/markAllRead own-user actions; **a real source wired (ECO review → APPROVAL notify) + /// NOTIF.2 seam**; shell unread badge + screen; **seed populates the feed, getNotifications grouped Today/Earlier + unreadCount, org-scoped**; **notify writes + markRead sets readAt (own + broadcast only)**; **APPROVAL broadcast visible to a member + deep-links**; getUnreadCount matches. Self-cleaning.
+- CI gate: install (frozen) · lint · typecheck · verify:all · **`pnpm build` compiles**. migrate clean. accessibility-review 0 on /notifications.
+
+**Manual (./dev.sh)**
+- Sidebar **Notifications** shows an **unread badge** (5). Click → `/notifications`: a grouped **Today / Earlier** feed (approvals, exceptions, run parks, mentions), each with a type icon, one-line summary, source module · object · relative time, an **unread lime bar/dot**, and a **deep-link** (e.g. PO-9007 → /procurement). Tabs **All · Unread · Approvals**; **Mark all read** clears the unread state + badge.
+- Submit an ECO to review on **/engineering** → an **APPROVAL** notification appears (broadcast to approvers) in the feed.
+
+**Notes / architecture**
+- **Schema:** `Notification { orgId, userId? (null=broadcast), type (APPROVAL/EXCEPTION/RUN/MENTION/SYSTEM), title, body, targetType, targetId, url, readAt }` + `@@index([orgId, userId, createdAt])`, a TENANT_MODEL, via `migrate dev`.
+- **Seed:** 12 through-line notifications (PO-9007 awaiting approval, Site-3 regression, Osei cert, ECO-318 released, mentions, …), a mix of unread/read + recent/older so Today/Earlier + tabs render.
+- **Writer/read model** `lib/notifications.ts`: `notify()` (the only writer, org-scoped), `getNotifications(orgId, userId, {filter})` (own + broadcasts, grouped, unread/approval counts), `getUnreadCount`.
+- **Actions** `(shell)/notifications/actions.ts`: `markRead`/`markAllRead` — own-user + broadcasts only, org-scoped (the only content mutation).
+- **Wired source:** `advanceEco` (DRAFT→REVIEW parks a change for release approval) emits an APPROVAL notify in one line; `/// NOTIF.2` seam left for the other sources (PO gate, run failures, mentions).
+- **Shell badge:** `/notifications` is a CORE route (exempt from the AUTH.6 module gate); the sidebar link carries the live unread count.
+- **Guardrails:** org isolation (a user sees only their org's own + broadcasts), read-only content, no invented reds, v2 tokens.
+- **Flags/deferred:** wiring every source (NOTIF.2), per-channel email routing (NOTIF.3 + EMAIL.1), digest email (EMAIL.2).

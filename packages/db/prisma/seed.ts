@@ -18,6 +18,7 @@ import { seedProjects } from "./seed/projects";
 import { seedMatrix } from "./seed/matrix";
 import { seedAudit } from "./seed/audit";
 import { seedBilling } from "./seed/billing";
+import { seedNotifications } from "./seed/notifications";
 import { seedMachines } from "./seed/machines";
 import { seedWorkflows } from "./seed/workflows";
 
@@ -155,6 +156,7 @@ async function main(): Promise<void> {
   const workflows = await seedWorkflows(db);
   const audit = await seedAudit(db, DEMO_ORG_ID, Date.now());
   await seedBilling(db, DEMO_ORG_ID); // BILL.3
+  await seedNotifications(db, DEMO_ORG_ID); // NOTIF.1
 
   // 5. Second org (isolation contrast)
   await seedSecondOrg(dbForOrg(SECOND_ORG_ID));
