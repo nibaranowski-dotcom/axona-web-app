@@ -1800,3 +1800,23 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Wiring:** `createInvites` (AUTH.5) now calls `sendEmail("invite", …)` per created invite (still returns the copyable link as a fallback).
 - **Config:** `.env.example` gains `RESEND_API_KEY` (blank ⇒ Fake), `EMAIL_FROM`, `APP_URL`. Root `tsconfig.json` gains `jsx: react-jsx` so the verify scripts type-check the `.tsx` templates.
 - **Flags/deferred:** reset/verify **flows** (AUTH.7 wires them; EMAIL.1 provides the send + templates), per-preference routing (NOTIF.3), digest (EMAIL.2), marketing/bulk (out of scope — transactional only, no autonomous sends).
+
+---
+
+## AUTH.7 — Email verification + password reset
+
+**Automated**
+- `pnpm verify:auth-7` (7 checks) — User.emailVerifiedAt + reset/verify token models + migration; /reset + /verify public + signup sends verify + Forgot→/reset + screens; reset bumps tokenVersion + anti-enumeration; **request reset → 1h token (existing) + send, unknown email → no token (anti-enum)**; **set-new-password re-hash + mark used + bump tokenVersion + reuse rejected**; **completed reset invalidates old sessions**; **verify token sets emailVerifiedAt (single-use, 24h) + signup wires verify send**. Runs on FakeMailer.
+- CI gate: install (frozen) · lint · typecheck · verify:all (FakeMailer) · **`pnpm build` compiles**. migrate clean. accessibility-review 0 on /reset + /reset/:token + /verify/:token.
+
+**Manual (./dev.sh)**
+- On **/login**, "Forgot password?" → **/reset**. Enter an email → **"Check your inbox"** (shown the same whether or not the email exists — anti-enumeration). Without a Resend key, `[FakeMailer] would send …` logs; the reset link is `/reset/:token`.
+- Open **/reset/:token** → set a new password (≥8) → **signed in → /core**; the old session is invalidated (tokenVersion bumped — logging in elsewhere with the old password fails). An expired/used/invalid token → clean "no longer valid" state → request a new link.
+- On **signup** (AUTH.4), a verification email is sent; **/verify/:token** → "Email verified" (sets `emailVerifiedAt`, single-use). Verification is **soft** (non-blocking) for now.
+
+**Notes / architecture**
+- **Schema:** `User.emailVerifiedAt` + `PasswordResetToken` (1h) + `EmailVerifyToken` (24h), both crypto-random single-use, via `migrate dev`. Reuses SET.3's `User.tokenVersion` — a completed reset bumps it.
+- **`lib/auth-tokens.ts`:** `requestPasswordReset` (**anti-enumeration** — silent for unknown/deactivated), `loadResetToken`, `completePasswordReset` (one txn: validate → bcrypt re-hash → mark used → **bump tokenVersion**), `sendVerificationEmail`, `verifyEmailToken`. All use EMAIL.1's `sendEmail` (FakeMailer in CI).
+- **Actions/screens:** `/reset` (request → confirmation), `/reset/:token` (set-new → sign in → /core), `/verify/:token` (verified/invalid) — 1:1 to `Reset Password.dc.html` via a shared `AuthCard` matching /login. `/verify` added to the middleware public allowlist. "Forgot password?" now links to /reset. Signup sends the verify email.
+- **Guardrails:** tokens crypto-random + single-use + short-lived; anti-enumeration on request; reset invalidates old sessions (tokenVersion); bcrypt, no plaintext/logs; FakeMailer in CI.
+- **Flags/deferred:** 2FA (later); hard verification gate (soft/non-blocking now); rate-limiting on reset request (flagged).

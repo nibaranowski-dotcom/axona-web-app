@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
 import { provisionWorkspace, type ProvisionResult } from "@/lib/provisioning";
+import { sendVerificationEmail } from "@/lib/auth-tokens";
 
 // AUTH.4 — the PUBLIC provisioning action. Validates + creates Org + first ADMIN
 // (bcrypt), then auto signs-in the new user and redirects to /onboarding (thin
@@ -28,6 +29,9 @@ export async function signupAction(
   if (!result.ok) {
     return { error: { field: result.field, message: result.message } };
   }
+
+  // AUTH.7 — send an email-verification link (soft/non-blocking). Best-effort.
+  await sendVerificationEmail(result.userId, input.email.toLowerCase().trim());
 
   // Auto sign-in the freshly-created ADMIN (credentials → JWT session). redirect
   // is thrown by signIn on success, so control leaves here.

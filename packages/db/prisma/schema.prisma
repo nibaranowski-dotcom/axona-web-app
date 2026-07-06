@@ -86,27 +86,54 @@ model Org {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  orgId         String
-  org           Org       @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  name          String
-  email         String    @unique
-  role          Role
+  id              String    @id @default(cuid())
+  orgId           String
+  org             Org       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name            String
+  email           String    @unique
+  role            Role
   /// AUTH.1: bcrypt hash of the password (Credentials provider). Nullable —
   /// SSO-only users (AUTH.2) won't have one. NEVER returned to the client / logged.
-  passwordHash  String?
+  passwordHash    String?
   /// SET.2: set = deactivated (can't log in, not an active seat). Null = active.
-  deactivatedAt DateTime?
+  deactivatedAt   DateTime?
   /// SET.2: updated on successful login → powers the members "last active" column.
-  lastSeenAt    DateTime?
+  lastSeenAt      DateTime?
   /// SET.3: avatar blob key (FILE.1 storage; upload UI deferred). Nullable.
-  avatarKey     String?
+  avatarKey       String?
   /// SET.3: bumped by "sign out everywhere" / password change. The JWT carries it;
   /// getCurrentUser rejects a token whose version ≠ this (stateless-JWT revoke).
-  tokenVersion  Int       @default(0)
-  createdAt     DateTime  @default(now())
+  tokenVersion    Int       @default(0)
+  /// AUTH.7: set when the user confirms their email (soft — non-blocking for now).
+  emailVerifiedAt DateTime?
+  createdAt       DateTime  @default(now())
 
   @@index([orgId])
+}
+
+// AUTH.7 — single-use, short-lived tokens for password reset (1h) + email verify
+// (24h). Crypto-random; a completed reset bumps User.tokenVersion (invalidates
+// existing sessions). Anti-enumeration is enforced at the request action.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model EmailVerifyToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
 
 /// SET.3 — a signed-in device/session for the profile "Sessions & devices" list.

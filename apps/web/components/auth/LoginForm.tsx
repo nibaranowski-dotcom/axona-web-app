@@ -178,14 +178,12 @@ export function LoginForm() {
               </div>
 
               <div className="mb-5 flex justify-end">
-                <button
-                  type="button"
-                  disabled
-                  title="Password reset lands in AUTH.7"
-                  className="cursor-not-allowed text-[12px] text-ink-muted opacity-70"
+                <a
+                  href="/reset"
+                  className="text-[12px] text-ink-muted transition-opacity hover:opacity-60"
                 >
                   Forgot password?
-                </button>
+                </a>
               </div>
 
               {/* primary */}

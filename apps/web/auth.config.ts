@@ -12,6 +12,7 @@ const PUBLIC = [
   /^\/login/,
   /^\/signup/,
   /^\/reset/,
+  /^\/verify/, // AUTH.7 — email verification link
   /^\/invite/,
   /^\/api\/auth/,
 ];
