@@ -1693,3 +1693,26 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - **Actions** `(shell)/settings/profile/actions.ts` (own-user only, org-scoped, audited): `updateProfile`, `changePassword` (bcrypt-verify current → re-hash + bump tokenVersion), `signOutEverywhere` (bump + clear rows + signOut), `revokeSession` (delete own row).
 - **Screen** `/settings/profile` 1:1 to `Settings - Profile.dc.html` via SettingsShell/SettingsNav. Replaces the SET.2 placeholder.
 - **Flags/deferred:** avatar upload UI (column exists), 2FA/passkeys (later), per-session remote revoke is best-effort under stateless JWT (sign-out-everywhere is the reliable control).
+
+---
+
+## BILL.3 — Billing & subscription (+ Plans)
+
+**Scope:** Axona-as-SaaS billing the tenant (distinct from the Finance module). **Stripe deferred (BILL.1/2)** — real data model + screens, charge actions **stubbed (no real charge)**.
+
+**Automated**
+- `pnpm verify:bill-3` (7 checks) — Subscription + InvoiceSaaS models + migration; **actions ADMIN-gated + audited + stubbed (charged:false, no stripe/charge path)**; billing + plans screens; **getBilling plan/seats/usage/invoices, seats == active members + pending (reconciles to SET.2), org-scoped**; **changePlan/addSeats update + audit (charged:false)**; getPlans 3 tiers w/ one recommended; cross-org subscription not reachable. Self-cleaning.
+- CI gate: install (frozen) · lint · typecheck · verify:all · **`pnpm build` compiles**. migrate clean. accessibility-review 0 on /settings/billing + /settings/billing/plans.
+
+**Manual (./dev.sh — as ADMIN)**
+- Sidebar Settings → **Billing** (`/settings/billing`): **plan strip** (Scale · ACTIVE · renews date · Change plan), **Seats** (7 / 25 used, bar, Add 5 seats), **Usage this cycle** (runs + seats bars · modules enabled), **payment method** (Visa ···· 4242 display · Update payment disabled → BILL.1), **Invoices** table (date · description · amount · Paid=green · PDF). Seats reconcile to the Members roster.
+- **Change plan** → `/settings/billing/plans`: 3 tiers (Pilot · **Scale** recommended-lime · Enterprise), Current marked. Switching plan updates locally + audits `billing.plan_change` (**no charge**). **Add 5 seats** audits `billing.seats_add` (no charge). Both appear in /audit; the summary says "no charge — Stripe deferred".
+- Non-ADMIN: read-only (no change/add controls; server rejects).
+
+**Notes / architecture**
+- **Schema:** `Subscription { orgId @unique, plan (PILOT/SCALE/ENTERPRISE), status, seatsPurchased, trialEndsAt, currentPeriodEnd, paymentSummary }` + `InvoiceSaaS { number, description, amountCents, status (PAID/OPEN/VOID), issuedAt }` (named distinctly from the Finance `Invoice`) — both TENANT_MODELS, via `migrate dev`.
+- **Seed:** demo org → Subscription (SCALE/ACTIVE/25 seats, Visa ···· 4242) + 4 paid invoices.
+- **Read model** `lib/billing.ts`: `getBilling` (seats = active users + pending invites from getMembers; usage = AgentRun+WorkflowRun this period vs plan limit; modules enabled), `getPlans` (static 3-tier config).
+- **Actions** `(shell)/settings/billing/actions.ts` (ADMIN-gated, org-scoped, audited, **STUBBED**): `changePlan`, `addSeats` — update the local Subscription only, every audit records `charged:false`. Axona **never initiates a real charge** here. "Update payment" is a disabled stub.
+- **Screens** `/settings/billing` + `/settings/billing/plans` 1:1 to the designs via SettingsShell/SettingsNav.
+- **Flags/deferred:** live Stripe checkout/webhooks/charges (BILL.1/2), usage-metering enforcement (BILL.4), dunning (BILL.5).

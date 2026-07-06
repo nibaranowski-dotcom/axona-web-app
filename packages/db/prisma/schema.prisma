@@ -125,6 +125,58 @@ model LoginSession {
   @@index([userId])
 }
 
+// BILL.3 — Axona-as-SaaS billing the tenant (distinct from the Finance module's
+// customer P&L). Stripe (BILL.1/2) is deferred: these hold the plan/seat/usage
+// data model; the "manage payment / change plan" actions are stubbed (no charge).
+enum PlanTier {
+  PILOT
+  SCALE
+  ENTERPRISE
+}
+
+enum SubStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum InvoiceSaaSStatus {
+  PAID
+  OPEN
+  VOID
+}
+
+model Subscription {
+  id               String    @id @default(cuid())
+  orgId            String    @unique
+  plan             PlanTier  @default(PILOT)
+  status           SubStatus @default(TRIALING)
+  seatsPurchased   Int       @default(10)
+  trialEndsAt      DateTime?
+  currentPeriodEnd DateTime?
+  /// Display-only card summary (stubbed until Stripe/BILL.1) — never real PAN data.
+  paymentSummary   String?
+  createdAt        DateTime  @default(now())
+
+  @@index([orgId])
+}
+
+/// SaaS invoices Axona issues to the tenant. Named distinctly from the Finance
+/// `Invoice` model (the customer's own AR).
+model InvoiceSaaS {
+  id          String            @id @default(cuid())
+  orgId       String
+  number      String
+  description String
+  amountCents Int
+  status      InvoiceSaaSStatus @default(PAID)
+  issuedAt    DateTime          @default(now())
+  url         String?
+
+  @@index([orgId])
+}
+
 enum Role {
   ADMIN
   OPS
