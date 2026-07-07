@@ -2,9 +2,14 @@
 // Skeleton.dc.html. A skeleton of the REAL shell — 240px sidebar · 60px topbar ·
 // main (stat strip · hero card · table) · 360px right pane — with pulsing .sk /
 // .sk-soft blocks (sk-pulse 1.4s). Dimensions mirror the real shell so streamed
-// content swaps in with NO layout shift. Used by app/(shell)/loading.tsx for route
-// transitions. Honors prefers-reduced-motion (static, dimmed; no motion). v2 tokens
-// only — no literal hex, no emoji. Server component.
+// content swaps in with NO layout shift. Honors prefers-reduced-motion (static,
+// dimmed; no motion). v2 tokens only — no literal hex, no emoji. Server component.
+//
+// variant="main" (used by app/(shell)/loading.tsx) renders ONLY the main column —
+// on a client-side route transition the shell layout (sidebar + agent pane) PERSISTS
+// and this fallback fills the <main> slot, so skeletonizing the whole shell would
+// double the sidebar/pane and cause a jump. variant="shell" (default) is the full
+// design 1:1 (sidebar + main + pane) for when the whole shell is absent.
 
 const SKELETON_CSS = `
 @keyframes sk-pulse{0%,100%{opacity:1}50%{opacity:.45}}
@@ -21,7 +26,92 @@ const NAV_GROUPS = [
 ];
 const HERO_BARS = ["46%", "62%", "38%", "54%"];
 
-export function ScreenSkeleton() {
+// The center column: 60px topbar + stat strip · hero card · table card. This is the
+// part that actually swaps on a route transition (matches the real <main>).
+function MainColumn() {
+  return (
+    <div className="flex min-w-0 flex-1 flex-col bg-panel">
+      {/* topbar — 60px, matches ScreenShell */}
+      <div className="flex h-[60px] flex-none items-center justify-between border-b border-line bg-paper px-6">
+        <div className="flex flex-col gap-[7px]">
+          <span className="sk h-[9px] w-[120px]" />
+          <span className="sk h-[15px] w-[190px]" />
+        </div>
+        <div className="flex gap-[10px]">
+          <span className="sk h-[32px] w-[110px] rounded-[8px]" />
+          <span className="sk-soft h-[32px] w-[120px] rounded-[8px]" />
+        </div>
+      </div>
+
+      <div className="flex flex-1 flex-col gap-[18px] overflow-hidden px-6 py-[22px]">
+        {/* stat strip */}
+        <div className="flex overflow-hidden rounded-[14px] border border-line bg-paper">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className={`flex flex-1 flex-col gap-[9px] px-[18px] py-4 ${i > 0 ? "border-l border-line" : ""}`}
+            >
+              <span className="sk h-[20px] w-[64px]" />
+              <span className="sk h-[9px] w-[88px]" />
+            </div>
+          ))}
+        </div>
+        {/* hero card */}
+        <div className="flex flex-col gap-[14px] rounded-[14px] border border-line bg-paper p-5">
+          <div className="flex justify-between">
+            <span className="sk h-[14px] w-[180px]" />
+            <span className="sk h-[12px] w-[90px]" />
+          </div>
+          {HERO_BARS.map((w, i) => (
+            <div key={i} className="flex flex-col gap-[7px]">
+              <span className="sk h-[10px]" style={{ width: w }} />
+              <span className="sk-soft h-[9px] w-full rounded-pill" />
+            </div>
+          ))}
+        </div>
+        {/* table card */}
+        <div className="flex flex-1 flex-col rounded-[14px] border border-line bg-paper px-5 py-[18px]">
+          <span className="sk mb-4 h-[14px] w-[150px]" />
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="flex items-center gap-4 border-t border-line py-[13px]"
+            >
+              <span className="sk h-[30px] w-[30px] flex-none rounded-[8px]" />
+              <span className="sk h-[11px] flex-[2]" />
+              <span className="sk h-[11px] flex-1" />
+              <span className="sk h-[11px] flex-1" />
+              <span className="sk-soft h-[20px] w-[76px] flex-none rounded-pill" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ScreenSkeleton({
+  variant = "shell",
+}: {
+  variant?: "shell" | "main";
+}) {
+  // Route-transition fallback: the persisted shell wraps this — skeletonize only
+  // the main column (no doubled sidebar/pane, no layout shift).
+  if (variant === "main") {
+    return (
+      <div
+        role="status"
+        aria-busy="true"
+        aria-label="Loading"
+        className="flex h-full min-h-0 flex-col"
+      >
+        <style>{SKELETON_CSS}</style>
+        <MainColumn />
+      </div>
+    );
+  }
+
+  // Full shell (1:1 design): sidebar · main · right pane.
   return (
     <div
       role="status"
@@ -70,63 +160,7 @@ export function ScreenSkeleton() {
       </aside>
 
       {/* main column skeleton */}
-      <div className="flex min-w-0 flex-1 flex-col bg-panel">
-        {/* topbar — 60px, matches ScreenShell */}
-        <div className="flex h-[60px] flex-none items-center justify-between border-b border-line bg-paper px-6">
-          <div className="flex flex-col gap-[7px]">
-            <span className="sk h-[9px] w-[120px]" />
-            <span className="sk h-[15px] w-[190px]" />
-          </div>
-          <div className="flex gap-[10px]">
-            <span className="sk h-[32px] w-[110px] rounded-[8px]" />
-            <span className="sk-soft h-[32px] w-[120px] rounded-[8px]" />
-          </div>
-        </div>
-
-        <div className="flex flex-1 flex-col gap-[18px] overflow-hidden px-6 py-[22px]">
-          {/* stat strip */}
-          <div className="flex overflow-hidden rounded-[14px] border border-line bg-paper">
-            {[0, 1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className={`flex flex-1 flex-col gap-[9px] px-[18px] py-4 ${i > 0 ? "border-l border-line" : ""}`}
-              >
-                <span className="sk h-[20px] w-[64px]" />
-                <span className="sk h-[9px] w-[88px]" />
-              </div>
-            ))}
-          </div>
-          {/* hero card */}
-          <div className="flex flex-col gap-[14px] rounded-[14px] border border-line bg-paper p-5">
-            <div className="flex justify-between">
-              <span className="sk h-[14px] w-[180px]" />
-              <span className="sk h-[12px] w-[90px]" />
-            </div>
-            {HERO_BARS.map((w, i) => (
-              <div key={i} className="flex flex-col gap-[7px]">
-                <span className="sk h-[10px]" style={{ width: w }} />
-                <span className="sk-soft h-[9px] w-full rounded-pill" />
-              </div>
-            ))}
-          </div>
-          {/* table card */}
-          <div className="flex flex-1 flex-col rounded-[14px] border border-line bg-paper px-5 py-[18px]">
-            <span className="sk mb-4 h-[14px] w-[150px]" />
-            {[0, 1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="flex items-center gap-4 border-t border-line py-[13px]"
-              >
-                <span className="sk h-[30px] w-[30px] flex-none rounded-[8px]" />
-                <span className="sk h-[11px] flex-[2]" />
-                <span className="sk h-[11px] flex-1" />
-                <span className="sk h-[11px] flex-1" />
-                <span className="sk-soft h-[20px] w-[76px] flex-none rounded-pill" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <MainColumn />
 
       {/* agent pane skeleton — 360px */}
       <div

@@ -99,12 +99,11 @@ function run(): void {
 
   // 2. wiring
   check(
-    "shell loading.tsx renders <ScreenSkeleton /> (not the old grey bars)",
+    "shell loading.tsx renders <ScreenSkeleton variant=main> (main-only; no doubled sidebar/pane)",
     () => {
       const l = read("app/(shell)/loading.tsx");
       return (
-        /<ScreenSkeleton\s*\/>/.test(l) &&
-        /ScreenSkeleton/.test(l) &&
+        /<ScreenSkeleton\b[^>]*variant=["']main["']/.test(l) &&
         !/bg-skeleton/.test(l) // old plain grey-bar placeholder is gone
       );
     },

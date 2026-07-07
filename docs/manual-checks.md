@@ -1596,7 +1596,7 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 ## UX.8 — Loading states (branded loader + shell skeleton)
 
-**Change** — replaced the plain grey-bar loading with two branded, design-1:1 loaders. `<FullScreenLoader />` (1:1 `Loading.dc.html`): axona wordmark + asymmetric square rising in (`ax-rise`), a sliding load bar (`ax-load`), and the "Waking the agents" mono label over the dotted grid — wired to the root `app/loading.tsx` (cold boot, pre-shell). `<ScreenSkeleton />` (1:1 `Loading Skeleton.dc.html`): a skeleton of the REAL shell (240px sidebar · 60px topbar · main stat-strip/hero/table · 360px right pane) with pulsing `.sk`/`.sk-soft` blocks (`sk-pulse 1.4s`) — wired to `app/(shell)/loading.tsx` so route transitions show the skeleton sized to the real layout (no layout shift when content streams in).
+**Change** — replaced the plain grey-bar loading with two branded, design-1:1 loaders. `<FullScreenLoader />` (1:1 `Loading.dc.html`): axona wordmark + asymmetric square rising in (`ax-rise`), a sliding load bar (`ax-load`), and the "Waking the agents" mono label over the dotted grid — wired to the root `app/loading.tsx` (cold boot, pre-shell). `<ScreenSkeleton />` (1:1 `Loading Skeleton.dc.html`): a skeleton of the REAL shell (240px sidebar · 60px topbar · main stat-strip/hero/table · 360px right pane) with pulsing `.sk`/`.sk-soft` blocks (`sk-pulse 1.4s`). `app/(shell)/loading.tsx` renders `<ScreenSkeleton variant="main" />` — **main column only**: on a client-side route transition the shell layout (sidebar + agent pane) PERSISTS, so the route fallback fills just the `<main>` slot; skeletonizing only the main column aligns to the real main (no layout shift) and avoids doubling the persisted sidebar/pane. The full-shell `variant="shell"` (design 1:1) stays available for a whole-shell-absent state.
 
 **Automated**
 - `pnpm verify:ux-8` (11 checks) — both components exist + render (wordmark/slide-bar/label; sidebar+topbar+main+right-pane `.sk` skeleton); both honor `prefers-reduced-motion` + are `role="status" aria-busy`; shell `loading.tsx` uses `<ScreenSkeleton />` (old `bg-skeleton` grey bars gone); root `app/loading.tsx` uses `<FullScreenLoader />`; skeleton mirrors the shell dims (`w-[240px]`/`h-[60px]`/`w-[360px]`); no invented reds/emoji.
@@ -1604,7 +1604,7 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 **Manual**
 - **Cold boot** (hard refresh on a slow load) → the branded FullScreenLoader (wordmark + sliding bar + "Waking the agents") shows before the shell mounts.
-- **Route transition** (navigate between modules) → the shell skeleton shows — sidebar/topbar/main/right-pane placeholders aligned to the real shell, so content swaps in with no jump.
+- **Route transition** (navigate between modules) → the real sidebar + agent pane stay; the main column shows the skeleton (topbar + stat strip + hero + table) aligned to the real main, so content swaps in with no jump (no doubled sidebar).
 - **Reduced motion** (OS "reduce motion") → no animation; static dimmed state.
 
 **Notes** — Pure UI; no data/schema change; v2 tokens only (no literal hex — FND.2 clean). CSS keyframes inline per the design; the dotted grid uses the shared `.bg-dotted-grid` utility.
