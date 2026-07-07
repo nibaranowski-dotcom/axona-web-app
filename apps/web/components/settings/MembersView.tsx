@@ -36,6 +36,13 @@ const ROLES = [
   "VIEWER",
 ] as const;
 
+// One grid template shared by the roster header AND every member row. The actions
+// column is a FIXED 44px slot reserved on all rows (empty when a row has no icon —
+// e.g. the last admin / self) so Person · Role · Status · Last active align
+// vertically regardless of the deactivate/revoke button (UX.6, same fix as UX.5's
+// PoRow). Never `auto` — that sizes to content and misaligns the fr columns.
+const MEMBER_COLS = "grid grid-cols-[2.2fr_1.1fr_1fr_1fr_44px] gap-3 px-5";
+
 export function MembersView({
   data,
   capabilities,
@@ -152,7 +159,9 @@ export function MembersView({
                 ` · ${data.rollup.deactivated} DEACTIVATED`}
             </span>
           </div>
-          <div className="grid grid-cols-[2.2fr_1.1fr_1fr_1fr_auto] gap-3 border-t border-line px-5 py-2.5 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted">
+          <div
+            className={`${MEMBER_COLS} border-t border-line py-2.5 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted`}
+          >
             <span>Person</span>
             <span>Role</span>
             <span>Status</span>
@@ -304,7 +313,7 @@ function MemberRowView({
 
   return (
     <div
-      className={`grid grid-cols-[2.2fr_1.1fr_1fr_1fr_auto] items-center gap-3 border-t border-line px-5 py-3 ${
+      className={`${MEMBER_COLS} items-center border-t border-line py-3 ${
         deactivated ? "opacity-55" : ""
       }`}
     >

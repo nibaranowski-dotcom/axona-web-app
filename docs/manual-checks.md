@@ -1541,6 +1541,21 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 ---
 
+## UX.6 — Members-table column alignment
+
+**Automated**
+- `pnpm verify:ux-6` (7 checks) — MembersView defines ONE shared grid template (`MEMBER_COLS`); its actions column is a **fixed width** (not `auto`); no `auto`-terminated members grid survives; the roster header row uses the shared template; every member row uses the same template; actions stay right-aligned (`justify-end`) in the fixed slot; no invented reds/emoji.
+- CI gate green; verify:all green (UX.5 alignment fix pattern reused); accessibility-review 0 on /settings/members.
+
+**Manual**
+- **/settings/members** — the roster columns **Role · Status · Last active** line up vertically across every row: rows WITH a deactivate/revoke icon and the no-icon last-admin/self row share the same column edges as the mono header. The actions icon sits right-aligned in a 44px slot reserved on every row.
+
+**Notes / root cause**
+- Same class of bug as UX.5's PoRow. The header grid (~line 155) and member row grid (~line 307) both ended in `auto` (`grid-cols-[2.2fr_1.1fr_1fr_1fr_auto]`). The `auto` actions column sized to content, so rows WITH a deactivate icon consumed width there and their `fr` data columns computed narrower/shifted vs the header and the no-icon last-admin row. Fix: one shared `MEMBER_COLS` template with a **fixed `44px`** actions slot reserved on every row (empty when a row has no icon) — the `fr` columns now compute identically everywhere.
+- Pure UI; no data/logic change; v2 tokens only.
+
+---
+
 ## AUTH.1 — Real authentication (Auth.js email/password + session + protected routes)
 
 **Dev login credentials** (seeded; dev-only — never a real secret): every role user shares the password **`axona-dev-2026!`**. Emails: `admin@axona-demo.test` (default), `ops@…`, `engineer@…`, `sales@…`, `finance@…`, `tech@…`, `viewer@…` (all `@axona-demo.test`). The plaintext lives ONLY here; the seed stores its bcrypt hash.
