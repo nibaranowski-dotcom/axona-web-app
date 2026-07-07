@@ -13,6 +13,9 @@ export interface SearchState {
   byType: Record<string, SearchHit[]>;
   counts: Record<string, number>;
   error?: string;
+  // SRCH.5 — the FTS portion degraded (module results still returned). A soft
+  // notice, NOT a blank-out: results are still shown.
+  degraded?: boolean;
 }
 
 const IDLE: SearchState = {
@@ -40,7 +43,9 @@ export function useSearch(query: string, scope: SearchScope): SearchState {
       )
         // Only a real transport/5xx failure is "unavailable". A 200 with zero
         // hits is a legitimate no-match (the palette shows a No-results state) —
-        // never masked as an error. (SRCH.4)
+        // never masked as an error. A 200 with `degraded: true` means the FTS
+        // portion fell back but module (and any) results still returned — shown
+        // with a soft notice, never a blank-out. (SRCH.4 / SRCH.5)
         .then((r) => {
           if (!r.ok) throw new Error(`search failed: ${r.status}`);
           return r.json();
@@ -51,6 +56,7 @@ export function useSearch(query: string, scope: SearchScope): SearchState {
             hits: data.hits ?? [],
             byType: data.byType ?? {},
             counts: data.counts ?? { ALL: 0 },
+            degraded: data.degraded === true,
           }),
         )
         .catch((e: unknown) => {

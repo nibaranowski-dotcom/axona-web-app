@@ -190,12 +190,23 @@ export function CommandPalette() {
             No matches for “{trimmed}”
           </p>
         ) : (
-          <Results
-            groups={groups}
-            activeIndex={active}
-            onActivate={setActive}
-            onSelect={navigate}
-          />
+          <>
+            {state.degraded && (
+              <p
+                role="status"
+                className="mt-[14px] flex-none rounded-[8px] border border-[var(--md-line)] bg-[var(--md-tile-hover)] px-3 py-2 font-mono text-[10.5px] tracking-[0.03em] text-on-dark-mut"
+              >
+                Showing available results — full-text search is temporarily
+                degraded.
+              </p>
+            )}
+            <Results
+              groups={groups}
+              activeIndex={active}
+              onActivate={setActive}
+              onSelect={navigate}
+            />
+          </>
         )}
 
         {/* footer hints */}

@@ -1177,6 +1177,28 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 ---
 
+## SRCH.5 — Robust, FTS-independent module search (ends the recurring "Search unavailable")
+
+**Root cause (3rd regression)** — SRCH.4's self-heal (`reindex` re-adds `tsv`) only runs on `db:seed`, and the 503-on-FTS-failure path meant that any time a schema op disturbed `SearchDoc.tsv` between seeds, `/api/search` 503'd and the client blanked the WHOLE palette to "Search unavailable" — even though the 22 modules could be found without FTS at all. FTS also stems `"pro"` to nothing (Procurement's lexeme is `procur`), so even a healthy FTS never matched the common `"pro"` prefix.
+
+**Durable fix (read-only; no schema.prisma change)**
+1. **FTS-independent module search** — new `moduleSearch()` (`packages/db/src/search/query.ts`) queries the `Module` table directly (`ILIKE` on name/key, `mode:"insensitive"`) — it never touches `tsv`. Typing a module name ALWAYS surfaces it, even with `tsv` dropped. Only runs for ALL/MODULE scopes.
+2. **Self-heal + graceful degradation** — `/api/search` always runs `moduleSearch` first; the FTS portion is best-effort: on failure it re-asserts the `tsv` (idempotent `ensureSearchIndexSchema` — the generated column repopulates) and retries ONCE; if it still fails it **degrades to a 200** with whatever it has (at least the module hits) + `degraded:true`. A **503 only when module search AND FTS are both down** — never a blanket blank-out.
+3. **Client** — `use-search.ts` carries the `degraded` flag; the palette shows a soft "Showing available results — full-text search is temporarily degraded" notice ABOVE the results (results still shown). "Search unavailable" appears only on `!r.ok` (a real total failure).
+
+**Automated**
+- `pnpm verify:srch-5` (9 checks; DB-gated ones skip cleanly without `DATABASE_URL`) — moduleSearch queries Module directly with no `tsv`/`tsquery` in its body; exported; route runs moduleSearch + self-heals + only 503s on `!moduleOk && !ftsOk`; client degraded wiring; **drop `tsv` → moduleSearch STILL returns Procurement for "pro"** (FTS-independence), FTS throws, self-heal repairs FTS for "procur"; garbage → no-results (not a throw); scope respected. Self-cleans the `tsv` in a `finally`.
+- CI gate green · SRCH.1–4 stay green · `accessibility-review` 0 on /search.
+
+**Manual (./dev.sh, http://localhost:3001/search or ⌘K)**
+- [ ] Type `pro` → **Procurement** (and Projects) appear as MODULE results — no "Search unavailable".
+- [ ] With `tsv` dropped (`ALTER TABLE "SearchDoc" DROP COLUMN "tsv" CASCADE;`), `pro` STILL surfaces Procurement; the palette shows the soft "degraded" notice, not a blank-out. `pnpm db:seed` (or one query, via the route's self-heal) restores full FTS.
+- [ ] Gibberish (`zzqxwv`) → **"No matches for …"** (NOT "Search unavailable").
+
+**Notes** — No new deps, no schema.prisma change. Module search now stands on its own; FTS is purely additive. This is the belt-and-suspenders that ends the recurring blank-out regardless of `tsv` state.
+
+---
+
 ## UX.1 — Screen polish pass (layout bugfixes)
 
 **Root causes**

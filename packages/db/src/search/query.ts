@@ -66,6 +66,53 @@ export async function search(
 }
 
 /**
+ * SRCH.5 — module search that does NOT depend on the FTS index. Queries the
+ * `Module` table directly (case-insensitive ILIKE on name/key), so typing a
+ * module name ALWAYS surfaces the module even when `SearchDoc.tsv` is degraded or
+ * dropped (the recurring "Search unavailable" regression). Modules are global
+ * (orgId NULL); `orgId` is accepted for signature parity + future scoping. Only
+ * runs for ALL / MODULE scopes (module rows are irrelevant to the other scopes).
+ * Prefix matches rank above mid-string matches so "pro" keeps Procurement on top.
+ */
+export async function moduleSearch(
+  _orgId: string,
+  q: string,
+  opts: { scope?: SearchScope; limit?: number } = {},
+): Promise<SearchHit[]> {
+  const scope = opts.scope ?? "ALL";
+  if (scope !== "ALL" && scope !== "MODULE") return [];
+  const term = q.trim();
+  if (!term) return [];
+  const limit = Math.min(Math.max(opts.limit ?? 20, 1), 50);
+
+  const rows = await prisma.module.findMany({
+    where: {
+      OR: [
+        { name: { contains: term, mode: "insensitive" } },
+        { key: { contains: term, mode: "insensitive" } },
+      ],
+    },
+    orderBy: { orderIndex: "asc" },
+    take: limit,
+  });
+
+  const lower = term.toLowerCase();
+  return rows.map((m) => ({
+    type: "MODULE",
+    refId: m.key,
+    title: m.name,
+    subtitle: m.group,
+    url: `/${m.key}`,
+    orgId: null,
+    rank:
+      m.name.toLowerCase().startsWith(lower) ||
+      m.key.toLowerCase().startsWith(lower)
+        ? 1
+        : 0.6,
+  }));
+}
+
+/**
  * Per-type total match counts for a query, IGNORING scope + limit, so scope tabs
  * (All (n) / Agents (n) / Modules (n) …) show live totals. Same org scoping +
  * parameterized tsquery as `search`. Returns every SearchType (0 when none) plus

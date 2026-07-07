@@ -30,6 +30,7 @@ export type { PageArgs } from "./pagination";
 export { reindex, ensureSearchIndexSchema, upsertDoc } from "./search/reindex";
 export {
   search,
+  moduleSearch,
   semanticSearch,
   hybridSearch,
   countByType,
