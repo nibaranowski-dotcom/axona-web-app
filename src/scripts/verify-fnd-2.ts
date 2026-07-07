@@ -86,7 +86,7 @@ const allowedHex = new Set(
     "#111111",
     "#0a0a0a",
     "#6b6b63",
-    "#9a9a90",
+    "#707066",
     "#8a8a82",
     "#a7a79d",
     // hairlines

@@ -25,6 +25,7 @@ export function FullScreenLoader() {
     // structure a11y (landmark-main / region / heading / bypass). The live status
     // region wraps the animated content.
     <main
+      id="main"
       aria-label="Loading Axona"
       className="bg-dotted-grid flex min-h-dvh flex-col items-center justify-center gap-[26px] bg-paper text-ink"
     >

@@ -50,6 +50,7 @@ export function LoginForm() {
 
   return (
     <main
+      id="main"
       aria-label="Sign in"
       className="flex min-h-dvh items-start justify-center bg-panel px-8 py-12 font-sans text-ink"
       style={{ paddingTop: "clamp(48px, 12vh, 140px)" }}

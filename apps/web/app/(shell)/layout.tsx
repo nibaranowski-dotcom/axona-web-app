@@ -90,7 +90,11 @@ export default async function ShellLayout({
         user={user ? { name: user.name, role: user.role } : null}
         unreadCount={unreadCount}
       />
-      <main aria-label="Main content" className="min-w-0 overflow-y-auto">
+      <main
+        id="main"
+        aria-label="Main content"
+        className="min-w-0 overflow-y-auto"
+      >
         {routeDisabled ? <ModuleNotEnabled /> : children}
       </main>
       <AgentPane axonaAgentId={axona?.id} agentsByModule={agentsByModule} />

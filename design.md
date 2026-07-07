@@ -28,7 +28,7 @@ type does the work (Archivo display + JetBrains Mono labels) · **no emoji**.
 
   /* Surfaces / ink (warm grey ramp) */
   --paper:#ffffff; --panel:#f4f3ef; --panel-2:#f7f2eb;
-  --ink:#111111; --ink-strong:#0a0a0a; --ink-muted:#6b6b63; --ink-faint:#9a9a90;
+  --ink:#111111; --ink-strong:#0a0a0a; --ink-muted:#6b6b63; --ink-faint:#707066;
   --mono-faint:#8a8a82; --mono-ghost:#a7a79d;
   --on-dark:#ffffff; --on-dark-mut:rgba(255,255,255,.70); --on-dark-faint:rgba(255,255,255,.40);
 
@@ -63,6 +63,9 @@ type does the work (Archivo display + JetBrains Mono labels) · **no emoji**.
   prototype's Google-CDN `@import` is not used in-app.
 - **Shadows:** imported but **marketing-only**; the Tailwind theme exposes no shadow
   utilities, so product surfaces stay on hairlines (brand invariant).
+- **A11Y.1:** `--ink-faint` darkened #9a9a90→**#707066** — the lightest warm-grey (same
+  +10 warm offset) that clears **WCAG AA 4.5:1** on both paper (#ffffff, 5.00:1) and
+  panel (#f4f3ef, 4.51:1). Small `text-ink-faint` meta/labels were ~2.8:1 before.
 
 ## App-specific notes
 - **AgentGlyph:** static 12-dot ring (never animated), exact DS coordinates; status dot

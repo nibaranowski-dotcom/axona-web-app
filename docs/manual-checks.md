@@ -1224,6 +1224,28 @@ SRCH.5's `moduleSearch` + graceful degradation stay as defense-in-depth, but no 
 
 ---
 
+## A11Y.1 — Accessibility cleanup (contrast token + landmarks/lang)
+
+**Two independent WCAG 2.1 AA gaps closed.**
+
+**1) Contrast — `text-ink-faint`.** Old `--ink-faint: #9a9a90` rendered small text at **2.838:1 on `#ffffff`** and **2.556:1 on `#f4f3ef`** — below AA 4.5:1. Fixed at the **token level**: darkened to **`#707066`** — the lightest warm-grey (same +10 warm offset as before: R=G, B=R−10) that clears AA on **both** backgrounds → **5.002:1 on `#ffffff`**, **4.505:1 on `#f4f3ef`** (one step lighter, `#717167`, fails panel at 4.440). No new token, no per-site hex — `#9a9a90` was used only in `tokens.css` (grep confirms zero hardcoded call sites), so every `text-ink-faint` usage inherits the darker value. Brand invariants intact (warm-grey family, single lime accent). `text-mono-faint`/`text-mono-ghost` are also low-contrast but have **0 call sites** (unused) — left out of scope.
+
+**2) Structure — `/search` Launcher route (the 4 SRCH.6 findings).** Root `<html lang="en">` was already present; the `/search` Launcher already had `<main>` + `<h1 class="sr-only">Mission Control</h1>` (and `/login` `LoginForm` + the shell layout already had `<main>` + `<h1>`). The genuinely-missing piece was a **skip/bypass** path: added a **skip-to-content link** in the root layout (`<a href="#main">Skip to content</a>` — first focusable, `sr-only` until focused, no visible layout change), and gave every primary `<main>` an `id="main"` (Launcher · LoginForm · shell layout · FullScreenLoader) as the bypass target.
+
+**Automated**
+- `pnpm verify:a11y-1` (8 checks) — computes `--ink-faint` contrast vs `#ffffff` (5.002) and `#f4f3ef` (4.505), asserts **both ≥4.5**; `#9a9a90` gone from tokens.css; root `<html lang>`; skip link (`href="#main"`, sr-only, "Skip to content") exists; Launcher `<main id="main">` + `<h1>`; the `#main` bypass target exists on shell/login/launcher.
+- `pnpm verify:fnd-2` stays green (allowlist repointed `#9a9a90`→`#707066`; 322 app files hex-clean).
+- CI gate green (incl. `pnpm build`); verify:all green.
+
+**Manual (a11y scans, logged-in for /core, logged-out for /login)**
+- **`/search` → 0 findings · `/login` → 0 · `/core` → 0** (representative: public loader route + auth route + dense shell route). *(Note: scanning `/login` while authenticated redirects to `/` → `/core`, catching the transient redirect window — scan `/login` logged-out for the real page, which is 0.)*
+- **Visual:** `text-ink-faint` still reads quieter than `text-ink` on the Core stat-strip meta + table mono sub-labels — now legible (AA), not muddy.
+- **Keyboard:** Tab on any page → the "Skip to content" chip appears (first focus); Enter jumps focus to `<main>`.
+
+**Notes** — One token value change (all call sites inherit); semantic/SR-only markup additions only; no visible layout change; no schema change. `/` is a pure `redirect("/core")` (not a scan target).
+
+---
+
 ## UX.1 — Screen polish pass (layout bugfixes)
 
 **Root causes**

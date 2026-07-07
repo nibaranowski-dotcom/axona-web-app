@@ -37,7 +37,7 @@ export function Launcher({
     .filter((g) => g.modules.length > 0);
 
   return (
-    <main className="bg-mission min-h-dvh font-sans text-on-dark">
+    <main id="main" className="bg-mission min-h-dvh font-sans text-on-dark">
       <h1 className="sr-only">Mission Control</h1>
       {/* top-right: agent actions · clock · avatar (clock/identity are stubs → AUTH.1) */}
       <div className="absolute right-6 top-4 z-[5] flex items-center gap-[13px]">

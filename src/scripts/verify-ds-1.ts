@@ -23,7 +23,7 @@ const IMPORTED = [
   "#111111", // ink
   "#0a0a0a", // ink-strong
   "#6b6b63", // ink-muted
-  "#9a9a90", // ink-faint
+  "#707066", // ink-faint (A11Y.1 — darkened from #9a9a90 for WCAG AA on paper + panel)
   "#c6f24f", // accent
   "#bce83f", // accent-hover
   "#1f9e6f", // success
