@@ -43,17 +43,23 @@ export async function search(
   const term = q.trim();
   if (!term) return { hits: [], byType: {} };
 
-  const tsquery = Prisma.sql`websearch_to_tsquery('english', ${term})`;
   const scopeClause =
     scope === "ALL"
       ? Prisma.empty
       : Prisma.sql`AND "type" = ${scope}::"SearchType"`;
 
+  // SRCH.6 — bind the tsquery term ONCE via a CTE. The prior form interpolated the
+  // `websearch_to_tsquery(...)` fragment twice (ts_rank + the `@@` filter), reusing
+  // one bound param across two positions — a fragile, non-idiomatic pattern that
+  // can surface as a `syntax error at or near "$N"` (42601) under bundling/driver
+  // edge cases. The CTE evaluates the tsquery once and both sites reference it, so
+  // each bind param appears exactly once, in a stable position.
   const rows = await prisma.$queryRaw<SearchHit[]>`
+    WITH q AS (SELECT websearch_to_tsquery('english', ${term}) AS tsq)
     SELECT "type", "refId", "title", "subtitle", "url", "orgId",
-           ts_rank("tsv", ${tsquery}) AS rank
-    FROM "SearchDoc"
-    WHERE "tsv" @@ ${tsquery}
+           ts_rank("tsv", q.tsq) AS rank
+    FROM "SearchDoc", q
+    WHERE "tsv" @@ q.tsq
       AND ("orgId" = ${orgId} OR "orgId" IS NULL)
       ${scopeClause}
     ORDER BY rank DESC
@@ -173,13 +179,16 @@ export async function semanticSearch(
   if (!qvec) return [];
   const lit = toVectorLiteral(qvec);
   const limit = Math.min(Math.max(opts.limit ?? 20, 1), 50);
+  // SRCH.6 — bind the query vector ONCE via a CTE (it's used by both the rank
+  // expression and the ORDER BY). Same parameter-placement hardening as search().
   return prisma.$queryRaw<SearchHit[]>`
+    WITH v AS (SELECT ${lit}::vector AS qv)
     SELECT "type", "refId", "title", "subtitle", "url", "orgId",
-           (1 - (embedding <=> ${lit}::vector))::float8 AS rank
-    FROM "SearchDoc"
+           (1 - (embedding <=> v.qv))::float8 AS rank
+    FROM "SearchDoc", v
     WHERE embedding IS NOT NULL
       AND ("orgId" = ${orgId} OR "orgId" IS NULL)
-    ORDER BY embedding <=> ${lit}::vector
+    ORDER BY embedding <=> v.qv
     LIMIT ${limit};
   `;
 }

@@ -1199,6 +1199,30 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 ---
 
+## SRCH.6 — Fix the FTS search() raw-SQL parameter placement
+
+**Symptom** — the agent trace showed `searchOperations failed: Raw query failed. Code: 42601: syntax error at or near "$4"`, so FTS search was reported broken (the Axona agent's `searchOperations` calls `search()` directly; `/api/search` "worked" only because SRCH.5 catches the throw and degrades to modules-only).
+
+**Root cause / investigation** — Could NOT reproduce 42601 against the current source under a healthy DB (comprehensive repro: `search()` all scopes, `searchOperations`, `hybridSearch`, `semanticSearch`, plan-cache after tsv drop/recreate — all return real hits; with `tsv` actually dropped `search()` throws **42703** "column tsv does not exist", not 42601). The observed 42601 was almost certainly a transient artifact of a corrupted dev-server hot-reload state (the concurrent "useRef null" 500 crashes + repeated tsv drop/restore during the prior session). **However** the genuine fragility is real: `search()` interpolated the `websearch_to_tsquery(...)` Prisma.sql fragment **twice** (`ts_rank` + the `@@` filter), reusing one bound param across two positions — exactly the non-idiomatic pattern that produces `$N` placement errors under bundling/driver edge cases.
+
+**Fix (read-only; no schema.prisma change)** — bind each term/vector **once** via a CTE:
+- `search()`: `WITH q AS (SELECT websearch_to_tsquery('english', $1) AS tsq)` — both `ts_rank("tsv", q.tsq)` and `"tsv" @@ q.tsq` reference the single evaluated tsquery. The old `const tsquery = Prisma.sql\`…\`` reused twice is gone.
+- `semanticSearch()`: `WITH v AS (SELECT $1::vector AS qv)` — both the rank expr and `ORDER BY` reference `v.qv`.
+SRCH.5's `moduleSearch` + graceful degradation stay as defense-in-depth, but no longer trigger for a healthy query (FTS now runs clean).
+
+**Automated**
+- `pnpm verify:srch-6` (9 checks; DB-gated ones skip without `DATABASE_URL`) — static: `search()`/`semanticSearch()` each bind via a CTE, old double-interpolation gone; engine: `search("quality")` returns MODULE+AGENT hits (no throw); non-ALL scope works (exercises the scope + limit params); the agent `searchOperations` tool returns cross-module results; `hybridSearch` runs clean (→ `/search` returns full results, not degraded); `semanticSearch` never throws; **SRCH.5 preserved** (drop tsv → moduleSearch still returns Procurement; self-cleans); search works again after tsv restore.
+- CI gate green (incl. `pnpm build`); verify:all green; `accessibility-review` 0 on /search.
+
+**Manual (./dev.sh, http://localhost:3001)**
+- [ ] `/agents` → ask the Axona agent a cross-module question ("what is blocking the BMW order?") → the trace's `searchOperations` returns results (no `42601`), and the agent answers from real records.
+- [ ] `/search` (or ⌘K) → type `quality` → full FTS results (Quality module + agents + files), **no** "full-text search temporarily degraded" notice.
+- [ ] Drop `tsv` (`ALTER TABLE "SearchDoc" DROP COLUMN "tsv" CASCADE;`) → `pro` still surfaces Procurement (SRCH.5); `pnpm db:seed` restores full FTS.
+
+**Notes** — No new deps, no schema change. Pure raw-SQL hardening in `packages/db/src/search/query.ts`. The CTE form is also more readable and one param shorter.
+
+---
+
 ## UX.1 — Screen polish pass (layout bugfixes)
 
 **Root causes**
