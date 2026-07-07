@@ -20,35 +20,44 @@ const LOADER_CSS = `
 
 export function FullScreenLoader() {
   return (
-    <div
-      role="status"
-      aria-busy="true"
+    // A <main> landmark (+ sr-only <h1>) so this full-screen state — shown before
+    // the shell mounts, so no shell landmarks exist yet — still satisfies page
+    // structure a11y (landmark-main / region / heading / bypass). The live status
+    // region wraps the animated content.
+    <main
       aria-label="Loading Axona"
       className="bg-dotted-grid flex min-h-dvh flex-col items-center justify-center gap-[26px] bg-paper text-ink"
     >
       <style>{LOADER_CSS}</style>
+      <h1 className="sr-only">Loading Axona</h1>
 
-      {/* wordmark + asymmetric square mark */}
-      <div className="ax-word flex items-center gap-[9px]">
-        <span className="text-[26px] font-bold tracking-[-0.045em] text-ink-strong">
-          axona
-        </span>
-        <span
-          aria-hidden
-          className="h-[14px] w-[14px] bg-ink-strong"
-          style={{ borderRadius: "0 8px 0 8px" }}
-        />
-      </div>
-
-      {/* progress bar + label */}
-      <div className="ax-sub flex flex-col items-center gap-[14px]">
-        <div className="ax-bar h-[3px] w-[150px] rounded-pill bg-line-strong">
-          <span />
+      <div
+        role="status"
+        aria-busy="true"
+        className="flex flex-col items-center gap-[26px]"
+      >
+        {/* wordmark + asymmetric square mark */}
+        <div className="ax-word flex items-center gap-[9px]">
+          <span className="text-[26px] font-bold tracking-[-0.045em] text-ink-strong">
+            axona
+          </span>
+          <span
+            aria-hidden
+            className="h-[14px] w-[14px] bg-ink-strong"
+            style={{ borderRadius: "0 8px 0 8px" }}
+          />
         </div>
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
-          Waking the agents
-        </span>
+
+        {/* progress bar + label */}
+        <div className="ax-sub flex flex-col items-center gap-[14px]">
+          <div className="ax-bar h-[3px] w-[150px] rounded-pill bg-line-strong">
+            <span />
+          </div>
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
+            Waking the agents
+          </span>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

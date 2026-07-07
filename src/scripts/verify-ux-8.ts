@@ -61,6 +61,12 @@ function run(): void {
       );
     },
   );
+  check(
+    "FullScreenLoader has page structure a11y (<main> landmark + <h1>) for the pre-shell state",
+    () => {
+      return /<main\b/.test(loader) && /<h1[^>]*sr-only[^>]*>/.test(loader);
+    },
+  );
 
   // 1. ScreenSkeleton — sidebar + main + pane + .sk blocks + reduced-motion
   check("ScreenSkeleton exists and exports the component", () => {
