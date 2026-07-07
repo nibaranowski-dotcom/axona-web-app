@@ -1578,6 +1578,22 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 ---
 
+## UX.7 — Audit/notifications/settings in a user-name contextual menu
+
+**Change** — the sidebar left nav is now **modules only**. Audit trail, Notifications (with the unread badge), and Settings are no longer standalone links below the modules; the identity block (name + role) at the bottom is a **button** that opens an **upward contextual menu** containing, top-to-bottom: Audit trail · Notifications (badge carried) · Settings · divider · the user (name + role) + Sign out. All routes + the badge still work.
+
+**Automated**
+- `pnpm verify:ux-7` (11 checks) — a `UserMenu` with `role="menu"`; the identity button has `aria-haspopup="menu"` + `aria-expanded={open}`; the three routes are each a single `role="menuitem"` (moved, not duplicated, not top-level nav); Notifications keeps the unread badge; the menu has the user + Sign out; Esc + click-outside close with focus returned to the trigger + first-item focus on open; Lucide `ChevronUp`/`ChevronDown` reflect state; no emoji / no invented reds.
+- CI gate green; verify:all green; accessibility-review 0 on the shell.
+
+**Manual**
+- **Any shell screen** — the left nav shows only module groups (no Audit/Notifications/Settings links). Click the name/role block at the bottom → an upward menu opens with Audit trail, Notifications (unread badge shown), Settings, a divider, then the user + a sign-out button.
+- Each item navigates to its route; the menu closes on select, on `Esc` (focus returns to the button), and on an outside click. The chevron points up when closed, down when open.
+
+**Notes** — Pure UI/shell change; no data/logic change; v2 tokens only. Matches the target screenshots (collapsed name button + open menu with the Notifications "5" badge).
+
+---
+
 ## AUTH.1 — Real authentication (Auth.js email/password + session + protected routes)
 
 **Dev login credentials** (seeded; dev-only — never a real secret): every role user shares the password **`axona-dev-2026!`**. Emails: `admin@axona-demo.test` (default), `ops@…`, `engineer@…`, `sales@…`, `finance@…`, `tech@…`, `viewer@…` (all `@axona-demo.test`). The plaintext lives ONLY here; the seed stores its bcrypt hash.

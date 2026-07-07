@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   Bell,
+  ChevronDown,
+  ChevronUp,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
@@ -31,8 +34,13 @@ const HIDDEN_FROM_NAV = new Set(["mission-control", "search"]);
 // mark + a collapse-menu button; a search bar that routes to Mission Control
 // (the navsearch links there per the design — its pill lands autofocused; ⌘K
 // keeps the dark Search overlay); collapsible <details> nav sections with
-// per-module alert badges; the AUTH.1 identity-stub footer. Collapses to a slim
-// rail (persisted in useUi). Icons are Lucide (thin stroke); no emoji.
+// per-module alert badges. Collapses to a slim rail (persisted in useUi).
+// Icons are Lucide (thin stroke); no emoji.
+//
+// UX.7 — the sidebar nav is MODULES ONLY. Audit trail, Notifications (with the
+// unread badge), and Settings no longer live as top-level nav links; they moved
+// into the identity block, which is now a button opening an upward contextual
+// menu (see UserMenu). Every route + the badge still work.
 
 export function Sidebar({
   groups,
@@ -160,93 +168,200 @@ export function Sidebar({
             <NavSection key={g.group} group={g} alerts={alerts} />
           ))
         )}
-
-        {/* Governance — the cross-cutting audit trail (AUDIT.2). A static link, not
-            a value-chain module; the immutable record of every gated decision. */}
-        <Link
-          href="/audit"
-          className={`mt-1.5 flex items-center gap-2 rounded-[7px] px-3 py-[7px] text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-            pathname === "/audit"
-              ? "bg-panel-2 font-semibold text-ink"
-              : "text-ink-muted hover:bg-panel hover:text-ink"
-          }`}
-        >
-          <ShieldCheck
-            className="h-[15px] w-[15px] flex-none"
-            strokeWidth={1.7}
-            aria-hidden
-          />
-          Audit trail
-        </Link>
-
-        {/* Notifications — the in-app activity feed (NOTIF.1) with an unread badge. */}
-        <Link
-          href="/notifications"
-          className={`flex items-center gap-2 rounded-[7px] px-3 py-[7px] text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-            pathname === "/notifications"
-              ? "bg-panel-2 font-semibold text-ink"
-              : "text-ink-muted hover:bg-panel hover:text-ink"
-          }`}
-        >
-          <Bell
-            className="h-[15px] w-[15px] flex-none"
-            strokeWidth={1.7}
-            aria-hidden
-          />
-          <span className="flex-1">Notifications</span>
-          {unreadCount > 0 && (
-            <span
-              aria-label={`${unreadCount} unread`}
-              className="min-w-[18px] rounded-pill bg-accent px-1.5 text-center font-mono text-[10px] font-bold text-accent-ink"
-            >
-              {unreadCount}
-            </span>
-          )}
-        </Link>
-
-        {/* Settings — members & roles (SET.2) + the org settings area. */}
-        <Link
-          href="/settings/members"
-          className={`flex items-center gap-2 rounded-[7px] px-3 py-[7px] text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-            pathname.startsWith("/settings")
-              ? "bg-panel-2 font-semibold text-ink"
-              : "text-ink-muted hover:bg-panel hover:text-ink"
-          }`}
-        >
-          <Settings
-            className="h-[15px] w-[15px] flex-none"
-            strokeWidth={1.7}
-            aria-hidden
-          />
-          Settings
-        </Link>
       </div>
 
-      {/* Identity + sign-out (AUTH.1) — the logged-in user + role. */}
-      <div className="mt-2 flex items-center gap-[10px] border-t border-line px-2 pb-0.5 pt-3">
+      {/* Identity block → upward contextual menu (UX.7): audit / notifications
+          (with the unread badge) / settings + the user & sign-out. */}
+      <UserMenu user={user} unreadCount={unreadCount} pathname={pathname} />
+    </nav>
+  );
+}
+
+// UX.7 — the identity block is a BUTTON that opens an upward contextual menu:
+// Audit trail · Notifications (carries the unread badge) · Settings · divider ·
+// the user (name + role) + Sign out. aria-haspopup/expanded; Esc + click-outside
+// close with focus returned to the button; first item focused on open. Lucide
+// icons, v2 tokens, no emoji. These three routes used to be top-level nav links.
+function UserMenu({
+  user,
+  unreadCount,
+  pathname,
+}: {
+  user?: SidebarUser | null;
+  unreadCount: number;
+  pathname: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
+
+  // Close on outside click + Escape; focus the first item on open, restore focus
+  // to the trigger on close.
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: MouseEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    };
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    // focus the first menu item
+    menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const itemBase =
+    "flex items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent";
+  const itemFor = (active: boolean) =>
+    `${itemBase} ${
+      active
+        ? "bg-panel-2 font-semibold text-ink"
+        : "text-ink-muted hover:bg-panel hover:text-ink"
+    }`;
+  const close = () => setOpen(false);
+
+  return (
+    <div ref={containerRef} className="relative mt-2">
+      {open && (
+        <div
+          ref={menuRef}
+          id={menuId}
+          role="menu"
+          aria-label="Account menu"
+          className="absolute bottom-[calc(100%+8px)] left-0 right-0 z-30 flex flex-col gap-0.5 rounded-card border border-line-strong bg-paper p-2 shadow-[0_-8px_28px_-12px_rgba(10,10,10,0.28)]"
+        >
+          <Link
+            href="/audit"
+            role="menuitem"
+            onClick={close}
+            className={itemFor(pathname === "/audit")}
+          >
+            <ShieldCheck
+              className="h-[15px] w-[15px] flex-none"
+              strokeWidth={1.7}
+              aria-hidden
+            />
+            Audit trail
+          </Link>
+          <Link
+            href="/notifications"
+            role="menuitem"
+            onClick={close}
+            className={itemFor(pathname === "/notifications")}
+          >
+            <Bell
+              className="h-[15px] w-[15px] flex-none"
+              strokeWidth={1.7}
+              aria-hidden
+            />
+            <span className="flex-1">Notifications</span>
+            {unreadCount > 0 && (
+              <span
+                aria-label={`${unreadCount} unread`}
+                className="min-w-[18px] rounded-pill bg-accent px-1.5 text-center font-mono text-[10px] font-bold text-accent-ink"
+              >
+                {unreadCount}
+              </span>
+            )}
+          </Link>
+          <Link
+            href="/settings/members"
+            role="menuitem"
+            onClick={close}
+            className={itemFor(pathname.startsWith("/settings"))}
+          >
+            <Settings
+              className="h-[15px] w-[15px] flex-none"
+              strokeWidth={1.7}
+              aria-hidden
+            />
+            Settings
+          </Link>
+
+          <div className="my-1.5 h-px bg-line" aria-hidden />
+
+          <div className="flex items-center gap-[10px] px-1.5 py-1">
+            <span
+              aria-hidden
+              className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-accent text-[11px] font-bold text-accent-ink"
+            >
+              {initials(user?.name)}
+            </span>
+            <div className="min-w-0 flex-1 text-[12.5px] leading-[1.3]">
+              <div className="truncate font-semibold text-ink">
+                {user?.name ?? "Signed in"}
+              </div>
+              <div className="truncate text-ink-muted">
+                {roleLabel(user?.role)}
+              </div>
+            </div>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => void signOut({ callbackUrl: "/login" })}
+              aria-label="Sign out"
+              title="Sign out"
+              className="flex h-7 w-7 flex-none items-center justify-center rounded-[7px] border border-line text-ink-muted transition-colors hover:bg-panel hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <LogOut
+                className="h-[15px] w-[15px]"
+                strokeWidth={1.7}
+                aria-hidden
+              />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        className="flex w-full items-center gap-[10px] border-t border-line px-2 pb-0.5 pt-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      >
         <span
           aria-hidden
           className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-accent text-[11px] font-bold text-accent-ink"
         >
           {initials(user?.name)}
         </span>
-        <div className="min-w-0 flex-1 text-[12.5px] leading-[1.3]">
-          <div className="truncate font-semibold text-ink">
+        <span className="min-w-0 flex-1 text-[12.5px] leading-[1.3]">
+          <span className="block truncate font-semibold text-ink">
             {user?.name ?? "Signed in"}
-          </div>
-          <div className="truncate text-ink-muted">{roleLabel(user?.role)}</div>
-        </div>
-        <button
-          type="button"
-          onClick={() => void signOut({ callbackUrl: "/login" })}
-          aria-label="Sign out"
-          title="Sign out"
-          className="flex h-7 w-7 flex-none items-center justify-center rounded-[7px] border border-line text-ink-muted transition-colors hover:bg-panel hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          <LogOut className="h-[15px] w-[15px]" strokeWidth={1.7} aria-hidden />
-        </button>
-      </div>
-    </nav>
+          </span>
+          <span className="block truncate text-ink-muted">
+            {roleLabel(user?.role)}
+          </span>
+        </span>
+        {open ? (
+          <ChevronDown
+            className="h-4 w-4 flex-none text-ink-muted"
+            strokeWidth={1.7}
+            aria-hidden
+          />
+        ) : (
+          <ChevronUp
+            className="h-4 w-4 flex-none text-ink-muted"
+            strokeWidth={1.7}
+            aria-hidden
+          />
+        )}
+      </button>
+    </div>
   );
 }
 
