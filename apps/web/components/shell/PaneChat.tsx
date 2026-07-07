@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ChatThread } from "@/components/agents/ChatThread";
 import { useAgentChat } from "@/components/agents/use-agent-chat";
 import { useCopilotSeed } from "@/lib/copilot-seed";
-import { TraceConsole } from "./TraceConsole";
+import { TracePane } from "./TracePane";
 
 // The agent-pane chat body (ART.4 stream via useAgentChat). Rendered keyed by
 // agentId so switching the active agent (or route) starts a fresh thread. Any
@@ -34,7 +34,7 @@ export function PaneChat({
 
   return (
     <>
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-[18px] py-[18px]">
+      <div className="flex min-h-0 flex-[1.2] flex-col gap-3 overflow-y-auto px-[18px] py-[18px]">
         {messages.length === 0 && (
           <p className="text-[13px] leading-[1.5] text-ink-muted">{intro}</p>
         )}
@@ -56,10 +56,10 @@ export function PaneChat({
             {error}
           </p>
         )}
-        {traceLines.length > 0 && (
-          <TraceConsole lines={traceLines} title="Trace" />
-        )}
       </div>
+
+      {/* UX.9 — collapsible trace sub-pane, pinned below the messages */}
+      {traceLines.length > 0 && <TracePane lines={traceLines} />}
 
       <form
         className="border-t border-line px-[18px] py-3"

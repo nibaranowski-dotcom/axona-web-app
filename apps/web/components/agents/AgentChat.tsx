@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AgentGlyph } from "@/components/ui";
-import { TraceConsole } from "@/components/shell/TraceConsole";
+import { TracePane } from "@/components/shell/TracePane";
 import { ChatThread } from "./ChatThread";
 import { type AgentSummary, stateTone } from "./AgentCard";
 import { useAgentChat } from "./use-agent-chat";
@@ -34,7 +34,7 @@ export function AgentChat({ agent }: { agent: AgentSummary }) {
         role="region"
         aria-label="Conversation"
         tabIndex={0}
-        className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 py-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+        className="flex min-h-0 flex-[1.2] flex-col gap-4 overflow-y-auto px-6 py-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
       >
         {proposals.length > 0 && (
           <ul className="flex flex-col gap-2" aria-label="Proposed actions">
@@ -70,9 +70,12 @@ export function AgentChat({ agent }: { agent: AgentSummary }) {
             {error}
           </p>
         )}
-
-        {traceLines.length > 0 && <TraceConsole lines={traceLines} />}
       </div>
+
+      {/* UX.9 — collapsible trace sub-pane, pinned below the messages */}
+      {traceLines.length > 0 && (
+        <TracePane lines={traceLines} orchestrator={agent.code} />
+      )}
 
       <form
         className="flex items-center gap-2 border-t border-line px-6 py-4"

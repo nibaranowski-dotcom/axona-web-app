@@ -1611,6 +1611,22 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 ---
 
+## UX.9 — Agent-chat trace open/close (collapsible trace sub-pane)
+
+**Change** — adopted the v9 collapsible trace sub-pane (`Procurement.dc.html` `.tracepane`) in the agent chat. New `TracePane` (native `<details>`, dark surface via `bg-ink-strong`): a **summary bar** = accent status dot + `TRACE` · the orchestrator name · a chevron; `[open]` → `flex:1; min-height:120px` (shows the trace lines), `:not([open])` → `flex:none` (summary only); the `.tracechev` rotates `-90deg`↔`0deg` (`.15s`). Swapped into BOTH agent chats — the right-pane chat (`PaneChat`) and `/agents` (`AgentChat`) — replacing their `<TraceConsole>`. The shared `TraceConsole` (18 module views) is untouched. Trace **content** still renders via the existing `TraceLine` shape (ts + text) — only the container/summary changed.
+
+**Automated**
+- `pnpm verify:ux-9` (11 checks) — TracePane is a native `<details>` `.tracepane` with a summary bar (accent dot + TRACE + `{orchestrator}` + Lucide chevron); `[open]{flex:1;min-height:120px}` / `:not([open]){flex:none}`; chevron rotates `-90°→0°` with a transition (native marker hidden); `prefers-reduced-motion` disables it; dark surface via `bg-ink-strong` + `on-dark` tokens (no hex); trace lines via the existing `TraceLine` (`l.ts`/`l.text`); both PaneChat + AgentChat render `<TracePane>` (not TraceConsole); no reds/emoji.
+- CI gate green (incl. `pnpm build`); verify:all green; accessibility-review 0 on /agents + /procurement (the agent chat).
+
+**Manual**
+- **/agents** (or any module right-pane chat) — send a message so trace lines stream; the trace shows as a dark sub-pane pinned below the messages with a `● TRACE … {orchestrator} ⌄` summary bar. **Open** → the trace lines fill the expanded pane (chevron down). **Click the summary** → collapses to just the bar (chevron rotates to point left). Keyboard: focus the summary, Enter/Space toggles.
+- **Reduced motion** → the chevron snaps (no transition).
+
+**Notes** — Pure UI; no data/schema change; v2 tokens only. **Out of scope (flagged):** the v9 chat's suggestion chips (Add buffer / Compare vendors / …) are a separate agent-suggestions feature — not part of this trace story. Dark surface uses the existing `bg-ink-strong` token (≈ the design's near-black `#121214`) to stay hex-free (FND.2) without adding a token.
+
+---
+
 ## AUTH.1 — Real authentication (Auth.js email/password + session + protected routes)
 
 **Dev login credentials** (seeded; dev-only — never a real secret): every role user shares the password **`axona-dev-2026!`**. Emails: `admin@axona-demo.test` (default), `ops@…`, `engineer@…`, `sales@…`, `finance@…`, `tech@…`, `viewer@…` (all `@axona-demo.test`). The plaintext lives ONLY here; the seed stores its bcrypt hash.
