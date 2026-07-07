@@ -1594,6 +1594,23 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 ---
 
+## UX.8 — Loading states (branded loader + shell skeleton)
+
+**Change** — replaced the plain grey-bar loading with two branded, design-1:1 loaders. `<FullScreenLoader />` (1:1 `Loading.dc.html`): axona wordmark + asymmetric square rising in (`ax-rise`), a sliding load bar (`ax-load`), and the "Waking the agents" mono label over the dotted grid — wired to the root `app/loading.tsx` (cold boot, pre-shell). `<ScreenSkeleton />` (1:1 `Loading Skeleton.dc.html`): a skeleton of the REAL shell (240px sidebar · 60px topbar · main stat-strip/hero/table · 360px right pane) with pulsing `.sk`/`.sk-soft` blocks (`sk-pulse 1.4s`) — wired to `app/(shell)/loading.tsx` so route transitions show the skeleton sized to the real layout (no layout shift when content streams in).
+
+**Automated**
+- `pnpm verify:ux-8` (11 checks) — both components exist + render (wordmark/slide-bar/label; sidebar+topbar+main+right-pane `.sk` skeleton); both honor `prefers-reduced-motion` + are `role="status" aria-busy`; shell `loading.tsx` uses `<ScreenSkeleton />` (old `bg-skeleton` grey bars gone); root `app/loading.tsx` uses `<FullScreenLoader />`; skeleton mirrors the shell dims (`w-[240px]`/`h-[60px]`/`w-[360px]`); no invented reds/emoji.
+- CI gate green (incl. `pnpm build`); verify:all green; accessibility-review 0 on the loading states.
+
+**Manual**
+- **Cold boot** (hard refresh on a slow load) → the branded FullScreenLoader (wordmark + sliding bar + "Waking the agents") shows before the shell mounts.
+- **Route transition** (navigate between modules) → the shell skeleton shows — sidebar/topbar/main/right-pane placeholders aligned to the real shell, so content swaps in with no jump.
+- **Reduced motion** (OS "reduce motion") → no animation; static dimmed state.
+
+**Notes** — Pure UI; no data/schema change; v2 tokens only (no literal hex — FND.2 clean). CSS keyframes inline per the design; the dotted grid uses the shared `.bg-dotted-grid` utility.
+
+---
+
 ## AUTH.1 — Real authentication (Auth.js email/password + session + protected routes)
 
 **Dev login credentials** (seeded; dev-only — never a real secret): every role user shares the password **`axona-dev-2026!`**. Emails: `admin@axona-demo.test` (default), `ops@…`, `engineer@…`, `sales@…`, `finance@…`, `tech@…`, `viewer@…` (all `@axona-demo.test`). The plaintext lives ONLY here; the seed stores its bcrypt hash.

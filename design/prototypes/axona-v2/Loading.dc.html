@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  @keyframes ax-dot{0%,100%{opacity:.18}50%{opacity:1}}
+  @keyframes ax-spin{to{transform:rotate(360deg)}}
+  @keyframes ax-rise{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
+  .ax-ring{animation:ax-spin 9s linear infinite}
+  .ax-dot{animation:ax-dot 1.4s ease-in-out infinite}
+  .ax-word{animation:ax-rise .6s ease .15s both}
+  .ax-sub{animation:ax-rise .6s ease .3s both}
+  .ax-bar{overflow:hidden}
+  .ax-bar>span{display:block;height:100%;width:38%;background:var(--ink-strong);border-radius:999px;animation:ax-load 1.5s cubic-bezier(.5,0,.2,1) infinite}
+  @keyframes ax-load{0%{transform:translateX(-110%)}100%{transform:translateX(360%)}}
+  @media (prefers-reduced-motion:reduce){.ax-ring,.ax-dot,.ax-bar>span{animation:none}.ax-dot{opacity:.7}}
+</style>
+</helmet>
+<div style="min-height:100vh;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;font-family:var(--font-sans);color:var(--ink);background-color:var(--paper);background-image:radial-gradient(#d9d8d2 1.1px,transparent 1.1px);background-size:18px 18px">
+
+  <!-- wordmark -->
+  <div class="ax-word" style="display:flex;align-items:center;gap:9px">
+    <span style="font-size:26px;font-weight:700;letter-spacing:-.045em;color:var(--ink-strong)">axona</span>
+    <span style="width:14px;height:14px;background:var(--ink-strong);border-radius:0 8px 0 8px"></span>
+  </div>
+
+  <!-- progress + label -->
+  <div class="ax-sub" style="display:flex;flex-direction:column;align-items:center;gap:14px">
+    <div class="ax-bar" style="width:150px;height:3px;border-radius:999px;background:var(--line-strong)"><span></span></div>
+    <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;color:var(--ink-faint);text-transform:uppercase">Waking the agents</span>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic { renderVals(){ return {}; } }
+</script>
+</body>
+</html>
