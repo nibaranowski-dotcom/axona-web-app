@@ -1,11 +1,12 @@
-import { Prisma } from "@prisma/client";
 import { prisma } from "../client";
 import { getEmbedder, toVectorLiteral, type Embedder } from "../embed/embedder";
 
 // Org-scoped full-text search over SearchDoc. All user input is parameterized
-// (websearch_to_tsquery over a bound value — no string-built tsquery); the
-// optional scope clause is composed with Prisma.sql / Prisma.empty (never a raw
-// string fragment). Globals (orgId NULL, i.e. Modules) are always included.
+// (websearch_to_tsquery over a bound value — no string-built tsquery). SRCH.6: the
+// query uses ONLY plain-value binds — NO `Prisma.sql` / `Prisma.empty` fragments
+// (those break under Next's duplicate @prisma/client bundle → 42601 `$N` errors);
+// scope is a nullable bound value (NULL ⇒ all). Globals (orgId NULL, i.e. Modules)
+// are always included.
 
 export interface SearchHit {
   type: string;
@@ -43,25 +44,28 @@ export async function search(
   const term = q.trim();
   if (!term) return { hits: [], byType: {} };
 
-  const scopeClause =
-    scope === "ALL"
-      ? Prisma.empty
-      : Prisma.sql`AND "type" = ${scope}::"SearchType"`;
-
-  // SRCH.6 — bind the tsquery term ONCE via a CTE. The prior form interpolated the
-  // `websearch_to_tsquery(...)` fragment twice (ts_rank + the `@@` filter), reusing
-  // one bound param across two positions — a fragile, non-idiomatic pattern that
-  // can surface as a `syntax error at or near "$N"` (42601) under bundling/driver
-  // edge cases. The CTE evaluates the tsquery once and both sites reference it, so
-  // each bind param appears exactly once, in a stable position.
+  // SRCH.6 — the 42601 `syntax error at or near "$N"` root cause: interpolating a
+  // `Prisma.sql` / `Prisma.empty` FRAGMENT (the old `scopeClause`) into `$queryRaw`.
+  // Next.js bundles a second copy of `@prisma/client`, so a fragment built here in
+  // @axona/db isn't recognised by the bundled `$queryRaw` — instead of expanding, it
+  // gets mis-bound as a stray placeholder, shifting `$N` and breaking the SQL. (tsx,
+  // with a single Prisma instance, never hit it — only the bundled server did.)
+  // Fix: NO fragments — every interpolation is a plain value. The scope is bound as a
+  // nullable value (NULL ⇒ ALL, no filter); the tsquery is evaluated once in a CTE
+  // and both the rank + `@@` sites reference it. Keep `SearchScope` typing at the
+  // boundary; cast the bound text to the enum in SQL.
+  const scopeParam: string | null = scope === "ALL" ? null : scope;
   const rows = await prisma.$queryRaw<SearchHit[]>`
-    WITH q AS (SELECT websearch_to_tsquery('english', ${term}) AS tsq)
+    WITH q AS (
+      SELECT websearch_to_tsquery('english', ${term}) AS tsq,
+             ${scopeParam}::text AS scope
+    )
     SELECT "type", "refId", "title", "subtitle", "url", "orgId",
            ts_rank("tsv", q.tsq) AS rank
     FROM "SearchDoc", q
     WHERE "tsv" @@ q.tsq
       AND ("orgId" = ${orgId} OR "orgId" IS NULL)
-      ${scopeClause}
+      AND (q.scope IS NULL OR "type" = q.scope::"SearchType")
     ORDER BY rank DESC
     LIMIT ${limit};
   `;
@@ -139,11 +143,12 @@ export async function countByType(
   const term = q.trim();
   if (!term) return { ALL: 0, ...perType };
 
-  const tsquery = Prisma.sql`websearch_to_tsquery('english', ${term})`;
+  // SRCH.6 — inline the tsquery (plain-value bind); no `Prisma.sql` fragment (which
+  // breaks under Next's duplicate @prisma/client — see search()).
   const rows = await prisma.$queryRaw<Array<{ type: string; n: bigint }>>`
     SELECT "type", count(*) AS n
     FROM "SearchDoc"
-    WHERE "tsv" @@ ${tsquery}
+    WHERE "tsv" @@ websearch_to_tsquery('english', ${term})
       AND ("orgId" = ${orgId} OR "orgId" IS NULL)
     GROUP BY "type";
   `;

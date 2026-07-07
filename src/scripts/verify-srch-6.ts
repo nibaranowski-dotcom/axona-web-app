@@ -3,13 +3,15 @@
  * checks are gated on DATABASE_URL. Run: pnpm verify:srch-6
  *
  * Symptom: search() surfaced `Raw query failed. Code: 42601: syntax error at or
- * near "$4"` — a parameter-placement fragility from interpolating the
- * `websearch_to_tsquery(...)` Prisma.sql fragment TWICE (ts_rank + the `@@` filter),
- * reusing one bound param across two positions. Fix: bind the tsquery term ONCE via
- * a CTE (`WITH q AS (SELECT websearch_to_tsquery(...) AS tsq)`) so both sites
- * reference the same evaluated value and every bind param appears once. Same
- * hardening for semanticSearch's vector literal. After the fix: search() returns
- * real FTS hits without throwing, the agent searchOperations tool returns
+ * near "$N"`. ROOT CAUSE (confirmed by reproducing in the bundled Next.js server —
+ * tsx never hit it): interpolating a `Prisma.sql` / `Prisma.empty` FRAGMENT (the
+ * scope clause; and the tsquery fragment in countByType) into `$queryRaw`. Next
+ * bundles a SECOND copy of `@prisma/client`, so a fragment built in @axona/db isn't
+ * recognised by the bundled `$queryRaw` — instead of expanding it mis-binds as a
+ * stray `$N` placeholder, shifting the params and breaking the SQL. Fix: NO
+ * fragments — every interpolation is a plain value (scope bound as a nullable value,
+ * NULL ⇒ all; the tsquery evaluated once in a CTE and referenced twice). After the
+ * fix: search() returns real FTS hits, the agent searchOperations tool returns
  * cross-module results, and /api/search returns FULL results (no degraded notice)
  * for a healthy query. SRCH.5's moduleSearch degradation is preserved as defense.
  */
@@ -41,34 +43,64 @@ async function run(): Promise<void> {
 
   const q = read("packages/db/src/search/query.ts");
 
-  // --- static: the double-bind is gone; each term/vector bound once via a CTE ---
+  // --- static: the ROOT CAUSE is gone — NO Prisma.sql/Prisma.empty FRAGMENTS ---
+  // (a fragment built in @axona/db isn't recognised by Next's duplicate-bundled
+  // `$queryRaw`, so it mis-binds as a stray `$N` → 42601). Every interpolation is
+  // now a plain value.
   await check(
-    "search() binds the tsquery ONCE via a CTE (no double fragment interpolation)",
+    "query.ts uses NO Prisma.sql / Prisma.empty / Prisma.raw fragments (+ import removed)",
+    () => {
+      // strip comments (they legitimately mention the removed fragments)
+      const code = q
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/\/\/[^\n]*/g, "");
+      return (
+        !/\bPrisma\.(sql|empty|raw|join)\b/.test(code) &&
+        !/import\s*\{[^}]*\bPrisma\b[^}]*\}\s*from\s*"@prisma\/client"/.test(
+          code,
+        )
+      );
+    },
+  );
+  await check(
+    "search() binds scope as a NULLABLE VALUE (NULL ⇒ all), not a fragment",
     () => {
       const body = q.slice(
         q.indexOf("export async function search"),
         q.indexOf("export async function moduleSearch"),
       );
       return (
-        /WITH q AS \(SELECT websearch_to_tsquery\('english', \$\{term\}\) AS tsq\)/.test(
-          body,
-        ) &&
+        /scope === "ALL" \? null : scope/.test(body) &&
+        /\$\{scopeParam\}::text AS scope/.test(body) &&
+        /q\.scope IS NULL OR "type" = q\.scope::"SearchType"/.test(body) &&
+        // tsquery evaluated once in the CTE, referenced by both sites
+        /websearch_to_tsquery\('english', \$\{term\}\) AS tsq/.test(body) &&
         /ts_rank\("tsv", q\.tsq\)/.test(body) &&
-        /"tsv" @@ q\.tsq/.test(body) &&
-        // the old reused-fragment pattern must be gone
-        !/const tsquery = Prisma\.sql/.test(body) &&
-        !/@@ \$\{tsquery\}/.test(body)
+        /"tsv" @@ q\.tsq/.test(body)
       );
     },
   );
-  await check("semanticSearch() binds the query vector ONCE via a CTE", () => {
-    const body = q.slice(q.indexOf("export async function semanticSearch"));
-    return (
-      /WITH v AS \(SELECT \$\{lit\}::vector AS qv\)/.test(body) &&
-      /embedding <=> v\.qv/.test(body) &&
-      !/\$\{lit\}::vector\)\)::float8[\s\S]*\$\{lit\}::vector/.test(body)
-    );
-  });
+  await check(
+    "countByType() inlines the tsquery (plain-value bind, no fragment)",
+    () => {
+      const body = q.slice(q.indexOf("export async function countByType"));
+      return (
+        /"tsv" @@ websearch_to_tsquery\('english', \$\{term\}\)/.test(body) &&
+        !/const tsquery = /.test(body)
+      );
+    },
+  );
+  await check(
+    "semanticSearch() binds the query vector ONCE via a CTE (no double interpolation)",
+    () => {
+      const body = q.slice(q.indexOf("export async function semanticSearch"));
+      return (
+        /WITH v AS \(SELECT \$\{lit\}::vector AS qv\)/.test(body) &&
+        /embedding <=> v\.qv/.test(body) &&
+        !/\$\{lit\}::vector\)\)::float8[\s\S]*\$\{lit\}::vector/.test(body)
+      );
+    },
+  );
 
   if (!process.env.DATABASE_URL) {
     console.log("  SKIP engine/db checks — DATABASE_URL not set");
