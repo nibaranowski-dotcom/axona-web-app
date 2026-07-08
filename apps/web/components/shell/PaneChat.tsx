@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ChatThread } from "@/components/agents/ChatThread";
+import { ChatSuggestions } from "@/components/agents/ChatSuggestions";
 import { useAgentChat } from "@/components/agents/use-agent-chat";
 import { useCopilotSeed } from "@/lib/copilot-seed";
 import { TracePane } from "./TracePane";
@@ -14,10 +15,12 @@ export function PaneChat({
   agentId,
   intro,
   placeholder,
+  suggestions = [],
 }: {
   agentId?: string;
   intro: string;
   placeholder: string;
+  suggestions?: string[];
 }) {
   const [input, setInput] = useState("");
   const { messages, traceLines, proposals, sending, error, send } =
@@ -35,10 +38,18 @@ export function PaneChat({
   return (
     <>
       <div className="flex min-h-0 flex-[1.2] flex-col gap-3 overflow-y-auto px-[18px] py-[18px]">
-        {messages.length === 0 && (
-          <p className="text-[13px] leading-[1.5] text-ink-muted">{intro}</p>
+        {messages.length === 0 ? (
+          <div className="flex flex-col gap-3">
+            <p className="text-[13px] leading-[1.5] text-ink-muted">{intro}</p>
+            <ChatSuggestions
+              suggestions={suggestions}
+              onPick={(s) => void send(s)}
+              disabled={sending}
+            />
+          </div>
+        ) : (
+          <ChatThread messages={messages} />
         )}
-        <ChatThread messages={messages} />
         {proposals.length > 0 && (
           <p
             role="status"

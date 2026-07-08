@@ -7,6 +7,7 @@ import { AgentGlyph } from "@/components/agents/AgentGlyph";
 import { useMounted, useUi } from "@/lib/ui-store";
 import { AgentRail } from "./AgentRail";
 import { PaneChat } from "./PaneChat";
+import { suggestionsFor } from "@/lib/agent-suggestions";
 
 // The shared right agent pane (Axona v2) — resizable (drag the left handle) and
 // collapsible to a rail; width + collapsed persist via the UI store (FND.13).
@@ -192,6 +193,7 @@ export function AgentPane({
         agentId={chatId}
         intro={intro}
         placeholder={`Message ${active.name}…`}
+        suggestions={suggestionsFor(moduleMode ? moduleKey : "core")}
       />
     </aside>
   );

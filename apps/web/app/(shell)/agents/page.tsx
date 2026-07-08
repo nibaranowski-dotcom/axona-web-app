@@ -36,6 +36,7 @@ export default async function AgentsPage() {
         role: a.role,
         description: a.description,
         state: a.state,
+        moduleKey: a.moduleKey,
       })),
     }))
     .filter((g) => g.agents.length > 0);

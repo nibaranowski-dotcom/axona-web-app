@@ -4,8 +4,10 @@ import { useState } from "react";
 import { AgentGlyph } from "@/components/ui";
 import { TracePane } from "@/components/shell/TracePane";
 import { ChatThread } from "./ChatThread";
+import { ChatSuggestions } from "./ChatSuggestions";
 import { type AgentSummary, stateTone } from "./AgentCard";
 import { useAgentChat } from "./use-agent-chat";
+import { suggestionsFor } from "@/lib/agent-suggestions";
 
 // Live chat with one agent (ART.4 / AGT.1). Trace lines stream into the console,
 // the answer (with citations) into the thread, gated actions as a distinct
@@ -60,7 +62,20 @@ export function AgentChat({ agent }: { agent: AgentSummary }) {
           </ul>
         )}
 
-        <ChatThread messages={messages} />
+        {messages.length === 0 ? (
+          <div className="flex flex-col gap-3">
+            <p className="text-[13px] leading-[1.5] text-ink-muted">
+              {agent.description}
+            </p>
+            <ChatSuggestions
+              suggestions={suggestionsFor(agent.moduleKey)}
+              onPick={(s) => void send(s)}
+              disabled={sending}
+            />
+          </div>
+        ) : (
+          <ChatThread messages={messages} />
+        )}
 
         {error && (
           <p

@@ -12,6 +12,8 @@ export interface AgentSummary {
   role: string;
   description: string;
   state: AgentState;
+  /** Owning module — keys the empty-thread suggestion chips (AGT.1). */
+  moduleKey?: string;
 }
 
 // Status-dot tone from AgentState. No invented criticals colour:
