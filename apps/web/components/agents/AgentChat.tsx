@@ -7,6 +7,7 @@ import { ChatThread } from "./ChatThread";
 import { ChatSuggestions } from "./ChatSuggestions";
 import { type AgentSummary, stateTone } from "./AgentCard";
 import { useAgentChat } from "./use-agent-chat";
+import { useStickToBottom } from "./use-stick-to-bottom";
 import { suggestionsFor } from "@/lib/agent-suggestions";
 
 // Live chat with one agent (ART.4 / AGT.1). Trace lines stream into the console,
@@ -17,9 +18,10 @@ export function AgentChat({ agent }: { agent: AgentSummary }) {
   const [input, setInput] = useState("");
   const { messages, traceLines, proposals, sending, error, send } =
     useAgentChat(agent.id);
+  const scrollRef = useStickToBottom<HTMLDivElement>(messages.length);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <header className="flex items-center gap-3 border-b border-line px-6 py-4">
         <AgentGlyph tone="ink" status={stateTone(agent.state)} size={28} />
         <div className="min-w-0">
@@ -33,10 +35,11 @@ export function AgentChat({ agent }: { agent: AgentSummary }) {
       </header>
 
       <div
+        ref={scrollRef}
         role="region"
         aria-label="Conversation"
         tabIndex={0}
-        className="flex min-h-0 flex-[1.2] flex-col gap-4 overflow-y-auto px-6 py-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+        className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 py-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
       >
         {proposals.length > 0 && (
           <ul className="flex flex-col gap-2" aria-label="Proposed actions">
@@ -93,7 +96,7 @@ export function AgentChat({ agent }: { agent: AgentSummary }) {
       )}
 
       <form
-        className="flex items-center gap-2 border-t border-line px-6 py-4"
+        className="flex flex-none items-center gap-2 border-t border-line px-6 py-4"
         onSubmit={(e) => {
           e.preventDefault();
           void send(input);

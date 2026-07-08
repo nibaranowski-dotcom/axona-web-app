@@ -48,10 +48,10 @@ export function AgentsView({ groups }: { groups: AgentGroup[] }) {
     : groups;
 
   return (
-    <div className="grid h-full grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+    <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
       <section
         aria-label="Agents roster"
-        className="min-w-0 overflow-y-auto border-r border-line px-6 py-6"
+        className="min-h-0 min-w-0 overflow-y-auto border-r border-line px-6 py-6"
       >
         <header className="mb-5 flex items-center justify-between gap-3">
           <div>
@@ -111,7 +111,10 @@ export function AgentsView({ groups }: { groups: AgentGroup[] }) {
         )}
       </section>
 
-      <section aria-label="Agent chat" className="min-w-0 overflow-hidden">
+      <section
+        aria-label="Agent chat"
+        className="min-h-0 min-w-0 overflow-hidden"
+      >
         {selected ? (
           <AgentChat key={selected.id} agent={selected} />
         ) : (

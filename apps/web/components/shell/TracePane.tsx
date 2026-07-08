@@ -1,20 +1,23 @@
 import { ChevronDown } from "lucide-react";
 import type { TraceLine } from "./TraceConsole";
 
-// UX.9 — the collapsible agent-chat trace sub-pane, 1:1 to the v9 Procurement.dc.html
-// `.tracepane`. A native <details> pinned at the bottom of the agent chat (right-pane
-// + /agents): a summary bar (accent status dot + TRACE · orchestrator name · chevron)
-// and, when open, the scrolling trace lines. [open] → flex:1/min-h 120px; :not([open])
-// → flex:none (summary only). The chevron rotates -90°↔0°. Only the container + summary
-// change here — the trace LINE content still renders via the existing TraceLine shape
-// (ts + text). Native <details>/<summary> is keyboard-accessible by default; the chevron
-// transition is disabled under prefers-reduced-motion. Dark surface via bg-ink-strong;
-// v2 tokens only — no literal hex, no emoji.
+// UX.9 look / UX.10 containment — the collapsible agent-chat trace sub-pane, 1:1 to
+// the v9 Procurement.dc.html `.tracepane`. A native <details> pinned at the bottom of
+// the agent chat (right-pane + /agents): a summary bar (accent status dot + TRACE ·
+// orchestrator name · chevron) and, when open, the scrolling trace lines.
+//
+// UX.10 scroll containment: the pane is flex:none (it never grows to push the composer
+// out); its CONTENT region (the <ol>) is the bounded scroll box — min-h-0 + max-height
+// (~40vh) + overflow-y-auto — so long result lines scroll WITHIN the pane instead of
+// clipping or overflowing the chat column. Closed → just the summary bar. The look is
+// unchanged (dark surface via bg-ink-strong; only the height behaviour is bounded).
+//
+// The chevron rotates -90°↔0°; native <details>/<summary> is keyboard-accessible by
+// default; the chevron transition is disabled under prefers-reduced-motion. v2 tokens
+// only — no literal hex, no emoji.
 
 const TRACEPANE_CSS = `
-.tracepane{display:flex;flex-direction:column;min-height:0}
-.tracepane:not([open]){flex:none}
-.tracepane[open]{flex:1;min-height:120px}
+.tracepane{display:flex;flex-direction:column;flex:none;min-height:0}
 .tracepane>summary{list-style:none;cursor:pointer}
 .tracepane>summary::-webkit-details-marker{display:none}
 .tracepane>summary::marker{content:""}
@@ -57,7 +60,7 @@ export function TracePane({
           />
         </span>
       </summary>
-      <ol className="min-h-0 flex-1 overflow-y-auto px-4 pb-3.5 font-mono text-[10.5px] leading-[1.7] text-on-dark-mut">
+      <ol className="max-h-[40vh] min-h-0 overflow-y-auto px-4 pb-3.5 font-mono text-[10.5px] leading-[1.7] text-on-dark-mut">
         {lines.map((l, i) => (
           <li key={i} className="flex gap-2.5">
             {l.ts && (

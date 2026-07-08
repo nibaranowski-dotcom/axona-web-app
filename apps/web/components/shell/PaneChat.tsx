@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ChatThread } from "@/components/agents/ChatThread";
 import { ChatSuggestions } from "@/components/agents/ChatSuggestions";
 import { useAgentChat } from "@/components/agents/use-agent-chat";
+import { useStickToBottom } from "@/components/agents/use-stick-to-bottom";
 import { useCopilotSeed } from "@/lib/copilot-seed";
 import { TracePane } from "./TracePane";
 
@@ -25,6 +26,7 @@ export function PaneChat({
   const [input, setInput] = useState("");
   const { messages, traceLines, proposals, sending, error, send } =
     useAgentChat(agentId);
+  const scrollRef = useStickToBottom<HTMLDivElement>(messages.length);
 
   const seed = useCopilotSeed((s) => s.seed);
   const setSeed = useCopilotSeed((s) => s.setSeed);
@@ -37,7 +39,10 @@ export function PaneChat({
 
   return (
     <>
-      <div className="flex min-h-0 flex-[1.2] flex-col gap-3 overflow-y-auto px-[18px] py-[18px]">
+      <div
+        ref={scrollRef}
+        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-[18px] py-[18px]"
+      >
         {messages.length === 0 ? (
           <div className="flex flex-col gap-3">
             <p className="text-[13px] leading-[1.5] text-ink-muted">{intro}</p>
@@ -73,7 +78,7 @@ export function PaneChat({
       {traceLines.length > 0 && <TracePane lines={traceLines} />}
 
       <form
-        className="border-t border-line px-[18px] py-3"
+        className="flex-none border-t border-line px-[18px] py-3"
         onSubmit={(e) => {
           e.preventDefault();
           void send(input);

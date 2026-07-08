@@ -66,11 +66,12 @@ function run(): void {
 
   // 2. open/close behavior
   check(
-    "[open] expands (flex:1/min-height:120px); :not([open]) collapses to summary",
+    "collapses/expands via native <details> [open] (summary always shown; lines only when open)",
     () => {
       return (
-        /\.tracepane\[open\]\{flex:1;min-height:120px\}/.test(pane) &&
-        /\.tracepane:not\(\[open\]\)\{flex:none\}/.test(pane)
+        /<details/.test(pane) &&
+        /open=\{defaultOpen\}/.test(pane) &&
+        /\.tracepane\[open\] \.tracechev\{transform:rotate\(0deg\)\}/.test(pane)
       );
     },
   );
