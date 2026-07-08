@@ -12,14 +12,23 @@ function autonomySeries(): {
   takeoversPer1k: number;
   policyVersion: string;
 }[] {
-  // autonomy regresses after the p-13 canary on Site-3
+  // 14-day window: eight stable days on p-12, then the p-13 canary regression
+  // on Site-3 (rate drops, takeovers climb) → INC-201.
   const points = [
-    { rate: 98.9, to: 1.1, pol: "p-12" },
-    { rate: 98.7, to: 1.3, pol: "p-12" },
     { rate: 98.8, to: 1.2, pol: "p-12" },
+    { rate: 99.0, to: 1.0, pol: "p-12" },
+    { rate: 98.7, to: 1.3, pol: "p-12" },
+    { rate: 98.9, to: 1.1, pol: "p-12" },
+    { rate: 98.6, to: 1.4, pol: "p-12" },
+    { rate: 98.8, to: 1.2, pol: "p-12" },
+    { rate: 98.7, to: 1.3, pol: "p-12" },
+    { rate: 98.9, to: 1.1, pol: "p-12" },
     { rate: 97.4, to: 2.6, pol: CODES.policy },
+    { rate: 97.0, to: 2.9, pol: CODES.policy },
     { rate: 96.9, to: 3.1, pol: CODES.policy },
+    { rate: 96.7, to: 3.3, pol: CODES.policy },
     { rate: 96.5, to: 3.5, pol: CODES.policy },
+    { rate: 96.3, to: 3.6, pol: CODES.policy },
   ];
   return points.map((p, i) => ({
     site: "Site-3",
@@ -225,6 +234,66 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
         status: "ACTIVE",
         ...DET,
       },
+      {
+        serial: "SN-2072",
+        model: CODES.product,
+        customer: "BMW",
+        site: "Site-2",
+        uptimePct: 98.9,
+        firmware: "v4.2.1",
+        status: "ACTIVE",
+        ...ROT,
+      },
+      {
+        serial: "SN-2044",
+        model: "HX-1",
+        customer: "Kawasaki",
+        site: "Site-1",
+        uptimePct: 99.3,
+        firmware: "v4.2.1",
+        status: "ACTIVE",
+        ...DET,
+      },
+      {
+        serial: "SN-2039",
+        model: CODES.product,
+        customer: "BMW",
+        site: "Site-3",
+        uptimePct: 98.1,
+        firmware: "v4.2.0",
+        status: "ACTIVE",
+        ...OSA,
+      },
+      {
+        serial: "SN-2027",
+        model: "HX-1",
+        customer: "Maersk",
+        site: "Site-2",
+        uptimePct: 97.6,
+        firmware: "v4.1.0",
+        status: "WATCH",
+        ...ROT,
+      },
+      {
+        serial: "SN-2015",
+        model: CODES.product,
+        customer: "Kawasaki",
+        site: "Site-1",
+        uptimePct: 99.5,
+        firmware: "v4.2.1",
+        status: "ACTIVE",
+        ...DET,
+      },
+      {
+        serial: "SN-2003",
+        model: "HX-1",
+        customer: "Maersk",
+        site: "Site-3",
+        uptimePct: 96.8,
+        firmware: "v4.0.2",
+        status: "WATCH",
+        ...OSA,
+      },
     ],
   });
 
@@ -250,6 +319,12 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       ...series(idOf("SN-2101")!, "battery_pct", [77, 78, 77, 79, 78]),
       ...series(idOf("SN-2050")!, "battery_pct", [95, 96, 95, 96, 95]),
       ...series(idOf("SN-2133")!, "battery_pct", [4, 3, 2, 1, 0]),
+      ...series(idOf("SN-2072")!, "battery_pct", [82, 83, 82, 84, 83]),
+      ...series(idOf("SN-2044")!, "battery_pct", [70, 71, 70, 72, 71]),
+      ...series(idOf("SN-2039")!, "battery_pct", [88, 89, 88, 90, 89]),
+      ...series(idOf("SN-2027")!, "battery_pct", [55, 52, 50, 48, 46]),
+      ...series(idOf("SN-2015")!, "battery_pct", [93, 94, 93, 95, 94]),
+      ...series(idOf("SN-2003")!, "battery_pct", [60, 58, 57, 55, 54]),
     ],
   });
 
@@ -268,7 +343,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
           {
             ts: d("-1h").toISOString(),
             kind: "ingest",
-            text: "telemetry · 9 units · signals/min",
+            text: "telemetry · 15 units · signals/min",
           },
           {
             ts: d("-1h").toISOString(),
@@ -448,6 +523,24 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       changeType: "HW",
       affected: "in production",
       stage: "APPROVED",
+    },
+  });
+  await db.eCO.create({
+    data: {
+      code: "ECO-310",
+      title: "Battery pack thermal shim (cell-4 hotspot)",
+      changeType: "HW",
+      affected: `HX-2 · ${CODES.robot} thermal watch`,
+      stage: "APPROVED",
+    },
+  });
+  await db.eCO.create({
+    data: {
+      code: "ECO-305",
+      title: "Autonomy stack update — obstacle re-plan latency",
+      changeType: "SW",
+      affected: "fleet-wide · Site-3 canary",
+      stage: "RELEASED",
     },
   });
 

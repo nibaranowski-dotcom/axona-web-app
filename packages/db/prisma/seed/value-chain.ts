@@ -17,8 +17,12 @@ function torqueSeries(): {
   const ucl = 4.2;
   const lcl = 3.4;
   const mean = 3.8;
-  // last point breaches UCL (stiff actuator → NCR-118)
-  const values = [3.7, 3.9, 3.8, 4.0, 4.1, 4.0, 4.3, 4.5];
+  // 24-point run in statistical control until the SERVO-204 drift; the last two
+  // points breach UCL (stiff actuator → NCR-118) — exactly 2 out of spec.
+  const values = [
+    3.6, 3.8, 3.7, 3.9, 3.8, 4.0, 3.7, 3.8, 3.9, 3.8, 4.0, 3.9, 3.7, 3.8, 4.0,
+    3.9, 4.1, 3.9, 4.0, 4.1, 4.0, 4.1, 4.3, 4.5,
+  ];
   return values.map((value, i) => ({
     characteristic: "drive_torque_Nm",
     serial: CODES.servoOld,
@@ -48,12 +52,28 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       onTimePct: 98.6,
     },
   });
-  await db.supplier.create({
+  const cellsPower = await db.supplier.create({
     data: {
       name: "Cells & Power KK",
       tier: 1,
       riskScore: 0.41,
       onTimePct: 91.3,
+    },
+  });
+  const harmonic = await db.supplier.create({
+    data: {
+      name: "Harmonic Drive Systems",
+      tier: 1,
+      riskScore: 0.27,
+      onTimePct: 96.4,
+    },
+  });
+  const vision = await db.supplier.create({
+    data: {
+      name: "Vision Sensors Inc",
+      tier: 2,
+      riskScore: 0.22,
+      onTimePct: 97.8,
     },
   });
 
@@ -76,13 +96,31 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       leadDays: 42,
     },
   });
-  await db.part.create({
+  const battHx2 = await db.part.create({
     data: {
       sku: "BATT-HX2",
       name: "HX-2 battery pack",
       onHand: 14,
       reorderPoint: 10,
       leadDays: 21,
+    },
+  });
+  const reducer = await db.part.create({
+    data: {
+      sku: "REDUCER-70",
+      name: "Harmonic reducer (size 70)",
+      onHand: 28,
+      reorderPoint: 12,
+      leadDays: 28,
+    },
+  });
+  const lidar = await db.part.create({
+    data: {
+      sku: "LIDAR-360",
+      name: "360° lidar module",
+      onHand: 9,
+      reorderPoint: 8,
+      leadDays: 30,
     },
   });
 
@@ -123,6 +161,85 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       draftedByAgentId: reorderAgent?.id ?? null,
       eta: d("+42d"),
     },
+  });
+  // A fuller queue across vendors/parts/values/statuses so the PO board reads as
+  // populated (mock richness). Agent-drafted rows carry real quantities + values.
+  await db.purchaseOrder.createMany({
+    data: [
+      {
+        code: "PO-9008",
+        supplierId: harmonic.id,
+        partId: reducer.id,
+        qty: 40,
+        value: 18_400,
+        status: "APPROVED",
+        eta: d("+21d"),
+      },
+      {
+        code: "PO-9009",
+        supplierId: vision.id,
+        partId: lidar.id,
+        qty: 12,
+        value: 54_000,
+        status: "SENT",
+        eta: d("+14d"),
+      },
+      {
+        code: "PO-9010",
+        supplierId: cellsPower.id,
+        partId: battHx2.id,
+        qty: 30,
+        value: 96_000,
+        status: "RECEIVED",
+        eta: d("-3d"),
+      },
+      {
+        code: "PO-9011",
+        supplierId: bearings.id,
+        partId: servo204.id,
+        qty: 60,
+        value: 50_400,
+        status: "SENT",
+        eta: d("+8d"),
+      },
+      {
+        code: "PO-9012",
+        supplierId: harmonic.id,
+        partId: reducer.id,
+        qty: 20,
+        value: 9_200,
+        status: "DRAFTED",
+        draftedByAgentId: reorderAgent?.id ?? null,
+      },
+      {
+        code: "PO-9013",
+        supplierId: vision.id,
+        partId: lidar.id,
+        qty: 8,
+        value: 36_000,
+        status: "DRAFTED",
+        draftedByAgentId: reorderAgent?.id ?? null,
+      },
+      {
+        code: "PO-9014",
+        supplierId: cellsPower.id,
+        partId: battHx2.id,
+        qty: 16,
+        value: 51_200,
+        status: "AWAITING_APPROVAL",
+        draftedByAgentId: reorderAgent?.id ?? null,
+        eta: d("+18d"),
+      },
+      {
+        code: "PO-9015",
+        supplierId: actuatorCo.id,
+        partId: servo205.id,
+        qty: 12,
+        value: 45_600,
+        status: "DRAFTED",
+        draftedByAgentId: reorderAgent?.id ?? null,
+      },
+    ],
   });
 
   // Manufacturing — the MES line across 6 stations (MFG.2). Units flow Frame
@@ -286,14 +403,101 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
 
   // Quality: torque drifting over UCL on SERVO-204 → NCR-118 → lot 88421
   await db.spcSample.createMany({ data: torqueSeries() });
-  await db.nCR.create({
-    data: {
-      code: CODES.ncr,
-      defect: "Drive torque over UCL (stiff actuator)",
-      linkedTo: `${CODES.lot}; ${CODES.servoOld}`,
-      severity: "CRITICAL",
-      status: "OPEN",
-    },
+  // NCRs across four defect families — the Defect Pareto groups by `defect`
+  // (closed ones still count toward the Pareto; the NCR table shows only the
+  // non-CLOSED). NCR-118 (CODES.ncr) stays the CRITICAL open torque breach that
+  // the §3.7 cross-module chain hangs off. Torque is the dominant (lime) family.
+  await db.nCR.createMany({
+    data: [
+      // Drive torque over UCL — the dominant family (5)
+      {
+        code: CODES.ncr, // NCR-118
+        defect: "Drive torque over UCL (stiff actuator)",
+        linkedTo: `${CODES.lot}; ${CODES.servoOld}`,
+        severity: "CRITICAL",
+        status: "OPEN",
+      },
+      {
+        code: "NCR-114",
+        defect: "Drive torque over UCL (stiff actuator)",
+        linkedTo: "HX2-0208; SERVO-204",
+        severity: "MAJOR",
+        status: "CONTAINED",
+      },
+      {
+        code: "NCR-106",
+        defect: "Drive torque over UCL (stiff actuator)",
+        linkedTo: "HX2-0181; SERVO-204",
+        severity: "MINOR",
+        status: "CLOSED",
+      },
+      {
+        code: "NCR-097",
+        defect: "Drive torque over UCL (stiff actuator)",
+        linkedTo: "HX2-0164; SERVO-204",
+        severity: "MINOR",
+        status: "CLOSED",
+      },
+      {
+        code: "NCR-090",
+        defect: "Drive torque over UCL (stiff actuator)",
+        linkedTo: "HX2-0150; SERVO-204",
+        severity: "MINOR",
+        status: "CLOSED",
+      },
+      // Joint calibration drift (3)
+      {
+        code: "NCR-116",
+        defect: "Joint calibration drift",
+        linkedTo: "HX2-0205; joint-3",
+        severity: "MAJOR",
+        status: "OPEN",
+      },
+      {
+        code: "NCR-109",
+        defect: "Joint calibration drift",
+        linkedTo: "HX2-0188; joint-5",
+        severity: "MINOR",
+        status: "CLOSED",
+      },
+      {
+        code: "NCR-101",
+        defect: "Joint calibration drift",
+        linkedTo: "HX2-0170; joint-2",
+        severity: "MINOR",
+        status: "CLOSED",
+      },
+      // Skin panel fit — cosmetic (2)
+      {
+        code: "NCR-112",
+        defect: "Skin panel fit (cosmetic)",
+        linkedTo: "HX2-0199; front-shell",
+        severity: "MINOR",
+        status: "OPEN",
+      },
+      {
+        code: "NCR-099",
+        defect: "Skin panel fit (cosmetic)",
+        linkedTo: "HX2-0166; front-shell",
+        severity: "MINOR",
+        status: "CLOSED",
+      },
+      // Wiring harness continuity (2)
+      {
+        code: "NCR-110",
+        defect: "Wiring harness continuity",
+        linkedTo: "HX2-0190; HARN-220",
+        severity: "MAJOR",
+        status: "REVIEW",
+      },
+      {
+        code: "NCR-095",
+        defect: "Wiring harness continuity",
+        linkedTo: "HX2-0158; HARN-220",
+        severity: "MINOR",
+        status: "CLOSED",
+      },
+    ],
   });
 
   // Certs — audit-ready compliance

@@ -83,7 +83,12 @@ const PROJECTS: Seed[] = [
     name: "SERVO-205 re-source",
     description: "Re-sourcing the torque-comp drive after ECO-318.",
     status: "ACTIVE",
-    files: [{ name: "RFQ — SERVO-205", ext: "pdf", type: "Quote" }],
+    files: [
+      { name: "RFQ — SERVO-205", ext: "pdf", type: "Quote" },
+      { name: "Supplier quotes — 3 vendors", ext: "xlsx", type: "Data" },
+      { name: "Lead-time analysis", ext: "pdf", type: "Report" },
+      { name: "Award recommendation", ext: "docx", type: "Memo" },
+    ],
   },
   {
     moduleKey: "fleet",
@@ -97,6 +102,9 @@ const PROJECTS: Seed[] = [
         type: "Data",
         linkedTo: `Fleet · ${CODES.robot}`,
       },
+      { name: "Predictive model output", ext: "pdf", type: "Report" },
+      { name: "Cell-4 ΔV trend", ext: "csv", type: "Data" },
+      { name: "Thermal guard runbook", ext: "md", type: "Memo" },
     ],
   },
   {
@@ -104,7 +112,12 @@ const PROJECTS: Seed[] = [
     name: "WO-5521 — battery swap",
     description: "SN-2196 battery swap dispatch under SLA.",
     status: "ACTIVE",
-    files: [{ name: "Work order WO-5521", ext: "pdf", type: "Report" }],
+    files: [
+      { name: "Work order WO-5521", ext: "pdf", type: "Report" },
+      { name: "Osei dispatch sheet", ext: "pdf", type: "Report" },
+      { name: "Battery swap procedure", ext: "pdf", type: "Spec" },
+      { name: "Site-3 access permit", ext: "docx", type: "Memo" },
+    ],
   },
   {
     moduleKey: "autonomy",
@@ -118,6 +131,9 @@ const PROJECTS: Seed[] = [
         type: "Report",
         linkedTo: "Autonomy · INC-201",
       },
+      { name: "INC-201 incident report", ext: "pdf", type: "Report" },
+      { name: "Takeover log Site-3", ext: "csv", type: "Data" },
+      { name: "Rollback plan → p-12", ext: "docx", type: "Plan" },
     ],
   },
   {
@@ -125,7 +141,12 @@ const PROJECTS: Seed[] = [
     name: "HX-2 margin review",
     description: "−2.1pt margin from ECO-318; rev-rec split.",
     status: "ACTIVE",
-    files: [{ name: "Unit economics HX-2", ext: "xlsx", type: "Data" }],
+    files: [
+      { name: "Unit economics HX-2", ext: "xlsx", type: "Data" },
+      { name: "Rev-rec split memo", ext: "docx", type: "Memo" },
+      { name: "ECO-318 cost impact", ext: "xlsx", type: "Data" },
+      { name: "Q3 margin bridge", ext: "pdf", type: "Report" },
+    ],
   },
   {
     moduleKey: "legal",
@@ -139,6 +160,9 @@ const PROJECTS: Seed[] = [
         type: "Memo",
         linkedTo: `Legal · ${CODES.eco}`,
       },
+      { name: "INC-201 liability review", ext: "docx", type: "Memo" },
+      { name: "Prior-art search", ext: "pdf", type: "Report" },
+      { name: "Export-control note", ext: "docx", type: "Memo" },
     ],
   },
   {
@@ -153,6 +177,9 @@ const PROJECTS: Seed[] = [
         type: "Quote",
         linkedTo: "Sales · BMW",
       },
+      { name: "MSA redlines", ext: "docx", type: "Memo" },
+      { name: "Deliverability assessment", ext: "pdf", type: "Report" },
+      { name: "Pricing model HX-2 ×24", ext: "xlsx", type: "Data" },
     ],
   },
   {
@@ -160,28 +187,48 @@ const PROJECTS: Seed[] = [
     name: "HX-2 line ramp",
     description: "Build genealogy + OEE for the HX-2 line.",
     status: "ACTIVE",
-    files: [{ name: "Build genealogy HX2-0418", ext: "csv", type: "Data" }],
+    files: [
+      { name: "Build genealogy HX2-0418", ext: "csv", type: "Data" },
+      { name: "OEE dashboard export", ext: "csv", type: "Data" },
+      { name: "Line balance plan", ext: "pdf", type: "Plan" },
+      { name: "Station takt study", ext: "xlsx", type: "Data" },
+    ],
   },
   {
     moduleKey: "people",
     name: "Field cert matrix",
     description: "Cert expiry gating dispatch (Osei HV/battery −12d).",
     status: "ACTIVE",
-    files: [{ name: "Cert matrix", ext: "xlsx", type: "Data" }],
+    files: [
+      { name: "Cert matrix", ext: "xlsx", type: "Data" },
+      { name: "Hiring plan vs fleet growth", ext: "xlsx", type: "Data" },
+      { name: "Osei recert schedule", ext: "pdf", type: "Plan" },
+      { name: "Training records", ext: "pdf", type: "Report" },
+    ],
   },
   {
     moduleKey: "security",
     name: "CVE-2026-3187 triage",
     description: "CVE affecting 42 deployed units; signed-firmware patch.",
     status: "ACTIVE",
-    files: [{ name: "CVE triage notes", ext: "md", type: "Memo" }],
+    files: [
+      { name: "CVE triage notes", ext: "md", type: "Memo" },
+      { name: "Patch rollout plan", ext: "pdf", type: "Plan" },
+      { name: "Affected-units list", ext: "csv", type: "Data" },
+      { name: "Signed-firmware attestation", ext: "pdf", type: "Report" },
+    ],
   },
   {
     moduleKey: "marketing",
     name: "Q3 channel mix",
     description: "Events dominant; reallocate from underperforming paid.",
     status: "DONE",
-    files: [{ name: "Attribution report", ext: "pdf", type: "Report" }],
+    files: [
+      { name: "Attribution report", ext: "pdf", type: "Report" },
+      { name: "Channel spend model", ext: "xlsx", type: "Data" },
+      { name: "Campaign ROI export", ext: "csv", type: "Data" },
+      { name: "Q4 plan draft", ext: "docx", type: "Plan" },
+    ],
   },
 ];
 
