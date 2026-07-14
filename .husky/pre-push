@@ -1,7 +1,32 @@
 #!/usr/bin/env sh
-# Local guard: block direct pushes to main, then run the full gate.
-# Remote branch protection is configured separately on GitHub.
+# (1) the push MUST target the Axona repo, (2) block direct pushes to main, then run the gate.
 # Override for maintained foundation pushes: AXONA_ALLOW_MAIN_PUSH=1 git push
+
+# --- (1) HARD REMOTE GUARD — non-overridable, by design. ---
+remote_url="$2"
+[ -z "$remote_url" ] && remote_url="$(git remote get-url --push origin 2>/dev/null)"
+
+case "$remote_url" in
+  *pemo-io*|*pemo_io*|*pemo.io*)
+    echo "pre-push REFUSED: the target remote looks like a pemo-io repo."
+    echo "  remote: $remote_url"
+    echo "  Axona code must NEVER be pushed to pemo-io. Aborting."
+    exit 1
+    ;;
+esac
+
+case "$remote_url" in
+  *nibaranowski-dotcom/axona-web-app*) : ;;  # the one allowed target
+  *)
+    echo "pre-push REFUSED: unrecognized push target."
+    echo "  remote:   $remote_url"
+    echo "  expected: github.com/nibaranowski-dotcom/axona-web-app"
+    echo "  This guard is not overridable — change the remote deliberately if intended."
+    exit 1
+    ;;
+esac
+
+# --- (2) branch guard ---
 branch="$(git symbolic-ref --short HEAD 2>/dev/null)"
 if [ "$branch" = "main" ] && [ "${AXONA_ALLOW_MAIN_PUSH:-0}" != "1" ]; then
   echo "pre-push blocked: direct push to main."

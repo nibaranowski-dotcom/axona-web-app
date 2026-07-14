@@ -120,6 +120,22 @@ Non-negotiable engineering invariants (apply to every story, regardless of P-lev
   must anonymize them → "Tier-1 auto OEM," etc. Never imply a real customer/person.
 - Never ship invented traction/metrics externally. AI proposes; a human approves money/safety/contract.
 
+## Git — the ONE remote (hard rule, non-negotiable)
+**Axona code may ONLY ever be pushed to `nibaranowski-dotcom/axona-web-app`. NEVER to a `pemo-io` repo**
+(Nicolas's other company — a different org entirely; cross-pushing would be a serious leak).
+- `origin` is pinned to `https://nibaranowski-dotcom@github.com/nibaranowski-dotcom/axona-web-app.git`.
+  **Never add a second remote, never re-point `origin`, never `push <url>` to an ad-hoc URL.**
+- The `.husky/pre-push` hook enforces this: it **refuses any push whose target URL isn't
+  `nibaranowski-dotcom/axona-web-app`**, and refuses anything matching `pemo-io` outright. This check has
+  **no env override** (unlike `AXONA_ALLOW_MAIN_PUSH`, which only relaxes the *branch* guard). Do not weaken,
+  bypass, or `--no-verify` around it.
+- Commit identity for this repo is `Nicolas Baranowski <nibaranowski@gmail.com>` (repo-local). If a push
+  fails on auth (locked keychain after the machine idles), **fix the credential — never re-point the remote.**
+- Background: `gh auth switch` changes which *account the gh CLI supplies a token as* — it does NOT change
+  where code goes (the remote URL does). Flipping the active gh account is a smell; prefer a repo-local
+  credential so the global gh account is irrelevant. If you ever find yourself switching gh accounts to
+  push Axona, stop and flag it.
+
 ## Deliverable to the decks — the screen export
 This project (the only one with the real screens) produces the **simplified deck-crops** for the pitch +
 sales decks. Run **`specs/screen-export-instruction.md`** → write the two files into `exports/`:
