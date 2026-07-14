@@ -176,12 +176,17 @@ async function run(): Promise<void> {
           const row = await dbForOrg(orgId).agentRun.findFirst({
             where: { id: r.runId },
           });
-          return (
+          const ok =
             !!row &&
             Array.isArray(row.trace) &&
             JSON.stringify(row.trace).includes("fake-sonnet") &&
-            r.status === "SUCCEEDED"
-          );
+            r.status === "SUCCEEDED";
+          // self-clean: this test-run lands on the first seeded agent (arbitrary
+          // module) — leaving it would shadow that module's seeded trace.
+          await dbForOrg(orgId)
+            .agentRun.delete({ where: { id: r.runId } })
+            .catch(() => {});
+          return ok;
         },
       );
 

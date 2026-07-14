@@ -19,6 +19,8 @@ export {
   getCertStatus,
   openNcr,
 } from "./quality";
+export { getBlastRadius, getBlastRadiusTool } from "./ontology";
+export type { EntityType, BlastRadiusResult, BlastNode } from "./ontology";
 export {
   engineeringTools,
   getEco,

@@ -91,7 +91,11 @@ export {
   // inventory
   inventoryTools,
   getStock,
+  // ontology (ONT.1) — the entity-link graph + blast-radius traversal
+  getBlastRadius,
+  getBlastRadiusTool,
 } from "./tools";
+export type { EntityType, BlastRadiusResult, BlastNode } from "./tools";
 
 // WF.1 — the workflow DAG schema + run engine (BullMQ consumer in apps/worker;
 // in-process path for the enqueue API + verify when there is no Redis).

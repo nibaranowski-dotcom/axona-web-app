@@ -1,25 +1,80 @@
 import { z } from "zod";
 import type { Tool } from "../runtime/types";
 import { LIST_CAP, genCode } from "./util";
+import { getBlastRadiusTool } from "./ontology";
 
 // Quality — reads + drafting an NCR runs autonomously (opening a defect record
 // is the agent's job; it commits nothing irreversible).
+
+/** Loose-match a display characteristic to a stored key: lowercase, strip
+ *  non-alphanumerics ("Drive torque" → "drivetorque" ⊂ "drivetorquenm"). */
+const normChar = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 export const runSpcCheck: Tool<{ characteristic: string }> = {
   name: "runSpcCheck",
   category: "read",
   description:
-    "Check recent SPC samples for a characteristic against control limits; flags any value outside [LCL, UCL].",
+    "Check recent SPC samples for a characteristic against control limits; flags any value outside [LCL, UCL]. Accepts the display name ('Drive torque') or the stored key; surfaces the linked NCR when a breach is on record.",
   inputSchema: z.object({ characteristic: z.string().min(1) }),
   handler: async ({ characteristic }, ctx) => {
+    // ONT.1 fix: the SPC chart labels a series "Drive torque" but the stored
+    // `characteristic` is "drive_torque_Nm" — an exact-match query found 0 rows
+    // while the chart showed 24/2-breach. Resolve the loose/display name to the
+    // real stored key first (take/predicate were already correct).
+    const distinct = await ctx.db.spcSample.findMany({
+      select: { characteristic: true },
+      distinct: ["characteristic"],
+    });
+    const target = normChar(characteristic);
+    const key =
+      distinct.find((d) => {
+        const n = normChar(d.characteristic);
+        return n === target || n.includes(target) || target.includes(n);
+      })?.characteristic ?? characteristic;
+
     const samples = await ctx.db.spcSample.findMany({
-      where: { characteristic },
+      where: { characteristic: key },
       orderBy: { ts: "desc" },
       take: LIST_CAP,
     });
     const breaches = samples.filter((s) => s.value > s.ucl || s.value < s.lcl);
+
+    // Surface the NCR the breach is linked to, via the ONT.1 graph.
+    let linkedNcr: { code: string; defect: string; status: string } | null =
+      null;
+    if (breaches.length > 0) {
+      const sampleIds = breaches.map((b) => b.id);
+      const links = await ctx.db.entityLink.findMany({
+        where: {
+          OR: [
+            { toType: "SPC_SAMPLE", toId: { in: sampleIds }, fromType: "NCR" },
+            {
+              fromType: "SPC_SAMPLE",
+              fromId: { in: sampleIds },
+              toType: "NCR",
+            },
+          ],
+        },
+      });
+      const link = links[0];
+      const ncrId = link
+        ? link.fromType === "NCR"
+          ? link.fromId
+          : link.toId
+        : null;
+      if (ncrId) {
+        const ncr = await ctx.db.nCR.findUnique({ where: { id: ncrId } });
+        if (ncr)
+          linkedNcr = {
+            code: ncr.code,
+            defect: ncr.defect,
+            status: ncr.status,
+          };
+      }
+    }
+
     return {
-      characteristic,
+      characteristic: key,
       sampled: samples.length,
       breaches: breaches.length,
       worst: breaches[0]
@@ -30,6 +85,7 @@ export const runSpcCheck: Tool<{ characteristic: string }> = {
             lcl: breaches[0].lcl,
           }
         : null,
+      linkedNcr,
     };
   },
 };
@@ -104,4 +160,7 @@ export const qualityTools: Tool[] = [
   listOpenNcrs as Tool,
   getCertStatus as Tool,
   openNcr as Tool,
+  // ONT.1 — exposed to the Quality agent AND (via ALL read tools) the Axona
+  // cross-module agent; not added to coreTools so other module agents don't get it.
+  getBlastRadiusTool as Tool,
 ];

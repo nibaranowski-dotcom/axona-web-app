@@ -83,6 +83,7 @@ model Org {
   exportLicenses   ExportLicense[]
   legalMatters     LegalMatter[]
   searchDocs       SearchDoc[]
+  entityLinks      EntityLink[]
 }
 
 model User {
@@ -1181,4 +1182,56 @@ model AuditLog {
   /// ONT.1 hardens this table into the immutable ontology event log — don't fork it.
   @@index([orgId, createdAt])
   @@index([targetType, targetId])
+}
+
+// ── ONT.1 · Entity-link graph (L1 ontology edge table) ──────────────────────
+// The typed link spine over the REAL domain models — the cross-module ripple is a
+// bidirectional BFS over these edges (getBlastRadius). Enum members are real models
+// only: LOT = the quarantined-lot Part (sku "LOT-88421"); UNIT = a WorkOrderMfg
+// build serial; WORK_ORDER = a WorkOrderField. NCR.linkedTo stays for now — the
+// graph supersedes it and dropping it is ONT.2.
+
+enum EntityType {
+  NCR
+  ECO
+  PART
+  SUPPLIER
+  PURCHASE_ORDER
+  UNIT
+  LOT
+  DELIVERY
+  WORK_ORDER
+  SPC_SAMPLE
+  INVOICE
+}
+
+enum LinkRelation {
+  CAUSED_BY
+  AFFECTS
+  RESOLVED_BY
+  SUPPLIED_BY
+  CONTAINS
+  SHIPPED_IN
+  DISPATCHED_FOR
+  IMPACTS
+}
+
+model EntityLink {
+  id        String       @id @default(cuid())
+  orgId     String
+  org       Org          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  fromType  EntityType
+  fromId    String // the resolved record id (code→id at seed/write time)
+  relation  LinkRelation
+  toType    EntityType
+  toId      String
+  note      String? // human-readable "why" — surfaces in the agent's answer
+  createdAt DateTime     @default(now())
+
+  /// The L1 ontology substrate the learning loop reads (MEM.1). An agent-PROPOSED
+  /// link (ONT.3) will later carry confidence + approver like any other proposal —
+  /// do NOT add those columns now; ONT.1 links are seeded/explicit FACTS only.
+  @@index([orgId, fromType, fromId])
+  @@index([orgId, toType, toId]) // traversal must be fast in BOTH directions
+  @@index([orgId, relation])
 }

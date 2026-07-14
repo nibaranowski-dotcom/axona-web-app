@@ -22,6 +22,7 @@ import { seedNotifications } from "./seed/notifications";
 import { seedIntegrations } from "./seed/integrations";
 import { seedMachines } from "./seed/machines";
 import { seedWorkflows } from "./seed/workflows";
+import { seedOntology } from "./seed/ontology";
 
 /** Delete the demo org's tenant rows, children before parents, scoped to its
  *  orgId. NEVER a bare deleteMany — other tenants must be untouched. The Org row
@@ -35,6 +36,7 @@ async function clearDemoOrg(): Promise<void> {
   const projectIds = demoProjects.map((p) => p.id);
 
   // children / leaf rows first
+  await prisma.entityLink.deleteMany({ where: { orgId } }); // ONT.1 link graph
   await prisma.telemetryPoint.deleteMany({ where: { orgId } });
   await prisma.machineSignal.deleteMany({ where: { machine: { orgId } } });
   await prisma.workOrderField.deleteMany({ where: { orgId } });
@@ -151,6 +153,8 @@ async function main(): Promise<void> {
   const inventory = await seedInventory(db);
   await seedRobotics(db);
   await seedBackOffice(db);
+  // ONT.1 — the entity-link graph, LAST so every referenced record exists.
+  const ontologyLinks = await seedOntology(db);
   const projects = await seedProjects(db);
   const matrix = await seedMatrix(db);
   const machines = await seedMachines(db);
@@ -177,7 +181,8 @@ async function main(): Promise<void> {
       `workflows: ${workflows.workflows} (${workflows.runs} runs), ` +
       `inventory: ${inventory.stock} stock rows, ` +
       `matrix: ${matrix.columns} cols (${matrix.cells} cells), ` +
-      `audit: ${audit.entries} log entries.`,
+      `audit: ${audit.entries} log entries, ` +
+      `ontology: ${ontologyLinks} entity links.`,
   );
 }
 

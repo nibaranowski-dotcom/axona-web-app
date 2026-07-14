@@ -102,7 +102,11 @@ async function run(): Promise<void> {
             model: fake,
           });
           const row = await db.agentRun.findFirst({ where: { id: r.runId } });
-          return !!row && r.status === "SUCCEEDED";
+          const ok = !!row && r.status === "SUCCEEDED";
+          // self-clean: this lands on the first seeded agent (arbitrary module) —
+          // leaving it would shadow that module's seeded orchestrator trace.
+          await db.agentRun.delete({ where: { id: r.runId } }).catch(() => {});
+          return ok;
         },
       );
 

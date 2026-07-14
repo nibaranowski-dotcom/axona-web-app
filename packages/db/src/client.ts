@@ -65,6 +65,7 @@ const TENANT_MODELS = new Set<string>([
   "Obligation",
   "ExportLicense",
   "LegalMatter",
+  "EntityLink", // ONT.1 — the entity-link graph is tenant-scoped like every edge/record
 ]);
 
 /** Operations whose `where` we tag with `orgId` (non-unique-target). */
