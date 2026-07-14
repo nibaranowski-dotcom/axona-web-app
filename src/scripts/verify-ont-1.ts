@@ -48,10 +48,6 @@ async function run() {
     ? readFileSync(join(root, "packages/db/prisma/schema.prisma"), "utf8")
     : "";
 
-  const { dbForOrg } = await import("@axona/db");
-  const { getBlastRadius, runSpcCheck } = await import("@axona/agents");
-  const db = dbForOrg(DEMO_ORG_ID);
-
   // 1. schema + migration
   await check(
     "EntityLink model + EntityType/LinkRelation enums in schema",
@@ -88,6 +84,19 @@ async function run() {
       );
     },
   );
+  // The static schema/migration checks above always run. The data checks below
+  // need a live DB — gate them behind DATABASE_URL like every other verify script
+  // so the pre-push hook (no .env) runs the static checks and CI runs the full set.
+  if (!process.env.DATABASE_URL) {
+    console.log("  SKIP data checks — DATABASE_URL not set");
+    console.log(`\nPASSED — ${passed} checks (static only)`);
+    return;
+  }
+
+  const { dbForOrg } = await import("@axona/db");
+  const { getBlastRadius, runSpcCheck } = await import("@axona/agents");
+  const db = dbForOrg(DEMO_ORG_ID);
+
   await check("EntityLink table is queryable (migration applied)", async () => {
     return (await db.entityLink.count()) > 0;
   });
