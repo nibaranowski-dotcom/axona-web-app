@@ -188,7 +188,10 @@ function MachineRowView({ m }: { m: MachineRow }) {
           <Icon className="h-4 w-4" strokeWidth={1.7} aria-hidden />
         </span>
         <div className="min-w-0">
-          <div className="truncate text-[13px] font-semibold text-ink">
+          <div
+            className="truncate text-[13px] font-semibold text-ink"
+            title={m.name}
+          >
             {m.name}
           </div>
           <div className="mt-px font-mono text-[9.5px] text-ink-muted">
@@ -196,7 +199,10 @@ function MachineRowView({ m }: { m: MachineRow }) {
           </div>
         </div>
       </div>
-      <span className="truncate font-mono text-[11px] text-ink-muted">
+      <span
+        className="truncate font-mono text-[11px] text-ink-muted"
+        title={m.location}
+      >
         {m.location}
       </span>
       <span>
@@ -226,7 +232,9 @@ function MachineRowView({ m }: { m: MachineRow }) {
           aria-hidden
           className={`h-[7px] w-[7px] flex-none rounded-full ${HEALTH_DOT[m.healthLevel]}`}
         />
-        <span className="truncate text-[12px] text-ink">{m.health}</span>
+        <span className="truncate text-[12px] text-ink" title={m.health}>
+          {m.health}
+        </span>
       </span>
       <span className="inline-flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.03em] text-ink-muted">
         <span

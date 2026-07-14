@@ -66,13 +66,18 @@ export function EcoTable({
               className={`${COLS} border-t border-line py-[13px] hover:bg-panel-2`}
             >
               <span className="font-mono text-[12px] text-ink">{e.code}</span>
-              <span className="truncate text-[13px] text-ink">{e.title}</span>
+              <span className="truncate text-[13px] text-ink" title={e.title}>
+                {e.title}
+              </span>
               <span>
                 <span className="rounded-[5px] border border-line-panel bg-panel px-[6px] py-px font-mono text-[9px] uppercase tracking-[0.04em] text-ink-muted">
                   {e.changeType}
                 </span>
               </span>
-              <span className="truncate font-mono text-[10.5px] text-ink-muted">
+              <span
+                className="truncate font-mono text-[10.5px] text-ink-muted"
+                title={e.affected}
+              >
                 {e.affected}
               </span>
               <span>

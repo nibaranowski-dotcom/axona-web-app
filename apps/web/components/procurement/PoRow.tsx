@@ -67,7 +67,10 @@ export function PoRow({
     <div className={`${COLS} border-t border-line py-[14px] hover:bg-panel-2`}>
       <span className="font-mono text-[12.5px] text-ink">{po.code}</span>
       <div className="min-w-0">
-        <div className="truncate text-[13.5px] text-ink">
+        <div
+          className="truncate text-[13.5px] text-ink"
+          title={`${po.partSku} · qty ${po.qty}`}
+        >
           {po.partSku} · qty {po.qty}
         </div>
         <div className="mt-0.5 font-mono text-[10px] text-ink-muted">
@@ -78,7 +81,9 @@ export function PoRow({
               : "—"}
         </div>
       </div>
-      <span className="truncate text-[13px] text-ink-muted">{po.supplier}</span>
+      <span className="truncate text-[13px] text-ink-muted" title={po.supplier}>
+        {po.supplier}
+      </span>
       <span className="font-mono text-[12.5px] text-ink">
         ${po.value.toLocaleString()}
       </span>

@@ -286,16 +286,18 @@ function AuditRow({ e }: { e: AuditEntry }) {
           </span>
         )}
       </span>
-      <span className="min-w-0 truncate text-[12px]">
+      <span className="flex min-w-0 items-center text-[12px]">
         {e.approverLabel ? (
-          <span className="inline-flex items-center gap-1.5">
+          <span className="flex min-w-0 items-center gap-1.5">
             {approved && (
               <span
                 aria-hidden
                 className="h-1.5 w-1.5 flex-none rounded-full bg-success"
               />
             )}
-            <span className="truncate text-ink">{e.approverLabel}</span>
+            <span className="truncate text-ink" title={e.approverLabel}>
+              {e.approverLabel}
+            </span>
           </span>
         ) : (
           <span className="text-ink-faint">—</span>
@@ -325,7 +327,9 @@ function ActorBadge({
         ? "bg-ink-strong"
         : "bg-line-strong";
   return (
-    <span className="inline-flex min-w-0 items-center gap-1.5">
+    // UX.11: block-level `flex` (not inline-flex) so it fills the grid track and
+    // the label truncates instead of sizing to max-content + overflowing the cell.
+    <span className="flex min-w-0 items-center gap-1.5">
       <span
         aria-hidden
         className={`h-1.5 w-1.5 flex-none rounded-full ${dot}`}

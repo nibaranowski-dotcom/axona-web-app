@@ -29,6 +29,7 @@ export function CommandCenter({
   error?: boolean;
 }) {
   const setCollapsed = useUi((s) => s.setAgentPaneCollapsed);
+  const setForceOpen = useUi((s) => s.setAgentPaneForceOpen);
   const setSeed = useCopilotSeed((s) => s.setSeed);
   const [ask, setAsk] = useState("");
 
@@ -44,8 +45,9 @@ export function CommandCenter({
   const send = (q: string) => {
     const t = q.trim();
     if (!t) return;
-    setSeed(t); // the global Axona pane (GA.1) prefills this
-    setCollapsed(false); // expand the pane to show the answer
+    setSeed(t, true); // UX.11: submit straight through (autoSend) — not a prefill
+    setForceOpen(true); // keep the pane open (immune to /core's re-collapse) …
+    setCollapsed(false); // … and expand it so the trace + answer stream in
     setAsk("");
   };
 

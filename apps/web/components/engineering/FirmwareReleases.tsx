@@ -44,7 +44,10 @@ export function FirmwareReleases({
                 <div className="font-mono text-[13px] font-semibold text-ink">
                   {r.version}
                 </div>
-                <div className="mt-0.5 text-[11px] text-ink-muted">
+                <div
+                  className="mt-0.5 truncate text-[11px] text-ink-muted"
+                  title={r.note}
+                >
                   {r.note}
                 </div>
               </div>

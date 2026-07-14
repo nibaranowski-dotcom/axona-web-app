@@ -173,7 +173,10 @@ export function InventoryView({
                     <div className="font-mono text-[12.5px] font-semibold text-ink">
                       {p.sku}
                     </div>
-                    <div className="mt-px truncate text-[11px] text-ink-muted">
+                    <div
+                      className="mt-px truncate text-[11px] text-ink-muted"
+                      title={p.name}
+                    >
                       {p.name}
                     </div>
                     {p.reorderNeeded && p.incomingPo && (

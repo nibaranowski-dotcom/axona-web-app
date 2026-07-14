@@ -67,10 +67,16 @@ export function LiveUnits({
           >
             <span aria-hidden className={`h-2 w-2 rounded-pill ${meta.dot}`} />
             <div className="min-w-0">
-              <div className="font-mono text-[12.5px] font-semibold text-ink">
+              <div
+                className="truncate font-mono text-[12.5px] font-semibold text-ink"
+                title={r.serial}
+              >
                 {r.serial}
               </div>
-              <div className="mt-px truncate text-[11px] text-ink-muted">
+              <div
+                className="mt-px truncate text-[11px] text-ink-muted"
+                title={`${r.model} · ${r.site}`}
+              >
                 {r.model} · {r.site}
               </div>
             </div>

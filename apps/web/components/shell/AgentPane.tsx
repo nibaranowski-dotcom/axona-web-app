@@ -44,8 +44,10 @@ export function AgentPane({
   const mounted = useMounted();
   const width = useUi((s) => s.agentPaneWidth);
   const collapsed = useUi((s) => s.agentPaneCollapsed);
+  const forceOpen = useUi((s) => s.agentPaneForceOpen);
   const setWidth = useUi((s) => s.setAgentPaneWidth);
-  const toggle = useUi((s) => s.toggleAgentPane);
+  const setCollapsed = useUi((s) => s.setAgentPaneCollapsed);
+  const setForceOpen = useUi((s) => s.setAgentPaneForceOpen);
   const draggingRef = useRef(false);
   const pathname = usePathname();
 
@@ -56,6 +58,11 @@ export function AgentPane({
   // Which agent is active (module mode). Reset when the route/module changes.
   const [activeId, setActiveId] = useState<string | null>(null);
   useEffect(() => setActiveId(null), [moduleKey]);
+  // UX.11: the /core Ask "force open" intent is per-visit — clear it once we
+  // leave /core so a later visit starts collapsed again.
+  useEffect(() => {
+    if (moduleKey !== "core") setForceOpen(false);
+  }, [moduleKey, setForceOpen]);
 
   const coreAgent = agentsByModule["core"]?.[0];
   const active: PaneAgent = moduleMode
@@ -104,7 +111,9 @@ export function AgentPane({
   if (pathname === "/agents") return null;
 
   // First paint = defaults (avoid hydration mismatch); reflect store once mounted.
-  if (mounted && collapsed) return <AgentRail />;
+  // UX.11: forceOpen (a /core Ask) keeps the pane open even while Command Center
+  // re-asserts collapsed, so PaneChat stays mounted to stream the answer.
+  if (mounted && collapsed && !forceOpen) return <AgentRail />;
 
   return (
     <aside
@@ -133,7 +142,10 @@ export function AgentPane({
         </div>
         <button
           type="button"
-          onClick={toggle}
+          onClick={() => {
+            setForceOpen(false); // UX.11: a manual collapse clears the Ask intent
+            setCollapsed(true);
+          }}
           aria-label="Collapse agent pane"
           className="flex h-7 w-7 flex-none items-center justify-center rounded-[7px] border border-line text-ink-muted transition-colors hover:bg-panel hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >

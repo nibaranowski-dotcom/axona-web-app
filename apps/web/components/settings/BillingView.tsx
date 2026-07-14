@@ -224,7 +224,10 @@ export function BillingView({
                     year: "numeric",
                   })}
                 </span>
-                <span className="truncate text-[12.5px] text-ink-muted">
+                <span
+                  className="truncate text-[12.5px] text-ink-muted"
+                  title={iv.description}
+                >
                   {iv.description}
                 </span>
                 <span className="font-mono text-[12.5px] font-semibold text-ink">

@@ -59,20 +59,28 @@ export function WorkOrderQueue({
             >
               <span className="font-mono text-[12px] text-ink">{w.code}</span>
               <div className="min-w-0">
-                <div className="font-mono text-[12px] font-semibold text-ink">
+                <div
+                  className="truncate font-mono text-[12px] font-semibold text-ink"
+                  title={w.robotSerial}
+                >
                   {w.robotSerial}
                 </div>
                 <div className="mt-px truncate text-[10.5px] text-ink-muted">
                   {w.site}
                 </div>
               </div>
-              <span className="truncate text-[13px] text-ink">{w.issue}</span>
+              <span className="truncate text-[13px] text-ink" title={w.issue}>
+                {w.issue}
+              </span>
               <span
                 className={`font-mono text-[12px] font-semibold ${SLA_COLOR[sla.tone]}`}
               >
                 {sla.text}
               </span>
-              <span className="truncate text-[12.5px] text-ink-muted">
+              <span
+                className="truncate text-[12.5px] text-ink-muted"
+                title={w.techId ? (nameOf.get(w.techId) ?? "—") : "Unassigned"}
+              >
                 {w.techId ? (nameOf.get(w.techId) ?? "—") : "Unassigned"}
               </span>
               <span>

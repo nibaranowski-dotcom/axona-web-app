@@ -29,13 +29,27 @@ export function PaneChat({
   const scrollRef = useStickToBottom<HTMLDivElement>(messages.length);
 
   const seed = useCopilotSeed((s) => s.seed);
+  const autoSend = useCopilotSeed((s) => s.autoSend);
   const setSeed = useCopilotSeed((s) => s.setSeed);
   useEffect(() => {
-    if (seed) {
-      setInput(seed);
-      setSeed(null);
+    if (!seed) return;
+    // UX.11: autoSend (Ask Axona) submits the prompt straight through so the
+    // trace starts; otherwise it just prefills the composer (legacy CMD.2).
+    if (autoSend && agentId) {
+      // Defer the send by a tick so it fires on the STABLE mount: when the pane
+      // expands from collapsed, React (StrictMode/dev) mounts→unmounts→remounts
+      // this component; a synchronous send would be aborted by useAgentChat's
+      // unmount cleanup. The transient mount clears its timer (and leaves the
+      // seed intact); the stable mount actually sends + clears the seed.
+      const id = setTimeout(() => {
+        void send(seed);
+        setSeed(null);
+      }, 0);
+      return () => clearTimeout(id);
     }
-  }, [seed, setSeed]);
+    setInput(seed);
+    setSeed(null);
+  }, [seed, autoSend, agentId, send, setSeed]);
 
   return (
     <>

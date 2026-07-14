@@ -43,7 +43,10 @@ export function CampaignsTable({
             key={c.id}
             className={`${COLS} border-t border-line py-[13px] hover:bg-panel-2`}
           >
-            <span className="truncate text-[13.5px] font-medium text-ink">
+            <span
+              className="truncate text-[13.5px] font-medium text-ink"
+              title={c.name}
+            >
               {c.name}
             </span>
             <span className="text-[12.5px] text-ink-muted">

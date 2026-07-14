@@ -73,7 +73,10 @@ export function UnitEconomics({ units }: { units: UnitEcon[] }) {
               key={u.id}
               className={`${COLS} border-t border-line py-[13px] hover:bg-panel-2`}
             >
-              <div className="min-w-0 text-[13.5px] font-semibold text-ink">
+              <div
+                className="min-w-0 truncate text-[13.5px] font-semibold text-ink"
+                title={u.product}
+              >
                 {u.product}
               </div>
               <span className="font-mono text-[12.5px] text-ink">

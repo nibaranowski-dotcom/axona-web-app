@@ -46,8 +46,13 @@ export function NcrTable({ ncrs }: { ncrs: QualityNcr[] }) {
               className={`${COLS} border-t border-line py-[13px] hover:bg-panel-2`}
             >
               <span className="font-mono text-[12.5px] text-ink">{n.code}</span>
-              <span className="truncate text-[13px] text-ink">{n.defect}</span>
-              <span className="truncate font-mono text-[11px] text-ink-muted">
+              <span className="truncate text-[13px] text-ink" title={n.defect}>
+                {n.defect}
+              </span>
+              <span
+                className="truncate font-mono text-[11px] text-ink-muted"
+                title={n.linkedTo}
+              >
                 {n.linkedTo}
               </span>
               <span>

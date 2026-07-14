@@ -54,7 +54,10 @@ export function Receivables({
             >
               <span className="font-mono text-[12px] text-ink">{iv.code}</span>
               <div className="min-w-0">
-                <div className="truncate text-[13px] text-ink">
+                <div
+                  className="truncate text-[13px] text-ink"
+                  title={iv.account}
+                >
                   {iv.account}
                 </div>
                 <div className="mt-px truncate font-mono text-[10px] text-ink-muted">

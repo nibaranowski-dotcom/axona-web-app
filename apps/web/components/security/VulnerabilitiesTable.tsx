@@ -64,7 +64,12 @@ export function VulnerabilitiesTable({
             className={`${COLS} border-t border-line py-[13px] hover:bg-panel-2`}
           >
             <span className="font-mono text-[12px] text-ink">{v.code}</span>
-            <span className="truncate text-[13px] text-ink">
+            <span
+              className="truncate text-[13px] text-ink"
+              title={
+                v.affectsDeployed ? "Deployed fleet · OT" : "Component library"
+              }
+            >
               {v.affectsDeployed ? "Deployed fleet · OT" : "Component library"}
             </span>
             <span className="font-mono text-[11.5px] text-ink-muted">
@@ -77,7 +82,10 @@ export function VulnerabilitiesTable({
                 {titleCase(v.severity)}
               </span>
             </span>
-            <span className="truncate font-mono text-[11.5px] text-ink-muted">
+            <span
+              className="truncate font-mono text-[11.5px] text-ink-muted"
+              title={remediation(v)}
+            >
               {remediation(v)}
             </span>
           </div>

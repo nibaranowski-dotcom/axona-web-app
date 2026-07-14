@@ -14,11 +14,20 @@ const RAIL = 52;
 interface UiState {
   agentPaneWidth: number; // px
   agentPaneCollapsed: boolean;
+  /**
+   * UX.11 — a transient "force the pane open" intent, set when the /core Ask Axona
+   * card submits. It overrides `agentPaneCollapsed` in AgentPane so the pane stays
+   * open (and PaneChat stays mounted to stream the answer) even though Command
+   * Center's mount effect keeps re-asserting collapsed on /core. NOT persisted;
+   * reset when leaving /core or on a manual collapse.
+   */
+  agentPaneForceOpen: boolean;
   sidebarCollapsed: boolean;
   navOpen: Record<string, boolean>; // group -> open?
   setAgentPaneWidth: (w: number) => void;
   toggleAgentPane: () => void;
   setAgentPaneCollapsed: (collapsed: boolean) => void;
+  setAgentPaneForceOpen: (open: boolean) => void;
   toggleSidebar: () => void;
   toggleNav: (group: string) => void;
 }
@@ -28,6 +37,7 @@ export const useUi = create<UiState>()(
     (set) => ({
       agentPaneWidth: 404,
       agentPaneCollapsed: false,
+      agentPaneForceOpen: false,
       sidebarCollapsed: false,
       navOpen: {
         CORE: true,
@@ -41,12 +51,23 @@ export const useUi = create<UiState>()(
         set((s) => ({ agentPaneCollapsed: !s.agentPaneCollapsed })),
       setAgentPaneCollapsed: (agentPaneCollapsed) =>
         set({ agentPaneCollapsed }),
+      setAgentPaneForceOpen: (agentPaneForceOpen) =>
+        set({ agentPaneForceOpen }),
       toggleSidebar: () =>
         set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       toggleNav: (group) =>
         set((s) => ({ navOpen: { ...s.navOpen, [group]: !s.navOpen[group] } })),
     }),
-    { name: "axona-ui" },
+    {
+      name: "axona-ui",
+      // agentPaneForceOpen is transient UI intent — never persist it.
+      partialize: (s) => ({
+        agentPaneWidth: s.agentPaneWidth,
+        agentPaneCollapsed: s.agentPaneCollapsed,
+        sidebarCollapsed: s.sidebarCollapsed,
+        navOpen: s.navOpen,
+      }),
+    },
   ),
 );
 

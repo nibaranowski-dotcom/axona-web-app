@@ -328,7 +328,14 @@ function MemberRowView({
           <div className="truncate text-[13.5px] font-semibold text-ink">
             {m.name}
           </div>
-          <div className="truncate font-mono text-[10px] text-ink-faint">
+          <div
+            className="truncate font-mono text-[10px] text-ink-faint"
+            title={
+              m.status === "INVITED"
+                ? `Invited · ${m.invitedByLabel ?? "admin"}`
+                : m.email
+            }
+          >
             {m.status === "INVITED"
               ? `Invited · ${m.invitedByLabel ?? "admin"}`
               : m.email}

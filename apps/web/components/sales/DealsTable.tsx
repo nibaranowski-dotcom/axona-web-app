@@ -58,14 +58,20 @@ export function DealsTable({ deals }: { deals: SalesDeal[] }) {
             className={`${COLS} border-t border-line py-[13px] hover:bg-panel-2`}
           >
             <div className="min-w-0">
-              <div className="truncate text-[13.5px] font-semibold text-ink">
+              <div
+                className="truncate text-[13.5px] font-semibold text-ink"
+                title={d.account}
+              >
                 {d.account}
               </div>
               <div className="mt-px font-mono text-[10px] text-ink-muted">
                 Close {closeLabel(d.closeDate)}
               </div>
             </div>
-            <span className="truncate text-[12.5px] text-ink-muted">
+            <span
+              className="truncate text-[12.5px] text-ink-muted"
+              title={d.config}
+            >
               {d.config}
             </span>
             <span className="font-mono text-[12.5px] font-semibold text-ink">

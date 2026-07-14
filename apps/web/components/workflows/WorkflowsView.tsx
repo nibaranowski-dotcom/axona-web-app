@@ -129,10 +129,16 @@ function WorkflowRowView({ w, now }: { w: WorkflowRow; now: number }) {
       className={`${COLS} mb-2 w-full rounded-card border border-line bg-paper px-3.5 py-[13px] text-left transition-colors hover:border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent`}
     >
       <div className="min-w-0">
-        <div className="truncate text-[13.5px] font-semibold text-ink">
+        <div
+          className="truncate text-[13.5px] font-semibold text-ink"
+          title={w.name}
+        >
           {w.name}
         </div>
-        <div className="mt-[3px] truncate text-[12px] text-ink-muted">
+        <div
+          className="mt-[3px] truncate text-[12px] text-ink-muted"
+          title={w.description}
+        >
           {w.description}
         </div>
       </div>
@@ -169,7 +175,10 @@ function WorkflowRowView({ w, now }: { w: WorkflowRow; now: number }) {
         </span>
       </div>
 
-      <div className="min-w-0 truncate font-mono text-[10.5px] text-ink-muted">
+      <div
+        className="min-w-0 truncate font-mono text-[10.5px] text-ink-muted"
+        title={w.modulesTouched.join(" · ")}
+      >
         {w.modulesTouched.join(" · ")}
       </div>
 

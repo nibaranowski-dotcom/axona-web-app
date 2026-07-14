@@ -408,7 +408,10 @@ function ApiKeysSection({
             key={k.id}
             className={`grid grid-cols-[1.4fr_1.4fr_1fr_auto] items-center gap-3 border-t border-line px-6 py-3 ${k.revokedAt ? "opacity-55" : ""}`}
           >
-            <span className="truncate text-[13px] font-semibold text-ink">
+            <span
+              className="truncate text-[13px] font-semibold text-ink"
+              title={k.name}
+            >
               {k.name}
             </span>
             <span className="truncate font-mono text-[12px] text-ink-muted">

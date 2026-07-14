@@ -136,10 +136,16 @@ function ProjectRowView({ p, now }: { p: ProjectRow; now: number }) {
       className={`${COLS} mb-2 w-full rounded-card border border-line bg-paper px-3.5 py-[13px] text-left transition-colors hover:border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent`}
     >
       <div className="min-w-0">
-        <div className="truncate text-[13.5px] font-semibold text-ink">
+        <div
+          className="truncate text-[13.5px] font-semibold text-ink"
+          title={p.name}
+        >
           {p.name}
         </div>
-        <div className="mt-[3px] truncate text-[12px] text-ink-muted">
+        <div
+          className="mt-[3px] truncate text-[12px] text-ink-muted"
+          title={p.description}
+        >
           {p.description}
         </div>
       </div>
