@@ -94,6 +94,8 @@ export {
   // ontology (ONT.1) — the entity-link graph + blast-radius traversal
   getBlastRadius,
   getBlastRadiusTool,
+  // memory (MEM.1) — recall prior operational episodes
+  recallMemoryTool,
 } from "./tools";
 export type { EntityType, BlastRadiusResult, BlastNode } from "./tools";
 

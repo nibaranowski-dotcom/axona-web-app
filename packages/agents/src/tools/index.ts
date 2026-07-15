@@ -21,6 +21,7 @@ export {
 } from "./quality";
 export { getBlastRadius, getBlastRadiusTool } from "./ontology";
 export type { EntityType, BlastRadiusResult, BlastNode } from "./ontology";
+export { recallMemoryTool } from "./memory";
 export {
   engineeringTools,
   getEco,

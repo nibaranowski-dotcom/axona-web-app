@@ -84,6 +84,7 @@ model Org {
   legalMatters     LegalMatter[]
   searchDocs       SearchDoc[]
   entityLinks      EntityLink[]
+  memoryItems      MemoryItem[]
 }
 
 model User {
@@ -1234,4 +1235,56 @@ model EntityLink {
   @@index([orgId, fromType, fromId])
   @@index([orgId, toType, toId]) // traversal must be fast in BOTH directions
   @@index([orgId, relation])
+}
+
+// ── MEM.1 · Operational memory (L2 intelligence spine — the layer that compounds) ─
+// A typed, org-scoped, entity-anchored, EMBEDDED record of operational EPISODES
+// (decisions · exceptions · approvals · resolutions) — DERIVED from the existing
+// substrate (AuditLog · NCR · SpcSample breach · SafetyIncident), never a new
+// capture and never a mutation of the source. NOT RAG-over-PDFs (that's
+// File.embedding/SearchDoc — disclaimed as "not the moat"); NOT the audit log
+// (that stays canonical). Memory USES the ONT.1 EntityLink graph (subjectType/
+// subjectId anchor into it) and adds the episode + outcome + a vector so an agent
+// can recall a prior episode — by similarity AND graph proximity — when it drafts.
+
+enum MemoryKind {
+  DECISION
+  EXCEPTION
+  APPROVAL
+  RESOLUTION
+  GENEALOGY_EVENT
+  TELEMETRY_ANOMALY
+}
+
+model MemoryItem {
+  id            String                 @id @default(cuid())
+  orgId         String
+  org           Org                    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  kind          MemoryKind
+  // Natural-language episode summary — the text embedded for semantic recall.
+  summary       String
+  // Structured anchor into the ontology: what this episode is ABOUT (resolve via
+  // the EntityLink graph — recall walks the neighborhood to surface related episodes).
+  subjectType   EntityType? // reuse the ONT.1 enum — anchored to a real record
+  subjectId     String?
+  // Provenance: the substrate row this was derived from — carries idempotency.
+  sourceType    String // "AuditLog" | "NCR" | "SpcSample" | "SafetyIncident"
+  sourceId      String // the source row id (RESOLUTION uses "<id>#resolution" to coexist with its EXCEPTION)
+  // Terminal state / payload that makes recall useful ("last time, the resolution was …").
+  outcome       String?
+  // Who/what produced the underlying action — mirrors AUDIT.3 (denormalized).
+  actorLabel    String?
+  approverLabel String?
+  model         String?
+  confidence    Float? /// uncalibrated agent-emitted signal; CONF.1 calibrates + gates on it — do NOT gate here
+  occurredAt    DateTime // when the episode happened (from the source), distinct from createdAt
+  createdAt     DateTime               @default(now())
+  // vector(1536) + HNSW (memoryitem_embedding_hnsw, vector_cosine_ops) added in raw
+  // SQL and re-asserted in the trailing …_ensure_raw_sql_ddl migration (MIGRATE.1).
+  // MEM.3 adds bitemporality (validFrom/txTime) on top of occurredAt/createdAt.
+  embedding     Unsupported("vector")?
+
+  @@unique([orgId, sourceType, sourceId]) // idempotent ingestion — one memory per source event
+  @@index([orgId, kind, occurredAt])
+  @@index([orgId, subjectType, subjectId]) // graph-proximity recall by subject
 }

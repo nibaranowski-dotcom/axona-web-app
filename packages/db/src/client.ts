@@ -66,6 +66,7 @@ const TENANT_MODELS = new Set<string>([
   "ExportLicense",
   "LegalMatter",
   "EntityLink", // ONT.1 — the entity-link graph is tenant-scoped like every edge/record
+  "MemoryItem", // MEM.1 — per-tenant isolation of operational memory is a moat invariant
 ]);
 
 /** Operations whose `where` we tag with `orgId` (non-unique-target). */
@@ -92,7 +93,7 @@ const READ_OPS = new Set([
  */
 export function dbForOrg(orgId: string) {
   if (!orgId) throw new Error("dbForOrg requires a non-empty orgId");
-  return prisma.$extends({
+  const client = prisma.$extends({
     query: {
       $allModels: {
         async $allOperations({ model, operation, args, query }) {
@@ -122,6 +123,18 @@ export function dbForOrg(orgId: string) {
       },
     },
   });
+  // Stash the tenant id on the scoped client. Prisma model ops are auto-scoped by
+  // the extension above, but RAW SQL ($queryRaw/$executeRaw — e.g. the pgvector
+  // cosine query in recallMemory) bypasses it, so those paths must org-filter
+  // explicitly. `$org` lets a `db`-first helper (recallMemory/ingestMemory) recover
+  // the tenant without changing its signature. Non-enumerable so it never leaks
+  // into spreads/logs.
+  Object.defineProperty(client, "$org", {
+    value: orgId,
+    enumerable: false,
+    writable: false,
+  });
+  return client as typeof client & { readonly $org: string };
 }
 
 export type OrgScopedDb = ReturnType<typeof dbForOrg>;

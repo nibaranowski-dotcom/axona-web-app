@@ -1,7 +1,6 @@
 import { z } from "zod";
 import type { Tool } from "../runtime/types";
 import { LIST_CAP, genCode } from "./util";
-import { getBlastRadiusTool } from "./ontology";
 
 // Quality — reads + drafting an NCR runs autonomously (opening a defect record
 // is the agent's job; it commits nothing irreversible).
@@ -160,7 +159,7 @@ export const qualityTools: Tool[] = [
   listOpenNcrs as Tool,
   getCertStatus as Tool,
   openNcr as Tool,
-  // ONT.1 — exposed to the Quality agent AND (via ALL read tools) the Axona
-  // cross-module agent; not added to coreTools so other module agents don't get it.
-  getBlastRadiusTool as Tool,
+  // getBlastRadiusTool moved to coreTools in MEM.1 (the wiring-gap fix) — the
+  // Quality agent still gets it via coreReadTools(), now WITHOUT duplicating it in
+  // readToolsAcrossModules() (which would collide the tool name for the Axona agent).
 ];

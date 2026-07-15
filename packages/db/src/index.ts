@@ -56,6 +56,15 @@ export {
   type ProcessResult,
 } from "./embed/process";
 
+// MEM.1 — operational memory: ingestion (derive from the substrate) + hybrid
+// recall (vector ⊕ graph proximity ⊕ recency).
+export { ingestMemory, type IngestResult } from "./memory/ingest";
+export {
+  recallMemory,
+  type RecallInput,
+  type MemoryHit,
+} from "./memory/recall";
+
 // Re-export Prisma's generated types/enums so consumers import from one place.
 export * from "@prisma/client";
 

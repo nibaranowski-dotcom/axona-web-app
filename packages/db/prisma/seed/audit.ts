@@ -46,9 +46,10 @@ export async function seedAudit(
   nowMs: number,
 ): Promise<{ entries: number }> {
   // Resolve the real through-line targets (fall back to a stable synthetic id).
-  const [po, ncr, eco, run, project, admin, ops] = await Promise.all([
+  const [po, ncr, ncr114, eco, run, project, admin, ops] = await Promise.all([
     db.purchaseOrder.findFirst({ select: { id: true, code: true } }),
     db.nCR.findFirst({ where: { code: CODES.ncr }, select: { id: true } }),
+    db.nCR.findFirst({ where: { code: "NCR-114" }, select: { id: true } }),
     db.eCO.findFirst({ where: { code: CODES.eco }, select: { id: true } }),
     db.workflowRun.findFirst({
       orderBy: { startedAt: "desc" },
@@ -84,6 +85,7 @@ export async function seedAudit(
   const poId = po?.id ?? "po-seed";
   const poCode = po?.code ?? "PO-9001";
   const ncrId = ncr?.id ?? "ncr-seed";
+  const ncr114Id = ncr114?.id ?? "ncr114-seed";
   const ecoId = eco?.id ?? "eco-seed";
   const runId = run?.id ?? "run-seed";
   const opsLabel = ops?.name ?? "M. Osei";
@@ -92,6 +94,50 @@ export async function seedAudit(
   const adminId = admin?.id ?? null;
 
   const entries: Entry[] = [
+    // MEM.1 — the PRIOR drive-torque incident (NCR-114), weeks before NCR-118, and
+    // how it was handled. Ingestion derives DECISION/APPROVAL + RESOLUTION memory
+    // from these; recallMemory surfaces them as precedent when NCR-118 is reasoned
+    // about (NCR-114 is a graph neighbour of NCR-118 via SERVO-204 / ECO-318).
+    {
+      daysAgo: 34,
+      actorType: "AGENT",
+      actorId: null,
+      actorLabel: "Quality agent",
+      action: "ncr.open",
+      targetType: "NCR",
+      targetId: ncr114Id,
+      summary:
+        "NCR-114 opened — drive torque over UCL (stiff actuator) on an earlier SERVO-204 lot",
+      output: { severity: "major", characteristic: "drive_torque_Nm" },
+    },
+    {
+      daysAgo: 33,
+      actorType: "AGENT",
+      actorId: null,
+      actorLabel: "Root Cause agent",
+      action: "quality.rootcause",
+      targetType: "NCR",
+      targetId: ncr114Id,
+      summary:
+        "NCR-114 root cause: SERVO-204 actuator drive stiffness, traced to the supplier lot",
+      output: { rootCause: CODES.servoOld },
+    },
+    {
+      daysAgo: 31,
+      actorType: "HUMAN",
+      actorId: opsId,
+      actorLabel: opsLabel,
+      action: "ncr.contain",
+      targetType: "NCR",
+      targetId: ncr114Id,
+      summary:
+        "NCR-114 CONTAINED — quarantined the actuator lot; ECO-318 supersede SERVO-204→205 approved; supplier corrective action requested",
+      inputs: { disposition: "CONTAIN" },
+      output: {
+        status: "CONTAINED",
+        action: "lot quarantine + ECO-318 supersede",
+      },
+    },
     // NCR → ECO chain
     {
       daysAgo: 5,
@@ -267,7 +313,7 @@ export async function seedAudit(
 
   // AUDIT.3 enrichment (derived): AGENT entries carry a model + emitted confidence;
   // HUMAN decision entries (approve/advance/triage/raise) carry the approver.
-  const HUMAN_DECISION = /approve|advance|triage|raise/;
+  const HUMAN_DECISION = /approve|advance|triage|raise|contain/;
 
   let count = 0;
   for (const e of entries) {
