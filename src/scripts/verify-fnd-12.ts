@@ -3,7 +3,7 @@
  *
  * Run: `pnpm verify:fnd-12` (needs a migrated + seeded DB; DATABASE_URL set).
  *   STATIC: seed orchestrator + per-domain modules exist.
- *   DATA: counts + the SERVO/NCR-118/ECO-318/BMW/DLV-3312/SN-2196/Osei/p-13/HX-2
+ *   DATA: counts + the SERVO/NCR-118/ECO-318/Tier-1 Auto OEM/DLV-3312/SN-2196/Osei/p-13/HX-2
  *     chain, and tenant-orgId integrity.
  */
 import { existsSync } from "node:fs";
@@ -70,9 +70,9 @@ async function run(): Promise<void> {
       const n = await db.nCR.findFirst({ where: { code: "NCR-118" } });
       return !!n && n.severity === "CRITICAL" && /88421/.test(n.linkedTo);
     });
-    await check("ECO-318 present, affects BMW order", async () => {
+    await check("ECO-318 present, affects Tier-1 Auto OEM order", async () => {
       const e = await db.eCO.findFirst({ where: { code: "ECO-318" } });
-      return !!e && /BMW/i.test(e.affected);
+      return !!e && /Tier-1 Auto OEM/i.test(e.affected);
     });
     await check("DLV-3312 customs hold (EAR99)", async () => {
       const dl = await db.delivery.findFirst({ where: { code: "DLV-3312" } });
@@ -106,10 +106,10 @@ async function run(): Promise<void> {
           },
         })) >= 1,
     );
-    await check("HX-2 margin -2.1pt + Kawasaki overdue invoice", async () => {
+    await check("HX-2 margin -2.1pt + OEM-2 overdue invoice", async () => {
       const u = await db.unitEconomic.findFirst({ where: { product: "HX-2" } });
       const inv = await db.invoice.findFirst({
-        where: { account: "Kawasaki", status: "OVERDUE" },
+        where: { account: "OEM-2", status: "OVERDUE" },
       });
       return !!u && /-2\.1/.test(u.trend) && !!inv;
     });

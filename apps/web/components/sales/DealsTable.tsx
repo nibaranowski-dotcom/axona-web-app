@@ -3,7 +3,7 @@ import { DELIVERABILITY, fmtMoney, titleCase } from "./format";
 
 // Top deals with the agent-checked deliverability badge (Sales & CRM.dc.html) —
 // the signature artifact. The badge is DERIVED over Fulfillment + Manufacturing
-// (BMW → DLV-3312 hold + HX-2 line hold = At risk), rendered with a dot + ink
+// (Tier-1 Auto OEM → DLV-3312 hold + HX-2 line hold = At risk), rendered with a dot + ink
 // label (AA-safe) + the reason. Brand palette only.
 const COLS =
   "grid grid-cols-[1.2fr_1.7fr_0.9fr_1fr_1.2fr] items-center gap-3 px-5";

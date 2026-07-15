@@ -16,7 +16,7 @@ import { ExceptionFeed } from "./ExceptionFeed";
 // copilot reuses the GA.1 pane (seed + open — no second chat).
 
 const SUGGESTIONS = [
-  "What is blocking the BMW order?",
+  "What is blocking the Tier-1 Auto OEM order?",
   "Which exceptions ripple the widest?",
   "What is at risk this week?",
 ];

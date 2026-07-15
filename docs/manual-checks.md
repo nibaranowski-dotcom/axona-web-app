@@ -224,13 +224,13 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ## FND.12 — Cross-module narrative seed
 
 **Automated**
-- `pnpm db:seed` then `pnpm verify:fnd-12` — counts + the SERVO/NCR-118/ECO-318/BMW/DLV-3312/SN-2196/Osei/p-13/HX-2 chain + tenant-orgId integrity (15 checks).
+- `pnpm db:seed` then `pnpm verify:fnd-12` — counts + the SERVO/NCR-118/ECO-318/Tier-1 Auto OEM/DLV-3312/SN-2196/Osei/p-13/HX-2 chain + tenant-orgId integrity (15 checks).
 - Re-run `pnpm db:seed` and `pnpm verify:fnd-12` — identical counts (idempotent; clear-then-seed scoped to the demo org).
 - `pnpm typecheck` + root `tsc --noEmit -p tsconfig.json` clean.
 
 **Manual (docker compose up first; export DATABASE_URL)**
 - [ ] `pnpm --filter @axona/db db:seed` runs clean (fresh `prisma migrate reset` then seed also works).
-- [ ] In psql: `NCR-118.linkedTo` contains 'lot 88421'; `ECO-318.affected` mentions BMW; `DLV-3312` stage=CUSTOMS with EAR99 in riskState; `Invoice` Kawasaki=OVERDUE, BMW net-60.
+- [ ] In psql: `NCR-118.linkedTo` contains 'lot 88421'; `ECO-318.affected` mentions Tier-1 Auto OEM; `DLV-3312` stage=CUSTOMS with EAR99 in riskState; `Invoice` OEM-2=OVERDUE, Tier-1 Auto OEM net-60.
 - [ ] Counts: Module=22, Project=14, Machine=21 (8 FIXED), Agent=90 (~6 × 15 agent-bearing modules).
 - [ ] No tenant row has an orgId outside the demo/second org (`select distinct "orgId" from "Supplier"`).
 - [ ] Second org has only its own minimal rows (1 supplier).
@@ -238,8 +238,8 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 **Notes / decisions**
 - **Module count = 22, not 24.** The build-spec §1 module list (source of truth) and the PRD's own sidebar enumeration are both 22; the PRD's "24" counts the Workflow-detail + Project-files *screens*. `verify-fnd-12` asserts 22. If 24 nav modules are actually wanted, name the extra 2 and I'll add them.
 - Seeded via `dbForOrg(DEMO_ORG_ID)` (orgId injected; ISO.1 dogfooded). Org/Module/Users-bootstrap use bare `prisma`. Clear-then-seed is strictly scoped to the demo orgId (never a bare `deleteMany`); the `Org` row is kept (no reliance on cascade).
-- Relative dates throughout (SLA/AR aging stay live): WO-5521 SLA +6h, Kawasaki invoice −9d, DLV-3312 committed +21d, Osei cert +12d.
-- BMW / Kawasaki are in-app sample data (allowed §3.7); anonymize only on export (screen-export gate) — not here.
+- Relative dates throughout (SLA/AR aging stay live): WO-5521 SLA +6h, OEM-2 invoice −9d, DLV-3312 committed +21d, Osei cert +12d.
+- Account names are anonymized OEM labels (Tier-1 Auto OEM · OEM-2 …) everywhere — seed, app source, exports, docs (SEED.1). No real marque renders anywhere; the repo-wide `verify:seed-1` gate enforces zero real-company hits.
 - `File.embedding` left NULL (vectors are FILE.2). Seed files are run by tsx (not in the tsc `include`); they executed twice cleanly. The illustrative agent-run traces / workflows are minimal (full WF.* / AUDIT.3 later).
 
 ---
@@ -288,7 +288,7 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - [ ] No emoji; hairlines (no shadows); single lime signal; Archivo names + JetBrains Mono glyphs/labels.
 
 **Computed alert counts (seeded demo org, via dbForOrg):**
-`procurement 1 · quality 1 · fulfillment 1 · fleet 1 · field-service 1 · autonomy 1 · finance 1 · legal 1 · engineering 1 · security 2` — each traces to a seeded exception (PO awaiting approval, NCR-118, DLV-3312 EAR99, SN-2196 WATCH, WO-5521 SLA, INC-201, Kawasaki overdue, BMW SLA at-risk, ECO-318 in review, 2 open CVEs).
+`procurement 1 · quality 1 · fulfillment 1 · fleet 1 · field-service 1 · autonomy 1 · finance 1 · legal 1 · engineering 1 · security 2` — each traces to a seeded exception (PO awaiting approval, NCR-118, DLV-3312 EAR99, SN-2196 WATCH, WO-5521 SLA, INC-201, OEM-2 overdue, Tier-1 Auto OEM SLA at-risk, ECO-318 in review, 2 open CVEs).
 
 **Notes / decisions**
 - **21 tiles, not 22.** Mission Control (`/`) is the launcher itself, so it's not rendered as a tile (Cursor rule: no self-link). The PRD's "22 tiles" loosely counts all modules; the 21 exclude the current page. Search renders as a tile (→`/search`) in addition to the search field.
@@ -473,7 +473,7 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 **Manual (real key — ANTHROPIC_API_KEY set, docker up, ./dev.sh)**
 - [ ] On any shell screen, the right agent pane is the "Axona agent" (resize/collapse still work).
-- [ ] Ask "what's blocking the BMW order?" → reasoning streams; the answer cites objects (e.g. DLV-3312 / ECO-318) as chips that link to the object's route; no emoji in the text.
+- [ ] Ask "what's blocking the Tier-1 Auto OEM order?" → reasoning streams; the answer cites objects (e.g. DLV-3312 / ECO-318) as chips that link to the object's route; no emoji in the text.
 - [ ] Ask "place the replacement PO" / "draft a PO" → it declines and routes you to the Procurement agent; no tool acts (its set has no draft/gated tools).
 - [ ] Citations are real (link to existing routes), deduped, capped at 8; tools with no sources → no chips (never fabricated).
 - [ ] Matches design/prototypes/ agent pane; no emoji; hairlines; lime = signal. accessibility-review 0 violations.
@@ -488,7 +488,7 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ## CMD.1 — Command Center rollups API
 
 **Automated**
-- `pnpm verify:cmd-1` — lib + route exist; `kpisByModule` covers core modules; KPIs derive from seeded rows (procurement open POs > 0); exceptions present + shaped (url, sourceLabel, ripples[], severity ink/lime/green); the **full seeded narrative surfaces** — NCR-118 (critical → engineering/procurement/fulfillment), DLV-3312 customs hold (→ legal/finance), SN-2196 thermal (→ field-service), Osei cert-expiring (people → field-service), HX-2 margin (finance), BMW SLA at-risk (legal → autonomy), agent-drafted PO awaiting approval (procurement), p-13 canary regression (→ fleet); no red severities; critical ranked first; org isolation.
+- `pnpm verify:cmd-1` — lib + route exist; `kpisByModule` covers core modules; KPIs derive from seeded rows (procurement open POs > 0); exceptions present + shaped (url, sourceLabel, ripples[], severity ink/lime/green); the **full seeded narrative surfaces** — NCR-118 (critical → engineering/procurement/fulfillment), DLV-3312 customs hold (→ legal/finance), SN-2196 thermal (→ field-service), Osei cert-expiring (people → field-service), HX-2 margin (finance), Tier-1 Auto OEM SLA at-risk (legal → autonomy), agent-drafted PO awaiting approval (procurement), p-13 canary regression (→ fleet); no red severities; critical ranked first; org isolation.
 - `pnpm typecheck` (workspace + root) clean.
 
 **Manual (docker up, ./dev.sh)**
@@ -598,7 +598,7 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - `pnpm typecheck` clean.
 
 **Manual (./dev.sh, http://localhost:3001)**
-- [ ] `curl 'http://localhost:3001/api/engineering/ecos?stage=REVIEW'` returns ECO-318 (Supersede SERVO-204 → SERVO-205; affected: SERVO-204; NCR-118; BMW order; HX-2).
+- [ ] `curl 'http://localhost:3001/api/engineering/ecos?stage=REVIEW'` returns ECO-318 (Supersede SERVO-204 → SERVO-205; affected: SERVO-204; NCR-118; Tier-1 Auto OEM order; HX-2).
 - [ ] `curl http://localhost:3001/api/engineering/firmware` returns v4.2.2-rc (RC) + v4.2.1 (RELEASED).
 - [ ] `curl http://localhost:3001/api/engineering/compat` returns HX-1/HX-2 × v4.2.2-rc/v4.2.1 cells (cert / compatible / in-test).
 
@@ -614,7 +614,7 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - `pnpm typecheck` clean.
 
 **Manual (./dev.sh, http://localhost:3001/engineering)**
-- [ ] Matches Engineering.dc.html on the v2 shell — the **ECO stage board** (Draft→Review→Approved→Released) + the **HW↔firmware compat matrix** lead (signature artifacts). ECO-318 card in Review ("Supersede SERVO-204 → SERVO-205 (torque-comp)"; affected: SERVO-204; NCR-118; BMW order; HX-2).
+- [ ] Matches Engineering.dc.html on the v2 shell — the **ECO stage board** (Draft→Review→Approved→Released) + the **HW↔firmware compat matrix** lead (signature artifacts). ECO-318 card in Review ("Supersede SERVO-204 → SERVO-205 (torque-comp)"; affected: SERVO-204; NCR-118; Tier-1 Auto OEM order; HX-2).
 - [ ] Compat matrix: HX-1/HX-2 × v4.2.2-rc/v4.2.1; cert = green, compatible = neutral, in-test = lime. No red.
 - [ ] Firmware releases: v4.2.2-rc (RC — awaiting HX-1 cert before Fleet OTA), v4.2.1 (Released).
 - [ ] As ENGINEER/ADMIN, an ECO card shows Submit/Approve/Release → advances a stage (RELEASE is the human step; attributed via trace line). As VIEWER the button is hidden (server action requireRole-throws — defense in depth).
@@ -636,15 +636,15 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ## FUL.1 — Fulfillment data/API
 
 **Automated**
-- `pnpm verify:ful-1` — route (deliveries); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getFulfillmentData returns deliveries with stage/committed-vs-eta/risk, DLV-3312 in CUSTOMS (BMW · Osaka · EAR99 hold · atRisk), the 7-stage pipeline rollup (ALLOC→ACTIVE), the holds list; org isolation (unknown org → empty).
+- `pnpm verify:ful-1` — route (deliveries); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getFulfillmentData returns deliveries with stage/committed-vs-eta/risk, DLV-3312 in CUSTOMS (Tier-1 Auto OEM · Osaka · EAR99 hold · atRisk), the 7-stage pipeline rollup (ALLOC→ACTIVE), the holds list; org isolation (unknown org → empty).
 - `pnpm typecheck` clean.
 
 **Manual (./dev.sh, http://localhost:3001)**
-- [ ] `curl 'http://localhost:3001/api/fulfillment/deliveries?stage=CUSTOMS'` returns DLV-3312 (BMW, Osaka JP, 24× HX-2, EAR99 customs hold).
-- [ ] `curl http://localhost:3001/api/fulfillment/deliveries` returns DLV-3312 + DLV-3309 (Kawasaki, Freight, on-track).
+- [ ] `curl 'http://localhost:3001/api/fulfillment/deliveries?stage=CUSTOMS'` returns DLV-3312 (Tier-1 Auto OEM, Osaka JP, 24× HX-2, EAR99 customs hold).
+- [ ] `curl http://localhost:3001/api/fulfillment/deliveries` returns DLV-3312 + DLV-3309 (OEM-2, Freight, on-track).
 
 **Notes**
-- Read/API only over the existing Delivery model (no schema change, no mutations — the delivery-pipeline screen is FUL.2). All via getCurrentUser → dbForOrg; paginated with paginateArgs/pageResult; cap 200 (list 50). Continues the narrative ECO-318 → BMW order → DLV-3312 Osaka customs hold. `atRisk` = riskState not empty/"on-track"; `late` = etaDate after committedDate; pipeline = count per DeliveryStage (all 7).
+- Read/API only over the existing Delivery model (no schema change, no mutations — the delivery-pipeline screen is FUL.2). All via getCurrentUser → dbForOrg; paginated with paginateArgs/pageResult; cap 200 (list 50). Continues the narrative ECO-318 → Tier-1 Auto OEM order → DLV-3312 Osaka customs hold. `atRisk` = riskState not empty/"on-track"; `late` = etaDate after committedDate; pipeline = count per DeliveryStage (all 7).
 
 ---
 
@@ -655,7 +655,7 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - `pnpm typecheck` clean.
 
 **Manual (./dev.sh, http://localhost:3001/fulfillment)**
-- [ ] Matches Fulfillment.dc.html on the v2 shell — the **delivery pipeline** leads; each card shows the ALLOC→ACTIVE station track. **DLV-3312 (BMW · Osaka)** sits at **Customs, blocked (ink + cut-out square), ink progress fill, "At risk"** — the EAR99 hold. Others span ALLOC/CRATE/FREIGHT/ONSITE/COMMISSION/ACTIVE. No red.
+- [ ] Matches Fulfillment.dc.html on the v2 shell — the **delivery pipeline** leads; each card shows the ALLOC→ACTIVE station track. **DLV-3312 (Tier-1 Auto OEM · Osaka)** sits at **Customs, blocked (ink + cut-out square), ink progress fill, "At risk"** — the EAR99 hold. Others span ALLOC/CRATE/FREIGHT/ONSITE/COMMISSION/ACTIVE. No red.
 - [ ] Shipment panel (DLV-3312, real fields; hold/late rows in ink) + Commissioning panel (an on-site/commission delivery, real stage progress).
 - [ ] The Fulfillment agents appear in the module-aware pane; "Schedule delivery" seeds the agent.
 - [ ] accessibility-review 0 violations.
@@ -677,11 +677,11 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ## FLEET.1 — Fleet data/API
 
 **Automated**
-- `pnpm verify:fleet-1` — routes (robots/telemetry); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getFleetData returns robots (SN-2196 WATCH · HX-2 · BMW · Site-3 · alert), per-robot telemetry series (SN-2196 thermal, ordered), fleet rollup (avg uptime · byStatus · firmware), the predictive-alert list (incl. SN-2196); org isolation (unknown org → empty).
+- `pnpm verify:fleet-1` — routes (robots/telemetry); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getFleetData returns robots (SN-2196 WATCH · HX-2 · Tier-1 Auto OEM · Site-3 · alert), per-robot telemetry series (SN-2196 thermal, ordered), fleet rollup (avg uptime · byStatus · firmware), the predictive-alert list (incl. SN-2196); org isolation (unknown org → empty).
 - `pnpm typecheck` clean.
 
 **Manual (./dev.sh, http://localhost:3001)**
-- [ ] `curl 'http://localhost:3001/api/fleet/robots?status=WATCH'` returns SN-2196 (HX-2, BMW, Site-3, uptime, firmware, lat/lng).
+- [ ] `curl 'http://localhost:3001/api/fleet/robots?status=WATCH'` returns SN-2196 (HX-2, Tier-1 Auto OEM, Site-3, uptime, firmware, lat/lng).
 - [ ] `curl 'http://localhost:3001/api/fleet/telemetry?robotId=<SN-2196 id>'` returns the battery_temp_c climb.
 
 **Notes**
@@ -796,16 +796,16 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ## FIN.1 — Finance data/API
 
 **Automated**
-- `pnpm verify:fin-1` — routes (ledger/invoices/unit-economics); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getFinanceData returns the revenue split (lumpy hardware vs ratable RaaS), unit economics (HX-2 margin −2.1pt from ECO-318, parsed marginDeltaPt), invoices with a derived AR-aging bucket (BMW net-60 current + Kawasaki overdue), the rollup (recognized revenue, AR total + overdue, netIncome; cash/runway flagged null); org isolation (unknown org → empty).
+- `pnpm verify:fin-1` — routes (ledger/invoices/unit-economics); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getFinanceData returns the revenue split (lumpy hardware vs ratable RaaS), unit economics (HX-2 margin −2.1pt from ECO-318, parsed marginDeltaPt), invoices with a derived AR-aging bucket (Tier-1 Auto OEM net-60 current + OEM-2 overdue), the rollup (recognized revenue, AR total + overdue, netIncome; cash/runway flagged null); org isolation (unknown org → empty).
 - `pnpm typecheck` clean.
 
 **Manual (./dev.sh, http://localhost:3001)**
 - [ ] `curl 'http://localhost:3001/api/finance/ledger?period=2026-Q2'` returns the Q2 ledger (Hardware/RaaS revenue, COGS, Opex).
-- [ ] `curl 'http://localhost:3001/api/finance/invoices?status=OVERDUE'` returns Kawasaki INV-7702 (overdue, agingBucket 1-30).
+- [ ] `curl 'http://localhost:3001/api/finance/invoices?status=OVERDUE'` returns OEM-2 INV-7702 (overdue, agingBucket 1-30).
 - [ ] `curl http://localhost:3001/api/finance/unit-economics` returns HX-2 (marginPct 22.9, marginDeltaPt −2.1) + HX-1.
 
 **Notes / flags**
-- Read/API only over LedgerEntry/Invoice/UnitEconomic (no schema change, no mutations — the P&L / unit-economics / AR screen is FIN.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; aggregates computed in JS over org-scoped findMany (small data; keeps the dbForOrg org-scope guarantee — no raw SQL that could bypass it); caps (ledger/invoices 500, UE 200 / lists 50–100). Continues the BMW thread: HX-2 −2.1pt from ECO-318 · BMW net-60 (current) + Kawasaki (overdue). `recognition` = lumpy (hardware, recognized at commissioning) vs ratable (RaaS); AR `agingBucket` = current / 1-30 / 31-60 / 61-90 / 90+ / paid from days-past-`dueDate`.
+- Read/API only over LedgerEntry/Invoice/UnitEconomic (no schema change, no mutations — the P&L / unit-economics / AR screen is FIN.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; aggregates computed in JS over org-scoped findMany (small data; keeps the dbForOrg org-scope guarantee — no raw SQL that could bypass it); caps (ledger/invoices 500, UE 200 / lists 50–100). Continues the Tier-1 Auto OEM thread: HX-2 −2.1pt from ECO-318 · Tier-1 Auto OEM net-60 (current) + OEM-2 (overdue). `recognition` = lumpy (hardware, recognized at commissioning) vs ratable (RaaS); AR `agingBucket` = current / 1-30 / 31-60 / 61-90 / 90+ / paid from days-past-`dueDate`.
 - **Flag: cash / runway are not derivable from the ledger** (no cash-balance or burn entries) → `rollup.cash` / `rollup.runwayMonths` return `null`; `netIncome` (revenue − COGS − Opex) is the derivable rollup. A cash/burn model = schema addition (deferred to FIN.2 notes).
 
 ### Deferred decisions (FIN.1)
@@ -816,17 +816,17 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ## FIN.2 — Finance screen
 
 **Automated**
-- `pnpm verify:fin-2` — route + components (FinanceView/RevenueChart/WorkingCapital/UnitEconomics/Receivables); renders getFinanceData; two-revenue-engine chart (hardware + RaaS, signature); per-unit economics + AR-aging tables; read-only (no mutations); no red/emoji/raw hex; HX-2 −2.1pt + BMW net-60 + Kawasaki overdue; chart full (≥6 periods, both engines); tables full (≥3 products, ≥3 invoices).
+- `pnpm verify:fin-2` — route + components (FinanceView/RevenueChart/WorkingCapital/UnitEconomics/Receivables); renders getFinanceData; two-revenue-engine chart (hardware + RaaS, signature); per-unit economics + AR-aging tables; read-only (no mutations); no red/emoji/raw hex; HX-2 −2.1pt + Tier-1 Auto OEM net-60 + OEM-2 overdue; chart full (≥6 periods, both engines); tables full (≥3 products, ≥3 invoices).
 - `pnpm typecheck` clean.
 
 **Manual (./dev.sh, http://localhost:3001/finance)**
-- [ ] Matches Finance.dc.html on the v2 shell — the **two-engine recognized-revenue chart** (hardware ink / RaaS lime, stacked per month), **per-unit economics** (HX-2 margin bar + ▼ −2.1pt · ECO-318), **AR-aging receivables** (BMW net-60 "Current", Kawasaki "62d overdue" ink). No red.
-- [ ] HX-2 −2.1pt shows in the topbar pill + the unit-economics trend; BMW + Kawasaki surface in AR.
+- [ ] Matches Finance.dc.html on the v2 shell — the **two-engine recognized-revenue chart** (hardware ink / RaaS lime, stacked per month), **per-unit economics** (HX-2 margin bar + ▼ −2.1pt · ECO-318), **AR-aging receivables** (Tier-1 Auto OEM net-60 "Current", OEM-2 "62d overdue" ink). No red.
+- [ ] HX-2 −2.1pt shows in the topbar pill + the unit-economics trend; Tier-1 Auto OEM + OEM-2 surface in AR.
 - [ ] Finance agents appear in the module-aware pane; "Run month-end close" seeds the fin agent.
 - [ ] accessibility-review 0 violations.
 
 **Notes / flags**
-- Read-only reads over FIN.1 getFinanceData (org-scoped) — extended with `revenueByPeriod` (hardware+RaaS per period) for the chart. Enriched seed (FND.12, idempotent): 8-month P&L ledger + 4 products (HX-2 −2.1pt kept) + 4 AR invoices (BMW/Kawasaki kept, +Maersk due-soon, +Tesla current) + a real fin-orchestrator AgentRun.
+- Read-only reads over FIN.1 getFinanceData (org-scoped) — extended with `revenueByPeriod` (hardware+RaaS per period) for the chart. Enriched seed (FND.12, idempotent): 8-month P&L ledger + 4 products (HX-2 −2.1pt kept) + 4 AR invoices (Tier-1 Auto OEM/OEM-2 kept, +OEM-4 due-soon, +OEM-3 current) + a real fin-orchestrator AgentRun.
 - **Design deviations flagged (data-shape mismatch — not substituted silently):**
   1. The design's **Cash & runway** panel + Cash/Runway stats need a treasury/burn feed the ledger doesn't carry (`rollup.cash`/`runwayMonths` = null) → the right card is replaced with the derivable **Working capital** view (AR open, overdue, net income); stats show **ARR (RaaS×12)** + **Net income** instead of Cash/Runway. A cash/burn model = schema addition (deferred, per FIN.1).
   2. **"Run month-end close"** seeds the fin agent (proposes); the real close (revenue recognition + period lock) is a **gated write** needing a period-close model (no `status` field on a period to transition without a schema change) — deferred. Kept read-only per the "no new columns" guardrail.
@@ -840,33 +840,33 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ## LEGAL.1 — Legal data/API
 
 **Automated**
-- `pnpm verify:legal-1` — routes (obligations/export-licenses/matters); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getLegalData returns obligations (BMW 99.5% fleet SLA AT_RISK from the autonomy regression), export licenses (DLV-3312 EAR99 HOLD), legal matters (ECO-318 IP → engineering, INC-201 liability → autonomy) with source-module links, the rollup; org isolation (unknown org → empty).
+- `pnpm verify:legal-1` — routes (obligations/export-licenses/matters); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getLegalData returns obligations (Tier-1 Auto OEM 99.5% fleet SLA AT_RISK from the autonomy regression), export licenses (DLV-3312 EAR99 HOLD), legal matters (ECO-318 IP → engineering, INC-201 liability → autonomy) with source-module links, the rollup; org isolation (unknown org → empty).
 - `pnpm typecheck` clean.
 
 **Manual (./dev.sh, http://localhost:3001)**
-- [ ] `curl 'http://localhost:3001/api/legal/obligations?state=AT_RISK'` returns BMW 99.5% fleet SLA (actual 99.3%, autonomy regression).
+- [ ] `curl 'http://localhost:3001/api/legal/obligations?state=AT_RISK'` returns Tier-1 Auto OEM 99.5% fleet SLA (actual 99.3%, autonomy regression).
 - [ ] `curl http://localhost:3001/api/legal/export-licenses` returns EAR99-DLV-3312 (Osaka JP, HOLD).
 - [ ] `curl 'http://localhost:3001/api/legal/matters?status=OPEN'` returns INC-201 liability (→ autonomy).
 
 **Notes**
-- Read/API only over Obligation/ExportLicense/LegalMatter (no schema change, no mutations — the screen is LEGAL.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; caps (200 / lists 50). Closes the BMW thread: 99.5% SLA at-risk (autonomy regression) · DLV-3312 EAR99 export hold · ECO-318 patent (IP) + INC-201 (liability) matters. `atRisk` = state contains RISK · `onHold` = state HOLD · `open` = status not closed/resolved/cleared. Matter `module` inferred from the linkedTo prefix (ECO→engineering · INC→autonomy · NCR→quality · DLV→fulfillment · PO→procurement · WO→field-service · CVE→security) — the cross-module link back to the source artifact.
+- Read/API only over Obligation/ExportLicense/LegalMatter (no schema change, no mutations — the screen is LEGAL.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; caps (200 / lists 50). Closes the Tier-1 Auto OEM thread: 99.5% SLA at-risk (autonomy regression) · DLV-3312 EAR99 export hold · ECO-318 patent (IP) + INC-201 (liability) matters. `atRisk` = state contains RISK · `onHold` = state HOLD · `open` = status not closed/resolved/cleared. Matter `module` inferred from the linkedTo prefix (ECO→engineering · INC→autonomy · NCR→quality · DLV→fulfillment · PO→procurement · WO→field-service · CVE→security) — the cross-module link back to the source artifact.
 
 ---
 
 ## LEGAL.2 — Legal screen
 
 **Automated**
-- `pnpm verify:legal-2` — route + components (LegalView/ObligationsPanel/ExportControl/MattersTable); renders getLegalData; obligations panel (state vs live ops); matters table (source-module links); read-only (no mutations); no red/emoji/raw hex; BMW SLA at-risk + DLV-3312 EAR99 hold; ECO-318→engineering + INC-201→autonomy; renders full (≥3 obligations, ≥3 licenses, ≥4 matters).
+- `pnpm verify:legal-2` — route + components (LegalView/ObligationsPanel/ExportControl/MattersTable); renders getLegalData; obligations panel (state vs live ops); matters table (source-module links); read-only (no mutations); no red/emoji/raw hex; Tier-1 Auto OEM SLA at-risk + DLV-3312 EAR99 hold; ECO-318→engineering + INC-201→autonomy; renders full (≥3 obligations, ≥3 licenses, ≥4 matters).
 - `pnpm typecheck` clean.
 
 **Manual (./dev.sh, http://localhost:3001/legal)**
-- [ ] Matches Legal.dc.html on the v2 shell — **contract obligations** (BMW 99.5% SLA "At risk" ink · Maersk/Tesla "Met" · Kawasaki "Review") + **export control** (DLV-3312 EAR99 "Hold" ink dot · others "Clear"/"Pending") + **matters & compliance** table (INC-201→Autonomy, ECO-318→Engineering, EU Reg→Quality, etc.). No red.
-- [ ] BMW SLA at-risk + DLV-3312 EAR99 hold surface; matters link back to their source module.
+- [ ] Matches Legal.dc.html on the v2 shell — **contract obligations** (Tier-1 Auto OEM 99.5% SLA "At risk" ink · OEM-4/OEM-3 "Met" · OEM-2 "Review") + **export control** (DLV-3312 EAR99 "Hold" ink dot · others "Clear"/"Pending") + **matters & compliance** table (INC-201→Autonomy, ECO-318→Engineering, EU Reg→Quality, etc.). No red.
+- [ ] Tier-1 Auto OEM SLA at-risk + DLV-3312 EAR99 hold surface; matters link back to their source module.
 - [ ] Legal agents appear in the module-aware pane; "New matter" seeds the legal agent.
 - [ ] accessibility-review 0 violations.
 
 **Notes / flags**
-- Read-only reads over LEGAL.1 getLegalData (org-scoped). Enriched seed (FND.12, idempotent): 4 obligations (BMW at-risk kept) + 4 export licenses (DLV-3312 EAR99 hold kept) + 5 matters (ECO-318/INC-201 kept, +REG/CONTRACT/EXPORT) + a real legal-orchestrator AgentRun.
+- Read-only reads over LEGAL.1 getLegalData (org-scoped). Enriched seed (FND.12, idempotent): 4 obligations (Tier-1 Auto OEM at-risk kept) + 4 export licenses (DLV-3312 EAR99 hold kept) + 5 matters (ECO-318/INC-201 kept, +REG/CONTRACT/EXPORT) + a real legal-orchestrator AgentRun.
 - **Design deviations flagged (data-shape mismatch — not substituted silently):**
   1. Stat **"Active contracts"** needs a Contract model the schema doesn't carry → **Obligations tracked** fills that slot. Adding a contracts model = schema addition (deferred).
   2. **"New matter"** seeds the legal agent (proposes); creating a LegalMatter is a **gated write** (propose→approve, would gate ADMIN/OPS — there is no LEGAL role in the enum) — deferred, kept read-only per the "no new columns / AI-proposes" guardrails.
@@ -1016,15 +1016,15 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ## SALES.1 — Sales data/API
 
 **Automated**
-- `pnpm verify:sales-1` — routes (deals/forecast); lib org-scoped (dbForOrg) + paginated (FND.11); deliverability composes over FUL.1 + MFG.1 (reuses libs); moat RBAC.4 + AUDIT.3 seams (agent-drafted only); read-only (no mutations); getSalesData funnel binds across all 5 stages; weighted forecast + pipeline value bind; BMW deliverability resolves AT_RISK through FUL + MFG; deliverability spread + at-risk count; listDeals paginates + filters by stage; org isolation.
+- `pnpm verify:sales-1` — routes (deals/forecast); lib org-scoped (dbForOrg) + paginated (FND.11); deliverability composes over FUL.1 + MFG.1 (reuses libs); moat RBAC.4 + AUDIT.3 seams (agent-drafted only); read-only (no mutations); getSalesData funnel binds across all 5 stages; weighted forecast + pipeline value bind; Tier-1 Auto OEM deliverability resolves AT_RISK through FUL + MFG; deliverability spread + at-risk count; listDeals paginates + filters by stage; org isolation.
 - `pnpm typecheck` clean · `verify-ful-1` / `verify-mfg-1` / `verify-proc-1` stay green.
 
 **Manual (./dev.sh, http://localhost:3001)**
-- [ ] `curl 'http://localhost:3001/api/sales/deals?stage=COMMIT'` returns the BMW deal (HX-2 ×24, $4.8M).
-- [ ] `curl http://localhost:3001/api/sales/forecast` returns the funnel (all 5 stages), weighted forecast, deliverability spread; BMW deliverability AT_RISK with a reason referencing DLV-3312 + the HX-2 line hold.
+- [ ] `curl 'http://localhost:3001/api/sales/deals?stage=COMMIT'` returns the Tier-1 Auto OEM deal (HX-2 ×24, $4.8M).
+- [ ] `curl http://localhost:3001/api/sales/forecast` returns the funnel (all 5 stages), weighted forecast, deliverability spread; Tier-1 Auto OEM deliverability AT_RISK with a reason referencing DLV-3312 + the HX-2 line hold.
 
 **Notes**
-- Read/API only over the existing Deal model (no schema change, no mutations — the pipeline screen is SALES.2). Deal list via getCurrentUser → dbForOrg + paginated; the funnel/forecast summary via getSalesData. The **DELIVERABILITY badge is DERIVED, not the stored string**: getSalesData composes **FUL.1** (`getFulfillmentData` — the deal account's delivery hold/late) + **MFG.1** (`getManufacturingData` — a line hold on the deal's product). **Through-line preserved:** BMW → DLV-3312 EAR99 hold (FUL) + HX2-0208 line hold (MFG, ECO-318/lot-88421) → **AT_RISK +3w**. Deals with no ops commitment yet fall back to the stored agent-checked feasibility. Weighted forecast = Σ(value × stage-probability) [QUALIFY .1 · DEMO .25 · PROPOSAL .5 · NEGOTIATION .7 · COMMIT .9].
+- Read/API only over the existing Deal model (no schema change, no mutations — the pipeline screen is SALES.2). Deal list via getCurrentUser → dbForOrg + paginated; the funnel/forecast summary via getSalesData. The **DELIVERABILITY badge is DERIVED, not the stored string**: getSalesData composes **FUL.1** (`getFulfillmentData` — the deal account's delivery hold/late) + **MFG.1** (`getManufacturingData` — a line hold on the deal's product). **Through-line preserved:** Tier-1 Auto OEM → DLV-3312 EAR99 hold (FUL) + HX2-0208 line hold (MFG, ECO-318/lot-88421) → **AT_RISK +3w**. Deals with no ops commitment yet fall back to the stored agent-checked feasibility. Weighted forecast = Σ(value × stage-probability) [QUALIFY .1 · DEMO .25 · PROPOSAL .5 · NEGOTIATION .7 · COMMIT .9].
 - **MOAT / gating:** CPQ config, contracts, forecast commits are **agent-DRAFTED/proposed only** — `/// RBAC.4` + `/// AUDIT.3` seams; no event-log/confidence/approver columns.
 
 ### Deferred decisions (SALES.1)
@@ -1037,12 +1037,12 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ## SALES.2 — Sales & CRM screen
 
 **Automated**
-- `pnpm verify:sales-2` — route + components (SalesView/PipelineFunnel/ForecastPanel/DealsTable); renders getSalesData; deals table binds the derived deliverability badge + reason; funnel + forecast panels bind; CPQ/new-deal is agent-proposed (no live write); no red/emoji/raw hex; funnel full (5 stages, weighted < pipeline); BMW deliverability AT_RISK resolves through FUL/MFG on-screen; deliverability spread has a mix.
+- `pnpm verify:sales-2` — route + components (SalesView/PipelineFunnel/ForecastPanel/DealsTable); renders getSalesData; deals table binds the derived deliverability badge + reason; funnel + forecast panels bind; CPQ/new-deal is agent-proposed (no live write); no red/emoji/raw hex; funnel full (5 stages, weighted < pipeline); Tier-1 Auto OEM deliverability AT_RISK resolves through FUL/MFG on-screen; deliverability spread has a mix.
 - CI gate (`pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm verify:all`) green · `accessibility-review` 0 · SALES.1/FUL.1/MFG.1 stay green.
 
 **Manual (./dev.sh, http://localhost:3001/sales)**
-- [ ] Matches Sales & CRM.dc.html on the v2 shell — the **pipeline funnel** (5 stages, Commit lime) + **Q3 forecast** (weighted commit vs best-case, BMW the swing) + the **top-deals table** with the agent-checked **deliverability badge** (BMW **At risk** ink, reason "DLV-3312 EAR99 customs hold · HX-2 line hold"). AT_RISK in ink, never red.
-- [ ] BMW deliverability AT_RISK reads on-screen (derived through FUL/MFG, not a hardcoded badge); "New deal" seeds the crm agent; Sales agents pane populated.
+- [ ] Matches Sales & CRM.dc.html on the v2 shell — the **pipeline funnel** (5 stages, Commit lime) + **Q3 forecast** (weighted commit vs best-case, Tier-1 Auto OEM the swing) + the **top-deals table** with the agent-checked **deliverability badge** (Tier-1 Auto OEM **At risk** ink, reason "DLV-3312 EAR99 customs hold · HX-2 line hold"). AT_RISK in ink, never red.
+- [ ] Tier-1 Auto OEM deliverability AT_RISK reads on-screen (derived through FUL/MFG, not a hardcoded badge); "New deal" seeds the crm agent; Sales agents pane populated.
 - [ ] accessibility-review 0 violations.
 
 **Notes / flags**
@@ -1127,7 +1127,7 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - [ ] accessibility-review 0 violations.
 
 **Notes / flags**
-- Read-only over Project + File (no schema change). getProjectsData groups module-separated, parses the members Json (agent count + human names), surfaces the **file COUNT** + last activity + a derived **needs-attention** flag (BLOCKED / IN_REVIEW), and rolls up. Seed (FND.12) = 14 projects across modules, member mixes varied (1–2 agents + 1–3 humans), files present, statuses varied, tied to the ECO-318/NCR-118/SERVO-205/BMW·DLV-3312 through-line. Create-project / add-file / assign are **agent-DRAFTED only** — `/// RBAC.4` + `/// AUDIT.3` seams; no live write.
+- Read-only over Project + File (no schema change). getProjectsData groups module-separated, parses the members Json (agent count + human names), surfaces the **file COUNT** + last activity + a derived **needs-attention** flag (BLOCKED / IN_REVIEW), and rolls up. Seed (FND.12) = 14 projects across modules, member mixes varied (1–2 agents + 1–3 humans), files present, statuses varied, tied to the ECO-318/NCR-118/SERVO-205/Tier-1 Auto OEM·DLV-3312 through-line. Create-project / add-file / assign are **agent-DRAFTED only** — `/// RBAC.4` + `/// AUDIT.3` seams; no live write.
 - **Design deviations flagged:**
   1. **The per-project file MATRIX (opening a project → AI-extracted columns) is MTX.2** — a separate later story blocked on the files pipeline. PROJ.1 shows the file COUNT only; a project row seeds the Axona agent to summarize (no navigation to a matrix, no extraction built).
   2. The design's pane "Ask about: All projects / Blocked only" scope chips are pane-specific content; the shared pane is generic infra, so it auto-loads the **Axona agent (GA.1)** with cross-project scope (the scope chips aren't replicated).
@@ -1216,7 +1216,7 @@ SRCH.5's `moduleSearch` + graceful degradation stay as defense-in-depth, but no 
 - CI gate green (incl. `pnpm build`); verify:all green; `accessibility-review` 0 on /search.
 
 **Manual (./dev.sh, http://localhost:3001)**
-- [ ] `/agents` → ask the Axona agent a cross-module question ("what is blocking the BMW order?") → the trace's `searchOperations` returns results (no `42601`), and the agent answers from real records.
+- [ ] `/agents` → ask the Axona agent a cross-module question ("what is blocking the Tier-1 Auto OEM order?") → the trace's `searchOperations` returns results (no `42601`), and the agent answers from real records.
 - [ ] `/search` (or ⌘K) → type `quality` → full FTS results (Quality module + agents + files), **no** "full-text search temporarily degraded" notice.
 - [ ] Drop `tsv` (`ALTER TABLE "SearchDoc" DROP COLUMN "tsv" CASCADE;`) → `pro` still surfaces Procurement (SRCH.5); `pnpm db:seed` restores full FTS.
 

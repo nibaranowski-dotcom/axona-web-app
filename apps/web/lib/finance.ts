@@ -3,8 +3,8 @@ import { dbForOrg, paginateArgs, pageResult } from "@axona/db";
 // FIN.1 — Finance read/API layer (build-spec §4.20, §6). Read-only over the
 // existing LedgerEntry / Invoice / UnitEconomic models: no schema change, no
 // mutations (the P&L / unit-economics / AR screen is FIN.2). Org-scoped via
-// dbForOrg; lists paginated with the FND.11 helpers. Continues the BMW thread:
-// HX-2 margin −2.1pt from ECO-318 · BMW net-60 + Kawasaki overdue.
+// dbForOrg; lists paginated with the FND.11 helpers. Continues the Tier-1 Auto OEM thread:
+// HX-2 margin −2.1pt from ECO-318 · Tier-1 Auto OEM net-60 + OEM-2 overdue.
 
 const LEDGER_CAP = 500;
 const INVOICE_CAP = 500;
@@ -130,7 +130,7 @@ const INVOICE_SELECT = {
  * Everything the P&L / unit-economics / AR screen (FIN.2) needs, org-scoped and
  * read-only: the revenue split (lumpy hardware recognized at commissioning vs
  * ratable RaaS), unit economics (HX-2 margin −2.1pt from ECO-318), invoices with
- * a derived AR-aging bucket (BMW net-60 current + Kawasaki overdue), and a rollup.
+ * a derived AR-aging bucket (Tier-1 Auto OEM net-60 current + OEM-2 overdue), and a rollup.
  */
 export async function getFinanceData(orgId: string): Promise<FinanceData> {
   const db = dbForOrg(orgId);

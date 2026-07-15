@@ -90,17 +90,22 @@ async function run(): Promise<void> {
           /ECO-318/.test(u.trend)
         );
       });
-      await check("BMW net-60 present (current, not overdue)", () => {
-        const inv = data.invoices.find((i) => i.account === "BMW");
-        return (
-          !!inv &&
-          inv.terms === "net-60" &&
-          inv.overdue === false &&
-          inv.agingBucket === "current"
-        );
-      });
-      await check("Kawasaki overdue with an AR-aging bucket", () => {
-        const inv = data.invoices.find((i) => i.account === "Kawasaki");
+      await check(
+        "Tier-1 Auto OEM net-60 present (current, not overdue)",
+        () => {
+          const inv = data.invoices.find(
+            (i) => i.account === "Tier-1 Auto OEM",
+          );
+          return (
+            !!inv &&
+            inv.terms === "net-60" &&
+            inv.overdue === false &&
+            inv.agingBucket === "current"
+          );
+        },
+      );
+      await check("OEM-2 overdue with an AR-aging bucket", () => {
+        const inv = data.invoices.find((i) => i.account === "OEM-2");
         return (
           !!inv &&
           inv.overdue === true &&

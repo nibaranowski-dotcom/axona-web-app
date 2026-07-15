@@ -93,17 +93,22 @@ async function run(): Promise<void> {
       failed++;
     } else {
       const data = await getFinanceData(org.id);
-      await check("HX-2 −2.1pt + BMW net-60 + Kawasaki overdue surface", () => {
-        const hx2 = data.unitEconomics.find((u) => u.product === "HX-2");
-        const bmw = data.invoices.find((i) => i.account === "BMW");
-        const kaw = data.invoices.find((i) => i.account === "Kawasaki");
-        return (
-          hx2?.marginDeltaPt === -2.1 &&
-          bmw?.terms === "net-60" &&
-          bmw.overdue === false &&
-          kaw?.overdue === true
-        );
-      });
+      await check(
+        "HX-2 −2.1pt + Tier-1 Auto OEM net-60 + OEM-2 overdue surface",
+        () => {
+          const hx2 = data.unitEconomics.find((u) => u.product === "HX-2");
+          const bmw = data.invoices.find(
+            (i) => i.account === "Tier-1 Auto OEM",
+          );
+          const kaw = data.invoices.find((i) => i.account === "OEM-2");
+          return (
+            hx2?.marginDeltaPt === -2.1 &&
+            bmw?.terms === "net-60" &&
+            bmw.overdue === false &&
+            kaw?.overdue === true
+          );
+        },
+      );
       await check(
         "revenue chart renders full — ≥6 periods, both engines",
         () => {

@@ -14,6 +14,7 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { BANNED_RE } from "./lib/anonymization";
 
 let passed = 0;
 let failed = 0;
@@ -36,9 +37,9 @@ const read = (p: string) =>
 
 // The five v2 tokens are the ONLY hex allowed (normalised, lowercase).
 const ALLOWED_HEX = new Set(["fff", "f4f3ef", "0a0a0a", "c6f24f", "1f9e6f"]);
-// Real companies/people that must never appear (anonymization gate).
-const BANNED =
-  /\b(BMW|Kawasaki|Tesla|Maersk|Siemens|Foxconn|Toyota|Boston Dynamics|Nvidia|Harmonic Drive)\b/i;
+// Real companies/people that must never appear (anonymization gate) — the banned
+// list is the shared SEED.1 source of truth (src/scripts/lib/anonymization.ts).
+const BANNED = BANNED_RE;
 // Emoji + dingbats (✓/✗) — but NOT the brand arrow (→, U+2192) or math ops.
 const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
 

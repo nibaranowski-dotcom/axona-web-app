@@ -69,7 +69,7 @@ export interface FleetData {
 
 /**
  * Everything the Fleet map/telemetry screen (FLEET.2) needs, org-scoped and
- * read-only: every deployed robot (SN-2196 HX-2 BMW Site-3 WATCH), recent
+ * read-only: every deployed robot (SN-2196 HX-2 Tier-1 Auto OEM Site-3 WATCH), recent
  * telemetry series per robot+metric (SN-2196 thermal climb), a fleet rollup (avg
  * uptime, counts by status, OTA firmware spread), and the predictive-alert list
  * (WATCH/FAULT → hand off to Field Service).

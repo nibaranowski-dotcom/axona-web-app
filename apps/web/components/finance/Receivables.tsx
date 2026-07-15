@@ -4,7 +4,7 @@ import { AGING_BADGE, agingLabel, fmtMoney } from "./format";
 
 // Receivables / AR aging (Finance.dc.html) — invoice · account·source · amount ·
 // terms · aging pill (overdue = ink, due-soon = lime, current = neutral-green) ·
-// a gated credit-note action (RBAC.5). BMW net-60 (not due) + Kawasaki overdue
+// a gated credit-note action (RBAC.5). Tier-1 Auto OEM net-60 (not due) + OEM-2 overdue
 // surface here. Brand palette only.
 const COLS =
   "grid grid-cols-[1fr_1.4fr_1fr_0.9fr_1.1fr_auto] items-center gap-3 px-5";

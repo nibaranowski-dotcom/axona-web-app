@@ -85,11 +85,16 @@ async function run(): Promise<void> {
       failed++;
     } else {
       const data = await getLegalData(org.id);
-      await check("BMW SLA at-risk + DLV-3312 EAR99 hold surface", () => {
-        const bmw = data.obligations.find((o) => o.account === "BMW");
-        const dlv = data.exportLicenses.find((e) => /DLV-3312/.test(e.code));
-        return bmw?.atRisk === true && dlv?.onHold === true;
-      });
+      await check(
+        "Tier-1 Auto OEM SLA at-risk + DLV-3312 EAR99 hold surface",
+        () => {
+          const bmw = data.obligations.find(
+            (o) => o.account === "Tier-1 Auto OEM",
+          );
+          const dlv = data.exportLicenses.find((e) => /DLV-3312/.test(e.code));
+          return bmw?.atRisk === true && dlv?.onHold === true;
+        },
+      );
       await check("ECO-318 + INC-201 matters link to their modules", () => {
         const eco = data.legalMatters.find((m) => m.linkedTo === "ECO-318");
         const inc = data.legalMatters.find((m) => m.linkedTo === "INC-201");

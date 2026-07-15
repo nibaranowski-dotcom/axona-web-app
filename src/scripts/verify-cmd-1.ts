@@ -100,10 +100,12 @@ async function run(): Promise<void> {
           (e) => e.module === "finance" && /HX-2/.test(e.title),
         ),
       );
-      await check("BMW SLA at-risk surfaces (Legal → Autonomy)", () =>
-        s.exceptions.some(
-          (e) => e.module === "legal" && e.ripples.includes("autonomy"),
-        ),
+      await check(
+        "Tier-1 Auto OEM SLA at-risk surfaces (Legal → Autonomy)",
+        () =>
+          s.exceptions.some(
+            (e) => e.module === "legal" && e.ripples.includes("autonomy"),
+          ),
       );
       await check(
         "agent-drafted PO awaiting approval surfaces (Procurement)",

@@ -3,7 +3,7 @@ import { CODES, d } from "./constants";
 
 // Value-chain slice of the §3.7 narrative: Suppliers/Parts/POs (incl. an
 // agent-drafted PO AWAITING_APPROVAL), WorkOrderMfg (lot 88421 / SERVO-204),
-// NCR-118, the SPC torque breach, Certs, the BMW deal, Campaigns, DLV-3312.
+// NCR-118, the SPC torque breach, Certs, the Tier-1 Auto OEM deal, Campaigns, DLV-3312.
 
 function torqueSeries(): {
   characteristic: string;
@@ -35,7 +35,7 @@ function torqueSeries(): {
 }
 
 export async function seedValueChain(db: OrgScopedDb): Promise<void> {
-  // Suppliers (fictional sample names; BMW/Kawasaki appear as customers, allowed §3.7)
+  // Suppliers (fictional sample names; customers are anonymized OEM labels — SEED.1, never a real marque)
   const actuatorCo = await db.supplier.create({
     data: {
       name: "Tier-1 Actuator Co",
@@ -62,7 +62,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
   });
   const harmonic = await db.supplier.create({
     data: {
-      name: "Harmonic Drive Systems",
+      name: "Strain-Wave Gear Co",
       tier: 1,
       riskScore: 0.27,
       onTimePct: 96.4,
@@ -526,14 +526,14 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
     },
   });
 
-  // Sales: the enterprise pipeline across all 5 stages (SALES.2). BMW 24-unit deal
+  // Sales: the enterprise pipeline across all 5 stages (SALES.2). Tier-1 Auto OEM 24-unit deal
   // is AT_RISK +3w — its deliverability resolves through Fulfillment (DLV-3312
   // EAR99 hold) + Manufacturing (HX2-0208 hold at Test, ECO-318/lot-88421), not a
   // hardcoded flag. Feasibility mix across the rest.
   await db.deal.createMany({
     data: [
       {
-        account: "BMW",
+        account: "Tier-1 Auto OEM",
         config: `${CODES.product} ×24`,
         value: 4_800_000,
         stage: "COMMIT",
@@ -541,7 +541,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
         feasibility: "AT_RISK",
       },
       {
-        account: "Kawasaki",
+        account: "OEM-2",
         config: `${CODES.product} ×6`,
         value: 1_200_000,
         stage: "NEGOTIATION",
@@ -549,7 +549,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
         feasibility: "ON_TIME",
       },
       {
-        account: "Tesla",
+        account: "OEM-3",
         config: "HX-1 ×30",
         value: 1_740_000,
         stage: "NEGOTIATION",
@@ -557,7 +557,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
         feasibility: "ON_TIME",
       },
       {
-        account: "Foxconn",
+        account: "OEM-5",
         config: `${CODES.product} ×40`,
         value: 8_000_000,
         stage: "PROPOSAL",
@@ -565,7 +565,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
         feasibility: "NOT_CHECKED",
       },
       {
-        account: "Maersk",
+        account: "OEM-4",
         config: `${CODES.product} ×12`,
         value: 2_400_000,
         stage: "PROPOSAL",
@@ -573,7 +573,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
         feasibility: "NOT_CHECKED",
       },
       {
-        account: "Siemens",
+        account: "OEM-6",
         config: `${CODES.product} ×8`,
         value: 1_600_000,
         stage: "DEMO",
@@ -581,7 +581,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
         feasibility: "NOT_CHECKED",
       },
       {
-        account: "Hyundai",
+        account: "OEM-7",
         config: "HX-1 ×20",
         value: 1_160_000,
         stage: "QUALIFY",
@@ -626,17 +626,17 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
           {
             ts: d("-6h").toISOString(),
             kind: "deliverability",
-            text: `BMW ${CODES.product}×24 → check ops build+deliver`,
+            text: `Tier-1 Auto OEM ${CODES.product}×24 → check ops build+deliver`,
           },
           {
             ts: d("-6h").toISOString(),
             kind: "at-risk",
-            text: `DLV-3312 hold + HX2-0208 line hold → BMW slips +3w`,
+            text: `DLV-3312 hold + HX2-0208 line hold → Tier-1 Auto OEM slips +3w`,
           },
           {
             ts: d("-6h").toISOString(),
             kind: "propose",
-            text: "flag BMW deliverability AT_RISK · notify AE (RBAC.4)",
+            text: "flag Tier-1 Auto OEM deliverability AT_RISK · notify AE (RBAC.4)",
           },
         ],
       },
@@ -752,14 +752,14 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
     });
   }
 
-  // Fulfillment: the delivery pipeline (ALLOC → ACTIVE). DLV-3312 is the BMW
-  // Osaka shipment held at customs (EAR99) — the ECO-318 → BMW order → hold
+  // Fulfillment: the delivery pipeline (ALLOC → ACTIVE). DLV-3312 is the Tier-1 Auto OEM
+  // Osaka shipment held at customs (EAR99) — the ECO-318 → Tier-1 Auto OEM order → hold
   // thread. The rest span the pipeline so it renders full (FUL.2).
   await db.delivery.createMany({
     data: [
       {
-        code: CODES.delivery, // DLV-3312 — BMW Osaka, held at customs (EAR99)
-        account: "BMW",
+        code: CODES.delivery, // DLV-3312 — Tier-1 Auto OEM · Osaka, held at customs (EAR99)
+        account: "Tier-1 Auto OEM",
         destination: "Osaka, JP",
         units: `24× ${CODES.product}`,
         stage: "CUSTOMS",
@@ -769,7 +769,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       },
       {
         code: "DLV-3315",
-        account: "Kawasaki",
+        account: "OEM-2",
         destination: "Nagoya, JP",
         units: `4× ${CODES.product}`,
         stage: "ALLOC",
@@ -779,7 +779,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       },
       {
         code: "DLV-3311",
-        account: "BMW",
+        account: "Tier-1 Auto OEM",
         destination: "Munich, DE",
         units: `2× ${CODES.product}`,
         stage: "CRATE",
@@ -789,7 +789,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       },
       {
         code: "DLV-3309",
-        account: "Kawasaki",
+        account: "OEM-2",
         destination: "Kobe, JP",
         units: `6× ${CODES.product}`,
         stage: "FREIGHT",
@@ -799,7 +799,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       },
       {
         code: "DLV-3306",
-        account: "BMW",
+        account: "Tier-1 Auto OEM",
         destination: "Munich, DE",
         units: `1× ${CODES.product}`,
         stage: "ONSITE",
@@ -809,7 +809,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       },
       {
         code: "DLV-3304",
-        account: "Kawasaki",
+        account: "OEM-2",
         destination: "Kobe, JP",
         units: `3× ${CODES.product}`,
         stage: "COMMISSION",
@@ -819,7 +819,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       },
       {
         code: "DLV-3301",
-        account: "BMW",
+        account: "Tier-1 Auto OEM",
         destination: "Munich, DE",
         units: `8× ${CODES.product}`,
         stage: "ACTIVE",

@@ -82,7 +82,7 @@ export async function seedNotifications(
     {
       type: "MENTION",
       title: "Dana Reyes mentioned you",
-      body: "“can you confirm the BMW deliverability note before EOD?”",
+      body: "“can you confirm the Tier-1 Auto OEM deliverability note before EOD?”",
       targetType: "Sales & CRM",
       targetId: "INV-2208",
       url: "/sales",
@@ -131,10 +131,10 @@ export async function seedNotifications(
     },
     {
       type: "EXCEPTION",
-      title: "BMW MSA · 99.5% fleet SLA at risk",
+      title: "Tier-1 Auto OEM MSA · 99.5% fleet SLA at risk",
       body: "Autonomy dip threatens the contracted uptime.",
       targetType: "Legal",
-      targetId: "BMW-MSA",
+      targetId: "Tier-1 Auto OEM-MSA",
       url: "/legal",
       ago: 4 * day,
       read: true,

@@ -68,7 +68,7 @@ async function run(): Promise<void> {
         return (
           !!d &&
           d.stage === "CUSTOMS" &&
-          d.account === "BMW" &&
+          d.account === "Tier-1 Auto OEM" &&
           /Osaka/.test(d.destination) &&
           /EAR99/i.test(d.riskState) &&
           d.atRisk === true

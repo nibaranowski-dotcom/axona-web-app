@@ -13,7 +13,10 @@ export interface TraceLine {
 
 const PLACEHOLDER: TraceLine[] = [
   { ts: "00:00", text: "scan        · NCR-118 torque breach on SERVO-204" },
-  { ts: "00:01", text: "correlate   · lot 88421 → ECO-318 → BMW DLV-3312" },
+  {
+    ts: "00:01",
+    text: "correlate   · lot 88421 → ECO-318 → Tier-1 Auto OEM DLV-3312",
+  },
   { ts: "00:02", text: "draft       · re-source PO for SERVO-205 (×24)" },
   {
     ts: "00:03",

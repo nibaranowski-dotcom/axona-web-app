@@ -152,7 +152,7 @@ async function run(): Promise<void> {
                 c: unknown,
               ) => Promise<{ results: unknown[] }>;
             }
-          ).handler({ query: "BMW order" }, { orgId, db: prisma });
+          ).handler({ query: "Tier-1 Auto OEM order" }, { orgId, db: prisma });
           return Array.isArray(res.results) && res.results.length > 0;
         },
       );

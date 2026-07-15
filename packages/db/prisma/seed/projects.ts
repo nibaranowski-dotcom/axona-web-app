@@ -29,10 +29,10 @@ const PROJECTS: Seed[] = [
         linkedTo: `Engineering · ${CODES.eco}`,
       },
       {
-        name: "Impact analysis — BMW order",
+        name: "Impact analysis — Tier-1 Auto OEM order",
         ext: "docx",
         type: "Report",
-        linkedTo: "Sales · BMW",
+        linkedTo: "Sales · Tier-1 Auto OEM",
       },
       {
         name: "SERVO-205 spec",
@@ -60,7 +60,7 @@ const PROJECTS: Seed[] = [
   },
   {
     moduleKey: "fulfillment",
-    name: `${CODES.delivery} — BMW Osaka delivery`,
+    name: `${CODES.delivery} — Tier-1 Auto OEM · Osaka delivery`,
     description: "24× HX-2 to Osaka; EAR99 customs hold.",
     status: "BLOCKED",
     files: [
@@ -167,15 +167,15 @@ const PROJECTS: Seed[] = [
   },
   {
     moduleKey: "sales",
-    name: "BMW HX-2 ×24",
+    name: "Tier-1 Auto OEM HX-2 ×24",
     description: "Commit-stage deal; deliverability AT_RISK +3w.",
     status: "ACTIVE",
     files: [
       {
-        name: "BMW proposal",
+        name: "Tier-1 Auto OEM proposal",
         ext: "pdf",
         type: "Quote",
-        linkedTo: "Sales · BMW",
+        linkedTo: "Sales · Tier-1 Auto OEM",
       },
       { name: "MSA redlines", ext: "docx", type: "Memo" },
       { name: "Deliverability assessment", ext: "pdf", type: "Report" },

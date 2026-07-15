@@ -100,9 +100,9 @@ async function run(): Promise<void> {
         );
       });
       await check(
-        "BMW deliverability resolves AT_RISK through FUL + MFG",
+        "Tier-1 Auto OEM deliverability resolves AT_RISK through FUL + MFG",
         () => {
-          const bmw = data.deals.find((d) => d.account === "BMW");
+          const bmw = data.deals.find((d) => d.account === "Tier-1 Auto OEM");
           return (
             !!bmw &&
             bmw.deliverability === "AT_RISK" &&

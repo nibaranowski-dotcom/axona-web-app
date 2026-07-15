@@ -68,15 +68,20 @@ async function run(): Promise<void> {
     } else {
       const data = await getLegalData(org.id);
 
-      await check("BMW 99.5% fleet SLA obligation is AT_RISK", () => {
-        const o = data.obligations.find((x) => x.account === "BMW");
-        return (
-          !!o &&
-          /99\.5%/.test(o.obligation) &&
-          o.atRisk === true &&
-          o.state.toUpperCase() === "AT_RISK"
-        );
-      });
+      await check(
+        "Tier-1 Auto OEM 99.5% fleet SLA obligation is AT_RISK",
+        () => {
+          const o = data.obligations.find(
+            (x) => x.account === "Tier-1 Auto OEM",
+          );
+          return (
+            !!o &&
+            /99\.5%/.test(o.obligation) &&
+            o.atRisk === true &&
+            o.state.toUpperCase() === "AT_RISK"
+          );
+        },
+      );
       await check("DLV-3312 EAR99 export license is on HOLD", () => {
         const e = data.exportLicenses.find((x) => /DLV-3312/.test(x.code));
         return (

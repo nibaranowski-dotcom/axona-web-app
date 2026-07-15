@@ -107,9 +107,9 @@ async function run(): Promise<void> {
         },
       );
       await check(
-        "BMW deliverability AT_RISK resolves through FUL/MFG on-screen",
+        "Tier-1 Auto OEM deliverability AT_RISK resolves through FUL/MFG on-screen",
         () => {
-          const bmw = data.deals.find((d) => d.account === "BMW");
+          const bmw = data.deals.find((d) => d.account === "Tier-1 Auto OEM");
           // the DealsTable renders deliverabilityReason for AT_RISK deals
           return (
             !!bmw &&

@@ -4,7 +4,7 @@ import type { DeliveryStage } from "@axona/db";
 // FUL.1 — Fulfillment & Delivery read/API layer (build-spec §4.12, §6). Read-only
 // over the existing Delivery model: no schema change, no mutations (the delivery-
 // pipeline screen is FUL.2). Org-scoped via dbForOrg; lists paginated with the
-// FND.11 helpers. Continues the narrative: ECO-318 → BMW order → DLV-3312 Osaka
+// FND.11 helpers. Continues the narrative: ECO-318 → Tier-1 Auto OEM order → DLV-3312 Osaka
 // customs hold.
 
 // The delivery pipeline, in order (ALLOC → … → ACTIVE).
@@ -76,7 +76,7 @@ function shape(r: {
 /**
  * Everything the delivery-pipeline screen (FUL.2) needs, org-scoped and
  * read-only: every delivery with its stage / committed-vs-eta / risk (DLV-3312
- * BMW Osaka EAR99 hold), a per-stage pipeline rollup (all 7 stages), and the
+ * Tier-1 Auto OEM · Osaka EAR99 hold), a per-stage pipeline rollup (all 7 stages), and the
  * at-risk/hold list.
  */
 export async function getFulfillmentData(

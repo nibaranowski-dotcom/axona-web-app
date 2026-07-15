@@ -2,7 +2,7 @@ import type { OrgScopedDb } from "../../src";
 import { CODES, d } from "./constants";
 
 // Back-office close of the §3.7 narrative: HX-2 margin −2.1pt from ECO-318;
-// BMW net-60 + Kawasaki overdue invoices; BMW 99.5% SLA obligation at risk;
+// Tier-1 Auto OEM net-60 + OEM-2 overdue invoices; Tier-1 Auto OEM 99.5% SLA obligation at risk;
 // DLV-3312 EAR99 export license hold; ECO-318 patent + INC-201 legal matters.
 
 export async function seedBackOffice(db: OrgScopedDb): Promise<void> {
@@ -80,7 +80,7 @@ export async function seedBackOffice(db: OrgScopedDb): Promise<void> {
     data: [
       {
         code: "INV-7741",
-        account: "BMW",
+        account: "Tier-1 Auto OEM",
         source: "DLV · 24× HX-2 + RaaS",
         amount: 8_400_000,
         terms: "net-60",
@@ -89,7 +89,7 @@ export async function seedBackOffice(db: OrgScopedDb): Promise<void> {
       },
       {
         code: "INV-7728",
-        account: "Maersk",
+        account: "OEM-4",
         source: "DLV-3301 · commissioned",
         amount: 1_900_000,
         terms: "net-30",
@@ -98,7 +98,7 @@ export async function seedBackOffice(db: OrgScopedDb): Promise<void> {
       },
       {
         code: "INV-7715",
-        account: "Tesla",
+        account: "OEM-3",
         source: "RaaS · Q2 ratable",
         amount: 600_000,
         terms: "net-30",
@@ -107,7 +107,7 @@ export async function seedBackOffice(db: OrgScopedDb): Promise<void> {
       },
       {
         code: "INV-7702",
-        account: "Kawasaki",
+        account: "OEM-2",
         source: "Spares · RMA-441",
         amount: 500_000,
         terms: "net-45",
@@ -147,7 +147,7 @@ export async function seedBackOffice(db: OrgScopedDb): Promise<void> {
           {
             ts: d("-2h").toISOString(),
             kind: "ar",
-            text: "BMW INV-7741 net-60 · not yet due · $8.4M",
+            text: "Tier-1 Auto OEM INV-7741 net-60 · not yet due · $8.4M",
           },
           {
             ts: d("-2h").toISOString(),
@@ -301,30 +301,30 @@ export async function seedBackOffice(db: OrgScopedDb): Promise<void> {
   }
 
   // Legal — obligations vs live ops, export control, IP/liability/reg matters
-  // (LEGAL.2). BMW 99.5% SLA at-risk from the autonomy regression · DLV-3312
+  // (LEGAL.2). Tier-1 Auto OEM 99.5% SLA at-risk from the autonomy regression · DLV-3312
   // EAR99 export hold · ECO-318 patent + INC-201 liability linked to their source.
   await db.obligation.createMany({
     data: [
       {
-        account: "BMW",
+        account: "Tier-1 Auto OEM",
         obligation: "MSA · 99.5% fleet SLA",
         actual: "Site-3 98.1% (autonomy regression)",
         state: "AT_RISK",
       },
       {
-        account: "Maersk",
+        account: "OEM-4",
         obligation: "RaaS · 30-day delivery warranty",
         actual: "On track",
         state: "MET",
       },
       {
-        account: "Tesla",
+        account: "OEM-3",
         obligation: "MSA · $14M liability cap",
         actual: "Within cap",
         state: "MET",
       },
       {
-        account: "Kawasaki",
+        account: "OEM-2",
         obligation: "Supply · spares SLA 5 days",
         actual: "RMA-441 aging",
         state: "REVIEW",
@@ -334,22 +334,22 @@ export async function seedBackOffice(db: OrgScopedDb): Promise<void> {
   await db.exportLicense.createMany({
     data: [
       {
-        destination: "Kawasaki · Osaka, JP",
+        destination: "OEM-2 · Osaka, JP",
         code: `EAR99-${CODES.delivery}`, // EAR99-DLV-3312
         state: "HOLD",
       },
       {
-        destination: "Tesla · Austin, US",
+        destination: "OEM-3 · Austin, US",
         code: "DLV-3305 · no license",
         state: "CLEAR",
       },
       {
-        destination: "Siemens · Munich, DE",
+        destination: "OEM-6 · Munich, DE",
         code: "Dual-use review",
         state: "PENDING",
       },
       {
-        destination: "Maersk · Rotterdam, NL",
+        destination: "OEM-4 · Rotterdam, NL",
         code: "EU intra · exempt",
         state: "CLEAR",
       },
@@ -377,7 +377,7 @@ export async function seedBackOffice(db: OrgScopedDb): Promise<void> {
       },
       {
         type: "CONTRACT",
-        title: "BMW MSA redline — net-60 + SLA terms",
+        title: "Tier-1 Auto OEM MSA redline — net-60 + SLA terms",
         linkedTo: "INV-7741", // → finance
         status: "EXECUTING",
       },
@@ -412,7 +412,7 @@ export async function seedBackOffice(db: OrgScopedDb): Promise<void> {
           {
             ts: d("-90m").toISOString(),
             kind: "breach-risk",
-            text: "BMW 99.5% SLA vs Site-3 98.1% → risk",
+            text: "Tier-1 Auto OEM 99.5% SLA vs Site-3 98.1% → risk",
           },
           {
             ts: d("-90m").toISOString(),

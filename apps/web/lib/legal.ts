@@ -3,7 +3,7 @@ import { dbForOrg, paginateArgs, pageResult } from "@axona/db";
 // LEGAL.1 — Legal & Compliance read/API layer (build-spec §4.23, §6). Read-only
 // over the existing Obligation / ExportLicense / LegalMatter models: no schema
 // change, no mutations (the obligations/export/matters screen is LEGAL.2). Org-
-// scoped via dbForOrg; lists paginated with the FND.11 helpers. Closes the BMW
+// scoped via dbForOrg; lists paginated with the FND.11 helpers. Closes the Tier-1 Auto OEM
 // thread: 99.5% SLA at-risk (autonomy regression) · DLV-3312 EAR99 export hold ·
 // ECO-318 patent + INC-201 liability matters, linked back to their source modules.
 
@@ -76,7 +76,7 @@ const MATTER_SELECT = {
 
 /**
  * Everything the Legal & Compliance screen (LEGAL.2) needs, org-scoped and
- * read-only: obligations vs live ops (BMW 99.5% fleet SLA at-risk from the
+ * read-only: obligations vs live ops (Tier-1 Auto OEM 99.5% fleet SLA at-risk from the
  * autonomy regression), export licenses (DLV-3312 EAR99 hold), and legal matters
  * (ECO-318 patent + INC-201 liability, linked to their source modules), + rollup.
  */

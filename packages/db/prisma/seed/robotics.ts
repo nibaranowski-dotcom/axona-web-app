@@ -135,7 +135,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
   });
 
   // Fleet — deployed units across 3 sites (Detroit / Rotterdam / Osaka). SN-2196
-  // (BMW, Site-3 Osaka) is WATCH for a thermal anomaly → hands to Field Service.
+  // (Tier-1 Auto OEM, Site-3 Osaka) is WATCH for a thermal anomaly → hands to Field Service.
   // Site coords: Site-1 Detroit, Site-2 Rotterdam, Site-3 Osaka.
   const DET = { lat: 42.331, lng: -83.046 };
   const ROT = { lat: 51.924, lng: 4.478 };
@@ -144,7 +144,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
     data: {
       serial: CODES.robot, // SN-2196
       model: CODES.product,
-      customer: "BMW",
+      customer: "Tier-1 Auto OEM",
       site: "Site-3",
       uptimePct: 96.4,
       firmware: "v4.2.1",
@@ -157,7 +157,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       {
         serial: "SN-2208",
         model: CODES.product,
-        customer: "BMW",
+        customer: "Tier-1 Auto OEM",
         site: "Site-2",
         uptimePct: 99.4,
         firmware: "v4.2.1",
@@ -167,7 +167,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       {
         serial: "SN-2188",
         model: CODES.product,
-        customer: "BMW",
+        customer: "Tier-1 Auto OEM",
         site: "Site-3",
         uptimePct: 99.2,
         firmware: "v4.2.1",
@@ -177,7 +177,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       {
         serial: "SN-2184",
         model: "HX-1",
-        customer: "Kawasaki",
+        customer: "OEM-2",
         site: "Site-1",
         uptimePct: 99.7,
         firmware: "v4.2.1",
@@ -187,7 +187,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       {
         serial: "SN-2150",
         model: CODES.product,
-        customer: "BMW",
+        customer: "Tier-1 Auto OEM",
         site: "Site-3",
         uptimePct: 97.1,
         firmware: "v4.0.2",
@@ -197,7 +197,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       {
         serial: "SN-2133",
         model: "HX-1",
-        customer: "Kawasaki",
+        customer: "OEM-2",
         site: "Site-1",
         uptimePct: 85.3,
         firmware: "v4.2.1",
@@ -207,7 +207,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       {
         serial: "SN-2120",
         model: "HX-1",
-        customer: "Kawasaki",
+        customer: "OEM-2",
         site: "Site-2",
         uptimePct: 91.0,
         firmware: "v4.1.0",
@@ -217,7 +217,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       {
         serial: "SN-2101",
         model: CODES.product,
-        customer: "BMW",
+        customer: "Tier-1 Auto OEM",
         site: "Site-2",
         uptimePct: 99.0,
         firmware: "v4.2.1",
@@ -227,7 +227,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       {
         serial: "SN-2050",
         model: CODES.product,
-        customer: "Kawasaki",
+        customer: "OEM-2",
         site: "Site-1",
         uptimePct: 99.6,
         firmware: "v4.2.0",
@@ -237,7 +237,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       {
         serial: "SN-2072",
         model: CODES.product,
-        customer: "BMW",
+        customer: "Tier-1 Auto OEM",
         site: "Site-2",
         uptimePct: 98.9,
         firmware: "v4.2.1",
@@ -247,7 +247,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       {
         serial: "SN-2044",
         model: "HX-1",
-        customer: "Kawasaki",
+        customer: "OEM-2",
         site: "Site-1",
         uptimePct: 99.3,
         firmware: "v4.2.1",
@@ -257,7 +257,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       {
         serial: "SN-2039",
         model: CODES.product,
-        customer: "BMW",
+        customer: "Tier-1 Auto OEM",
         site: "Site-3",
         uptimePct: 98.1,
         firmware: "v4.2.0",
@@ -267,7 +267,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       {
         serial: "SN-2027",
         model: "HX-1",
-        customer: "Maersk",
+        customer: "OEM-4",
         site: "Site-2",
         uptimePct: 97.6,
         firmware: "v4.1.0",
@@ -277,7 +277,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       {
         serial: "SN-2015",
         model: CODES.product,
-        customer: "Kawasaki",
+        customer: "OEM-2",
         site: "Site-1",
         uptimePct: 99.5,
         firmware: "v4.2.1",
@@ -287,7 +287,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       {
         serial: "SN-2003",
         model: "HX-1",
-        customer: "Maersk",
+        customer: "OEM-4",
         site: "Site-3",
         uptimePct: 96.8,
         firmware: "v4.0.2",
@@ -503,7 +503,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       code: CODES.eco, // ECO-318
       title: `Supersede ${CODES.servoOld} → -205 (tighter tolerance)`,
       changeType: "HW",
-      affected: `${CODES.lot} · 3 units · ${CODES.ncr} · BMW order`,
+      affected: `${CODES.lot} · 3 units · ${CODES.ncr} · Tier-1 Auto OEM order`,
       stage: "REVIEW",
     },
   });
@@ -607,7 +607,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
           {
             ts: d("-3h").toISOString(),
             kind: "impact",
-            text: `3 units · ${CODES.lot} · 2 BOMs · BMW order`,
+            text: `3 units · ${CODES.lot} · 2 BOMs · Tier-1 Auto OEM order`,
           },
           {
             ts: d("-3h").toISOString(),

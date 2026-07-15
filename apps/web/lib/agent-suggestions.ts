@@ -5,7 +5,7 @@
 
 const SUGGESTIONS: Record<string, string[]> = {
   core: [
-    "What is blocking the BMW order?",
+    "What is blocking the Tier-1 Auto OEM order?",
     "Which exceptions ripple the widest?",
     "What is at risk this week?",
   ],
@@ -37,7 +37,7 @@ const SUGGESTIONS: Record<string, string[]> = {
   sales: [
     "What's the weighted Q3 forecast?",
     "Which deals are at risk on deliverability?",
-    "Summarize the BMW commit-stage deal",
+    "Summarize the Tier-1 Auto OEM commit-stage deal",
   ],
   marketing: [
     "Which channel sources the most pipeline?",
@@ -81,7 +81,7 @@ const SUGGESTIONS: Record<string, string[]> = {
   ],
   legal: [
     "Which contract obligations are at risk?",
-    "What's holding up the Kawasaki export?",
+    "What's holding up the OEM-2 export?",
     "Summarize open legal matters",
   ],
   machines: [

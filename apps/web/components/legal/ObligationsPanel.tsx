@@ -2,7 +2,7 @@ import type { LegalObligation } from "@/lib/legal";
 import { obligationBadge, titleCase } from "./format";
 
 // Contract obligations vs live ops (Legal.dc.html) — every committed SLA/warranty
-// checked against what the operation is actually doing. BMW 99.5% SLA reads
+// checked against what the operation is actually doing. Tier-1 Auto OEM 99.5% SLA reads
 // at-risk in ink (the autonomy regression). Brand palette only.
 export function ObligationsPanel({
   obligations,

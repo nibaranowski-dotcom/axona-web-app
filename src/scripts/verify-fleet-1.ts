@@ -67,17 +67,20 @@ async function run(): Promise<void> {
     } else {
       const data = await getFleetData(org.id);
 
-      await check("SN-2196 present as WATCH (HX-2, BMW, Site-3)", () => {
-        const r = data.robots.find((x) => x.serial === "SN-2196");
-        return (
-          !!r &&
-          r.status === "WATCH" &&
-          r.alert === true &&
-          r.model === "HX-2" &&
-          r.customer === "BMW" &&
-          r.site === "Site-3"
-        );
-      });
+      await check(
+        "SN-2196 present as WATCH (HX-2, Tier-1 Auto OEM, Site-3)",
+        () => {
+          const r = data.robots.find((x) => x.serial === "SN-2196");
+          return (
+            !!r &&
+            r.status === "WATCH" &&
+            r.alert === true &&
+            r.model === "HX-2" &&
+            r.customer === "Tier-1 Auto OEM" &&
+            r.site === "Site-3"
+          );
+        },
+      );
       await check("SN-2196 has a thermal telemetry series", () => {
         const s = data.telemetry.find(
           (t) => t.serial === "SN-2196" && /temp/i.test(t.metric),

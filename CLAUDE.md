@@ -115,9 +115,13 @@ Non-negotiable engineering invariants (apply to every story, regardless of P-lev
   BOM churn + genealogy). Moat-load-bearing stories: `MFG.1`, `FLEET.1`/`MACH.1`, `AUDIT.1`, `ART.5`.
 
 ## Integrity / never (inherited from ../CLAUDE.md)
-- The cross-module seed narrative names **BMW / Kawasaki** — these are **fictional sample data**. Inside
-  the app, sample data is fine and labeled; **anything leaving the app** (decks, screenshots, marketing)
-  must anonymize them → "Tier-1 auto OEM," etc. Never imply a real customer/person.
+- **NO real company/person/marque names anywhere in the repo** — seed, app source, exports, docs, full
+  stop (SEED.1). Not "anonymize on the way out": the app itself must never render a real marque, because
+  any screen — or the Axona agent's own answers — can surface it in a live investor demo and read as a
+  real customer (the one unrecoverable mistake in that room). Customer accounts use anonymized OEM labels
+  (**"Tier-1 Auto OEM"**, **"OEM-2"**, … — the same labels the DEMO.3 deck crops use, so app + demo +
+  decks tell one story). The repo-wide **`verify:seed-1`** gate (banned list + scanner in
+  `src/scripts/lib/anonymization.ts`, shared with `verify:demo-3`) fails CI on any reintroduced marque.
 - Never ship invented traction/metrics externally. AI proposes; a human approves money/safety/contract.
 
 ## Git — the ONE remote (hard rule, non-negotiable)

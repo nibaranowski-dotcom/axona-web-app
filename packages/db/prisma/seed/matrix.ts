@@ -24,9 +24,9 @@ const COLUMNS: { question: string; answers: Record<string, Answer> }[] = [
         citation: "ECO-318 change package",
         confidence: 0.86,
       },
-      "Impact analysis — BMW order": {
+      "Impact analysis — Tier-1 Auto OEM order": {
         value: "24× HX-2 slip ~3 weeks; phased delivery proposed",
-        citation: "Sales · BMW",
+        citation: "Sales · Tier-1 Auto OEM",
         confidence: 0.72,
       },
       "SERVO-205 spec": {
@@ -45,9 +45,10 @@ const COLUMNS: { question: string; answers: Record<string, Answer> }[] = [
         citation: "Engineering · ECO-318",
         confidence: 0.34, // LOW — flag for human review
       },
-      "Impact analysis — BMW order": {
-        value: "Feasibility risk flagged to Sales for the BMW commitment",
-        citation: "Sales · BMW",
+      "Impact analysis — Tier-1 Auto OEM order": {
+        value:
+          "Feasibility risk flagged to Sales for the Tier-1 Auto OEM commitment",
+        citation: "Sales · Tier-1 Auto OEM",
         confidence: 0.61,
       },
       "SERVO-205 spec": {
@@ -65,9 +66,9 @@ const COLUMNS: { question: string; answers: Record<string, Answer> }[] = [
         citation: "Engineering · ECO-318",
         confidence: 0.78,
       },
-      "Impact analysis — BMW order": {
+      "Impact analysis — Tier-1 Auto OEM order": {
         value: "Dana Reyes · Sales",
-        citation: "Sales · BMW",
+        citation: "Sales · Tier-1 Auto OEM",
         confidence: 0.7,
       },
       "SERVO-205 spec": {
