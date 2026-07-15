@@ -1,11 +1,17 @@
 import Link from "next/link";
 import type { Citation } from "@/lib/agent-chat";
 import { AgentGlyph } from "./AgentGlyph";
+import { Markdown } from "./Markdown";
 
 // DS.1 chat thread — user/agent message bubbles (Axona v2). Agent rows lead with
 // the static 12-dot AgentGlyph; user rows right-align. Lime is reserved as the
 // single signal, so bubbles use warm-grey / ink surfaces. Agent messages render
 // their citations (GA.1) as DS chips linking to the object.
+//
+// UX.12: the ASSISTANT body is markdown (the model emits **bold** section headers,
+// bullet/numbered lists, --- rules, and pipe tables — e.g. the NCR-118 blast-radius
+// answer) so it renders through the sanitized <Markdown> renderer. The USER message
+// stays plain text (whitespace-pre-wrap) — users don't write markdown.
 
 export interface ChatMessage {
   role: "USER" | "AGENT";
@@ -43,13 +49,13 @@ export function ChatThread({ messages }: { messages: ChatMessage[] }) {
             <div className="max-w-[80%]">
               <span className="sr-only">{user ? "You:" : "Agent:"}</span>
               <div
-                className={`whitespace-pre-wrap rounded-[13px] px-[13px] py-[11px] text-[13px] leading-[1.5] ${
+                className={`min-w-0 overflow-hidden rounded-[13px] px-[13px] py-[11px] text-[13px] leading-[1.5] ${
                   user
-                    ? "bg-ink-strong text-on-dark"
+                    ? "whitespace-pre-wrap bg-ink-strong text-on-dark"
                     : "border border-line-panel bg-panel text-ink"
                 }`}
               >
-                {m.text}
+                {user ? m.text : <Markdown>{m.text}</Markdown>}
               </div>
               {!user && m.citations && m.citations.length > 0 && (
                 <ul
