@@ -161,99 +161,104 @@ export function MatrixView({ data }: { data: MatrixScreenData }) {
         </p>
       )}
 
-      {/* matrix table — flows with the page (UX.4); keeps HORIZONTAL scroll for the
-          wide dynamic columns. */}
-      <div
-        role="region"
-        aria-label={`${data.projectName} file matrix`}
-        tabIndex={0}
-        className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
-      >
-        <div className="min-w-max">
-          {/* header */}
-          <div className="sticky top-0 z-[2] flex h-[38px] items-center border-b border-line bg-panel px-6 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted">
-            <span className="w-[30px] flex-none" />
-            <span className="min-w-[220px] flex-[2.4]">Document</span>
-            <span className="w-[92px] flex-none">Type</span>
-            <span className="min-w-[150px] flex-[1.3]">Linked to</span>
-            {columns.map((c) => (
-              <span
-                key={c.id}
-                className="flex min-w-[176px] flex-[1.5] items-center gap-1.5"
-              >
-                <span
-                  aria-hidden
-                  className="h-1.5 w-1.5 flex-none rounded-full bg-accent"
-                />
-                <span className="truncate">{c.question}</span>
-              </span>
-            ))}
-            {extracting && (
-              <span className="flex min-w-[176px] flex-[1.5] items-center gap-1.5 rounded-[5px] border border-line px-2 text-ink">
-                <span
-                  aria-hidden
-                  className="h-1.5 w-1.5 flex-none rounded-full bg-accent"
-                />
-                Extracting…
-              </span>
-            )}
-            <span className="w-[92px] flex-none">Modified</span>
-          </div>
-
-          {/* rows */}
-          {rows.map((f) => (
-            <div
-              key={f.fileId}
-              className="flex min-h-[52px] items-center border-b border-line px-6"
-            >
-              <span className="w-[30px] flex-none">
-                <span
-                  aria-hidden
-                  className="inline-block h-[15px] w-[15px] rounded-[4px] border-[1.5px] border-line-strong"
-                />
-              </span>
-              <div className="flex min-w-[220px] flex-[2.4] items-center gap-[11px] py-2 pr-3">
-                <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-md bg-panel-2 text-ink-muted">
-                  <FileText
-                    className="h-[15px] w-[15px]"
-                    strokeWidth={1.7}
-                    aria-hidden
-                  />
-                </span>
-                <div className="min-w-0">
-                  <div className="truncate text-[13px] font-semibold text-ink">
-                    {f.name}
-                  </div>
-                  <div className="mt-px font-mono text-[9.5px] text-ink-muted">
-                    {fmtExt(f.ext)} · {fmtSize(f.sizeBytes)}
-                  </div>
-                </div>
+      {/* matrix table on a white card — the canonical table surface (UX.13); flows
+          with the page (UX.4), keeps HORIZONTAL scroll for the wide dynamic columns
+          inside the card. */}
+      <div className="px-6 pb-6">
+        <div className="overflow-hidden rounded-card border border-line bg-paper">
+          <div
+            role="region"
+            aria-label={`${data.projectName} file matrix`}
+            tabIndex={0}
+            className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+          >
+            <div className="min-w-max">
+              {/* header */}
+              <div className="sticky top-0 z-[2] flex h-[38px] items-center border-b border-line bg-paper px-6 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted">
+                <span className="w-[30px] flex-none" />
+                <span className="min-w-[220px] flex-[2.4]">Document</span>
+                <span className="w-[92px] flex-none">Type</span>
+                <span className="min-w-[150px] flex-[1.3]">Linked to</span>
+                {columns.map((c) => (
+                  <span
+                    key={c.id}
+                    className="flex min-w-[176px] flex-[1.5] items-center gap-1.5"
+                  >
+                    <span
+                      aria-hidden
+                      className="h-1.5 w-1.5 flex-none rounded-full bg-accent"
+                    />
+                    <span className="truncate">{c.question}</span>
+                  </span>
+                ))}
+                {extracting && (
+                  <span className="flex min-w-[176px] flex-[1.5] items-center gap-1.5 rounded-[5px] border border-line px-2 text-ink">
+                    <span
+                      aria-hidden
+                      className="h-1.5 w-1.5 flex-none rounded-full bg-accent"
+                    />
+                    Extracting…
+                  </span>
+                )}
+                <span className="w-[92px] flex-none">Modified</span>
               </div>
-              <span className="w-[92px] flex-none">
-                <span className="rounded-[5px] border border-line bg-panel px-[7px] py-0.5 font-mono text-[9px] tracking-[0.03em] text-ink-muted">
-                  {f.type}
-                </span>
-              </span>
-              <span className="min-w-[150px] flex-[1.3] truncate pr-3 font-mono text-[11px] text-ink-muted">
-                {f.linkedTo ?? "—"}
-              </span>
-              {columns.map((c) => (
-                <MatrixCellView
-                  key={c.id}
-                  cell={f.answers[c.id]}
-                  extracting={extracting === c.id}
-                />
+
+              {/* rows */}
+              {rows.map((f) => (
+                <div
+                  key={f.fileId}
+                  className="flex min-h-[52px] items-center border-t border-line px-6 transition-colors hover:bg-panel-2"
+                >
+                  <span className="w-[30px] flex-none">
+                    <span
+                      aria-hidden
+                      className="inline-block h-[15px] w-[15px] rounded-[4px] border-[1.5px] border-line-strong"
+                    />
+                  </span>
+                  <div className="flex min-w-[220px] flex-[2.4] items-center gap-[11px] py-2 pr-3">
+                    <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-md bg-panel-2 text-ink-muted">
+                      <FileText
+                        className="h-[15px] w-[15px]"
+                        strokeWidth={1.7}
+                        aria-hidden
+                      />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="truncate text-[13px] font-semibold text-ink">
+                        {f.name}
+                      </div>
+                      <div className="mt-px font-mono text-[9.5px] text-ink-muted">
+                        {fmtExt(f.ext)} · {fmtSize(f.sizeBytes)}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="w-[92px] flex-none">
+                    <span className="rounded-[5px] border border-line bg-panel px-[7px] py-0.5 font-mono text-[9px] tracking-[0.03em] text-ink-muted">
+                      {f.type}
+                    </span>
+                  </span>
+                  <span className="min-w-[150px] flex-[1.3] truncate pr-3 font-mono text-[11px] text-ink-muted">
+                    {f.linkedTo ?? "—"}
+                  </span>
+                  {columns.map((c) => (
+                    <MatrixCellView
+                      key={c.id}
+                      cell={f.answers[c.id]}
+                      extracting={extracting === c.id}
+                    />
+                  ))}
+                  {extracting && !columns.some((c) => c.id === extracting) && (
+                    <span className="flex min-w-[176px] flex-[1.5] items-center pr-3">
+                      <ExtractingCell />
+                    </span>
+                  )}
+                  <span className="w-[92px] flex-none font-mono text-[10.5px] text-ink-muted">
+                    {relTime(f.modifiedAt)}
+                  </span>
+                </div>
               ))}
-              {extracting && !columns.some((c) => c.id === extracting) && (
-                <span className="flex min-w-[176px] flex-[1.5] items-center pr-3">
-                  <ExtractingCell />
-                </span>
-              )}
-              <span className="w-[92px] flex-none font-mono text-[10.5px] text-ink-muted">
-                {relTime(f.modifiedAt)}
-              </span>
             </div>
-          ))}
+          </div>
         </div>
       </div>
     </ScreenShell>

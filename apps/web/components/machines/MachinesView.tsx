@@ -127,50 +127,57 @@ export function MachinesView({
             </div>
           </div>
 
-          {/* table header */}
-          <div
-            className={`${COLS} flex-none border-b border-line bg-panel px-6 py-[10px] font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted`}
-          >
-            <span>Machine</span>
-            <span>Location</span>
-            <span>Status</span>
-            <span>Utilization</span>
-            <span>Health</span>
-            <span>Telemetry</span>
-          </div>
+          {/* register on a white card — the canonical table surface (UX.13):
+              rows sit on bg-paper, hairline dividers, hover panel-2 (matches
+              Fleet/Quality), not transparent-on-panel. */}
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div
+              role="region"
+              aria-label="Machines register"
+              tabIndex={0}
+              className="overflow-hidden rounded-card border border-line bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+            >
+              {/* table header */}
+              <div
+                className={`${COLS} border-b border-line bg-paper px-5 py-[10px] font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted`}
+              >
+                <span>Machine</span>
+                <span>Location</span>
+                <span>Status</span>
+                <span>Utilization</span>
+                <span>Health</span>
+                <span>Telemetry</span>
+              </div>
 
-          <div
-            role="region"
-            aria-label="Machines register"
-            tabIndex={0}
-            className="px-6 pb-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
-          >
-            {visibleGroups.length === 0 ? (
-              <p className="py-10 text-center text-sm text-ink-muted">
-                No machines need service.
-              </p>
-            ) : (
-              visibleGroups.map((g) => (
-                <div key={g.kind}>
-                  <div className="mb-1.5 mt-4 flex items-center gap-3">
-                    <span
-                      aria-hidden
-                      className="h-[7px] w-[7px] flex-none rounded-[2px] bg-ink-strong"
-                    />
-                    <span className="text-[13px] font-semibold text-ink">
-                      {g.label}
-                    </span>
-                    <span className="font-mono text-[10px] text-ink-muted">
-                      {g.machines.length} machines
-                    </span>
-                    <span aria-hidden className="h-px flex-1 bg-line" />
-                  </div>
-                  {g.machines.map((m) => (
-                    <MachineRowView key={m.id} m={m} />
+              {visibleGroups.length === 0 ? (
+                <p className="border-t border-line px-5 py-10 text-center text-sm text-ink-muted">
+                  No machines need service.
+                </p>
+              ) : (
+                <div className="px-5 pb-4">
+                  {visibleGroups.map((g) => (
+                    <div key={g.kind}>
+                      <div className="mb-1.5 mt-4 flex items-center gap-3">
+                        <span
+                          aria-hidden
+                          className="h-[7px] w-[7px] flex-none rounded-[2px] bg-ink-strong"
+                        />
+                        <span className="text-[13px] font-semibold text-ink">
+                          {g.label}
+                        </span>
+                        <span className="font-mono text-[10px] text-ink-muted">
+                          {g.machines.length} machines
+                        </span>
+                        <span aria-hidden className="h-px flex-1 bg-line" />
+                      </div>
+                      {g.machines.map((m) => (
+                        <MachineRowView key={m.id} m={m} />
+                      ))}
+                    </div>
                   ))}
                 </div>
-              ))
-            )}
+              )}
+            </div>
           </div>
         </>
       )}
@@ -182,7 +189,9 @@ function MachineRowView({ m }: { m: MachineRow }) {
   const badge = STATUS_BADGE[m.status];
   const Icon = m.kind === "FIXED" ? Factory : Truck;
   return (
-    <div className={`${COLS} border-b border-line px-2 py-3`}>
+    <div
+      className={`${COLS} border-t border-line px-2 py-3 transition-colors hover:bg-panel-2`}
+    >
       <div className="flex min-w-0 items-center gap-[11px]">
         <span className="flex h-8 w-8 flex-none items-center justify-center rounded-md bg-panel-2 text-ink-muted">
           <Icon className="h-4 w-4" strokeWidth={1.7} aria-hidden />
