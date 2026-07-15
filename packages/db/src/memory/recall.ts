@@ -217,6 +217,107 @@ async function resolveSubject(
   }
 }
 
+// MEM.1a — resolve a subject that may be a HUMAN CODE (how the agent calls it,
+// e.g. "NCR-118") OR a raw record id to the canonical cuid the EntityLink graph is
+// keyed on. Without this the neighborhood BFS seeds from the code, matches no edge,
+// and graph-proximity recall silently degrades to vector-only. Mirrors the ONT.1
+// getBlastRadius natural keys per type — kept IN @axona/db so recall doesn't import
+// from @axona/agents (no dependency cycle). Backward-compatible: a raw cuid resolves
+// to nothing here and passes through unchanged.
+async function resolveSubjectId(
+  db: OrgScopedDb,
+  type: EntityType,
+  value: string,
+): Promise<string> {
+  const pick = <T extends { id: string }>(r: T | null): string | null =>
+    r?.id ?? null;
+  let hit: string | null = null;
+  switch (type) {
+    case "NCR":
+      hit = pick(
+        await db.nCR.findFirst({
+          where: { code: value },
+          select: { id: true },
+        }),
+      );
+      break;
+    case "ECO":
+      hit = pick(
+        await db.eCO.findFirst({
+          where: { code: value },
+          select: { id: true },
+        }),
+      );
+      break;
+    case "PART":
+    case "LOT":
+      hit = pick(
+        await db.part.findFirst({
+          where: { sku: value },
+          select: { id: true },
+        }),
+      );
+      break;
+    case "SUPPLIER":
+      hit = pick(
+        await db.supplier.findFirst({
+          where: { name: value },
+          select: { id: true },
+        }),
+      );
+      break;
+    case "PURCHASE_ORDER":
+      hit = pick(
+        await db.purchaseOrder.findFirst({
+          where: { code: value },
+          select: { id: true },
+        }),
+      );
+      break;
+    case "UNIT":
+      hit = pick(
+        await db.workOrderMfg.findFirst({
+          where: { serial: value },
+          select: { id: true },
+        }),
+      );
+      break;
+    case "DELIVERY":
+      hit = pick(
+        await db.delivery.findFirst({
+          where: { code: value },
+          select: { id: true },
+        }),
+      );
+      break;
+    case "WORK_ORDER":
+      hit = pick(
+        await db.workOrderField.findFirst({
+          where: { code: value },
+          select: { id: true },
+        }),
+      );
+      break;
+    case "INVOICE":
+      hit = pick(
+        await db.invoice.findFirst({
+          where: { code: value },
+          select: { id: true },
+        }),
+      );
+      break;
+    case "SPC_SAMPLE":
+      hit = pick(
+        await db.spcSample.findFirst({
+          where: { serial: value },
+          select: { id: true },
+        }),
+      );
+      break;
+  }
+  return hit ?? value; // resolved code→id, or a raw cuid passed through unchanged
+}
+
 export async function recallMemory(
   db: OrgScopedDb,
   input: RecallInput,
@@ -226,10 +327,16 @@ export async function recallMemory(
   const maxDepth = Math.min(Math.max(input.maxDepth ?? 3, 1), 5);
   const embedder = input.embedder ?? getEmbedder();
 
-  // 1. graph neighborhood of the subject (if any) → the node set to pull memories for.
-  const neigh =
+  // 1. graph neighborhood of the subject (if any) → the node set to pull memories
+  // for. Resolve a human code (agent path) → the cuid the graph is keyed on FIRST,
+  // else the BFS finds nothing and graph proximity no-ops (MEM.1a).
+  const subjectId =
     input.subjectType && input.subjectId
-      ? await neighborhood(db, input.subjectType, input.subjectId, maxDepth)
+      ? await resolveSubjectId(db, input.subjectType, input.subjectId)
+      : input.subjectId;
+  const neigh =
+    input.subjectType && subjectId
+      ? await neighborhood(db, input.subjectType, subjectId, maxDepth)
       : new Map<string, NeighborNode>();
 
   // 2. gather candidate memories: vector top-N ∪ graph-anchored ∪ (subject itself).

@@ -193,6 +193,51 @@ async function run(): Promise<void> {
     },
   );
 
+  // MEM.1a — the assertion the original test MISSED: the AGENT passes the human
+  // CODE ("NCR-118"), not the cuid. recall must resolve it and fire its OWN graph
+  // arm (fails on the pre-MEM.1a code — code matched no EntityLink edge → graph
+  // no-op'd → NCR-114 only surfaced, if at all, via vector).
+  await check(
+    "recall by HUMAN CODE (agent path) resolves the neighborhood itself → NCR-114 via graph",
+    async () => {
+      const byCode = await recallMemory(db, {
+        subjectType: "NCR",
+        subjectId: "NCR-118", // the CODE, exactly how the agent calls it — NOT the cuid
+        query:
+          "drive torque over UCL stiff actuator — have we handled this before?",
+        limit: 6,
+      });
+      const h = byCode.find(
+        (x) => x.subject?.code === "NCR-114" && x.kind === "RESOLUTION",
+      );
+      return (
+        !!h &&
+        h.via.graph === true &&
+        (h.via.graphDepth ?? 0) >= 1 && // reached via the graph, not vector
+        h.outcome === "CONTAINED"
+      );
+    },
+  );
+
+  // Backward-compatible: a raw cuid subject still resolves the same neighborhood.
+  await check(
+    "recall by raw cuid still works (backward compatible)",
+    async () => {
+      const byId = await recallMemory(db, {
+        subjectType: "NCR",
+        subjectId: ncr118Id,
+        query: "drive torque stiff actuator",
+        limit: 6,
+      });
+      return byId.some(
+        (x) =>
+          x.subject?.code === "NCR-114" &&
+          x.kind === "RESOLUTION" &&
+          x.via.graph === true,
+      );
+    },
+  );
+
   await check(
     "hybrid ≠ pure-vector: a graph-neighbor memory surfaces that a pure-vector query misses",
     async () => {
