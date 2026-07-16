@@ -11,18 +11,17 @@ export interface TraceLine {
   text: string;
 }
 
+// PROSPECT.2 — org-neutral fallback lines (no tenant narrative baked in). Every
+// caller passes real per-org `lines`; this default only shows if a caller omits them.
 const PLACEHOLDER: TraceLine[] = [
-  { ts: "00:00", text: "scan        · NCR-118 torque breach on SERVO-204" },
-  {
-    ts: "00:01",
-    text: "correlate   · lot 88421 → ECO-318 → Tier-1 Auto OEM DLV-3312",
-  },
-  { ts: "00:02", text: "draft       · re-source PO for SERVO-205 (×24)" },
+  { ts: "00:00", text: "scan        · reviewing open exceptions" },
+  { ts: "00:01", text: "correlate   · linking records across modules" },
+  { ts: "00:02", text: "draft       · preparing a proposal" },
   {
     ts: "00:03",
-    text: "policy-check· spend < $100k → human approval required",
+    text: "policy-check· gated action → human approval required",
   },
-  { ts: "00:04", text: "result      · PO drafted, AWAITING_APPROVAL" },
+  { ts: "00:04", text: "result      · drafted, AWAITING_APPROVAL" },
 ];
 
 export function TraceConsole({

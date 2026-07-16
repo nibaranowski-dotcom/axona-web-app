@@ -131,7 +131,9 @@ export async function getCoreSummary(orgId: string): Promise<CoreSummary> {
     db.policyVersion.findFirst({ where: { state: "canary" } }),
 
     db.invoice.count({ where: { status: "OVERDUE" } }),
-    db.unitEconomic.findFirst({ where: { product: "HX-2" } }),
+    // PROSPECT.2 — the flagship product's margin (highest ASP), not a hardcoded
+    // product name (which returned null — an empty KPI — for any other tenant).
+    db.unitEconomic.findFirst({ orderBy: { asp: "desc" } }),
 
     db.technician.findMany(),
 
@@ -365,16 +367,27 @@ export async function getCoreSummary(orgId: string): Promise<CoreSummary> {
       ripples: ["legal", "finance"],
     });
 
-  if (watchRobot)
+  if (watchRobot) {
+    // PROSPECT.2 — derive the reason from the unit's real field work order (its
+    // actual issue), not a hardcoded "thermal anomaly" (which assumed one tenant's
+    // narrative). Falls back to the status when there's no linked work order.
+    const watchWo = await db.workOrderField.findFirst({
+      where: { robotSerial: watchRobot.serial },
+      orderBy: { slaDueAt: "asc" },
+      select: { issue: true },
+    });
     exceptions.push({
       id: `robot-${watchRobot.id}`,
-      title: `${watchRobot.serial} ${watchRobot.status.toLowerCase()} — thermal anomaly`,
+      title: watchWo
+        ? `${watchRobot.serial} — ${watchWo.issue}`
+        : `${watchRobot.serial} on ${watchRobot.status.toLowerCase()}`,
       severity: "warn",
       module: "fleet",
       sourceLabel: watchRobot.serial,
       url: "/fleet",
       ripples: ["field-service"],
     });
+  }
 
   if (expiringTechs[0]) {
     const tech = expiringTechs[0];

@@ -46,11 +46,14 @@ export function Sidebar({
   groups,
   alerts,
   user,
+  org,
   unreadCount = 0,
 }: {
   groups: NavGroup[];
   alerts: Record<string, number>;
   user?: SidebarUser | null;
+  // PROSPECT.2 — the workspace's OWN identity (each tenant renders its own brand).
+  org?: { name: string; logoUrl: string | null } | null;
   unreadCount?: number;
 }) {
   const router = useRouter();
@@ -111,12 +114,23 @@ export function Sidebar({
       <div className="flex items-center justify-between gap-2 px-2 pb-[18px] pt-1">
         <Link
           href="/launcher"
-          aria-label="axona — Mission Control"
-          className="flex items-center gap-2 rounded-[7px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          aria-label={`${org?.name ?? "Axona"} — Mission Control`}
+          className="flex min-w-0 items-center gap-2 rounded-[7px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
-          <span className="text-[21px] font-bold tracking-[-0.04em] text-ink-strong">
-            axona
-          </span>
+          {/* Workspace identity: the org's logo if set, else its name. The Axona
+              square mark stays as the product marker. */}
+          {org?.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={org.logoUrl}
+              alt={org.name}
+              className="h-[22px] w-auto max-w-[150px] flex-none object-contain"
+            />
+          ) : (
+            <span className="min-w-0 truncate text-[19px] font-bold tracking-[-0.03em] text-ink-strong">
+              {org?.name ?? "Axona"}
+            </span>
+          )}
           <span
             aria-hidden
             className="h-3 w-3 flex-none bg-ink-strong"

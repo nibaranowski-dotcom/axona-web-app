@@ -5,6 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 import type { CoreSummary } from "@/lib/core-summary";
 import { useUi } from "@/lib/ui-store";
 import { useCopilotSeed } from "@/lib/copilot-seed";
+import { suggestionsFor } from "@/lib/agent-suggestions";
 import { KpiStrip } from "./KpiStrip";
 import { HealthGrid } from "./HealthGrid";
 import { ExceptionFeed } from "./ExceptionFeed";
@@ -15,11 +16,9 @@ import { ExceptionFeed } from "./ExceptionFeed";
 // cross-module exception feed (the platform thesis). All live from CMD.1; the
 // copilot reuses the GA.1 pane (seed + open — no second chat).
 
-const SUGGESTIONS = [
-  "What is blocking the Tier-1 Auto OEM order?",
-  "Which exceptions ripple the widest?",
-  "What is at risk this week?",
-];
+// PROSPECT.2 — org-neutral chips (shared, no hardcoded customer/record). The live
+// agent answers a tenant's specifics from that tenant's own records.
+const SUGGESTIONS = suggestionsFor("core");
 
 export function CommandCenter({
   summary,

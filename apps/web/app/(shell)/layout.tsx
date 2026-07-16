@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { dbForOrg } from "@axona/db";
+import { dbForOrg, presignedGetUrl, s3Configured } from "@axona/db";
 import { getAxonaAgent } from "@axona/agents";
 import { Sidebar } from "@/components/shell/Sidebar";
 import { AgentPane, type PaneAgent } from "@/components/shell/AgentPane";
@@ -68,6 +68,16 @@ export default async function ShellLayout({
     number,
   ];
 
+  // PROSPECT.2 — the workspace's OWN identity for the shell wordmark. Each tenant
+  // renders its own brand (logo if set, else its name) — never a hardcoded wordmark.
+  let orgLogoUrl: string | null = null;
+  if (onboarding?.logoKey && s3Configured()) {
+    orgLogoUrl = await presignedGetUrl(onboarding.logoKey).catch(() => null);
+  }
+  const org = onboarding
+    ? { name: onboarding.name, logoUrl: orgLogoUrl }
+    : null;
+
   // Group the org's agents by module for the context-aware pane (picked by route
   // client-side, so navigation between modules needs no re-fetch).
   const agentsByModule: Record<string, PaneAgent[]> = {};
@@ -88,6 +98,7 @@ export default async function ShellLayout({
         groups={groups}
         alerts={alerts}
         user={user ? { name: user.name, role: user.role } : null}
+        org={org}
         unreadCount={unreadCount}
       />
       <main

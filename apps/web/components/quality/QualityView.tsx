@@ -34,8 +34,12 @@ export function QualityView({
   const setSeed = useCopilotSeed((s) => s.setSeed);
   const setCollapsed = useUi((s) => s.setAgentPaneCollapsed);
 
+  // PROSPECT.2 — surface the SPC series that matters for THIS org (the most
+  // out-of-spec points), not a hardcoded characteristic. Falls back to the first.
+  const breachCount = (s: (typeof data.spcSeries)[number]) =>
+    s.points.filter((p) => p.value > p.ucl || p.value < p.lcl).length;
   const primary =
-    data.spcSeries.find((s) => s.characteristic === "drive_torque_Nm") ??
+    [...data.spcSeries].sort((a, b) => breachCount(b) - breachCount(a))[0] ??
     data.spcSeries[0];
   const criticalCount = data.ncrs.filter(
     (n) => n.severity === "CRITICAL",
@@ -94,7 +98,11 @@ export function QualityView({
             <button
               type="button"
               onClick={() => {
-                setSeed("Open an NCR for the SERVO-204 torque breach");
+                setSeed(
+                  primary
+                    ? `Open an NCR for the ${primary.characteristic} breach`
+                    : "Open an NCR for the top SPC breach",
+                );
                 setCollapsed(false);
               }}
               className="inline-flex items-center gap-1.5 rounded-btn bg-ink-strong px-4 py-[9px] text-[13.5px] font-semibold text-on-dark transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"

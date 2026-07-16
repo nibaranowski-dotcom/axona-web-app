@@ -87,6 +87,10 @@ export const DEFAULT_ENABLED = [
 export interface OrgOnboarding {
   onboardedAt: Date | null;
   enabledModules: string[];
+  // PROSPECT.2 — the workspace's OWN identity for the shell (each tenant renders its
+  // own brand, never a hardcoded wordmark).
+  name: string;
+  logoKey: string | null;
 }
 
 export async function getOrgOnboarding(
@@ -99,10 +103,16 @@ export async function getOrgOnboarding(
       enabledModules: true,
       name: true,
       industry: true,
+      logoKey: true,
     },
   });
   if (!org) return null;
-  return { onboardedAt: org.onboardedAt, enabledModules: org.enabledModules };
+  return {
+    onboardedAt: org.onboardedAt,
+    enabledModules: org.enabledModules,
+    name: org.name,
+    logoKey: org.logoKey,
+  };
 }
 
 // Null/empty enabledModules ⇒ ALL enabled (back-compat for demo / pre-existing).
