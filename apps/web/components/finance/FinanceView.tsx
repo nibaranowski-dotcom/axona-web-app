@@ -43,7 +43,9 @@ export function FinanceView({
     : 0;
   const latestRaas =
     data.revenueByPeriod[data.revenueByPeriod.length - 1]?.raas ?? 0;
-  const hx2 = data.unitEconomics.find((u) => u.product === "HX-2");
+  // PROSPECT.2a — the org's flagship product (highest ASP), not a hardcoded "HX-2"
+  // (which rendered an empty margin pill for any other tenant, e.g. Nomagic).
+  const flagship = [...data.unitEconomics].sort((a, b) => b.asp - a.asp)[0];
   const hasData = data.revenueByPeriod.length > 0 || data.invoices.length > 0;
 
   // Design metrics — real where derivable. Cash / runway need a treasury feed the
@@ -76,13 +78,13 @@ export function FinanceView({
             </h1>
           </div>
           <div className="flex items-center gap-[14px]">
-            {hx2?.marginDeltaPt != null && hx2.marginDeltaPt < 0 && (
+            {flagship?.marginDeltaPt != null && flagship.marginDeltaPt < 0 && (
               <span className="inline-flex items-center gap-[7px] rounded-pill border border-line-strong bg-panel px-3 py-[5px] text-[12.5px] font-semibold text-ink">
                 <span
                   aria-hidden
                   className="h-[7px] w-[7px] rounded-full bg-accent"
                 />
-                HX-2 margin {hx2.marginDeltaPt}pt
+                {flagship.product} margin {flagship.marginDeltaPt}pt
               </span>
             )}
             <button

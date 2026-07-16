@@ -95,7 +95,7 @@ async function run(): Promise<void> {
   const { getUserSettings } = await import("../../apps/web/lib/user-settings");
   const bcrypt = (await import("bcryptjs")).default;
 
-  const demo = await prisma.org.findFirst({ where: { name: "Axona Demo Co" } });
+  const demo = await prisma.org.findFirst({ where: { name: "Axona" } });
   const ops = await prisma.user.findFirst({
     where: { orgId: demo!.id, role: "OPS" },
   });

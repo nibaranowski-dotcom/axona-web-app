@@ -175,7 +175,7 @@ async function run(): Promise<void> {
         keys.includes("procurement") && !keys.includes("finance");
 
       const demo = await prisma.org.findFirst({
-        where: { name: "Axona Demo Co" },
+        where: { name: "Axona" },
       });
       const demoNav = await getNavModules(demo ? [] : null); // empty ⇒ all
       const demoKeys = demoNav.flatMap((g) => g.modules.map((m) => m.key));

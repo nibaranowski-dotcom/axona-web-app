@@ -113,7 +113,7 @@ async function run(): Promise<void> {
     const { getProjectMatrix } = await import("../../apps/web/lib/matrix");
 
     const org = await prisma.org.findFirst({
-      where: { name: "Axona Demo Co" },
+      where: { name: "Axona" },
     });
     const project = org
       ? await dbForOrg(org.id).project.findFirst({

@@ -79,7 +79,7 @@ async function run(): Promise<void> {
   } else {
     const { prisma, dbForOrg } = await import("@axona/db");
     const org = await prisma.org.findFirst({
-      where: { name: "Axona Demo Co" },
+      where: { name: "Axona" },
     });
     await check("agents roster scoped + seeded (>= 60)", async () => {
       if (!org) throw new Error("demo org not seeded");

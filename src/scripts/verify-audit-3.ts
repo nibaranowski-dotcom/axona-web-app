@@ -79,7 +79,7 @@ async function run(): Promise<void> {
       },
     ]);
 
-  const org = await prisma.org.findFirst({ where: { name: "Axona Demo Co" } });
+  const org = await prisma.org.findFirst({ where: { name: "Axona" } });
   if (!org) {
     console.log("  FAIL demo org missing (run pnpm db:seed)");
     failed++;

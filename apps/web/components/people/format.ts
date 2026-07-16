@@ -4,16 +4,26 @@ import type { PeopleTech } from "@/lib/people";
 // expiring < 30d = ink (critical), in-training = lime, not-held = skeleton. No
 // invented reds; brand palette only.
 
+// PROSPECT.2a — only the GENERIC, cross-tenant cert labels are curated here; any
+// product-specific cert key (e.g. a Shoebox Picker service cert) is humanized from
+// its key, so no tenant's product name is hardcoded into the label registry.
 export const CERT_META: Record<string, { label: string; order: number }> = {
-  hx2Service: { label: "HX-2 svc", order: 0 },
-  hx1Service: { label: "HX-1 svc", order: 1 },
   hvBattery: { label: "HV / batt", order: 2 },
   safetyLoto: { label: "Safety LOTO", order: 3 },
   commissioning: { label: "Commission", order: 4 },
 };
 
+/** Humanize a cert key: "shoebox_picker" → "Shoebox picker"; "hx2Service" → "Hx2 service". */
+function humanizeCert(key: string): string {
+  const words = key
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .trim();
+  return words.charAt(0).toUpperCase() + words.slice(1).toLowerCase();
+}
+
 export function certLabel(key: string): string {
-  return CERT_META[key]?.label ?? key;
+  return CERT_META[key]?.label ?? humanizeCert(key);
 }
 
 export function sortCertKeys(keys: string[]): string[] {

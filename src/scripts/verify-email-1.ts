@@ -106,7 +106,7 @@ async function run(): Promise<void> {
         kind: "invite",
         props: {
           inviterName: "Dana Reyes",
-          orgName: "Axona Demo Co",
+          orgName: "Axona",
           role: "OPS",
           acceptUrl: "https://x/invite/tok_abc",
         },
@@ -122,7 +122,7 @@ async function run(): Promise<void> {
       const receipt = await renderEmail({
         kind: "receipt",
         props: {
-          orgName: "Axona Demo Co",
+          orgName: "Axona",
           amount: "$4,200.00",
           invoiceUrl: "https://x/inv/1",
         },
@@ -176,7 +176,7 @@ async function run(): Promise<void> {
 
   const { prisma } = await import("@axona/db");
   const { createInvites } = await import("../../apps/web/lib/invites");
-  const demo = await prisma.org.findFirst({ where: { name: "Axona Demo Co" } });
+  const demo = await prisma.org.findFirst({ where: { name: "Axona" } });
   const admin = await prisma.user.findFirst({
     where: { orgId: demo!.id, role: "ADMIN" },
     select: { id: true, name: true },

@@ -104,7 +104,7 @@ async function run(): Promise<void> {
   const { getMembers } = await import("../../apps/web/lib/members");
   const { verifyCredentials } = await import("../../apps/web/lib/credentials");
 
-  const demo = await prisma.org.findFirst({ where: { name: "Axona Demo Co" } });
+  const demo = await prisma.org.findFirst({ where: { name: "Axona" } });
   const second = await prisma.org.findFirst({
     where: { name: "Isolation Test Co" },
   });

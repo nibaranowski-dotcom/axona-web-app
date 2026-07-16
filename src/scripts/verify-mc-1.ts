@@ -72,7 +72,7 @@ async function run(): Promise<void> {
       await import("../../apps/web/lib/module-alerts");
     const { prisma } = await import("@axona/db");
     const org = await prisma.org.findFirst({
-      where: { name: "Axona Demo Co" },
+      where: { name: "Axona" },
     });
     await check(
       "alerts present where narrative implies (quality/fleet/finance/procurement)",

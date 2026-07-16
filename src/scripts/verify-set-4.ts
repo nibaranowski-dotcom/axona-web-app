@@ -82,7 +82,7 @@ async function run(): Promise<void> {
     await import("../../apps/web/lib/notification-prefs");
   const { getNotifications } = await import("../../apps/web/lib/notifications");
 
-  const demo = await prisma.org.findFirst({ where: { name: "Axona Demo Co" } });
+  const demo = await prisma.org.findFirst({ where: { name: "Axona" } });
   const ops = await prisma.user.findFirst({
     where: { orgId: demo!.id, role: "OPS" },
   });

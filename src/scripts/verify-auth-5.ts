@@ -101,7 +101,7 @@ async function run(): Promise<void> {
   };
   await cleanup();
 
-  const demo = await prisma.org.findFirst({ where: { name: "Axona Demo Co" } });
+  const demo = await prisma.org.findFirst({ where: { name: "Axona" } });
   const admin = await prisma.user.findFirst({
     where: { orgId: demo!.id, role: "ADMIN" },
     select: { id: true, name: true },

@@ -107,7 +107,7 @@ async function run(): Promise<void> {
   };
   await cleanup();
 
-  const demo = await prisma.org.findFirst({ where: { name: "Axona Demo Co" } });
+  const demo = await prisma.org.findFirst({ where: { name: "Axona" } });
 
   // 1) createWorkspace → Org + ADMIN with a bcrypt hash that verifies.
   await check(

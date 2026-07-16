@@ -75,7 +75,7 @@ async function run(): Promise<void> {
       await import("@axona/db");
     const embedder = new FakeEmbedder();
     const org = await prisma.org.findFirst({
-      where: { name: "Axona Demo Co" },
+      where: { name: "Axona" },
     });
     // a seeded through-line file (its FILE.1 placeholder blob has bytes)
     const file = org

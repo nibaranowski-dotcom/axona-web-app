@@ -130,7 +130,7 @@ async function run(): Promise<void> {
           "tsv",
         )) as unknown[];
         const org = await prisma.org.findFirst({
-          where: { name: "Axona Demo Co" },
+          where: { name: "Axona" },
         });
         if (!org || col.length === 0) return false;
         const { hits } = await search(org.id, "procur", {
@@ -163,7 +163,7 @@ async function run(): Promise<void> {
       "parked fixture intact — procurement latest run is AWAITING_APPROVAL",
       async () => {
         const org = await prisma.org.findFirst({
-          where: { name: "Axona Demo Co" },
+          where: { name: "Axona" },
         });
         const proc = await prisma.workflow.findFirst({
           where: { orgId: org!.id, name: "Procurement reorder" },

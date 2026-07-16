@@ -21,9 +21,14 @@ import { BANNED_RE, scanForMarques } from "./lib/anonymization";
 const DEMO_ORG_ID = "org_axona_demo";
 const EXAMPLE_ORG_ID = "org_prospect_example";
 
-// Demo-narrative literals that must not be HARDCODED into the app's presentation.
+// Demo-narrative literals that must not be HARDCODED into the app's PRESENTATION
+// (executable code — comments documenting the narrative are stripped before this
+// runs). Covers product names (HX-2), customer names (Tier-1 Auto OEM), and record
+// codes (SN-2196 / NCR-118 / SERVO-204 / DLV-3312 / ECO-31x / HX2-0xxx). PROSPECT.2a:
+// broadened from `product: "HX-2"` — that literal missed `product === "HX-2"` in
+// FinanceView; now any `HX-2` product literal in executable code is caught.
 const DEMO_LITERALS =
-  /Tier-1 Auto OEM|SN-2196|NCR-118|SERVO-20[45]|DLV-3312|ECO-31[0-9]|HX2-0|drive_torque_Nm|thermal anomaly|lot 88421|M\. Osei|product: "HX-2"/;
+  /Tier-1 Auto OEM|SN-2196|NCR-118|SERVO-20[45]|DLV-3312|ECO-31[0-9]|HX2-0|HX-2|drive_torque_Nm|thermal anomaly|lot 88421|M\. Osei/;
 
 let passed = 0;
 let failed = 0;
@@ -41,7 +46,10 @@ const check = async (
   }
 };
 
-// Strip line comments so a hit only counts if it's in RENDERED code, not a doc line.
+// Strip comments so a hit only counts if it's in EXECUTABLE code, not documentation.
+// Removes full-line comments AND trailing `// …` comments (leaving `://` in strings,
+// e.g. URLs, alone) — PROSPECT.2a: a trailing comment mentioning the narrative is
+// documentation, not a render.
 const codeOnly = (src: string) =>
   src
     .split("\n")
@@ -54,6 +62,7 @@ const codeOnly = (src: string) =>
         t.startsWith("///")
       );
     })
+    .map((l) => l.replace(/(^|[^:])\/\/.*$/, "$1")) // drop trailing // comments
     .join("\n");
 
 async function run(): Promise<void> {
@@ -189,12 +198,10 @@ async function run(): Promise<void> {
           where: { id: EXAMPLE_ORG_ID },
           select: { name: true },
         });
-        return (
-          !!demo?.name &&
-          !!ex?.name &&
-          demo.name !== ex.name &&
-          demo.name.toLowerCase() !== "axona" // its OWN name, not a hardcoded wordmark
-        );
+        // Each org resolves its OWN name (data-driven), and the two DIFFER — proof
+        // the wordmark isn't a shared hardcoded string. (The demo org's name is now
+        // "Axona"; the prospect's is its own — the shell renders whichever it is.)
+        return !!demo?.name && !!ex?.name && demo.name !== ex.name;
       },
     );
   } finally {

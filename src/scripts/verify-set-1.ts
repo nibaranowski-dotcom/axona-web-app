@@ -98,7 +98,7 @@ async function run(): Promise<void> {
   const { getNavModules } = await import("../../apps/web/lib/nav");
   const { writeAudit } = await import("@axona/db");
 
-  const demo = await prisma.org.findFirst({ where: { name: "Axona Demo Co" } });
+  const demo = await prisma.org.findFirst({ where: { name: "Axona" } });
   const second = await prisma.org.findFirst({
     where: { name: "Isolation Test Co" },
   });
@@ -140,8 +140,7 @@ async function run(): Promise<void> {
         s.moduleGroups.length === 4 &&
         s.moduleGroups.flatMap((g) => g.modules).length === s.totalModules;
       const s2 = await getOrgSettings(second.id);
-      const scoped =
-        s2?.name === "Isolation Test Co" && s.name === "Axona Demo Co";
+      const scoped = s2?.name === "Isolation Test Co" && s.name === "Axona";
       return gridOk && s.slug === "axona-demo-co" && scoped;
     },
   );
@@ -150,7 +149,7 @@ async function run(): Promise<void> {
   await check("updateOrgProfile updates name/industry + audits", async () => {
     await db.org.updateMany({
       where: { id: demo.id },
-      data: { name: "Axona Demo Co", industry: "Mobility & AVs" },
+      data: { name: "Axona", industry: "Mobility & AVs" },
     });
     await writeAudit(db, {
       orgId: demo.id,
@@ -254,8 +253,7 @@ async function run(): Promise<void> {
       const sDemo = await getOrgSettings(demo.id);
       const sSecond = await getOrgSettings(second.id);
       const readScoped =
-        sDemo?.name === "Axona Demo Co" &&
-        sSecond?.name === "Isolation Test Co";
+        sDemo?.name === "Axona" && sSecond?.name === "Isolation Test Co";
       return allSelfOrg && readScoped;
     },
   );

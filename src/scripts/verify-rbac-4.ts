@@ -75,7 +75,7 @@ async function run(): Promise<void> {
       },
     ]);
 
-  const org = await prisma.org.findFirst({ where: { name: "Axona Demo Co" } });
+  const org = await prisma.org.findFirst({ where: { name: "Axona" } });
   const org2 = await prisma.org.findFirst({
     where: { name: "Isolation Test Co" },
   });

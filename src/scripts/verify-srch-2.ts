@@ -62,7 +62,7 @@ async function run(): Promise<void> {
   } else {
     const { prisma, search, countByType } = await import("@axona/db");
     const demo = await prisma.org.findFirst({
-      where: { name: "Axona Demo Co" },
+      where: { name: "Axona" },
     });
     const second = await prisma.org.findFirst({
       where: { name: "Isolation Test Co" },

@@ -59,7 +59,7 @@ async function run(): Promise<void> {
     const { prisma } = await import("@axona/db");
     const { getFleetData } = await import("../../apps/web/lib/fleet");
     const org = await prisma.org.findFirst({
-      where: { name: "Axona Demo Co" },
+      where: { name: "Axona" },
     });
     if (!org) {
       console.log("  FAIL demo org not seeded (run pnpm db:seed)");

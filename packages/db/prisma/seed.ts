@@ -115,7 +115,7 @@ async function main(): Promise<void> {
   await prisma.org.upsert({
     where: { id: DEMO_ORG_ID },
     update: {
-      name: "Axona Demo Co",
+      name: "Axona",
       slug: "axona-demo-co",
       industry: "Humanoid",
       onboardedAt: new Date(),
@@ -123,7 +123,7 @@ async function main(): Promise<void> {
     },
     create: {
       id: DEMO_ORG_ID,
-      name: "Axona Demo Co",
+      name: "Axona",
       slug: "axona-demo-co",
       industry: "Humanoid",
       onboardedAt: new Date(),

@@ -129,7 +129,7 @@ async function run(): Promise<void> {
 
   await check("all 7 seeded users have a passwordHash", async () => {
     const org = await prisma.org.findFirst({
-      where: { name: "Axona Demo Co" },
+      where: { name: "Axona" },
     });
     if (!org) return false;
     const users = await prisma.user.findMany({
