@@ -44,7 +44,7 @@ export function FinanceView({
   const latestRaas =
     data.revenueByPeriod[data.revenueByPeriod.length - 1]?.raas ?? 0;
   // PROSPECT.2a — the org's flagship product (highest ASP), not a hardcoded "HX-2"
-  // (which rendered an empty margin pill for any other tenant, e.g. Nomagic).
+  // (which rendered an empty margin pill for any tenant without that product).
   const flagship = [...data.unitEconomics].sort((a, b) => b.asp - a.asp)[0];
   const hasData = data.revenueByPeriod.length > 0 || data.invoices.length > 0;
 
