@@ -96,7 +96,9 @@ async function resolveByType(
       for (const r of await db.spcSample.findMany({ where }))
         out.set(r.id, {
           code: r.characteristic,
-          label: `${r.value} N·m (UCL ${r.ucl})`,
+          // unit-agnostic: the characteristic name carries the metric/unit (e.g.
+          // drive_torque_Nm, mispick_rate_pct) — don't hardcode a torque unit.
+          label: `${r.value} (UCL ${r.ucl})`,
           status:
             r.value > r.ucl || r.value < r.lcl ? "out of spec" : "in control",
         });
