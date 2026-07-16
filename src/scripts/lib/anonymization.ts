@@ -72,6 +72,9 @@ const IGNORE_DIRS = new Set([
   "build",
   "coverage",
   ".vercel",
+  // PROSPECT.1 — untracked prospect-demo configs (real prospect brands live here and
+  // are gitignored); never scanned by the SEED.1 marque gate.
+  "prospects",
 ]);
 const TEXT_EXTS = new Set([
   ".ts",

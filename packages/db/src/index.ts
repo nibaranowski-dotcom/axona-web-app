@@ -65,6 +65,12 @@ export {
   type MemoryHit,
 } from "./memory/recall";
 
+// PROSPECT.1 — the generic (marque-free) prospect-demo tenant mechanism. Only the
+// TYPES live in @axona/db (so a prospect config can import them + the web build stays
+// clean); the seed RUNTIME (node:fs for the logo) lives in src/scripts/lib/
+// prospect-seed.ts, imported only by the seed script + verify (never bundled by web).
+export type { ProspectConfig, ProspectSeedContext } from "./prospect/types";
+
 // Re-export Prisma's generated types/enums so consumers import from one place.
 export * from "@prisma/client";
 

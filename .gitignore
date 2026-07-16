@@ -19,3 +19,9 @@ design/prototypes/axona-v2/uploads/
 design/prototypes/axona-v2/screenshots/
 design/prototypes/axona-v2/**/.DS_Store
 design/prototypes/axona-v2/.thumbnail
+
+# PROSPECT.1 — prospect demo tenants. Tailored, prospect-NAMED demo configs (branding,
+# logos, sample data, demo logins) live ONLY here and are NEVER committed — this keeps
+# the SEED.1 anonymization wall intact (no real marque in the tracked repo / investor
+# build). Seed via: pnpm db:seed:prospect prospects/<name>  (see docs/prospect-demo.md).
+prospects/
