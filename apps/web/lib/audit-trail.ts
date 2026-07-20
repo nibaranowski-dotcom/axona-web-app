@@ -1,10 +1,19 @@
-import { dbForOrg } from "@axona/db";
+import {
+  dbForOrg,
+  getCalibrationModel,
+  calibratedConfidence,
+  type CalibrationModelData,
+} from "@axona/db";
 
 // AUDIT.2 — the audit-trail READ model. Read-only over the append-only AuditLog
 // (AUDIT.1); org-scoped via dbForOrg; newest-first, cursor-paginated. Surfaces the
 // AUDIT.3 enrichment (model · confidence · approver) and resolves a deep-link to
 // each target's source screen where one is derivable. There is NO write path — the
 // log is immutable; this module only reads.
+//
+// CONF.1 — each entry's raw confidence is passed through the org's CALIBRATED map
+// (calibratedConfidence): the surfaced number is the calibrated one, with an
+// `uncalibrated` state on cold start. The reliability view reads getCalibration().
 
 export const LOW_CONFIDENCE = 0.4; // < this = flagged for human review (INK, never red)
 const DEFAULT_TAKE = 40;
@@ -19,10 +28,15 @@ export interface AuditEntry {
   targetId: string;
   summary: string;
   model: string | null;
-  confidence: number | null;
+  confidence: number | null; // the agent's RAW emitted confidence
+  // CONF.1 — the calibrated value + whether the org's model is trusted yet (cold
+  // start below the sample floor → state "uncalibrated", value = raw).
+  calibrated: { value: number; state: "calibrated" | "uncalibrated" } | null;
   approverLabel: string | null;
   href: string | null; // deep-link to the target's source screen, when derivable
 }
+
+export type { CalibrationModelData };
 
 export interface AuditTrailPage {
   entries: AuditEntry[];
@@ -132,9 +146,17 @@ export async function getAuditTrail(
   const hasMore = rows.length > take;
   const page = hasMore ? rows.slice(0, take) : rows;
   const hrefMap = await resolveHrefs(orgId, page);
+  const model = await getCalibrationModel(orgId); // CONF.1 — the org's fitted map
 
   const entries: AuditEntry[] = page.map((r) => ({
     ...r,
+    calibrated:
+      r.confidence == null
+        ? null
+        : (() => {
+            const c = calibratedConfidence(r.confidence, model);
+            return { value: c.value, state: c.state };
+          })(),
     href:
       r.targetType === "PurchaseOrder"
         ? "/procurement"
@@ -143,6 +165,13 @@ export async function getAuditTrail(
           : (hrefMap.get(r.targetId) ?? null),
   }));
   return { entries, nextCursor: hasMore ? page[page.length - 1]!.id : null };
+}
+
+/** CONF.1 — the org's fitted calibration model for the reliability view (per-org). */
+export async function getCalibration(
+  orgId: string,
+): Promise<CalibrationModelData | null> {
+  return getCalibrationModel(orgId);
 }
 
 export async function getAuditRollup(orgId: string): Promise<AuditRollup> {

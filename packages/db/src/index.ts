@@ -71,6 +71,23 @@ export {
 // prospect-seed.ts, imported only by the seed script + verify (never bundled by web).
 export type { ProspectConfig, ProspectSeedContext } from "./prospect/types";
 
+// CONF.1 — calibrated confidence: fit a per-org raw→calibrated map from the audit
+// log's outcomes, apply it, and expose the advisory autonomy-gate seam for TRUST.1.
+export {
+  calibrate,
+  fitCalibration,
+  getCalibrationModel,
+  calibratedConfidence,
+  meetsAutonomyThreshold,
+  MIN_SAMPLES,
+  DEFAULT_AUTONOMY_THRESHOLD,
+} from "./confidence/calibration";
+export type {
+  CalibrationModelData,
+  CalibrationBin,
+  CalibratedConfidence,
+} from "./confidence/calibration";
+
 // Re-export Prisma's generated types/enums so consumers import from one place.
 export * from "@prisma/client";
 

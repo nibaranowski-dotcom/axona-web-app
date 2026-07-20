@@ -48,43 +48,44 @@ model Org {
   createdAt            DateTime  @default(now())
 
   // back-relations — one array per tenant-owned model (FND.11)
-  users            User[]
-  agents           Agent[]
-  chats            Chat[]
-  workflows        Workflow[]
-  projects         Project[]
-  machines         Machine[]
-  suppliers        Supplier[]
-  parts            Part[]
-  purchaseOrders   PurchaseOrder[]
-  workOrdersMfg    WorkOrderMfg[]
-  ncrs             NCR[]
-  spcSamples       SpcSample[]
-  certs            Cert[]
-  deals            Deal[]
-  campaigns        Campaign[]
-  deliveries       Delivery[]
-  robots           Robot[]
-  telemetry        TelemetryPoint[]
-  workOrdersField  WorkOrderField[]
-  technicians      Technician[]
-  ecos             ECO[]
-  firmwareReleases FirmwareRelease[]
-  compatCells      CompatCell[]
-  autonomyMetrics  AutonomyMetric[]
-  safetyIncidents  SafetyIncident[]
-  policyVersions   PolicyVersion[]
-  ledgerEntries    LedgerEntry[]
-  invoices         Invoice[]
-  unitEconomics    UnitEconomic[]
-  requisitions     Requisition[]
-  cves             CVE[]
-  obligations      Obligation[]
-  exportLicenses   ExportLicense[]
-  legalMatters     LegalMatter[]
-  searchDocs       SearchDoc[]
-  entityLinks      EntityLink[]
-  memoryItems      MemoryItem[]
+  users             User[]
+  agents            Agent[]
+  chats             Chat[]
+  workflows         Workflow[]
+  projects          Project[]
+  machines          Machine[]
+  suppliers         Supplier[]
+  parts             Part[]
+  purchaseOrders    PurchaseOrder[]
+  workOrdersMfg     WorkOrderMfg[]
+  ncrs              NCR[]
+  spcSamples        SpcSample[]
+  certs             Cert[]
+  deals             Deal[]
+  campaigns         Campaign[]
+  deliveries        Delivery[]
+  robots            Robot[]
+  telemetry         TelemetryPoint[]
+  workOrdersField   WorkOrderField[]
+  technicians       Technician[]
+  ecos              ECO[]
+  firmwareReleases  FirmwareRelease[]
+  compatCells       CompatCell[]
+  autonomyMetrics   AutonomyMetric[]
+  safetyIncidents   SafetyIncident[]
+  policyVersions    PolicyVersion[]
+  ledgerEntries     LedgerEntry[]
+  invoices          Invoice[]
+  unitEconomics     UnitEconomic[]
+  requisitions      Requisition[]
+  cves              CVE[]
+  obligations       Obligation[]
+  exportLicenses    ExportLicense[]
+  legalMatters      LegalMatter[]
+  searchDocs        SearchDoc[]
+  entityLinks       EntityLink[]
+  memoryItems       MemoryItem[]
+  calibrationModels CalibrationModel[]
 }
 
 model User {
@@ -1287,4 +1288,27 @@ model MemoryItem {
   @@unique([orgId, sourceType, sourceId]) // idempotent ingestion — one memory per source event
   @@index([orgId, kind, occurredAt])
   @@index([orgId, subjectType, subjectId]) // graph-proximity recall by subject
+}
+
+// ── CONF.1 · Calibrated confidence (L2 intelligence spine — the moat) ─────────
+// The per-org fitted map that turns an agent's RAW confidence into a CALIBRATED
+// one, learned from the ground truth the audit log already captures: every gated
+// agent proposal's raw `confidence` + the human APPROVED/REJECTED decision. The
+// AuditLog stays the source of truth (recomputed from it); this row is the small,
+// fast, per-tenant persisted model. NO new columns on AuditLog/MemoryItem —
+// CONF.1 reads the existing confidence/approver history + the /// CONF.1 seams.
+model CalibrationModel {
+  id         String   @id @default(cuid())
+  orgId      String
+  org        Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  scope      String   @default("org") // "org" now; per-action-kind later (seam)
+  // The fitted monotonic map + provenance as JSON: bin edges · per-bin observed
+  // rate + count · sampleSize · fitMethod ("isotonic"|"binned") · Brier · ECE ·
+  // fittedAt. Recomputed from AuditLog; TRUST.1/LOOP.1 read it, never fork it.
+  model      Json
+  sampleSize Int
+  fittedAt   DateTime @default(now())
+
+  @@unique([orgId, scope]) // one model per org per scope — idempotent upsert
+  @@index([orgId])
 }

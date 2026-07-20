@@ -4,7 +4,7 @@
 // Idempotent: clear the demo org's tenant rows (scoped to DEMO_ORG_ID, FK-safe
 // order), then reseed through dbForOrg so every row carries the demo orgId and
 // ISO.1 is dogfooded. Org/Module/Users-bootstrap use the bare prisma client.
-import { prisma, dbForOrg, reindex, ingestMemory } from "../src";
+import { prisma, dbForOrg, reindex, ingestMemory, calibrate } from "../src";
 import type { OrgScopedDb } from "../src";
 import { DEMO_ORG_ID, SECOND_ORG_ID } from "./seed/constants";
 import { seedModules } from "./seed/modules";
@@ -23,6 +23,11 @@ import { seedIntegrations } from "./seed/integrations";
 import { seedMachines } from "./seed/machines";
 import { seedWorkflows } from "./seed/workflows";
 import { seedOntology } from "./seed/ontology";
+import {
+  seedCalibrationHistory,
+  DEMO_CALIBRATION,
+  ISOLATION_CALIBRATION,
+} from "./seed/calibration";
 
 /** Delete the demo org's tenant rows, children before parents, scoped to its
  *  orgId. NEVER a bare deleteMany — other tenants must be untouched. The Org row
@@ -36,6 +41,7 @@ async function clearDemoOrg(): Promise<void> {
   const projectIds = demoProjects.map((p) => p.id);
 
   // children / leaf rows first
+  await prisma.calibrationModel.deleteMany({ where: { orgId } }); // CONF.1 fitted model
   await prisma.memoryItem.deleteMany({ where: { orgId } }); // MEM.1 operational memory
   await prisma.entityLink.deleteMany({ where: { orgId } }); // ONT.1 link graph
   await prisma.telemetryPoint.deleteMany({ where: { orgId } });
@@ -160,7 +166,8 @@ async function main(): Promise<void> {
   const matrix = await seedMatrix(db);
   const machines = await seedMachines(db);
   const workflows = await seedWorkflows(db);
-  const audit = await seedAudit(db, DEMO_ORG_ID, Date.now());
+  const nowMs = Date.now();
+  const audit = await seedAudit(db, DEMO_ORG_ID, nowMs);
   await seedBilling(db, DEMO_ORG_ID); // BILL.3
   await seedNotifications(db, DEMO_ORG_ID); // NOTIF.1
   const demoAdmin = await prisma.user.findFirst({
@@ -174,8 +181,29 @@ async function main(): Promise<void> {
   // for recall's proximity arm. FakeEmbedder offline (no EMBED_API_KEY) → CI-green.
   const memory = await ingestMemory(db);
 
-  // 5. Second org (isolation contrast)
-  await seedSecondOrg(dbForOrg(SECOND_ORG_ID));
+  // CONF.1 — a decided-proposal history (seeded AFTER ingestMemory so it stays
+  // calibration fodder, not narrative memory) that the engine fits from. The demo
+  // org is systematically over-confident (agents ~0.9, humans approve ~60%), so its
+  // fitted map corrects 0.9 → ~0.6. Idempotent; org-scoped.
+  const calHistory = await seedCalibrationHistory(
+    db,
+    DEMO_ORG_ID,
+    DEMO_CALIBRATION,
+    {
+      prefix: "cal-demo",
+      nowMs,
+    },
+  );
+  const calib = await calibrate(db, DEMO_ORG_ID);
+
+  // 5. Second org (isolation contrast) — its OWN, disjoint calibration (under-confident).
+  const secondDb = dbForOrg(SECOND_ORG_ID);
+  await seedSecondOrg(secondDb);
+  await seedCalibrationHistory(secondDb, SECOND_ORG_ID, ISOLATION_CALIBRATION, {
+    prefix: "cal-iso",
+    nowMs,
+  });
+  await calibrate(secondDb, SECOND_ORG_ID);
 
   // 6. Build the unified search index (SRCH.1) — globals + all tenants; idempotent.
   await reindex();
@@ -189,7 +217,8 @@ async function main(): Promise<void> {
       `matrix: ${matrix.columns} cols (${matrix.cells} cells), ` +
       `audit: ${audit.entries} log entries, ` +
       `ontology: ${ontologyLinks} entity links, ` +
-      `memory: ${memory.created} items (${memory.embedded} embedded).`,
+      `memory: ${memory.created} items (${memory.embedded} embedded), ` +
+      `calibration: ${calHistory} decided proposals → n=${calib.sampleSize} (ECE ${calib.ece}).`,
   );
 }
 

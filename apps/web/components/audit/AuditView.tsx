@@ -9,14 +9,18 @@ import type {
   AuditEntry,
   AuditFilterOptions,
   AuditRollup,
+  CalibrationModelData,
 } from "@/lib/audit-trail";
 import { LOW_CONFIDENCE } from "@/lib/audit-trail";
+import { ReliabilityPanel } from "./ReliabilityPanel";
 
 export interface AuditScreenData {
   entries: AuditEntry[];
   nextCursor: string | null;
   rollup: AuditRollup;
   options: AuditFilterOptions;
+  // CONF.1 — the org's fitted calibration model for the reliability view.
+  calibration: CalibrationModelData | null;
 }
 
 // The Governance audit-trail viewer (AUDIT.2) — on the DS.1 primitives (StatStrip +
@@ -145,6 +149,9 @@ export function AuditView({
       ) : (
         <>
           <StatStrip stats={stats} />
+
+          {/* CONF.1 — the reliability view (the moat made legible), per org */}
+          <ReliabilityPanel calibration={data.calibration} />
 
           {/* filters */}
           <div className="flex flex-wrap items-center gap-2">
@@ -276,8 +283,28 @@ function AuditRow({ e }: { e: AuditEntry }) {
         {e.confidence === null ? (
           <span className="text-ink-faint">—</span>
         ) : (
-          <span className="inline-flex items-center gap-1.5">
-            <span className="text-ink">{e.confidence.toFixed(2)}</span>
+          <span className="inline-flex items-center gap-1">
+            {/* CONF.1 — show the CALIBRATED value; mark cold start; hint the raw
+                when the calibrated number diverges (the correction, made visible). */}
+            <span className="text-ink">
+              {(e.calibrated?.value ?? e.confidence).toFixed(2)}
+            </span>
+            {e.calibrated?.state === "uncalibrated" ? (
+              <span
+                title={`raw ${e.confidence.toFixed(2)} · not enough decided proposals to calibrate yet`}
+                className="rounded-[4px] border border-line px-1 py-px text-[8px] font-medium uppercase tracking-[0.03em] text-ink-muted"
+              >
+                uncal
+              </span>
+            ) : e.calibrated &&
+              Math.abs(e.calibrated.value - e.confidence) >= 0.05 ? (
+              <span
+                title={`agent said ${e.confidence.toFixed(2)}; calibrated to the org's observed rate`}
+                className="text-[9px] text-ink-faint"
+              >
+                ·raw {e.confidence.toFixed(2)}
+              </span>
+            ) : null}
             {low && (
               <span className="rounded-pill bg-ink-strong px-1.5 py-px text-[8.5px] font-semibold uppercase tracking-[0.03em] text-on-dark">
                 Review
