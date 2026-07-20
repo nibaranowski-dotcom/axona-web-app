@@ -17,12 +17,7 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import {
-  fitCalibration,
-  calibratedConfidence,
-  MIN_SAMPLES,
-  type CalibrationModelData,
-} from "@axona/db";
+import { fitCalibration, calibratedConfidence, MIN_SAMPLES } from "@axona/db";
 
 const DEMO_ORG_ID = "org_axona_demo";
 const SECOND_ORG_ID = "org_isolation_test";

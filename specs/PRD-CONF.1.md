@@ -110,7 +110,7 @@ model CalibrationModel {
   the divergence is shown by the value itself, not a scary color).
 - **Reliability view** — a compact calibration panel (reliability curve: stated vs. observed, + sampleSize +
   ECE/Brier) — placed where the moat is inspectable (e.g. an Agents/Trust section or the Audit area). Data-driven
-  per org (no hardcoded narrative — PROSPECT.2 discipline). For Nomagic's tenant it reflects *their* outcomes.
+  per org (no hardcoded narrative — PROSPECT.2 discipline). For a prospect tenant it reflects THEIR outcomes.
 
 ## Guardrails / moat invariants
 
@@ -147,7 +147,7 @@ clean; commit + push; Actions green.
 kind has been historically over-approved-against shows a **calibrated** number below 0.9 with the reliability
 view explaining why ("agents said ~90%, were right ~60%, n=…") — and a cold-start kind shows raw + `uncalibrated`.
 Confidence now corresponds to reality. (Bonus: it renders correctly + independently in both the investor and
-Nomagic tenants — CONF.1 respects PROSPECT.2's data-driven, per-tenant behavior.)
+prospect tenants — CONF.1 respects PROSPECT.2's data-driven, per-tenant behavior.)
 
 ## Review gate
 
