@@ -48,44 +48,54 @@ model Org {
   createdAt            DateTime  @default(now())
 
   // back-relations — one array per tenant-owned model (FND.11)
-  users             User[]
-  agents            Agent[]
-  chats             Chat[]
-  workflows         Workflow[]
-  projects          Project[]
-  machines          Machine[]
-  suppliers         Supplier[]
-  parts             Part[]
-  purchaseOrders    PurchaseOrder[]
-  workOrdersMfg     WorkOrderMfg[]
-  ncrs              NCR[]
-  spcSamples        SpcSample[]
-  certs             Cert[]
-  deals             Deal[]
-  campaigns         Campaign[]
-  deliveries        Delivery[]
-  robots            Robot[]
-  telemetry         TelemetryPoint[]
-  workOrdersField   WorkOrderField[]
-  technicians       Technician[]
-  ecos              ECO[]
-  firmwareReleases  FirmwareRelease[]
-  compatCells       CompatCell[]
-  autonomyMetrics   AutonomyMetric[]
-  safetyIncidents   SafetyIncident[]
-  policyVersions    PolicyVersion[]
-  ledgerEntries     LedgerEntry[]
-  invoices          Invoice[]
-  unitEconomics     UnitEconomic[]
-  requisitions      Requisition[]
-  cves              CVE[]
-  obligations       Obligation[]
-  exportLicenses    ExportLicense[]
-  legalMatters      LegalMatter[]
-  searchDocs        SearchDoc[]
-  entityLinks       EntityLink[]
-  memoryItems       MemoryItem[]
-  calibrationModels CalibrationModel[]
+  users                 User[]
+  agents                Agent[]
+  chats                 Chat[]
+  workflows             Workflow[]
+  projects              Project[]
+  machines              Machine[]
+  suppliers             Supplier[]
+  parts                 Part[]
+  purchaseOrders        PurchaseOrder[]
+  workOrdersMfg         WorkOrderMfg[]
+  ncrs                  NCR[]
+  spcSamples            SpcSample[]
+  certs                 Cert[]
+  deals                 Deal[]
+  campaigns             Campaign[]
+  deliveries            Delivery[]
+  robots                Robot[]
+  telemetry             TelemetryPoint[]
+  workOrdersField       WorkOrderField[]
+  technicians           Technician[]
+  ecos                  ECO[]
+  firmwareReleases      FirmwareRelease[]
+  compatCells           CompatCell[]
+  autonomyMetrics       AutonomyMetric[]
+  safetyIncidents       SafetyIncident[]
+  policyVersions        PolicyVersion[]
+  ledgerEntries         LedgerEntry[]
+  invoices              Invoice[]
+  unitEconomics         UnitEconomic[]
+  requisitions          Requisition[]
+  cves                  CVE[]
+  obligations           Obligation[]
+  exportLicenses        ExportLicense[]
+  legalMatters          LegalMatter[]
+  searchDocs            SearchDoc[]
+  entityLinks           EntityLink[]
+  memoryItems           MemoryItem[]
+  calibrationModels     CalibrationModel[]
+  // PLM.1a — the Unit spine + configuration cluster
+  productModels         ProductModel[]
+  partMasters           PartMaster[]
+  partRevisions         PartRevision[]
+  bomLines              BomLine[]
+  units                 Unit[]
+  asBuiltRecords        AsBuiltRecord[]
+  softwareReleases      SoftwareRelease[]
+  unitSoftwareStates    UnitSoftwareState[]
+  configurationVersions ConfigurationVersion[]
 }
 
 model User {
@@ -943,6 +953,14 @@ model ECO {
   /// AUDIT.3 — keep this as a plain status here.
   stage      String
 
+  /// PLM.1a — effectivity + rollout. `effectiveFromSerial`/`effectiveFromDate`
+  /// scope which units the change applies to (from a serial/date onward);
+  /// `rolloutStatus` tracks fleet-wide progress. `changeRequestId` (the ECR that
+  /// originated this ECO) lands in PLM.1b — do not add it yet.
+  effectiveFromSerial String?
+  effectiveFromDate   DateTime?
+  rolloutStatus       EcoRolloutStatus @default(pending)
+
   @@index([orgId])
 }
 
@@ -1205,6 +1223,11 @@ enum EntityType {
   WORK_ORDER
   SPC_SAMPLE
   INVOICE
+  // PLM.1a — the golden thread reaches the PLM cluster (TEST_RUN / FIELD_EVENT
+  // land in PLM.1b).
+  PRODUCT_MODEL
+  PART_REVISION
+  CONFIG_VERSION
 }
 
 enum LinkRelation {
@@ -1310,5 +1333,209 @@ model CalibrationModel {
   fittedAt   DateTime @default(now())
 
   @@unique([orgId, scope]) // one model per org per scope — idempotent upsert
+  @@index([orgId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PLM.1a · The Unit spine + as-designed BOM + as-built + time-resolved config
+// (L1 Foundation — capture fidelity caps the moat). Non-breaking retrofit:
+// WorkOrderMfg (build) and Robot (deployment) keep working; Unit links them by
+// scalar id and is backfilled from existing serials. TestRun/TestResult/
+// FieldEvent/ChangeRequest/NCR.rootCause land in PLM.1b — kept cleanly separate.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Unit lifecycle — a countable, org-scoped identity. `Unit` is ALSO the billing
+/// meter (per-module pricing metered by units under management, BILL.1): the
+/// billable states are `deployed`/`active` (under management); `in_build`/
+/// `in_test` are pre-delivery, `decommissioned` is post. Do not meter here.
+enum UnitStatus {
+  in_build
+  in_test
+  deployed
+  active
+  decommissioned
+}
+
+enum EcoRolloutStatus {
+  pending
+  in_progress
+  complete
+}
+
+/// A product design (e.g. a picking cell) + its current design revision. BOM +
+/// configurations hang off it.
+model ProductModel {
+  id             String   @id @default(cuid())
+  orgId          String
+  org            Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  code           String
+  name           String
+  designRevision String
+  createdAt      DateTime @default(now())
+
+  units    Unit[]
+  bomLines BomLine[]
+  configs  ConfigurationVersion[]
+
+  @@unique([orgId, code])
+  @@index([orgId])
+}
+
+/// A part in the master catalog (the design-side identity; distinct from the
+/// procurement `Part`/SKU which is the buy-side stock item).
+model PartMaster {
+  id                String   @id @default(cuid())
+  orgId             String
+  org               Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  partNumber        String
+  description       String
+  category          String?
+  lifecycleStatus   String // active | ncr_hold | superseded | obsolete
+  approvedVendorIds String[]
+
+  revisions PartRevision[]
+
+  @@unique([orgId, partNumber])
+  @@index([orgId])
+}
+
+model PartRevision {
+  id               String     @id @default(cuid())
+  orgId            String
+  org              Org        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  partMasterId     String
+  partMaster       PartMaster @relation(fields: [partMasterId], references: [id], onDelete: Cascade)
+  rev              String
+  effectiveFrom    DateTime
+  effectiveTo      DateTime?
+  /// The ECO that introduced this revision (scalar — crosses to ENG, kept a plain
+  /// id like NCR.linkedTo per FND.11).
+  originatingEcoId String?
+
+  bomLines       BomLine[]
+  asBuiltRecords AsBuiltRecord[]
+
+  @@unique([orgId, partMasterId, rev])
+  @@index([orgId])
+  @@index([partMasterId])
+}
+
+/// As-designed BOM — multi-level (self-referential parent). One row per position.
+model BomLine {
+  id             String       @id @default(cuid())
+  orgId          String
+  org            Org          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  productModelId String
+  productModel   ProductModel @relation(fields: [productModelId], references: [id], onDelete: Cascade)
+  designRevision String
+  parentLineId   String?
+  parentLine     BomLine?     @relation("BomHierarchy", fields: [parentLineId], references: [id], onDelete: SetNull)
+  children       BomLine[]    @relation("BomHierarchy")
+  position       String
+  partRevisionId String
+  partRevision   PartRevision @relation(fields: [partRevisionId], references: [id], onDelete: Restrict)
+  qty            Int
+
+  @@index([orgId])
+  @@index([productModelId, designRevision])
+}
+
+/// The physical-unit spine — one row per serial, spanning build → test → deploy →
+/// field. `workOrderMfgId`/`robotId` are the two legacy anchors (scalar; the
+/// existing MFG/Fleet screens keep reading their own rows). `@@unique([orgId,
+/// serial])` gives the clean countable identity BILL.1 meters on.
+model Unit {
+  id             String       @id @default(cuid())
+  orgId          String
+  org            Org          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  serial         String
+  productModelId String
+  productModel   ProductModel @relation(fields: [productModelId], references: [id], onDelete: Restrict)
+  buildDate      DateTime?
+  status         UnitStatus
+  siteLabel      String?
+  customerLabel  String?
+  workOrderMfgId String?
+  robotId        String?
+  createdAt      DateTime     @default(now())
+
+  asBuiltRecords AsBuiltRecord[]
+  softwareStates UnitSoftwareState[]
+
+  @@unique([orgId, serial])
+  @@index([orgId])
+  @@index([orgId, status])
+}
+
+/// As-built — the ACTUAL part revision + lot/serial installed at a BOM position,
+/// captured AT BUILD (never reconstructed). `isSubstitution` flags a divergence
+/// from the as-designed BomLine. Substitutions are NORMAL, not errors.
+model AsBuiltRecord {
+  id              String       @id @default(cuid())
+  orgId           String
+  org             Org          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  unitId          String
+  unit            Unit         @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  bomPosition     String
+  partRevisionId  String
+  partRevision    PartRevision @relation(fields: [partRevisionId], references: [id], onDelete: Restrict)
+  lotCode         String?
+  componentSerial String?
+  installedById   String?
+  installedAt     DateTime
+  isSubstitution  Boolean      @default(false)
+  note            String?
+
+  @@index([orgId, unitId])
+  @@index([orgId, lotCode])
+}
+
+model SoftwareRelease {
+  id        String  @id @default(cuid())
+  orgId     String
+  org       Org     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  component String // e.g. "firmware", "autonomy-policy"
+  version   String
+  notes     String?
+
+  states UnitSoftwareState[]
+
+  @@unique([orgId, component, version])
+  @@index([orgId])
+}
+
+/// Time-series of the software running on a unit — effectiveFrom→To windows. The
+/// spine of `resolveConfigAt` (what sw was it running THEN).
+model UnitSoftwareState {
+  id                String          @id @default(cuid())
+  orgId             String
+  org               Org             @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  unitId            String
+  unit              Unit            @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  softwareReleaseId String
+  softwareRelease   SoftwareRelease @relation(fields: [softwareReleaseId], references: [id], onDelete: Restrict)
+  effectiveFrom     DateTime
+  effectiveTo       DateTime?
+
+  @@index([orgId, unitId])
+  @@index([unitId, effectiveFrom])
+}
+
+/// A named, lockable, baselineable resolved hw+sw combination. `hwSpec`/`swSpec`
+/// are JSON so a config can be matched against a unit's resolved state.
+model ConfigurationVersion {
+  id             String       @id @default(cuid())
+  orgId          String
+  org            Org          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name           String
+  productModelId String
+  productModel   ProductModel @relation(fields: [productModelId], references: [id], onDelete: Cascade)
+  hwSpec         Json
+  swSpec         Json
+  isBaseline     Boolean      @default(false)
+  lockedAt       DateTime?
+  lockedById     String?
+
+  @@unique([orgId, name])
   @@index([orgId])
 }

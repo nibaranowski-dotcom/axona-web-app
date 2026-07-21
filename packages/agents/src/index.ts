@@ -94,10 +94,13 @@ export {
   // ontology (ONT.1) — the entity-link graph + blast-radius traversal
   getBlastRadius,
   getBlastRadiusTool,
+  // PLM.1a — affected-units façade over the Unit spine + ONT.1 blast radius
+  affectedUnits,
   // memory (MEM.1) — recall prior operational episodes
   recallMemoryTool,
 } from "./tools";
 export type { EntityType, BlastRadiusResult, BlastNode } from "./tools";
+export type { AffectedUnit, AffectedUnitsResult } from "./tools";
 
 // WF.1 — the workflow DAG schema + run engine (BullMQ consumer in apps/worker;
 // in-process path for the enqueue API + verify when there is no Redis).

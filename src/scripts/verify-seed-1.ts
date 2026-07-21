@@ -7,7 +7,7 @@
  *      visited files (guards against a silent empty scan false-passing).
  *   2. No-regression on the DEMO.3 export: both export files exist and are clean.
  *   3. The seed still produces the same cross-module narrative — getBlastRadius
- *      for NCR-118 is still 14 nodes / 7 modules, and the Fulfillment/Finance
+ *      for NCR-118 is 17 nodes / 7 modules (PLM.1a added the Unit spine), and the Fulfillment/Finance
  *      nodes now read the anonymized account ("Tier-1 Auto OEM", never a marque).
  *      (DB check — gated behind DATABASE_URL so the pre-push hook runs statics.)
  */
@@ -86,8 +86,11 @@ async function run(): Promise<void> {
   const db = dbForOrg("org_axona_demo");
   const r = await getBlastRadius(db, { entityType: "NCR", code: "NCR-118" });
 
-  await check("NCR-118 cascade intact — 14 nodes / 7 modules", () => {
-    return r.found && r.nodeCount === 14 && r.moduleCount === 7;
+  // PLM.1a extended the thread with the Unit spine — NCR-118 now reaches the three
+  // affected units (SN-2208/2209/2210) via the ECO/LOT→UNIT edges, so 14→17 nodes;
+  // the units tag to Manufacturing (already one of the 7), so moduleCount holds at 7.
+  await check("NCR-118 cascade intact — 17 nodes / 7 modules", () => {
+    return r.found && r.nodeCount === 17 && r.moduleCount === 7;
   });
   await check(
     "Fulfillment + Finance nodes read the anonymized OEM account (no marque)",

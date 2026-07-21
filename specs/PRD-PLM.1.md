@@ -10,6 +10,33 @@ capture layer the whole moat compounds on).
 **Deps:** ONT.1 (EntityLink — the golden thread), MFG (`WorkOrderMfg`), FLEET (`Robot`), ENG (`ECO`,
 firmware), QUAL (`NCR`, `SpcSample`), PROC/INV (`Part`, `Supplier`). **Downstream:** every PLM screen story.
 
+## Delivery split — build as **PLM.1a** then **PLM.1b** (two stories, two commits)
+
+The CRO's wedge ruling (2026-07-20) keeps **Procurement** as the commercial wedge and treats PLM as a
+**module** (domain #15), not a pivot — *CLAUDE.md's "Wedge = Procurement" stands; do not rewrite it.* Only part
+of this model serves the wedge demo today, so ship it in two halves with a clean stop point between them:
+
+**PLM.1a — the commercial slice (build first).** `ProductModel` · `PartMaster` · `PartRevision` · `BomLine` ·
+**`Unit`** · `AsBuiltRecord` · `SoftwareRelease` · **`UnitSoftwareState`** · `ConfigurationVersion` · the
+`EntityType` extensions · the seed thread · `resolveConfigAt` · `asBuiltDiff` · `affectedUnits` · CSV import.
+This answers Q1, Q2 and most of Q5, strengthens the existing procurement demo, and covers the two things the
+prospect resonated hardest on (per-unit config genealogy; fault → order the exact part).
+
+**PLM.1b — the deferred tier (build after the stop point).** `TestRun` · `TestResult` · `FieldEvent` ·
+`ChangeRequest` · `NCR.rootCause` + its links · `freezeConfigSnapshot`. No buyer has budget against these yet;
+they're being built by founder decision, not by evidence. Keep them cleanly separable so the program can stop
+after 1a if time compresses.
+
+**Billing meter (CRO note — model for it now):** pricing will be **per module, metered by units under
+management**, so **`Unit` is also the billing meter**. Give `Unit` a clean, countable, org-scoped identity with
+a lifecycle status that distinguishes billable states — BILL.1 will meter on exactly this. Do **not** build
+metering here; just don't model `Unit` in a way that makes it impossible.
+
+**Copy guardrail (CRO note):** never lead with a category word in-product — "ERP" invites SAP, "PLM" invites
+the incumbents our buyers actively reject. Lead with the pain. Engineering-facing copy is *"configuration
+management and traceability"*; business-facing is *"the operating system for how robotics companies run."*
+(This lands concretely on the Engineering nav label in PLM.V1.)
+
 ## Why this exists
 
 The product must let a user answer five questions. Today it can answer roughly one and a half:

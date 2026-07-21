@@ -68,6 +68,16 @@ const TENANT_MODELS = new Set<string>([
   "EntityLink", // ONT.1 — the entity-link graph is tenant-scoped like every edge/record
   "MemoryItem", // MEM.1 — per-tenant isolation of operational memory is a moat invariant
   "CalibrationModel", // CONF.1 — per-tenant isolation of fitted models is a moat invariant
+  // PLM.1a — the Unit spine + configuration cluster (per-tenant isolation is a moat invariant)
+  "ProductModel",
+  "PartMaster",
+  "PartRevision",
+  "BomLine",
+  "Unit",
+  "AsBuiltRecord",
+  "SoftwareRelease",
+  "UnitSoftwareState",
+  "ConfigurationVersion",
 ]);
 
 /** Operations whose `where` we tag with `orgId` (non-unique-target). */

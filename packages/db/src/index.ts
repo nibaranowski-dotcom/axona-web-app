@@ -88,6 +88,21 @@ export type {
   CalibratedConfidence,
 } from "./confidence/calibration";
 
+// PLM.1a — the Unit spine core logic: resolveConfigAt · asBuiltDiff · CSV import.
+// (affectedUnits lives in @axona/agents — it reuses ONT.1 getBlastRadius.)
+export {
+  resolveConfigAt,
+  asBuiltDiff,
+  importUnits,
+  importBom,
+  type ResolvedConfig,
+  type ResolvedHwLine,
+  type AsBuiltDiffResult,
+  type AsBuiltDiffLine,
+  type ImportResult,
+  type RowError,
+} from "./plm";
+
 // Re-export Prisma's generated types/enums so consumers import from one place.
 export * from "@prisma/client";
 

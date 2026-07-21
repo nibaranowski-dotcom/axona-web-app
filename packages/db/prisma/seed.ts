@@ -23,6 +23,7 @@ import { seedIntegrations } from "./seed/integrations";
 import { seedMachines } from "./seed/machines";
 import { seedWorkflows } from "./seed/workflows";
 import { seedOntology } from "./seed/ontology";
+import { seedPlm } from "./seed/plm";
 import {
   seedCalibrationHistory,
   DEMO_CALIBRATION,
@@ -44,6 +45,16 @@ async function clearDemoOrg(): Promise<void> {
   await prisma.calibrationModel.deleteMany({ where: { orgId } }); // CONF.1 fitted model
   await prisma.memoryItem.deleteMany({ where: { orgId } }); // MEM.1 operational memory
   await prisma.entityLink.deleteMany({ where: { orgId } }); // ONT.1 link graph
+  // PLM.1a — the Unit spine cluster (children before parents; Unit FKs ProductModel)
+  await prisma.asBuiltRecord.deleteMany({ where: { orgId } });
+  await prisma.unitSoftwareState.deleteMany({ where: { orgId } });
+  await prisma.bomLine.deleteMany({ where: { orgId } });
+  await prisma.configurationVersion.deleteMany({ where: { orgId } });
+  await prisma.unit.deleteMany({ where: { orgId } });
+  await prisma.partRevision.deleteMany({ where: { orgId } });
+  await prisma.softwareRelease.deleteMany({ where: { orgId } });
+  await prisma.partMaster.deleteMany({ where: { orgId } });
+  await prisma.productModel.deleteMany({ where: { orgId } });
   await prisma.telemetryPoint.deleteMany({ where: { orgId } });
   await prisma.machineSignal.deleteMany({ where: { machine: { orgId } } });
   await prisma.workOrderField.deleteMany({ where: { orgId } });
@@ -162,6 +173,7 @@ async function main(): Promise<void> {
   await seedBackOffice(db);
   // ONT.1 — the entity-link graph, LAST so every referenced record exists.
   const ontologyLinks = await seedOntology(db);
+  const plm = await seedPlm(db); // PLM.1a — Unit spine + as-built + config thread
   const projects = await seedProjects(db);
   const matrix = await seedMatrix(db);
   const machines = await seedMachines(db);

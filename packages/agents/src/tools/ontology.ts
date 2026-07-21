@@ -20,7 +20,11 @@ export type EntityType =
   | "DELIVERY"
   | "WORK_ORDER"
   | "SPC_SAMPLE"
-  | "INVOICE";
+  | "INVOICE"
+  // PLM.1a — must stay in sync with Prisma's EntityType enum
+  | "PRODUCT_MODEL"
+  | "PART_REVISION"
+  | "CONFIG_VERSION";
 
 const ENTITY_TYPES = [
   "NCR",
@@ -34,6 +38,9 @@ const ENTITY_TYPES = [
   "WORK_ORDER",
   "SPC_SAMPLE",
   "INVOICE",
+  "PRODUCT_MODEL",
+  "PART_REVISION",
+  "CONFIG_VERSION",
 ] as const;
 
 /** The module each entity type belongs to (drives the grouped answer). */
@@ -49,6 +56,10 @@ const MODULE: Record<EntityType, string> = {
   DELIVERY: "Fulfillment",
   WORK_ORDER: "Field Service",
   INVOICE: "Finance",
+  // PLM.1a — the PLM cluster tags to Engineering (the PLM hub).
+  PRODUCT_MODEL: "Engineering",
+  PART_REVISION: "Engineering",
+  CONFIG_VERSION: "Engineering",
 };
 
 const MAX_NODES = 200;
@@ -207,6 +218,10 @@ async function resolveSeedId(
       return first(await db.invoice.findFirst({ where: { code } }));
     case "SPC_SAMPLE":
       return first(await db.spcSample.findFirst({ where: { serial: code } }));
+    default:
+      // PLM.1a types (PRODUCT_MODEL/PART_REVISION/CONFIG_VERSION) are graph
+      // members but not yet seeded as blast-radius roots — resolve nothing.
+      return null;
   }
 }
 
