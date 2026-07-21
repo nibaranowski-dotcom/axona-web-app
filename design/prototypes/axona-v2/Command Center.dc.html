@@ -12,6 +12,17 @@
 <style>
   body{margin:0}
   ::selection{background:var(--accent)}
+  .profmenu{position:relative}
+  .profmenu summary{list-style:none;cursor:pointer}
+  .profmenu summary::-webkit-details-marker{display:none}
+  .profmenu summary::marker{content:""}
+  .profmenu summary:hover{background:var(--panel)}
+  .profmenu[open] .profchev{transform:rotate(180deg)}
+  .profchev{transition:transform .15s;flex:none}
+  .pm-item{transition:background .15s}
+  .pm-item:hover{background:var(--panel)}
+  .pm-signout{transition:border-color .15s,color .15s}
+  .pm-signout:hover{border-color:var(--ink-strong);color:var(--ink)}
   .copilot-dark{background-color:#121214;background-image:radial-gradient(520px 280px at 8% -30%,rgba(198,242,79,.14),transparent 62%),linear-gradient(155deg,#1c1c20,#111114)}
   .collapse-btn{transition:background .15s,color .15s}
   .collapse-btn:hover{background:var(--panel);color:var(--ink)}
@@ -64,10 +75,34 @@
         </details>
       </sc-for>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;padding:12px 8px 2px;border-top:1px solid var(--line);margin-top:8px">
-      <span style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink)">LC</span>
-      <div style="font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Head of Ops</div></div>
-    </div>
+    <details class="profmenu" style="border-top:1px solid var(--line);margin-top:8px;padding-top:8px">
+      <summary style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px">
+        <span style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink);flex:none">LC</span>
+        <div style="flex:1;min-width:0;font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Head of Ops</div></div>
+        <svg class="profchev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"></path></svg>
+      </summary>
+      <div style="position:absolute;bottom:calc(100% + 8px);left:0;right:0;background:var(--paper);border:1px solid var(--line);border-radius:13px;box-shadow:0 18px 40px rgba(0,0,0,.12);padding:6px;z-index:40">
+        <a class="pm-item" href="Audit Trail.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg>
+          <span style="flex:1">Audit trail</span>
+        </a>
+        <a class="pm-item" href="Notifications.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg>
+          <span style="flex:1">Notifications</span>
+          <span style="font-family:var(--font-mono);font-size:11px;font-weight:700;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:2px 9px">5</span>
+        </a>
+        <a class="pm-item" href="Settings — Organization.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          <span style="flex:1">Settings</span>
+        </a>
+        <div style="height:1px;background:var(--line);margin:6px 4px"></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px">
+          <span style="width:30px;height:30px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink);flex:none">LC</span>
+          <div style="flex:1;min-width:0;font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Admin</div></div>
+          <a class="pm-signout" href="Login.dc.html" title="Sign out" style="width:32px;height:32px;border:1px solid var(--line-strong);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-muted);text-decoration:none;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg></a>
+        </div>
+      </div>
+    </details>
   </aside>
 
   <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--panel)">
@@ -179,7 +214,7 @@ class Component extends DCLogic {
     const navGroups = navRaw.map(g => ({
       label: g.label || null,
       items: g.items.map(it => ({
-        name: it.name, badge: it.badge || null, href: it.href || (it.name === 'Inventory' ? '#' : it.name + '.dc.html'), pad: it.sub ? '24px' : '10px',
+        name: it.name, badge: it.badge || null, href: it.href || (it.name === 'Inventory' ? 'Inventory.dc.html' : it.name + '.dc.html'), pad: it.sub ? '24px' : '10px',
         bg: it.active ? 'var(--panel)' : 'transparent',
         fg: it.active ? 'var(--ink)' : 'var(--ink-muted)',
         weight: it.active ? 600 : 400,

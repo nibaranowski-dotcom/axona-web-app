@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .profmenu{position:relative}
+  .profmenu summary{list-style:none;cursor:pointer}
+  .profmenu summary::-webkit-details-marker{display:none}
+  .profmenu summary:hover{background:var(--panel)}
+  .profmenu[open] .profchev{transform:rotate(180deg)}
+  .profchev{transition:transform .15s;flex:none}
+  .pm-item{transition:background .15s}
+  .pm-item:hover{background:var(--panel)}
+  .pm-signout{transition:border-color .15s,color .15s}
+  .pm-signout:hover{border-color:var(--ink-strong);color:var(--ink)}
+  .navitem{transition:background .15s,color .15s}
+  .navitem:hover{background:var(--panel)}
+  .navgroup summary{list-style:none}
+  .navgroup summary::-webkit-details-marker{display:none}
+  .navgroup summary:hover .navchev{stroke:var(--ink-muted)}
+  .navchev{transition:transform .15s;flex:none}
+  .navgroup:not([open]) .navchev{transform:rotate(-90deg)}
+  .navsearch{transition:border-color .15s,background .15s}
+  .navsearch:hover{border-color:var(--ink-strong);background:var(--panel-2)}
+  .drow{transition:background .15s}
+  .drow.sub:hover{background:var(--panel-2)}
+  .fchip{transition:border-color .15s,color .15s;cursor:pointer}
+  .fchip:hover{border-color:var(--ink-strong);color:var(--ink)}
+  .scarea::-webkit-scrollbar{width:8px;height:8px}
+  .scarea::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+</style>
+<script>document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key&&e.key.toLowerCase()==='k'){e.preventDefault();window.location.href='Mission Control.dc.html';}});</script>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden;font-family:var(--font-sans);color:var(--ink);background:var(--panel)">
+
+  <aside style="width:240px;flex:none;background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 14px">
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 8px 18px">
+      <span style="font-size:21px;font-weight:700;letter-spacing:-.04em;color:var(--ink-strong)">axona</span>
+      <span style="width:12px;height:12px;background:var(--ink-strong);border-radius:0 7px 0 7px"></span>
+    </div>
+    <a href="Mission Control.dc.html" class="navsearch" style="display:flex;align-items:center;gap:9px;margin:0 4px 10px;padding:8px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--panel);cursor:pointer;text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <span style="flex:1;font-size:13px;color:var(--ink-faint)">Search</span>
+      <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px">⌘K</span>
+    </a>
+    <div class="scarea" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;margin:0 -4px;padding:0 4px">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <details open="open" class="navgroup">
+          <summary style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;padding:14px 10px 6px;cursor:pointer"><span style="flex:1">{{ g.label }}</span><svg class="navchev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--line-strong)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></summary>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+          <a class="navitem" href="{{ it.href }}" style="display:flex;align-items:center;gap:11px;padding:8px 10px 8px {{ it.pad }};border-radius:8px;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.weight }};font-size:14px;text-decoration:none">
+            <span style="width:6px;height:6px;border-radius:2px;background:{{ it.marker }};flex:none"></span>
+            <span style="flex:1">{{ it.name }}</span>
+            <sc-if value="{{ it.badge }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:10px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 7px;font-weight:600">{{ it.badge }}</span></sc-if>
+          </a>
+        </sc-for>
+        </details>
+      </sc-for>
+    </div>
+    <details class="profmenu" style="border-top:1px solid var(--line);margin-top:8px;padding-top:8px">
+      <summary style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px">
+        <span style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink);flex:none">LC</span>
+        <div style="flex:1;min-width:0;font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Head of Ops</div></div>
+        <svg class="profchev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"></path></svg>
+      </summary>
+      <div style="position:absolute;bottom:calc(100% + 8px);left:0;right:0;background:var(--paper);border:1px solid var(--line);border-radius:13px;box-shadow:0 18px 40px rgba(0,0,0,.12);padding:6px;z-index:40">
+        <a class="pm-item" href="Audit Trail.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500"><span style="flex:1">Audit trail</span></a>
+        <a class="pm-item" href="Notifications.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500"><span style="flex:1">Notifications</span><span style="font-family:var(--font-mono);font-size:11px;font-weight:700;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:2px 9px">5</span></a>
+        <a class="pm-item" href="Settings — Organization.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500"><span style="flex:1">Settings</span></a>
+        <div style="height:1px;background:var(--line);margin:6px 4px"></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px">
+          <span style="width:30px;height:30px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink);flex:none">LC</span>
+          <div style="flex:1;min-width:0;font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Admin</div></div>
+          <a class="pm-signout" href="Login.dc.html" title="Sign out" style="width:32px;height:32px;border:1px solid var(--line-strong);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-muted);text-decoration:none;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg></a>
+        </div>
+      </div>
+    </details>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--panel)">
+    <div style="flex:none;border-bottom:1px solid var(--line);background:var(--paper);padding:14px 24px 16px">
+      <div style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:10px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:9px">
+        <a href="Engineering.dc.html" style="color:var(--ink-faint);text-decoration:none">Engineering</a><span>/</span><a href="Unit Registry.dc.html" style="color:var(--ink-faint);text-decoration:none">Unit registry</a><span>/</span><a href="Unit.dc.html" style="color:var(--ink-faint);text-decoration:none">SN-2208</a><span>/</span><span style="color:var(--ink-muted)">As-built diff</span>
+      </div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div>
+          <h1 style="margin:0;font-size:19px;font-weight:600;letter-spacing:-.02em">As-designed vs as-built</h1>
+          <div style="font-size:13px;color:var(--ink-muted);margin-top:4px"><span style="font-family:var(--font-mono);font-size:12px">SN-2208</span> · HX-2 Humanoid · against BOM rev C</div>
+        </div>
+        <div style="display:flex;gap:8px;padding-bottom:2px">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2">
+            <span class="fchip" style="font-size:12.5px;font-weight:500;padding:7px 13px;border-radius:8px;background:{{ t.bg }};color:{{ t.fg }};border:1px solid {{ t.bd }}">{{ t.label }}</span>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- summary strip -->
+    <div style="flex:none;display:flex;background:var(--paper);border-bottom:1px solid var(--line)">
+      <sc-for list="{{ summary }}" as="s" hint-placeholder-count="4">
+        <div style="flex:1;padding:14px 24px;border-left:{{ s.divider }}">
+          <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;letter-spacing:-.02em;color:{{ s.color }}">{{ s.v }}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase;margin-top:3px">{{ s.l }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div class="scarea" style="flex:1;min-width:0;overflow:auto">
+      <div style="min-width:900px;padding:20px 24px 24px">
+        <!-- diff column headers -->
+        <div style="display:grid;grid-template-columns:64px 1fr 1fr 150px;gap:0;position:sticky;top:0;z-index:2">
+          <span style="background:var(--panel)"></span>
+          <div style="background:var(--panel);padding:0 0 10px 4px"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">As-designed · BOM rev C</span></div>
+          <div style="background:var(--panel);padding:0 0 10px 16px"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">As-built · SN-2208</span></div>
+          <div style="background:var(--panel);padding:0 0 10px 16px"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Substitution</span></div>
+        </div>
+
+        <div style="border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--paper)">
+          <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+            <div class="drow {{ r.cls }}" style="display:grid;grid-template-columns:64px 1fr 1fr 150px;gap:0;border-top:{{ r.divider }};background:{{ r.rowBg }};opacity:{{ r.op }}">
+              <div style="padding:13px 0 13px 16px;display:flex;align-items:center"><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint)">{{ r.pos }}</span></div>
+              <div style="padding:13px 16px 13px 4px;border-left:3px solid {{ r.accent }}">
+                <div style="font-family:var(--font-mono);font-size:12.5px;font-weight:{{ r.weight }};color:{{ r.leftColor }}">{{ r.designed }}</div>
+                <div style="font-size:11px;color:var(--ink-faint);margin-top:2px">{{ r.name }}</div>
+              </div>
+              <div style="padding:13px 16px">
+                <div style="font-family:var(--font-mono);font-size:12.5px;font-weight:{{ r.weight }}">{{ r.built }}</div>
+                <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);margin-top:2px">{{ r.builtMeta }}</div>
+              </div>
+              <div style="padding:13px 16px 13px 16px;display:flex;align-items:center">
+                <sc-if value="{{ r.isSub }}" hint-placeholder-val="{{ true }}"><span style="font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.04em;background:var(--ink-strong);color:#fff;border-radius:5px;padding:3px 8px">{{ r.flag }}</span></sc-if>
+                <sc-if value="{{ r.match }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;color:var(--ink-faint);display:inline-flex;align-items:center;gap:5px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>Match</span></sc-if>
+              </div>
+            </div>
+            <sc-if value="{{ r.expanded }}" hint-placeholder-val="{{ false }}">
+              <div style="border-top:1px solid var(--line);background:var(--panel-2);padding:12px 16px 14px 80px;display:flex;gap:26px;flex-wrap:wrap">
+                <div><div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase">Reason</div><div style="font-size:12.5px;margin-top:3px;max-width:42ch">{{ r.reason }}</div></div>
+                <div><div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase">Who · when</div><div style="font-family:var(--font-mono);font-size:12px;margin-top:3px">{{ r.who }}</div></div>
+                <div><div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase">Lot / serial</div><a href="Blast Radius.dc.html" style="font-family:var(--font-mono);font-size:12px;margin-top:3px;display:block;color:var(--ink);text-decoration:underline;text-underline-offset:2px">lot {{ r.lot }} →</a></div>
+              </div>
+            </sc-if>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;color:var(--ink-muted)">
+          <span style="display:inline-flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border-radius:3px;background:var(--ink-strong)"></span>Substitution</span>
+          <span style="color:var(--line-strong)">·</span>
+          <span style="display:inline-flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border-radius:3px;background:var(--line-strong)"></span>Matched (de-emphasised)</span>
+          <span style="margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)">Showing 8 of 142 positions · <span style="color:var(--ink);cursor:pointer">show all</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){
+    const navGroups = this._nav();
+
+    const tabs = [
+      { label:'Substitutions only', active:true },
+      { label:'All positions', active:false },
+    ].map(t => ({ label:t.label, bg: t.active ? 'var(--ink-strong)' : 'var(--paper)', fg: t.active ? '#fff' : 'var(--ink-muted)', bd: t.active ? 'var(--ink-strong)' : 'var(--line-strong)' }));
+
+    const summary = [
+      { v:'142', l:'Positions', color:'var(--ink)' },
+      { v:'3', l:'Substitutions', color:'var(--ink-strong)' },
+      { v:'2', l:'Lots involved', color:'var(--ink)' },
+      { v:'139', l:'Match as-designed', color:'var(--success)' },
+    ].map((s,i) => ({ ...s, divider: i ? '1px solid var(--line)' : 'none' }));
+
+    const sub = (pos, designed, name, built, builtMeta, flag, reason, who, lot, expanded) => ({
+      pos, designed, name, built, builtMeta, flag, reason, who, lot,
+      cls:'sub', isSub:true, match:false, weight:600, leftColor:'var(--ink-muted)',
+      accent:'var(--ink-strong)', rowBg:'var(--paper)', op:'1', expanded,
+    });
+    const match = (pos, designed, name, built) => ({
+      pos, designed, name, built, builtMeta:'as-designed', flag:'', reason:'', who:'', lot:'',
+      cls:'match', isSub:false, match:true, weight:400, leftColor:'var(--ink-muted)',
+      accent:'transparent', rowBg:'var(--paper)', op:'.6', expanded:false,
+    });
+
+    const rowsRaw = [
+      sub('A-14','SERVO-204 rev C','Left actuator harmonic drive','SERVO-204 rev C','installed · lot 88421','Flagged lot','Same part number, but from a lot later quarantined by Quality (NCR-118 — torque out of spec).','M. Osei · 2026-05-14','88421', true),
+      match('A-15','SERVO-204 rev C','Right actuator harmonic drive','SERVO-204 rev C'),
+      sub('B-07','HARN-220 rev A','Main wiring harness','HARN-220 rev B','installed · lot 5567','Rev bump','Superseded to rev B mid-build under ECO-314 (connector keying fix). Newer than the BOM baseline.','Line 2 · 2026-05-14','5567', false),
+      match('B-08','SENS-12 rev 2','Vision sensor · front','SENS-12 rev 2'),
+      match('B-19','SENS-12 rev 2','Vision sensor · rear','SENS-12 rev 2'),
+      sub('C-03','BATT-48V rev 2','48V battery pack','BATT-48V rev 2','installed · lot 7741','Alt vendor','Approved alternate — primary vendor was short at build time. Same revision, second-source cell.','Sourcing agent · 2026-05-13','7741', false),
+      match('C-04','BMS-9 rev 4','Battery management board','BMS-9 rev 4'),
+      match('D-01','CHASSIS-2 rev B','Chassis frame','CHASSIS-2 rev B'),
+    ];
+    const rows = rowsRaw.map((r,i) => ({ ...r, divider: i ? '1px solid var(--line)' : 'none' }));
+
+    return { navGroups, tabs, summary, rows };
+  }
+  _nav(){
+    const navRaw = [
+      { label:'Core', items:[ { name:'Command Center', href:'Mission Control.dc.html' }, { name:'Agents', href:'Agents.dc.html' }, { name:'Workflows', href:'Workflows.dc.html' }, { name:'Projects', href:'Projects.dc.html' }, { name:'Machines', href:'Machines.dc.html' } ] },
+      { label:'Value chain', items:[ { name:'Procurement', badge:'6' }, { name:'Manufacturing' }, { name:'Inventory' }, { name:'Fulfillment', badge:'3' }, { name:'Quality' }, { name:'Sales & CRM' }, { name:'Marketing' } ] },
+      { label:'Robotics', items:[ { name:'Fleet' }, { name:'Field Service' }, { name:'Engineering', active:true }, { name:'Autonomy' } ] },
+      { label:'Back office', items:[ { name:'Finance', badge:'6' }, { name:'People' }, { name:'Security' }, { name:'Legal' } ] },
+    ];
+    return navRaw.map(g => ({
+      label: g.label || null,
+      items: g.items.map(it => ({
+        name: it.name, badge: it.badge || null, href: it.href || (it.name + '.dc.html'), pad: it.sub ? '24px' : '10px',
+        bg: it.active ? 'var(--panel)' : 'transparent',
+        fg: it.active ? 'var(--ink)' : 'var(--ink-muted)',
+        weight: it.active ? 600 : 400,
+        marker: it.active ? 'var(--ink-strong)' : 'var(--line-strong)',
+      })),
+    }));
+  }
+}
+</script>
+</body>
+</html>

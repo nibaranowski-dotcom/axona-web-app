@@ -26,15 +26,21 @@ implemented tokens + primitives in `design/` are the visual source of truth; `de
 match it (brand invariants above still win on any conflict). `FND.14`/`FND.15` (data + agent primitives)
 build on DS.1's components, not parallel to them.
 
-**Per-screen design source = the committed `Axona v2` export at `design/prototypes/axona-v2/`** (exported
-from the `claude_design` project `30c1e297…`; ~26 `.dc.html` files, one per screen, + `tokens/`,
-`components/`, `guidelines/`, and handoff `.md` docs). This is the canonical fidelity reference — it
-supersedes the older DS.1-era `design/prototypes/` set. **Every UI story implements its screen 1:1 against
-its local `.dc.html`** (Claude Code reads the file directly — no MCP/connector round-trip, no re-auth).
-The block names the file: "implement `design/prototypes/axona-v2/<Screen>.dc.html` 1:1 on the DS.1
-primitives." Route→file map: the file name is the module's display name (`/sales` → `Sales & CRM.dc.html`,
-`/core` → `Command Center.dc.html`, `/agents` → `Agents.dc.html`, `/procurement` → `Procurement.dc.html`,
-…). `uploads/` (40MB binaries), `.DS_Store`, `.thumbnail`, `screenshots/` are gitignored — only the
+**Per-screen design source = the committed design export at `design/prototypes/axona-v2/`** (exported
+from the `claude_design` project `30c1e297…`; **current export = v8** — `52` `.dc.html` files, one per
+screen, + `tokens/`, `components/`, `guidelines/`, and handoff `.md` docs). This directory is the canonical
+`.dc.html` fidelity reference — it supersedes the older DS.1-era `design/prototypes/` set. **For the
+screen→story map (which route/story owns which screen, esp. the PLM screens), the source of truth is
+`specs/PRD-PLM-screens.md`** — build from that, not from a copied-in handoff note (we deliberately do NOT
+duplicate the v8 map into the repo as a second, drift-prone source). **Every UI story implements its screen
+1:1 against its local `.dc.html`** (Claude Code reads the file directly — no MCP/connector round-trip, no
+re-auth). The block names the file: "implement `design/prototypes/axona-v2/<Screen>.dc.html` 1:1 on the
+DS.1 primitives." Route→file map: the file name is the module's display name (`/sales` →
+`Sales & CRM.dc.html`, `/core` → `Command Center.dc.html`, `/agents` → `Agents.dc.html`, `/procurement` →
+`Procurement.dc.html`, …; the v8 PLM screens are `Unit.dc.html`, `Unit Registry.dc.html`,
+`As-Built Diff.dc.html`, `Blast Radius.dc.html`, `Test Explorer.dc.html`, `Test Run.dc.html`, `RCA.dc.html`,
+`Change Order.dc.html`, `Configurations.dc.html`; `Audit Trail.dc.html` is `/audit`'s first mock — see
+AUDIT.4). `uploads/` (40MB binaries), `.DS_Store`, `.thumbnail`, `screenshots/` are gitignored — only the
 `.dc.html` + tokens + docs are committed. Data/API-only stories skip this (no screen). Visual fidelity is
 part of the DoD, checked per story — never a later pass.
 

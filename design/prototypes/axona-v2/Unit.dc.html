@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .profmenu{position:relative}
+  .profmenu summary{list-style:none;cursor:pointer}
+  .profmenu summary::-webkit-details-marker{display:none}
+  .profmenu summary:hover{background:var(--panel)}
+  .profmenu[open] .profchev{transform:rotate(180deg)}
+  .profchev{transition:transform .15s;flex:none}
+  .pm-item{transition:background .15s}
+  .pm-item:hover{background:var(--panel)}
+  .pm-signout{transition:border-color .15s,color .15s}
+  .pm-signout:hover{border-color:var(--ink-strong);color:var(--ink)}
+  .collapse-btn{transition:background .15s,color .15s}
+  .collapse-btn:hover{background:var(--panel);color:var(--ink)}
+  .navitem{transition:background .15s,color .15s}
+  .navitem:hover{background:var(--panel)}
+  .navgroup summary{list-style:none}
+  .navgroup summary::-webkit-details-marker{display:none}
+  .navgroup summary:hover .navchev{stroke:var(--ink-muted)}
+  .navchev{transition:transform .15s;flex:none}
+  .navgroup:not([open]) .navchev{transform:rotate(-90deg)}
+  .navsearch{transition:border-color .15s,background .15s}
+  .navsearch:hover{border-color:var(--ink-strong);background:var(--panel-2)}
+  .lrow{transition:background .15s}
+  .lrow:hover{background:var(--panel-2)}
+  .subrow:hover{background:var(--panel-2)}
+  .dgroup summary{list-style:none;cursor:pointer}
+  .dgroup summary::-webkit-details-marker{display:none}
+  .dgroup[open] .dchev{transform:rotate(90deg)}
+  .dchev{transition:transform .15s;flex:none}
+  .scarea::-webkit-scrollbar{width:8px}
+  .scarea::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+</style>
+<script>document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key&&e.key.toLowerCase()==='k'){e.preventDefault();window.location.href='Mission Control.dc.html';}});</script>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden;font-family:var(--font-sans);color:var(--ink);background:var(--panel)">
+
+  <aside style="width:240px;flex:none;background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 8px 18px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:21px;font-weight:700;letter-spacing:-.04em;color:var(--ink-strong)">axona</span>
+        <span style="width:12px;height:12px;background:var(--ink-strong);border-radius:0 7px 0 7px"></span>
+      </div>
+    </div>
+    <a href="Mission Control.dc.html" class="navsearch" style="display:flex;align-items:center;gap:9px;margin:0 4px 10px;padding:8px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--panel);cursor:pointer;text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <span style="flex:1;font-size:13px;color:var(--ink-faint)">Search</span>
+      <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px">⌘K</span>
+    </a>
+    <div class="scarea" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;margin:0 -4px;padding:0 4px">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <details open="open" class="navgroup">
+          <summary style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;padding:14px 10px 6px;cursor:pointer"><span style="flex:1">{{ g.label }}</span><svg class="navchev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--line-strong)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></summary>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+          <a class="navitem" href="{{ it.href }}" style="display:flex;align-items:center;gap:11px;padding:8px 10px 8px {{ it.pad }};border-radius:8px;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.weight }};font-size:14px;text-decoration:none">
+            <span style="width:6px;height:6px;border-radius:2px;background:{{ it.marker }};flex:none"></span>
+            <span style="flex:1">{{ it.name }}</span>
+            <sc-if value="{{ it.badge }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:10px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 7px;font-weight:600">{{ it.badge }}</span></sc-if>
+          </a>
+        </sc-for>
+        </details>
+      </sc-for>
+    </div>
+    <details class="profmenu" style="border-top:1px solid var(--line);margin-top:8px;padding-top:8px">
+      <summary style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px">
+        <span style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink);flex:none">LC</span>
+        <div style="flex:1;min-width:0;font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Head of Ops</div></div>
+        <svg class="profchev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"></path></svg>
+      </summary>
+      <div style="position:absolute;bottom:calc(100% + 8px);left:0;right:0;background:var(--paper);border:1px solid var(--line);border-radius:13px;box-shadow:0 18px 40px rgba(0,0,0,.12);padding:6px;z-index:40">
+        <a class="pm-item" href="Audit Trail.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500"><span style="flex:1">Audit trail</span></a>
+        <a class="pm-item" href="Notifications.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500"><span style="flex:1">Notifications</span><span style="font-family:var(--font-mono);font-size:11px;font-weight:700;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:2px 9px">5</span></a>
+        <a class="pm-item" href="Settings — Organization.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500"><span style="flex:1">Settings</span></a>
+        <div style="height:1px;background:var(--line);margin:6px 4px"></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px">
+          <span style="width:30px;height:30px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink);flex:none">LC</span>
+          <div style="flex:1;min-width:0;font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Admin</div></div>
+          <a class="pm-signout" href="Login.dc.html" title="Sign out" style="width:32px;height:32px;border:1px solid var(--line-strong);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-muted);text-decoration:none;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg></a>
+        </div>
+      </div>
+    </details>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--panel)">
+    <!-- topbar / identity header -->
+    <div style="flex:none;border-bottom:1px solid var(--line);background:var(--paper);padding:14px 24px 16px">
+      <div style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:10px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:9px">
+        <a href="Engineering.dc.html" style="color:var(--ink-faint);text-decoration:none">Engineering</a><span>/</span><a href="Unit Registry.dc.html" style="color:var(--ink-faint);text-decoration:none">Unit registry</a><span>/</span><span style="color:var(--ink-muted)">SN-2208</span>
+      </div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap">
+        <div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <h1 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-.03em;font-family:var(--font-mono)">SN-2208</h1>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:.03em;padding:3px 10px;border-radius:999px;background:var(--success-tint);color:var(--success)"><span style="width:6px;height:6px;border-radius:50%;background:var(--success)"></span>Deployed</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:6px;font-size:13px;color:var(--ink-muted)">
+            <span>HX-2 Humanoid</span><span style="color:var(--line-strong)">·</span><span>Built <span style="font-family:var(--font-mono);font-size:12px">2026-05-14</span></span><span style="color:var(--line-strong)">·</span><span>BMW Group · Munich</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <a href="As-Built Diff.dc.html" style="font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;padding:9px 15px;font-size:13px;background:transparent;color:var(--ink);border:1px solid var(--line-strong);text-decoration:none">View as-built diff</a>
+          <button style="font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;padding:9px 15px;font-size:13px;background:var(--ink-strong);color:#fff;border:1px solid var(--ink-strong)">Export record</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="scarea" style="flex:1;min-width:0;overflow-y:auto;display:flex">
+      <!-- main column -->
+      <div style="flex:1;min-width:0;padding:22px 24px;display:flex;flex-direction:column;gap:18px">
+
+        <!-- CURRENT RESOLVED CONFIG (pinned) -->
+        <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:15px 20px 13px;border-bottom:1px solid var(--line)">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <h3 style="margin:0;font-size:15px;font-weight:600">Current configuration</h3>
+              <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.04em;color:var(--ink-muted);text-transform:uppercase;background:var(--panel);border:1px solid var(--line-panel);border-radius:5px;padding:2px 7px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Baseline · locked</span>
+            </div>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);letter-spacing:.04em">RESOLVED AS OF NOW</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0">
+            <div style="padding:16px 20px;border-right:1px solid var(--line)">
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Config version</div>
+              <div style="font-family:var(--font-mono);font-size:16px;font-weight:600;margin-top:6px">CFG-HX2-r4.2</div>
+              <div style="font-size:11.5px;color:var(--ink-muted);margin-top:3px">Baselined 2026-06-18</div>
+            </div>
+            <div style="padding:16px 20px;border-right:1px solid var(--line)">
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Hardware rev</div>
+              <div style="font-family:var(--font-mono);font-size:16px;font-weight:600;margin-top:6px">HX-2 · rev 4</div>
+              <div style="font-size:11.5px;color:var(--ink-muted);margin-top:3px">142 components · 3 substitutions</div>
+            </div>
+            <div style="padding:16px 20px">
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Software / firmware</div>
+              <div style="font-family:var(--font-mono);font-size:16px;font-weight:600;margin-top:6px">v4.2.1</div>
+              <div style="font-size:11.5px;color:var(--ink-muted);margin-top:3px">Autonomy p-12.4 · certified</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AS-DESIGNED vs AS-BUILT diff summary (expandable) -->
+        <details class="dgroup" style="background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+          <summary style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 20px">
+            <svg class="dchev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600">As-designed vs as-built</div>
+              <div style="font-size:12.5px;color:var(--ink-muted);margin-top:2px">142 positions · <span style="color:var(--ink);font-weight:600">3 substitutions</span> · 2 lots involved</div>
+            </div>
+            <span style="font-family:var(--font-mono);font-size:11px;font-weight:700;background:var(--ink-strong);color:#fff;border-radius:999px;padding:3px 11px">3 Δ</span>
+          </summary>
+          <div style="border-top:1px solid var(--line)">
+            <sc-for list="{{ subs }}" as="s" hint-placeholder-count="3">
+              <div class="subrow" style="display:grid;grid-template-columns:1fr 24px 1fr 1.1fr;gap:14px;align-items:center;padding:13px 20px;border-top:1px solid var(--line)">
+                <div style="min-width:0">
+                  <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase">Designed · pos {{ s.pos }}</div>
+                  <div style="font-family:var(--font-mono);font-size:12.5px;margin-top:3px;color:var(--ink-muted);text-decoration:line-through">{{ s.designed }}</div>
+                </div>
+                <span style="text-align:center;color:var(--ink-faint)">→</span>
+                <div style="min-width:0">
+                  <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase">Built</div>
+                  <div style="font-family:var(--font-mono);font-size:12.5px;margin-top:3px;font-weight:600">{{ s.built }}</div>
+                </div>
+                <div style="min-width:0">
+                  <div style="font-size:12px;color:var(--ink)">{{ s.reason }}</div>
+                  <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);margin-top:2px">{{ s.who }} · lot {{ s.lot }}</div>
+                </div>
+              </div>
+            </sc-for>
+            <div style="padding:12px 20px;border-top:1px solid var(--line)"><a href="As-Built Diff.dc.html" style="font-size:12.5px;font-weight:600;color:var(--ink);text-decoration:none">Open full diff viewer →</a></div>
+          </div>
+        </details>
+
+        <!-- LIFECYCLE TIMELINE (hero) -->
+        <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px 6px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <h3 style="margin:0;font-size:15px;font-weight:600">Lifecycle</h3>
+            <div style="display:flex;align-items:center;gap:14px">
+              <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-muted)"><span style="width:8px;height:8px;border-radius:50%;background:var(--ink-strong)"></span>Build &amp; change</span>
+              <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-muted)"><span style="width:8px;height:8px;border-radius:50%;background:var(--accent)"></span>Test</span>
+              <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-muted)"><span style="width:8px;height:8px;border-radius:2px;background:var(--ink-strong)"></span>Field event</span>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--ink-muted);margin-bottom:18px">Every event carries the configuration this unit was running at that time.</div>
+
+          <div style="position:relative;padding-left:22px">
+            <span style="position:absolute;left:5px;top:4px;bottom:20px;width:2px;background:var(--line-strong)"></span>
+            <sc-for list="{{ timeline }}" as="e" hint-placeholder-count="6">
+              <div class="lrow" style="position:relative;display:flex;gap:16px;padding:11px 12px 11px 0;border-radius:9px;margin-left:-12px;padding-left:12px">
+                <span style="position:absolute;left:-12px;top:15px;width:12px;height:12px;border-radius:{{ e.dotRadius }};background:{{ e.dotBg }};border:2px solid var(--paper);box-shadow:0 0 0 1px {{ e.dotBg }}"></span>
+                <span style="width:74px;flex:none;font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);padding-top:1px">{{ e.date }}</span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13.5px;font-weight:600">{{ e.title }}</div>
+                  <div style="font-size:12.5px;color:var(--ink-muted);margin-top:2px;line-height:1.45">{{ e.detail }}</div>
+                </div>
+                <span style="flex:none;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.03em;color:var(--ink-muted);background:var(--panel);border:1px solid var(--line-panel);border-radius:5px;padding:3px 8px;height:fit-content;margin-top:1px">{{ e.config }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- right context rail -->
+      <div style="width:312px;flex:none;border-left:1px solid var(--line);background:var(--paper);padding:20px;display:flex;flex-direction:column;gap:22px">
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Open issues</span>
+            <span style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--ink-strong)">1</span>
+          </div>
+          <a href="Quality.dc.html" class="lrow" style="display:block;border:1px solid var(--line);border-radius:10px;padding:12px;text-decoration:none;color:inherit">
+            <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-family:var(--font-mono);font-size:12px;font-weight:600">NCR-118</span><span style="font-size:10px;font-weight:600;background:var(--ink-strong);color:#fff;border-radius:999px;padding:2px 8px">Critical</span></div>
+            <div style="font-size:12px;color:var(--ink-muted);margin-top:5px;line-height:1.4">Actuator torque out of spec · SERVO-204 lot 88421</div>
+          </a>
+        </div>
+
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Test runs</span>
+            <a href="Test Explorer.dc.html" style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);text-decoration:none">All →</a>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ runs }}" as="r" hint-placeholder-count="3">
+              <a href="Test Run.dc.html" class="lrow" style="display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-decoration:none;color:inherit">
+                <span style="width:7px;height:7px;border-radius:50%;background:{{ r.color }};flex:none"></span>
+                <div style="flex:1;min-width:0"><div style="font-family:var(--font-mono);font-size:11.5px;font-weight:600">{{ r.id }}</div><div style="font-size:11px;color:var(--ink-faint);margin-top:1px">{{ r.name }}</div></div>
+                <span style="font-family:var(--font-mono);font-size:10px;font-weight:600;color:{{ r.color }}">{{ r.outcome }}</span>
+              </a>
+            </sc-for>
+          </div>
+        </div>
+
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Change orders</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ ecos }}" as="e" hint-placeholder-count="2">
+              <a href="Change Order.dc.html" class="lrow" style="display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-decoration:none;color:inherit">
+                <div style="flex:1;min-width:0"><div style="font-family:var(--font-mono);font-size:11.5px;font-weight:600">{{ e.id }}</div><div style="font-size:11px;color:var(--ink-faint);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ e.title }}</div></div>
+                <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.03em;color:var(--ink-muted);background:var(--panel);border:1px solid var(--line-panel);border-radius:5px;padding:2px 6px;flex:none">{{ e.state }}</span>
+              </a>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){
+    const navGroups = this._nav();
+
+    const subs = [
+      { pos:'A-14', designed:'SERVO-204 rev C', built:'SERVO-204 rev C · lot 88421', reason:'Same part, flagged lot — quarantined post-build', who:'M. Osei', lot:'88421' },
+      { pos:'B-07', designed:'HARN-220 rev A', built:'HARN-220 rev B', reason:'Rev bump — connector keying fix (ECO-314)', who:'Line 2', lot:'5567' },
+      { pos:'C-03', designed:'BATT-48V rev 2', built:'BATT-48V rev 2 · alt vendor', reason:'Approved alternate — primary vendor short', who:'Sourcing agent', lot:'7741' },
+    ];
+
+    const B='var(--ink-strong)', A='var(--accent)';
+    const timeline = [
+      { date:'2026-05-14', title:'Build completed', detail:'Line 2 · Detroit · as-built captured against BOM rev C — 3 substitutions flagged.', config:'CFG-HX2-r4.0', dotBg:B, dotRadius:'50%' },
+      { date:'2026-05-16', title:'Acceptance test · passed', detail:'142 checks · torque within spec at build time.', config:'CFG-HX2-r4.0', dotBg:A, dotRadius:'50%' },
+      { date:'2026-05-28', title:'Firmware v4.2.1', detail:'OTA update · torque compensation + autonomy p-12.4.', config:'CFG-HX2-r4.1', dotBg:B, dotRadius:'50%' },
+      { date:'2026-06-18', title:'Baseline CFG-HX2-r4.2', detail:'Configuration locked for the BMW deployment.', config:'CFG-HX2-r4.2', dotBg:B, dotRadius:'50%' },
+      { date:'2026-06-24', title:'Deployed · BMW Munich', detail:'Commissioned on-site · commissioning checklist 6/6.', config:'CFG-HX2-r4.2', dotBg:B, dotRadius:'2px' },
+      { date:'2026-07-02', title:'Field test · torque drift', detail:'Re-test flagged 2 of 8 readings above UCL → NCR-118 opened.', config:'CFG-HX2-r4.2', dotBg:A, dotRadius:'50%' },
+    ];
+
+    const runs = [
+      { id:'TR-8841', name:'Actuator torque · re-test', outcome:'FAIL', color:'var(--ink-strong)' },
+      { id:'TR-8720', name:'Acceptance · full', outcome:'PASS', color:'var(--success)' },
+      { id:'TR-8712', name:'Power-on self test', outcome:'PASS', color:'var(--success)' },
+    ];
+    const ecos = [
+      { id:'ECO-318', title:'Supersede SERVO-204 → -205', state:'Review' },
+      { id:'ECO-314', title:'Harness connector keying', state:'Applied' },
+    ];
+
+    return { navGroups, subs, timeline, runs, ecos };
+  }
+  _nav(){
+    const navRaw = [
+      { label:'Core', items:[ { name:'Command Center', href:'Mission Control.dc.html' }, { name:'Agents', href:'Agents.dc.html' }, { name:'Workflows', href:'Workflows.dc.html' }, { name:'Projects', href:'Projects.dc.html' }, { name:'Machines', href:'Machines.dc.html' } ] },
+      { label:'Value chain', items:[ { name:'Procurement', badge:'6' }, { name:'Manufacturing' }, { name:'Inventory' }, { name:'Fulfillment', badge:'3' }, { name:'Quality' }, { name:'Sales & CRM' }, { name:'Marketing' } ] },
+      { label:'Robotics', items:[ { name:'Fleet' }, { name:'Field Service' }, { name:'Engineering', active:true }, { name:'Autonomy' } ] },
+      { label:'Back office', items:[ { name:'Finance', badge:'6' }, { name:'People' }, { name:'Security' }, { name:'Legal' } ] },
+    ];
+    return navRaw.map(g => ({
+      label: g.label || null,
+      items: g.items.map(it => ({
+        name: it.name, badge: it.badge || null, href: it.href || (it.name + '.dc.html'), pad: it.sub ? '24px' : '10px',
+        bg: it.active ? 'var(--panel)' : 'transparent',
+        fg: it.active ? 'var(--ink)' : 'var(--ink-muted)',
+        weight: it.active ? 600 : 400,
+        marker: it.active ? 'var(--ink-strong)' : 'var(--line-strong)',
+      })),
+    }));
+  }
+}
+</script>
+</body>
+</html>

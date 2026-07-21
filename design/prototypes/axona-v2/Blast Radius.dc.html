@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .profmenu{position:relative}
+  .profmenu summary{list-style:none;cursor:pointer}
+  .profmenu summary::-webkit-details-marker{display:none}
+  .profmenu summary:hover{background:var(--panel)}
+  .profmenu[open] .profchev{transform:rotate(180deg)}
+  .profchev{transition:transform .15s;flex:none}
+  .pm-item{transition:background .15s}
+  .pm-item:hover{background:var(--panel)}
+  .pm-signout{transition:border-color .15s,color .15s}
+  .pm-signout:hover{border-color:var(--ink-strong);color:var(--ink)}
+  .navitem{transition:background .15s,color .15s}
+  .navitem:hover{background:var(--panel)}
+  .navgroup summary{list-style:none}
+  .navgroup summary::-webkit-details-marker{display:none}
+  .navgroup summary:hover .navchev{stroke:var(--ink-muted)}
+  .navchev{transition:transform .15s;flex:none}
+  .navgroup:not([open]) .navchev{transform:rotate(-90deg)}
+  .navsearch{transition:border-color .15s,background .15s}
+  .navsearch:hover{border-color:var(--ink-strong);background:var(--panel-2)}
+  .igroup summary{list-style:none;cursor:pointer}
+  .igroup summary::-webkit-details-marker{display:none}
+  .igroup summary:hover{background:var(--panel-2)}
+  .igroup[open] .ichev{transform:rotate(90deg)}
+  .ichev{transition:transform .15s;flex:none}
+  .irow:hover{background:var(--panel-2)}
+  .seg{transition:background .15s,color .15s;cursor:pointer}
+  .scarea::-webkit-scrollbar{width:8px}
+  .scarea::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+</style>
+<script>document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key&&e.key.toLowerCase()==='k'){e.preventDefault();window.location.href='Mission Control.dc.html';}});</script>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden;font-family:var(--font-sans);color:var(--ink);background:var(--panel)">
+
+  <aside style="width:240px;flex:none;background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 14px">
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 8px 18px">
+      <span style="font-size:21px;font-weight:700;letter-spacing:-.04em;color:var(--ink-strong)">axona</span>
+      <span style="width:12px;height:12px;background:var(--ink-strong);border-radius:0 7px 0 7px"></span>
+    </div>
+    <a href="Mission Control.dc.html" class="navsearch" style="display:flex;align-items:center;gap:9px;margin:0 4px 10px;padding:8px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--panel);cursor:pointer;text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <span style="flex:1;font-size:13px;color:var(--ink-faint)">Search</span>
+      <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px">⌘K</span>
+    </a>
+    <div class="scarea" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;margin:0 -4px;padding:0 4px">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <details open="open" class="navgroup">
+          <summary style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;padding:14px 10px 6px;cursor:pointer"><span style="flex:1">{{ g.label }}</span><svg class="navchev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--line-strong)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></summary>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+          <a class="navitem" href="{{ it.href }}" style="display:flex;align-items:center;gap:11px;padding:8px 10px 8px {{ it.pad }};border-radius:8px;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.weight }};font-size:14px;text-decoration:none">
+            <span style="width:6px;height:6px;border-radius:2px;background:{{ it.marker }};flex:none"></span>
+            <span style="flex:1">{{ it.name }}</span>
+            <sc-if value="{{ it.badge }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:10px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 7px;font-weight:600">{{ it.badge }}</span></sc-if>
+          </a>
+        </sc-for>
+        </details>
+      </sc-for>
+    </div>
+    <details class="profmenu" style="border-top:1px solid var(--line);margin-top:8px;padding-top:8px">
+      <summary style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px">
+        <span style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink);flex:none">LC</span>
+        <div style="flex:1;min-width:0;font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Head of Ops</div></div>
+        <svg class="profchev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"></path></svg>
+      </summary>
+      <div style="position:absolute;bottom:calc(100% + 8px);left:0;right:0;background:var(--paper);border:1px solid var(--line);border-radius:13px;box-shadow:0 18px 40px rgba(0,0,0,.12);padding:6px;z-index:40">
+        <a class="pm-item" href="Audit Trail.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500"><span style="flex:1">Audit trail</span></a>
+        <a class="pm-item" href="Notifications.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500"><span style="flex:1">Notifications</span><span style="font-family:var(--font-mono);font-size:11px;font-weight:700;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:2px 9px">5</span></a>
+        <a class="pm-item" href="Settings — Organization.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500"><span style="flex:1">Settings</span></a>
+        <div style="height:1px;background:var(--line);margin:6px 4px"></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px">
+          <span style="width:30px;height:30px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink);flex:none">LC</span>
+          <div style="flex:1;min-width:0;font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Admin</div></div>
+          <a class="pm-signout" href="Login.dc.html" title="Sign out" style="width:32px;height:32px;border:1px solid var(--line-strong);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-muted);text-decoration:none;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg></a>
+        </div>
+      </div>
+    </details>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--panel)">
+    <div style="height:60px;flex:none;border-bottom:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:space-between;padding:0 24px">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Engineering · PLM · traceability</div>
+        <h1 style="margin:2px 0 0;font-size:19px;font-weight:600;letter-spacing:-.02em;display:inline-flex;align-items:center;gap:10px"><a href="Engineering.dc.html" title="Back to Engineering" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border:1px solid var(--line-strong);border-radius:7px;color:var(--ink-muted);text-decoration:none;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg></a>Blast radius</h1>
+      </div>
+      <button style="font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;padding:9px 15px;font-size:13px;background:var(--ink-strong);color:#fff;border:1px solid var(--ink-strong);display:inline-flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></svg>Hand to field service</button>
+    </div>
+
+    <!-- input selector -->
+    <div style="flex:none;border-bottom:1px solid var(--line);background:var(--paper);padding:14px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Trace from</span>
+      <div style="display:flex;background:var(--panel);border:1px solid var(--line-strong);border-radius:9px;padding:3px">
+        <sc-for list="{{ inputs }}" as="i" hint-placeholder-count="4">
+          <span class="seg" style="font-size:12.5px;font-weight:500;padding:6px 13px;border-radius:6px;background:{{ i.bg }};color:{{ i.fg }}">{{ i.label }}</span>
+        </sc-for>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;background:var(--panel);border:1px solid var(--ink-strong);border-radius:9px;padding:7px 13px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.91 8.84 8.56 2.23a1.93 1.93 0 0 0-1.81 0L3.1 4.13a2.12 2.12 0 0 0-.05 3.69l12.22 6.93a2 2 0 0 0 1.94 0L21 12.51a2.12 2.12 0 0 0-.09-3.67Z"></path><path d="m3.09 8.84 12.35-6.61"></path></svg>
+        <span style="font-family:var(--font-mono);font-size:13px;font-weight:600">lot 88421</span>
+        <span style="font-size:11.5px;color:var(--ink-faint)">· SERVO-204 rev C</span>
+      </div>
+    </div>
+
+    <!-- impact summary strip -->
+    <div style="flex:none;display:flex;background:#121214;color:#fff">
+      <sc-for list="{{ summary }}" as="s" hint-placeholder-count="4">
+        <div style="flex:1;padding:16px 24px;border-left:{{ s.divider }}">
+          <div style="font-family:var(--font-mono);font-size:22px;font-weight:700;letter-spacing:-.02em;color:{{ s.color }}">{{ s.v }}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:rgba(255,255,255,.5);text-transform:uppercase;margin-top:4px">{{ s.l }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div class="scarea" style="flex:1;min-width:0;overflow-y:auto;padding:20px 24px 24px">
+      <div style="font-size:12.5px;color:var(--ink-muted);margin-bottom:16px">Everything the graph reaches from <span style="font-family:var(--font-mono);font-size:11.5px;color:var(--ink)">lot 88421</span>, grouped by module — each row shows the relation path that connected it.</div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <sc-for list="{{ groups }}" as="g" hint-placeholder-count="5">
+          <details open="{{ g.open }}" class="igroup" style="background:var(--paper);border:1px solid var(--line);border-radius:13px;overflow:hidden">
+            <summary style="display:flex;align-items:center;gap:13px;padding:14px 18px">
+              <svg class="ichev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+              <span style="width:9px;height:9px;border-radius:2px;background:var(--ink-strong);flex:none"></span>
+              <span style="font-size:14px;font-weight:600;flex:1">{{ g.module }}</span>
+              <span style="font-size:12px;color:var(--ink-muted)">{{ g.summary }}</span>
+              <span style="font-family:var(--font-mono);font-size:11px;font-weight:700;background:var(--panel);border:1px solid var(--line-panel);border-radius:999px;padding:2px 10px;color:var(--ink)">{{ g.count }}</span>
+            </summary>
+            <div style="border-top:1px solid var(--line)">
+              <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3">
+                <a href="{{ r.href }}" class="irow" style="display:grid;grid-template-columns:1.1fr 2.3fr 0.9fr;gap:14px;align-items:center;padding:12px 18px 12px 40px;border-top:1px solid var(--line);text-decoration:none;color:inherit">
+                  <span style="font-family:var(--font-mono);font-size:12.5px;font-weight:600">{{ r.id }}</span>
+                  <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.path }}</span>
+                  <span style="justify-self:end"><sc-if value="{{ r.tag }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:{{ r.tagBg }};color:{{ r.tagFg }}">{{ r.tag }}</span></sc-if></span>
+                </a>
+              </sc-for>
+            </div>
+          </details>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){
+    const navGroups = this._nav();
+
+    const inputs = [
+      { label:'Lot', active:true }, { label:'SW version', active:false }, { label:'ECO', active:false }, { label:'Part revision', active:false },
+    ].map(i => ({ label:i.label, bg: i.active ? 'var(--ink-strong)' : 'transparent', fg: i.active ? '#fff' : 'var(--ink-muted)' }));
+
+    const summary = [
+      { v:'7', l:'Units affected', color:'#fff' },
+      { v:'3', l:'Sites', color:'#fff' },
+      { v:'2', l:'Customers', color:'#fff' },
+      { v:'lot 88421', l:'Trace root', color:'var(--accent)' },
+    ].map((s,i) => ({ ...s, divider: i ? '1px solid rgba(255,255,255,.12)' : 'none' }));
+
+    const INK='var(--ink-strong)', SUC='var(--success)', ACC='var(--accent)';
+    const tag = (t) => t==='crit' ? { tagBg:'var(--ink-strong)', tagFg:'#fff' } : t==='ok' ? { tagBg:'var(--success-tint)', tagFg:'var(--success)' } : t==='acc' ? { tagBg:'var(--accent)', tagFg:'var(--accent-ink)' } : { tagBg:'var(--panel)', tagFg:'var(--ink-muted)' };
+    const row = (id, path, tagText, t, href) => ({ id, path, tag:tagText, ...tag(t), href:href||'Unit.dc.html' });
+
+    const groups = [
+      { module:'Units', summary:'installed at BOM position A-14', count:'7', open:'open', rows:[
+        row('SN-2208','lot 88421 → pos A-14 → SN-2208','NCR open','crit','Unit.dc.html'),
+        row('SN-2211','lot 88421 → pos A-14 → SN-2211','deployed','ok','Unit.dc.html'),
+        row('SN-2215','lot 88421 → pos A-14 → SN-2215','deployed','ok','Unit.dc.html'),
+        row('SN-2219','lot 88421 → pos A-14 → SN-2219 (+2 more)','building','acc','Unit Registry.dc.html'),
+      ] },
+      { module:'Quality', summary:'non-conformances raised', count:'1', open:'open', rows:[
+        row('NCR-118','lot 88421 → SN-2208 → torque test → NCR','critical','crit','Quality.dc.html'),
+      ] },
+      { module:'Engineering', summary:'change orders in flight', count:'1', open:null, rows:[
+        row('ECO-318','lot 88421 → NCR-118 → supersede SERVO-204','review','acc','Change Order.dc.html'),
+      ] },
+      { module:'Field Service', summary:'deployed units needing action', count:'2', open:null, rows:[
+        row('SN-2208','deployed BMW Munich → schedule inspection','WO needed','crit','Field Service.dc.html'),
+        row('SN-2196','deployed Site-2 Rotterdam → schedule inspection','WO needed','crit','Field Service.dc.html'),
+      ] },
+      { module:'Legal', summary:'contract obligations touched', count:'1', open:null, rows:[
+        row('BMW MSA','SN-2208 → BMW deployment → 99.5% SLA','SLA risk','acc','Legal.dc.html'),
+      ] },
+    ];
+
+    return { navGroups, inputs, summary, groups };
+  }
+  _nav(){
+    const navRaw = [
+      { label:'Core', items:[ { name:'Command Center', href:'Mission Control.dc.html' }, { name:'Agents', href:'Agents.dc.html' }, { name:'Workflows', href:'Workflows.dc.html' }, { name:'Projects', href:'Projects.dc.html' }, { name:'Machines', href:'Machines.dc.html' } ] },
+      { label:'Value chain', items:[ { name:'Procurement', badge:'6' }, { name:'Manufacturing' }, { name:'Inventory' }, { name:'Fulfillment', badge:'3' }, { name:'Quality' }, { name:'Sales & CRM' }, { name:'Marketing' } ] },
+      { label:'Robotics', items:[ { name:'Fleet' }, { name:'Field Service' }, { name:'Engineering', active:true }, { name:'Autonomy' } ] },
+      { label:'Back office', items:[ { name:'Finance', badge:'6' }, { name:'People' }, { name:'Security' }, { name:'Legal' } ] },
+    ];
+    return navRaw.map(g => ({
+      label: g.label || null,
+      items: g.items.map(it => ({
+        name: it.name, badge: it.badge || null, href: it.href || (it.name + '.dc.html'), pad: it.sub ? '24px' : '10px',
+        bg: it.active ? 'var(--panel)' : 'transparent',
+        fg: it.active ? 'var(--ink)' : 'var(--ink-muted)',
+        weight: it.active ? 600 : 400,
+        marker: it.active ? 'var(--ink-strong)' : 'var(--line-strong)',
+      })),
+    }));
+  }
+}
+</script>
+</body>
+</html>

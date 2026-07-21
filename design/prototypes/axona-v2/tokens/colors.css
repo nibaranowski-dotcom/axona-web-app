@@ -9,7 +9,7 @@
   --ink: #111111; /* primary text */
   --ink-strong: #0a0a0a; /* near-black UI, footer, announcement bar */
   --ink-muted: #6b6b63; /* secondary text */
-  --ink-faint: #707066; /* tertiary text (A11Y.1 — darkened from #9a9a90 for WCAG AA) */
+  --ink-faint: #9a9a90; /* tertiary / disabled text */
   --mono-faint: #8a8a82; /* mono eyebrow labels */
   --mono-ghost: #a7a79d; /* mono on panels / captions */
   --on-dark: #ffffff; /* text on ink-strong surfaces */

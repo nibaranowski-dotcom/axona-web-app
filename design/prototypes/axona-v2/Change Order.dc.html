@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .profmenu{position:relative}
+  .profmenu summary{list-style:none;cursor:pointer}
+  .profmenu summary::-webkit-details-marker{display:none}
+  .profmenu summary:hover{background:var(--panel)}
+  .profmenu[open] .profchev{transform:rotate(180deg)}
+  .profchev{transition:transform .15s;flex:none}
+  .pm-item{transition:background .15s}
+  .pm-item:hover{background:var(--panel)}
+  .pm-signout{transition:border-color .15s,color .15s}
+  .pm-signout:hover{border-color:var(--ink-strong);color:var(--ink)}
+  .navitem{transition:background .15s,color .15s}
+  .navitem:hover{background:var(--panel)}
+  .navgroup summary{list-style:none}
+  .navgroup summary::-webkit-details-marker{display:none}
+  .navgroup summary:hover .navchev{stroke:var(--ink-muted)}
+  .navchev{transition:transform .15s;flex:none}
+  .navgroup:not([open]) .navchev{transform:rotate(-90deg)}
+  .navsearch{transition:border-color .15s,background .15s}
+  .navsearch:hover{border-color:var(--ink-strong);background:var(--panel-2)}
+  .urow:hover{background:var(--panel-2)}
+  .scarea::-webkit-scrollbar{width:8px}
+  .scarea::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+</style>
+<script>document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key&&e.key.toLowerCase()==='k'){e.preventDefault();window.location.href='Mission Control.dc.html';}});</script>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden;font-family:var(--font-sans);color:var(--ink);background:var(--panel)">
+
+  <aside style="width:240px;flex:none;background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 14px">
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 8px 18px">
+      <span style="font-size:21px;font-weight:700;letter-spacing:-.04em;color:var(--ink-strong)">axona</span>
+      <span style="width:12px;height:12px;background:var(--ink-strong);border-radius:0 7px 0 7px"></span>
+    </div>
+    <a href="Mission Control.dc.html" class="navsearch" style="display:flex;align-items:center;gap:9px;margin:0 4px 10px;padding:8px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--panel);cursor:pointer;text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <span style="flex:1;font-size:13px;color:var(--ink-faint)">Search</span>
+      <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px">⌘K</span>
+    </a>
+    <div class="scarea" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;margin:0 -4px;padding:0 4px">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <details open="open" class="navgroup">
+          <summary style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;padding:14px 10px 6px;cursor:pointer"><span style="flex:1">{{ g.label }}</span><svg class="navchev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--line-strong)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></summary>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+          <a class="navitem" href="{{ it.href }}" style="display:flex;align-items:center;gap:11px;padding:8px 10px 8px {{ it.pad }};border-radius:8px;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.weight }};font-size:14px;text-decoration:none">
+            <span style="width:6px;height:6px;border-radius:2px;background:{{ it.marker }};flex:none"></span>
+            <span style="flex:1">{{ it.name }}</span>
+            <sc-if value="{{ it.badge }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:10px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 7px;font-weight:600">{{ it.badge }}</span></sc-if>
+          </a>
+        </sc-for>
+        </details>
+      </sc-for>
+    </div>
+    <details class="profmenu" style="border-top:1px solid var(--line);margin-top:8px;padding-top:8px">
+      <summary style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px">
+        <span style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink);flex:none">LC</span>
+        <div style="flex:1;min-width:0;font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Head of Ops</div></div>
+        <svg class="profchev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"></path></svg>
+      </summary>
+      <div style="position:absolute;bottom:calc(100% + 8px);left:0;right:0;background:var(--paper);border:1px solid var(--line);border-radius:13px;box-shadow:0 18px 40px rgba(0,0,0,.12);padding:6px;z-index:40">
+        <a class="pm-item" href="Audit Trail.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500"><span style="flex:1">Audit trail</span></a>
+        <a class="pm-item" href="Notifications.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500"><span style="flex:1">Notifications</span><span style="font-family:var(--font-mono);font-size:11px;font-weight:700;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:2px 9px">5</span></a>
+        <a class="pm-item" href="Settings — Organization.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500"><span style="flex:1">Settings</span></a>
+        <div style="height:1px;background:var(--line);margin:6px 4px"></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px">
+          <span style="width:30px;height:30px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink);flex:none">LC</span>
+          <div style="flex:1;min-width:0;font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Admin</div></div>
+          <a class="pm-signout" href="Login.dc.html" title="Sign out" style="width:32px;height:32px;border:1px solid var(--line-strong);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-muted);text-decoration:none;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg></a>
+        </div>
+      </div>
+    </details>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--panel)">
+    <div style="flex:none;border-bottom:1px solid var(--line);background:var(--paper);padding:14px 24px 16px">
+      <div style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:10px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:9px">
+        <a href="Engineering.dc.html" style="color:var(--ink-faint);text-decoration:none">Engineering</a><span>/</span><a href="Change Order.dc.html" style="color:var(--ink-faint);text-decoration:none">Change orders</a><span>/</span><span style="color:var(--ink-muted)">ECO-318</span>
+      </div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap">
+        <div style="min-width:0">
+          <div style="display:flex;align-items:center;gap:12px">
+            <h1 style="margin:0;font-size:20px;font-weight:700;letter-spacing:-.03em">Supersede SERVO-204 → -205</h1>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:.03em;padding:3px 10px;border-radius:999px;background:var(--accent);color:var(--accent-ink)">In review</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:6px;font-size:13px;color:var(--ink-muted)">
+            <span style="font-family:var(--font-mono);font-size:12px">ECO-318</span><span style="color:var(--line-strong)">·</span><span>Hardware change</span><span style="color:var(--line-strong)">·</span><span>from ECR-241 · raised by Quality</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button style="font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;padding:9px 15px;font-size:13px;background:transparent;color:var(--ink);border:1px solid var(--line-strong)">Request changes</button>
+          <button style="font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;padding:9px 15px;font-size:13px;background:var(--ink-strong);color:#fff;border:1px solid var(--ink-strong)">Approve</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="scarea" style="flex:1;min-width:0;overflow-y:auto;display:flex">
+      <div style="flex:1;min-width:0;padding:22px 24px;display:flex;flex-direction:column;gap:18px">
+        <!-- proposal -->
+        <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+          <h3 style="margin:0 0 10px;font-size:15px;font-weight:600">Proposal</h3>
+          <p style="margin:0;font-size:13.5px;color:var(--ink);line-height:1.55;max-width:70ch">Replace the SERVO-204 harmonic drive with the tighter-tolerance <span style="font-family:var(--font-mono);font-size:12px">SERVO-205</span> (±2.5% vs ±4%). Triggered by NCR-118 — lot 88421 drives measure ~4% stiff, pushing actuator torque out of spec. The -205 resolves the root cause and tightens REQ-114.</p>
+          <div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+            <sc-for list="{{ facts }}" as="f" hint-placeholder-count="3">
+              <div><div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase">{{ f.k }}</div><div style="font-family:var(--font-mono);font-size:13px;font-weight:600;margin-top:4px;color:{{ f.color }}">{{ f.v }}</div></div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- AFFECTED UNITS (signature) -->
+        <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 20px 13px">
+            <div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0;font-size:15px;font-weight:600">Affected units</h3><span style="font-family:var(--font-mono);font-size:11px;font-weight:700;background:var(--ink-strong);color:#fff;border-radius:999px;padding:2px 10px">7</span></div>
+            <a href="Unit Registry.dc.html" style="font-size:12.5px;font-weight:600;color:var(--ink);text-decoration:none">Open in registry →</a>
+          </div>
+          <div style="display:flex;gap:0;border-top:1px solid var(--line);background:var(--panel)">
+            <sc-for list="{{ effStats }}" as="s" hint-placeholder-count="3">
+              <div style="flex:1;padding:12px 20px;border-left:{{ s.divider }}"><div style="font-family:var(--font-mono);font-size:16px;font-weight:700">{{ s.v }}</div><div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase;margin-top:2px">{{ s.l }}</div></div>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr 1.1fr;gap:12px;padding:10px 20px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">
+            <span>Unit</span><span>Site</span><span>Effectivity</span><span>Rollout</span>
+          </div>
+          <sc-for list="{{ units }}" as="u" hint-placeholder-count="4">
+            <a href="Unit.dc.html" class="urow" style="display:grid;grid-template-columns:1fr 1.2fr 1fr 1.1fr;gap:12px;padding:12px 20px;align-items:center;border-top:1px solid var(--line);text-decoration:none;color:inherit">
+              <span style="font-family:var(--font-mono);font-size:12.5px;font-weight:600">{{ u.serial }}</span>
+              <span style="font-size:12.5px;color:var(--ink-muted)">{{ u.site }}</span>
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-muted)">{{ u.eff }}</span>
+              <span><span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:{{ u.color }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ u.color }}"></span>{{ u.rollout }}</span></span>
+            </a>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- right rail: approvals + effectivity + history -->
+      <div style="width:320px;flex:none;border-left:1px solid var(--line);background:var(--paper);padding:20px;display:flex;flex-direction:column;gap:22px">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:11px">Approval</div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <sc-for list="{{ approvals }}" as="a" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-top:{{ a.divider }}">
+                <span style="width:24px;height:24px;border-radius:50%;background:{{ a.avBg }};display:inline-flex;align-items:center;justify-content:center;color:{{ a.avFg }};flex:none">{{ a.icon }}</span>
+                <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600">{{ a.role }}</div><div style="font-size:11px;color:var(--ink-faint)">{{ a.who }}</div></div>
+                <span style="font-family:var(--font-mono);font-size:9.5px;color:{{ a.stColor }};font-weight:600">{{ a.state }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:11px">Effectivity</div>
+          <div style="border:1px solid var(--line);border-radius:11px;padding:13px">
+            <div style="font-size:12px;color:var(--ink-muted)">Applies from</div>
+            <div style="font-family:var(--font-mono);font-size:14px;font-weight:600;margin-top:4px">SN-2231 onward</div>
+            <div style="font-size:11.5px;color:var(--ink-faint);margin-top:2px">builds after 2026-07-10 · retrofit 3 in-field</div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:11px">Change history</div>
+          <div style="position:relative;padding-left:18px">
+            <span style="position:absolute;left:4px;top:4px;bottom:8px;width:2px;background:var(--line-strong)"></span>
+            <sc-for list="{{ history }}" as="h" hint-placeholder-count="4">
+              <div style="position:relative;padding:0 0 14px">
+                <span style="position:absolute;left:-18px;top:3px;width:9px;height:9px;border-radius:50%;background:{{ h.dot }};border:2px solid var(--paper);box-shadow:0 0 0 1px {{ h.dot }}"></span>
+                <div style="font-size:12px;font-weight:600">{{ h.title }}</div>
+                <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);margin-top:1px">{{ h.meta }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){
+    const navGroups = this._nav();
+    const facts = [
+      { k:'Cost impact', v:'+$140 / unit', color:'var(--ink-strong)' },
+      { k:'Affected part', v:'SERVO-204 rev C', color:'var(--ink)' },
+      { k:'New part', v:'SERVO-205', color:'var(--ink)' },
+      { k:'Requirement', v:'REQ-114 · ±2.5%', color:'var(--ink)' },
+    ];
+
+    const effStats = [
+      { v:'7', l:'Units' }, { v:'3', l:'Sites' }, { v:'2', l:'Customers' }, { v:'3', l:'In field · retrofit' },
+    ].map((s,i)=>({ ...s, divider: i ? '1px solid var(--line)' : 'none' }));
+
+    const SUC='var(--success)', ACC='var(--accent)', INK='var(--ink-strong)';
+    const roll = (t) => t==='done' ? SUC : t==='prog' ? ACC : INK;
+    const u = (serial, site, eff, rollout, t) => ({ serial, site, eff, rollout, color:roll(t) });
+    const units = [
+      u('SN-2208','BMW · Munich','retrofit','Planned','plan'),
+      u('SN-2196','Site-2 · Rotterdam','retrofit','Planned','plan'),
+      u('SN-2231','Line 2 · Detroit','at build','In progress','prog'),
+      u('SN-2232','Line 2 · Detroit','at build','In progress','prog'),
+    ];
+
+    const chk = React.createElement('svg',{width:12,height:12,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.6,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M20 6 9 17l-5-5'}));
+    const dot = React.createElement('span',{style:{width:'6px',height:'6px',borderRadius:'50%',background:'currentColor'}});
+    const ap = (role, who, state, done) => ({ role, who, state, icon: done?chk:dot, avBg: done?'var(--accent)':'var(--panel-2)', avFg: done?'var(--accent-ink)':'var(--ink-muted)', stColor: done?'var(--success)':'var(--ink-muted)' });
+    const approvals = [
+      ap('Quality lead','M. Osei','Approved',true),
+      ap('Engineering','O. Haddad','Approved',true),
+      ap('Ops / cost','Lauren C.','Pending',false),
+    ].map((a,i)=>({ ...a, divider: i ? '1px solid var(--line)' : 'none' }));
+
+    const history = [
+      { title:'ECR-241 raised', meta:'Quality · from NCR-118 · Jul 2', dot:'var(--ink-strong)' },
+      { title:'Promoted to ECO-318', meta:'Engineering · Jul 3', dot:'var(--ink-strong)' },
+      { title:'Quality + Eng approved', meta:'2 of 3 approvals · Jul 4', dot:'var(--accent)' },
+      { title:'Awaiting ops sign-off', meta:'cost impact review', dot:'var(--line-strong)' },
+    ];
+
+    return { navGroups, facts, effStats, units, approvals, history };
+  }
+  _nav(){
+    const navRaw = [
+      { label:'Core', items:[ { name:'Command Center', href:'Mission Control.dc.html' }, { name:'Agents', href:'Agents.dc.html' }, { name:'Workflows', href:'Workflows.dc.html' }, { name:'Projects', href:'Projects.dc.html' }, { name:'Machines', href:'Machines.dc.html' } ] },
+      { label:'Value chain', items:[ { name:'Procurement', badge:'6' }, { name:'Manufacturing' }, { name:'Inventory' }, { name:'Fulfillment', badge:'3' }, { name:'Quality' }, { name:'Sales & CRM' }, { name:'Marketing' } ] },
+      { label:'Robotics', items:[ { name:'Fleet' }, { name:'Field Service' }, { name:'Engineering', active:true }, { name:'Autonomy' } ] },
+      { label:'Back office', items:[ { name:'Finance', badge:'6' }, { name:'People' }, { name:'Security' }, { name:'Legal' } ] },
+    ];
+    return navRaw.map(g => ({
+      label: g.label || null,
+      items: g.items.map(it => ({
+        name: it.name, badge: it.badge || null, href: it.href || (it.name + '.dc.html'), pad: it.sub ? '24px' : '10px',
+        bg: it.active ? 'var(--panel)' : 'transparent',
+        fg: it.active ? 'var(--ink)' : 'var(--ink-muted)',
+        weight: it.active ? 600 : 400,
+        marker: it.active ? 'var(--ink-strong)' : 'var(--line-strong)',
+      })),
+    }));
+  }
+}
+</script>
+</body>
+</html>
