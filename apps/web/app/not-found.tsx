@@ -27,7 +27,7 @@ export default function NotFound() {
           The page you’re looking for doesn’t exist or has moved.
         </p>
         <Link
-          href="/"
+          href="/core"
           className="mt-5 inline-flex items-center rounded-btn border border-line-strong bg-paper px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:border-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           Back to Axona
