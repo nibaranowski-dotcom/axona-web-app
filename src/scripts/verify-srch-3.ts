@@ -32,8 +32,24 @@ check(
 check("useSearch hits /api/search", /\/api\/search/.test(useSearchTs));
 
 check(
-  "palette mounted at root (global)",
-  /CommandPalette/.test(read(join(base, "app/layout.tsx"))),
+  // LOGIN.1 — the palette is mounted client-only (CommandPaletteMount, ssr:false)
+  // by the (shell) layout + the launcher, NOT the root layout. Mounting it in the
+  // root layout server-rendered this client component onto public/not-found routes
+  // and 500-ed /login in Next dev; it stays globally reachable via ⌘K on every
+  // route that can open it. See specs/PRD-LOGIN.1.md.
+  "palette mounted client-only on the shell + launcher (NOT the root layout)",
+  ((): boolean => {
+    const mount = read(join(base, "components/search/CommandPaletteMount.tsx"));
+    const shell = read(join(base, "app/(shell)/layout.tsx"));
+    const launcher = read(join(base, "components/core/Launcher.tsx"));
+    const rootLayout = read(join(base, "app/layout.tsx"));
+    return (
+      /ssr:\s*false/.test(mount) &&
+      /CommandPaletteMount/.test(shell) &&
+      /CommandPaletteMount/.test(launcher) &&
+      !/CommandPalette/.test(rootLayout) // the root layout must NOT mount it
+    );
+  })(),
 );
 
 const palette = read(join(base, "components/search/CommandPalette.tsx"));

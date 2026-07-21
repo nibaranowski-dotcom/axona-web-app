@@ -6,6 +6,7 @@ import { dbForOrg, presignedGetUrl, s3Configured } from "@axona/db";
 import { getAxonaAgent } from "@axona/agents";
 import { Sidebar } from "@/components/shell/Sidebar";
 import { AgentPane, type PaneAgent } from "@/components/shell/AgentPane";
+import { CommandPaletteMount } from "@/components/search/CommandPaletteMount";
 import { getNavModules } from "@/lib/nav";
 import { getModuleAlerts } from "@/lib/module-alerts";
 import { getCurrentUser } from "@/lib/session";
@@ -109,6 +110,10 @@ export default async function ShellLayout({
         {routeDisabled ? <ModuleNotEnabled /> : children}
       </main>
       <AgentPane axonaAgentId={axona?.id} agentsByModule={agentsByModule} />
+      {/* LOGIN.1 — the global ⌘K palette (SRCH.3) is mounted here (signed-in
+          surface), not in the root layout, so public/auth/not-found routes never
+          render it. Opened by the sidebar search, ⌘K, and the MC pill. */}
+      <CommandPaletteMount />
     </div>
   );
 }

@@ -1953,3 +1953,58 @@ SRCH.5's `moduleSearch` + graceful degradation stay as defense-in-depth, but no 
 - **Actions/screens:** `/reset` (request → confirmation), `/reset/:token` (set-new → sign in → /core), `/verify/:token` (verified/invalid) — 1:1 to `Reset Password.dc.html` via a shared `AuthCard` matching /login. `/verify` added to the middleware public allowlist. "Forgot password?" now links to /reset. Signup sends the verify email.
 - **Guardrails:** tokens crypto-random + single-use + short-lived; anti-enumeration on request; reset invalidates old sessions (tokenVersion); bcrypt, no plaintext/logs; FakeMailer in CI.
 - **Flags/deferred:** 2FA (later); hard verification gate (soft/non-blocking now); rate-limiting on reset request (flagged).
+
+---
+
+## LOGIN.1 — the recurring `/login` 500, diagnosed and fixed
+
+**Root cause (with evidence, not a guess).** A fresh browser profile's first request to a
+localhost app is `GET /.well-known/appspecific/com.chrome.devtools.json` (Chrome DevTools auto-probe).
+No route matches it → Next 14.2.5 dev compiles and renders the synthetic **`/_not-found` first**, before
+`/login`. The **root `layout.tsx` rendered `<CommandPalette/>`** (a `"use client"` component using
+`useRef`); with `_not-found` compiled first, that client component got invoked **server-side** and threw
+`TypeError: Cannot read properties of null (reading 'useRef')`. With **no root error boundary**, the
+unhandled throw became a raw **500** on every route sharing the root layout — `/login` first. Reproduced
+deterministically: cold server, `curl` the devtools probe then `/login` → **500, 500**; the dev log showed
+`⨯ TypeError … at CommandPalette` with an `Invalid hook call` warning. Prod (`next build && start`) and CI
+were always clean (they never fire the probe and don't hit the dev compile-order bug) — which is why it
+looked "environmental" and got worked around with a fresh tab.
+
+**The fix (structural — not a workaround).**
+1. **Removed `<CommandPalette/>` from the root layout.** It's a signed-in ⌘K surface with no business on
+   public/auth/not-found routes. It's now mounted by the **`(shell)` layout** (all app screens) and the
+   **`Launcher`** (`/launcher` + `/search`, which live outside the shell).
+2. **Client-only mount (`CommandPaletteMount`, `next/dynamic` `ssr:false`).** The palette never
+   server-renders on ANY route, so the "useRef of null during SSR" class cannot recur (shell, launcher, or
+   a stray prefetch/not-found prerender). ⌘K still works — it's a client overlay opened by a keypress.
+3. **Root `global-error.tsx` + `not-found.tsx`.** Any unhandled throw now renders the designed error state
+   (ink + accent, no red) instead of a raw 500; unknown paths + every `notFound()` get a branded 404
+   instead of leaning on the synthetic `/_not-found` default.
+
+**Automated**
+- `pnpm verify:login-1` (8 checks) — root layout does NOT render CommandPalette; palette mounted client-only
+  (`ssr:false`) on shell + launcher; root `global-error` (own `<html>` + retry) and `not-found` boundaries
+  exist; `/login` public in every `authorized()` branch; login contract intact (`signIn("credentials")`);
+  **(runtime, when a dev server is up)** the poisoning sequence — devtools probe THEN `/login` ×3 — returns
+  **200** unauthenticated, and a protected route (`/core`) 307s to `/login`.
+- CI gate: install (frozen) · lint · turbo typecheck · verify:all · **`pnpm build`** · accessibility 0 on
+  `/login` (94 rules, 0 violations).
+
+**Manual (./dev.sh)**
+- Cold `./dev.sh` (confirm nothing was already on :3001), open a **brand-new browser profile**, go straight
+  to `http://localhost:3001/login` → the login screen renders **first time**, and on repeated loads incl. a
+  hard reload (verified 3× consecutively). No 500, and the dev log shows **no** `⨯ … useRef` / `Invalid hook`.
+- Signed-in shell (`/core`, `/launcher`, `/search`) still opens the ⌘K palette (client-side); the palette
+  chunk is referenced in the shell HTML.
+- Force any render error → the **"Something went wrong"** global-error state (with **Try again**), never a
+  raw 500. An unknown URL → the branded **404** state.
+
+**Notes / architecture**
+- **Files:** root `app/layout.tsx` (palette removed), `app/(shell)/layout.tsx` + `components/core/Launcher.tsx`
+  (mount `CommandPaletteMount`), new `components/search/CommandPaletteMount.tsx` (`ssr:false` wrapper), new
+  `app/global-error.tsx` + `app/not-found.tsx`, `src/scripts/verify-login-1.ts`. `verify-srch-3.ts`'s
+  "mounted at root" assertion was reconciled to the new client-only shell/launcher mount.
+- **Middleware unchanged** — `/login` was already public in every branch (`auth.config.ts` `PUBLIC` +
+  `isPublic → allow()`); verify asserts it rather than assuming.
+- **Dev password:** `admin@axona-demo.test` / `axona-dev-2026!` (used to prove the authenticated shell stays
+  200 under the same poisoning order).

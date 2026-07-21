@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import "@axona/config/styles/tokens.css";
 import "./globals.css";
 import { archivo, jetbrainsMono } from "./fonts";
-import { CommandPalette } from "@/components/search/CommandPalette";
 
 export const metadata = {
   title: "Axona",
@@ -23,8 +22,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           Skip to content
         </a>
         {children}
-        {/* Global ⌘K command palette (SRCH.3) — works on / and inside the shell */}
-        <CommandPalette />
+        {/* LOGIN.1 — the ⌘K palette (SRCH.3) is a SIGNED-IN surface; it is mounted
+            by the (shell) layout and the launcher/search pages, NOT here at the
+            root. Keeping it out of the root layout means public + auth routes
+            (/login, /signup, /reset, …) and the not-found boundary never render
+            this client component — which is both correct (they can't open it) and
+            the fix for the recurring /login 500: in Next 14 dev, when the synthetic
+            /_not-found compiled before /login (a fresh browser probes
+            /.well-known/appspecific/com.chrome.devtools.json first), this component
+            was invoked server-side and threw `useRef of null`, 500-ing every route
+            that shares the root layout. */}
       </body>
     </html>
   );

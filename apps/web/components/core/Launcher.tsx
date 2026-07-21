@@ -5,6 +5,7 @@ import { Search } from "lucide-react";
 import type { NavGroup } from "@/lib/nav";
 import { metaFor } from "@/lib/module-meta";
 import { useCommandPalette } from "@/lib/command-palette";
+import { CommandPaletteMount } from "@/components/search/CommandPaletteMount";
 import { AppTile } from "./AppTile";
 
 // Mission Control launchpad (build-spec §4.1; matching Mission Control.dc.html).
@@ -100,6 +101,11 @@ export function Launcher({
           </section>
         ))}
       </div>
+      {/* LOGIN.1 — the launcher (/launcher + /search) lives outside the (shell)
+          group, so it mounts its own ⌘K palette (the root layout no longer does).
+          The search pill above and deepLinkQuery open THIS instance. Client-only
+          mount (ssr:false) — never server-renders. */}
+      <CommandPaletteMount />
     </main>
   );
 }
