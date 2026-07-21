@@ -114,19 +114,19 @@ another module.
 
 | Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | FND.1 | Scaffold pnpm + Turborepo monorepo (apps/web, apps/worker, packages/db, packages/agents, packages/config) | P0 | M | 3 | — | todo |
-| 2 | FND.2 | Wire design tokens → Tailwind CSS variables from design.md; self-host Archivo + JetBrains Mono via next/font | P0 | S | 2 | FND.1 | todo |
-| 3 | FND.3 | docker-compose dev env: Postgres + pgvector, Redis, MinIO | P0 | S | 1 | FND.1 | todo |
-| 4 | FND.4 | CI + hooks: tsc --noEmit, eslint/prettier, block push-to-main, verify-script runner | P0 | S | 2 | FND.1 | todo |
-| 5 | FND.5 | Prisma schema — Core/tenancy (Org, User, Role, Module, ModuleGroup) | P0 | S | 1 | FND.1 | todo |
-| 6 | FND.6 | Prisma schema — Agents/Chats/Workflows/Runs (§3.2) | P0 | M | 3 | FND.5 | todo |
-| 7 | FND.7 | Prisma schema — Projects/Files/MatrixColumn + pgvector embedding (§3.3) | P0 | S | 2 | FND.5 | todo |
-| 8 | FND.8 | Prisma schema — Machines + MachineSignal time-series (§3.4) | P0 | S | 2 | FND.5 | todo |
-| 9 | FND.9 | Prisma schema — Value-chain entities (§3.5) | P0 | M | 3 | FND.5 | todo |
-| 10 | FND.10 | Prisma schema — Robotics + back-office entities (§3.6) | P0 | M | 3 | FND.5 | todo |
-| 11 | FND.11 | Migrations + `packages/db` client (org-scoped query helpers, pagination) | P0 | M | 3 | FND.5-10 | todo |
-| 12 | FND.12 | Seed the full cross-module narrative (NCR-118 → ECO-318 → SERVO-205, BMW DLV-3312, p-13 canary, Osei cert, HX-2 margin; ~6 agents/module, 14 projects, 21 machines) | P0 | L | 5 | FND.11 | todo |
-| 13 | FND.13 | App shell: sidebar (wordmark, ⌘K, CORE/VALUE CHAIN/ROBOTICS/BACK OFFICE nav), resizable+collapsible agent pane, trace-console slot | P0 | L | 5 | FND.2 | todo |
+| 1 | FND.1 | Scaffold pnpm + Turborepo monorepo (apps/web, apps/worker, packages/db, packages/agents, packages/config) | P0 | M | 3 | — | done |
+| 2 | FND.2 | Wire design tokens → Tailwind CSS variables from design.md; self-host Archivo + JetBrains Mono via next/font | P0 | S | 2 | FND.1 | done |
+| 3 | FND.3 | docker-compose dev env: Postgres + pgvector, Redis, MinIO | P0 | S | 1 | FND.1 | done |
+| 4 | FND.4 | CI + hooks: tsc --noEmit, eslint/prettier, block push-to-main, verify-script runner | P0 | S | 2 | FND.1 | done |
+| 5 | FND.5 | Prisma schema — Core/tenancy (Org, User, Role, Module, ModuleGroup) | P0 | S | 1 | FND.1 | done |
+| 6 | FND.6 | Prisma schema — Agents/Chats/Workflows/Runs (§3.2) | P0 | M | 3 | FND.5 | done |
+| 7 | FND.7 | Prisma schema — Projects/Files/MatrixColumn + pgvector embedding (§3.3) | P0 | S | 2 | FND.5 | done |
+| 8 | FND.8 | Prisma schema — Machines + MachineSignal time-series (§3.4) | P0 | S | 2 | FND.5 | done |
+| 9 | FND.9 | Prisma schema — Value-chain entities (§3.5) | P0 | M | 3 | FND.5 | done |
+| 10 | FND.10 | Prisma schema — Robotics + back-office entities (§3.6) | P0 | M | 3 | FND.5 | done |
+| 11 | FND.11 | Migrations + `packages/db` client (org-scoped query helpers, pagination) | P0 | M | 3 | FND.5-10 | done |
+| 12 | FND.12 | Seed the full cross-module narrative (NCR-118 → ECO-318 → SERVO-205, BMW DLV-3312, p-13 canary, Osei cert, HX-2 margin; ~6 agents/module, 14 projects, 21 machines) | P0 | L | 5 | FND.11 | done |
+| 13 | FND.13 | App shell: sidebar (wordmark, ⌘K, CORE/VALUE CHAIN/ROBOTICS/BACK OFFICE nav), resizable+collapsible agent pane, trace-console slot | P0 | L | 5 | FND.2 | done |
 | 14 | FND.14 | Data-component library: DataTable, StatusBadge, ProgressBar, Funnel, SpcChart, StageTimeline, CompatMatrix | P0 | L | 5 | FND.2 | todo |
 | 15 | FND.15 | Agent primitives: AgentGlyph (static 12-dot ring), AgentCard, ChatThread, Suggestions | P0 | M | 3 | FND.2 | todo |
 | 15b | MIGRATE.1 | Baseline Prisma migration history; capture FTS + pgvector raw-SQL DDL in a drift-proof trailing migration; forbid `prisma db push`; make verify runs self-clean | P0 | S | 2 | FND.11 | done |
@@ -135,134 +135,134 @@ another module.
 
 | Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
 |---|---|---|---|---|---|---|---|
-| 16 | AUTH.1 | Auth.js email/password + session + protected-route middleware | P0 | M | 3 | FND.11 | todo |
+| 16 | AUTH.1 | Auth.js email/password + session + protected-route middleware | P0 | M | 3 | FND.11 | done |
 | 17 | AUTH.2 | Enterprise SSO/SAML + OIDC sign-in | P1 | M | 4 | AUTH.1 | todo |
-| 18 | AUTH.3 | Post-auth routing — new user → onboarding, existing → Mission Control | P0 | S | 1 | AUTH.1 | todo |
-| 19 | AUTH.4 | Signup + org provisioning (create Org, seat owner as ADMIN) | P0 | M | 3 | AUTH.1 | todo |
-| 20 | AUTH.5 | Invite + accept-invite flow (email token → join org with role) | P0 | M | 3 | AUTH.4, EMAIL.1 | todo |
-| 21 | AUTH.6 | Onboarding wizard: org profile, invite first members, enable modules | P1 | M | 3 | AUTH.4 | todo |
-| 22 | AUTH.7 | Email verification + password reset | P0 | S | 2 | AUTH.1, EMAIL.1 | todo |
+| 18 | AUTH.3 | Post-auth routing — new user → onboarding, existing → Mission Control | P0 | S | 1 | AUTH.1 | done |
+| 19 | AUTH.4 | Signup + org provisioning (create Org, seat owner as ADMIN) | P0 | M | 3 | AUTH.1 | done |
+| 20 | AUTH.5 | Invite + accept-invite flow (email token → join org with role) | P0 | M | 3 | AUTH.4, EMAIL.1 | done |
+| 21 | AUTH.6 | Onboarding wizard: org profile, invite first members, enable modules | P1 | M | 3 | AUTH.4 | done |
+| 22 | AUTH.7 | Email verification + password reset | P0 | S | 2 | AUTH.1, EMAIL.1 | done |
 
 ## E2 — RBAC, Audit & Guardrails · Track: Platform
 
 | Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
 |---|---|---|---|---|---|---|---|
-| 23 | RBAC.1 | Role model + `requireRole()` guard (ADMIN/OPS/ENGINEER/SALES/FINANCE/TECH/VIEWER) | P0 | M | 3 | AUTH.1 | todo |
-| 24 | RBAC.2 | Per-route authZ + org-scoping enforcement (every endpoint, server-validated) | P0 | M | 3 | RBAC.1 | todo |
+| 23 | RBAC.1 | Role model + `requireRole()` guard (ADMIN/OPS/ENGINEER/SALES/FINANCE/TECH/VIEWER) | P0 | M | 3 | AUTH.1 | done |
+| 24 | RBAC.2 | Per-route authZ + org-scoping enforcement (every endpoint, server-validated) | P0 | M | 3 | RBAC.1 | done |
 | 25 | RBAC.3 | Agent tool-permission filter by acting user's role | P0 | M | 3 | RBAC.1, ART.2 | todo |
-| 26 | RBAC.4 | Approval state machine for gated actions (PO approve, ECO release, policy rollback, credit note) → returns AWAITING_APPROVAL | P0 | M | 4 | RBAC.1 | todo |
-| 27 | AUDIT.1 | Audit-log model + writer on every mutation & agent action | P0 | M | 3 | RBAC.2 | todo |
-| 28 | AUDIT.2 | Audit-trail viewer (filter by actor/module/object) | P1 | S | 2 | AUDIT.1 | todo |
+| 26 | RBAC.4 | Approval state machine for gated actions (PO approve, ECO release, policy rollback, credit note) → returns AWAITING_APPROVAL | P0 | M | 4 | RBAC.1 | done |
+| 27 | AUDIT.1 | Audit-log model + writer on every mutation & agent action | P0 | M | 3 | RBAC.2 | done |
+| 28 | AUDIT.2 | Audit-trail viewer (filter by actor/module/object) | P1 | S | 2 | AUDIT.1 | done |
 
 ## E3 — Agent Runtime & Workflow Engine · Track: Platform
 
 | Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
 |---|---|---|---|---|---|---|---|
-| 29 | ART.1 | AgentRuntime — Claude tool-use loop ({systemPrompt, tools[], scope}) | P0 | L | 5 | FND.11, FND.6 | todo |
-| 30 | ART.2 | Typed tool registry over the data model (draftPurchaseOrder, openNCR, routeTechnician, runSpcCheck, recognizeRevenue…) with Zod I/O | P0 | L | 5 | ART.1 | todo |
+| 29 | ART.1 | AgentRuntime — Claude tool-use loop ({systemPrompt, tools[], scope}) | P0 | L | 5 | FND.11, FND.6 | done |
+| 30 | ART.2 | Typed tool registry over the data model (draftPurchaseOrder, openNCR, routeTechnician, runSpcCheck, recognizeRevenue…) with Zod I/O | P0 | L | 5 | ART.1 | done |
 | 31 | ART.3 | Module orchestrator — route events to agents; cross-module tool calls produce the agent trace | P0 | L | 5 | ART.2 | todo |
-| 32 | ART.4 | Agent chat endpoint streaming reply + trace over SSE (`POST /api/agents/:id/chat`) | P0 | M | 4 | ART.1 | todo |
+| 32 | ART.4 | Agent chat endpoint streaming reply + trace over SSE (`POST /api/agents/:id/chat`) | P0 | M | 4 | ART.1 | done |
 | 33 | ART.5 | AgentRun trace persistence + TraceConsole renderer (scan→correlate→draft→policy-check→result) | P0 | M | 3 | ART.1, FND.13 | todo |
-| 34 | WF.1 | Workflow DAG model + BullMQ run engine (steps, gates, branches) | P0 | L | 5 | ART.3 | todo |
+| 34 | WF.1 | Workflow DAG model + BullMQ run engine (steps, gates, branches) | P0 | L | 5 | ART.3 | done |
 | 35 | WF.2 | WorkflowRun SSE stream + decision-gate evaluation (e.g. <$50k auto-route else escalate) | P0 | M | 4 | WF.1 | todo |
 | 36 | WF.3 | Guardrail gate tools — spend/risk/policy checks as explicit DAG nodes | P0 | M | 3 | WF.1, RBAC.4 | todo |
-| 37 | GA.1 | General Axona agent — cross-module read scope, always cites source files/objects | P0 | M | 4 | ART.3, SRCH.2 | todo |
+| 37 | GA.1 | General Axona agent — cross-module read scope, always cites source files/objects | P0 | M | 4 | ART.3, SRCH.2 | done |
 
 ## E4 — Search & Files Platform · Track: Platform
 
 | Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
 |---|---|---|---|---|---|---|---|
-| 38 | SRCH.1 | Unified index — Postgres FTS + pgvector over Agents/Chats/Files/Modules/Workflows/Projects | P0 | M | 4 | FND.11 | todo |
-| 39 | SRCH.2 | Search API (`/api/search?q=&scope=`) grouped results + live counts | P0 | M | 3 | SRCH.1 | todo |
-| 40 | FILE.1 | S3/MinIO blob upload + File record lifecycle | P0 | M | 3 | FND.7 | todo |
-| 41 | FILE.2 | Text-extraction + embedding pipeline (queue job) | P0 | M | 4 | FILE.1, SRCH.1 | todo |
-| 42 | MTX.1 | Ask-across-files column extraction job (`POST /projects/:id/columns` → per-file answers) | P0 | M | 4 | FILE.2, ART.2 | todo |
+| 38 | SRCH.1 | Unified index — Postgres FTS + pgvector over Agents/Chats/Files/Modules/Workflows/Projects | P0 | M | 4 | FND.11 | done |
+| 39 | SRCH.2 | Search API (`/api/search?q=&scope=`) grouped results + live counts | P0 | M | 3 | SRCH.1 | done |
+| 40 | FILE.1 | S3/MinIO blob upload + File record lifecycle | P0 | M | 3 | FND.7 | done |
+| 41 | FILE.2 | Text-extraction + embedding pipeline (queue job) | P0 | M | 4 | FILE.1, SRCH.1 | done |
+| 42 | MTX.1 | Ask-across-files column extraction job (`POST /projects/:id/columns` → per-file answers) | P0 | M | 4 | FILE.2, ART.2 | done |
 
 ## E5 — Core Layer Screens · Track: Core
 
 | Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
 |---|---|---|---|---|---|---|---|
-| 43 | MC.1 | Mission Control launcher — module grid (Core/Value chain/Robotics/Back office) + per-module alert counts + ⌘K hand-off | P0 | M | 3 | FND.13 | todo |
-| 44 | SRCH.3 | Search palette UI — scope tabs, grouped rows, ↑↓/↵/Esc keyboard nav | P0 | M | 3 | SRCH.2, MC.1 | todo |
-| 45 | CMD.1 | Command Center rollups API (`/api/core/summary`) — per-module KPIs + cross-module exceptions | P0 | M | 4 | FND.11 | todo |
-| 46 | CMD.2 | Command Center screen — KPI grid, alert/exception feed (click-through), global copilot entry | P0 | L | 5 | CMD.1, GA.1 | todo |
-| 47 | AGT.1 | Agents roster screen — module-grouped cards (glyph + status dot + description), open into chat | P0 | M | 4 | ART.4, FND.15 | todo |
-| 48 | AGT.2 | Agents "needs attention" filter (CRITICAL state) | P1 | XS | 1 | AGT.1 | todo |
-| 49 | WFL.1 | Workflows list — module-separated rows, agent-chain glyph preview, step/module counts, status, last run | P0 | M | 3 | WF.1 | todo |
-| 50 | WFL.2 | Workflow detail — step-flow canvas (trigger→agents→gates→output) + live run console + Run button | P0 | L | 5 | WFL.1, WF.2 | todo |
-| 51 | PROJ.1 | Projects list — module-separated rows, file count, agent+human members, status, last activity, side Axona agent | P0 | M | 3 | FND.11, GA.1 | todo |
-| 52 | MTX.2 | Project file matrix — sticky-header table with AI-extracted columns, ask-across-files bar, citation-aware side agent (collapsible) | P0 | L | 5 | PROJ.1, MTX.1 | todo |
-| 53 | MACH.1 | Machines screen — Fixed/Mobile groups, status/util/health/telemetry cells, "needs service" filter, maintenance agent | P0 | M | 4 | FND.11, ART.4 | todo |
+| 43 | MC.1 | Mission Control launcher — module grid (Core/Value chain/Robotics/Back office) + per-module alert counts + ⌘K hand-off | P0 | M | 3 | FND.13 | done |
+| 44 | SRCH.3 | Search palette UI — scope tabs, grouped rows, ↑↓/↵/Esc keyboard nav | P0 | M | 3 | SRCH.2, MC.1 | done |
+| 45 | CMD.1 | Command Center rollups API (`/api/core/summary`) — per-module KPIs + cross-module exceptions | P0 | M | 4 | FND.11 | done |
+| 46 | CMD.2 | Command Center screen — KPI grid, alert/exception feed (click-through), global copilot entry | P0 | L | 5 | CMD.1, GA.1 | done |
+| 47 | AGT.1 | Agents roster screen — module-grouped cards (glyph + status dot + description), open into chat | P0 | M | 4 | ART.4, FND.15 | done |
+| 48 | AGT.2 | Agents "needs attention" filter (CRITICAL state) | P1 | XS | 1 | AGT.1 | done |
+| 49 | WFL.1 | Workflows list — module-separated rows, agent-chain glyph preview, step/module counts, status, last run | P0 | M | 3 | WF.1 | done |
+| 50 | WFL.2 | Workflow detail — step-flow canvas (trigger→agents→gates→output) + live run console + Run button | P0 | L | 5 | WFL.1, WF.2 | done |
+| 51 | PROJ.1 | Projects list — module-separated rows, file count, agent+human members, status, last activity, side Axona agent | P0 | M | 3 | FND.11, GA.1 | done |
+| 52 | MTX.2 | Project file matrix — sticky-header table with AI-extracted columns, ask-across-files bar, citation-aware side agent (collapsible) | P0 | L | 5 | PROJ.1, MTX.1 | done |
+| 53 | MACH.1 | Machines screen — Fixed/Mobile groups, status/util/health/telemetry cells, "needs service" filter, maintenance agent | P0 | M | 4 | FND.11, ART.4 | done |
 
 ## E6 — Value Chain · Track: Value Chain
 
 | Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
 |---|---|---|---|---|---|---|---|
-| 54 | PROC.1 | Procurement data/API — Suppliers, Parts, PurchaseOrders (org-scoped, paginated) | P0 | S | 2 | FND.11 | todo |
-| 55 | PROC.2 | Procurement screen — PO queue (drafted vs sent), approve/edit drafted PO, reorder banner, filter chips, agent-trace | P0 | M | 4 | PROC.1, RBAC.4 | todo |
+| 54 | PROC.1 | Procurement data/API — Suppliers, Parts, PurchaseOrders (org-scoped, paginated) | P0 | S | 2 | FND.11 | done |
+| 55 | PROC.2 | Procurement screen — PO queue (drafted vs sent), approve/edit drafted PO, reorder banner, filter chips, agent-trace | P0 | M | 4 | PROC.1, RBAC.4 | done |
 | 56 | PROC.3 | Procurement agents — sourcing, RFQ, negotiation, reorder, reconciliation, supply-risk | P0 | M | 4 | PROC.2, ART.2 | todo |
-| 57 | MFG.1 | Manufacturing data/API — WorkOrderMfg + build genealogy per serial | P0 | S | 2 | FND.11 | todo |
-| 58 | MFG.2 | Manufacturing screen — line flow, throughput/OEE, serial genealogy trace, bottleneck alerts | P0 | M | 4 | MFG.1 | todo |
+| 57 | MFG.1 | Manufacturing data/API — WorkOrderMfg + build genealogy per serial | P0 | S | 2 | FND.11 | done |
+| 58 | MFG.2 | Manufacturing screen — line flow, throughput/OEE, serial genealogy trace, bottleneck alerts | P0 | M | 4 | MFG.1 | done |
 | 59 | MFG.3 | Manufacturing agents — scheduler, work-order, genealogy, OEE, kitting, PM | P0 | M | 4 | MFG.2, ART.2 | todo |
-| 60 | INV.1 | Inventory data/API — stock by location, reorder points, RMA, reservations, edge-cache spares | P0 | S | 2 | FND.11 | todo |
-| 61 | INV.2 | Inventory screen — stock by location, reorder triggers feeding Procurement, RMA processing, reserve-against-order | P1 | M | 4 | INV.1, PROC.1 | todo |
+| 60 | INV.1 | Inventory data/API — stock by location, reorder points, RMA, reservations, edge-cache spares | P0 | S | 2 | FND.11 | done |
+| 61 | INV.2 | Inventory screen — stock by location, reorder triggers feeding Procurement, RMA processing, reserve-against-order | P1 | M | 4 | INV.1, PROC.1 | done |
 | 62 | INV.3 | Inventory agents — stock, reorder, RMA, cycle-count, reservation, edge-cache | P1 | M | 3 | INV.2, ART.2 | todo |
-| 63 | FUL.1 | Fulfillment data/API — Deliveries with stage timeline | P0 | S | 2 | FND.11 | todo |
-| 64 | FUL.2 | Fulfillment screen — stage timeline (Alloc→Crate→Freight→Customs→On-site→Commission→Active) vs committed date, Osaka EAR99 hold, shipment + commissioning panels | P0 | M | 4 | FUL.1 | todo |
+| 63 | FUL.1 | Fulfillment data/API — Deliveries with stage timeline | P0 | S | 2 | FND.11 | done |
+| 64 | FUL.2 | Fulfillment screen — stage timeline (Alloc→Crate→Freight→Customs→On-site→Commission→Active) vs committed date, Osaka EAR99 hold, shipment + commissioning panels | P0 | M | 4 | FUL.1 | done |
 | 65 | FUL.3 | Fulfillment agents — allocation, freight, customs, install-scheduling, commissioning, delivery-SLA | P0 | M | 4 | FUL.2, ART.2 | todo |
-| 66 | QUAL.1 | Quality data/API — SpcSample, NCR, Cert | P0 | S | 2 | FND.11 | todo |
-| 67 | QUAL.2 | Quality screen — SPC control chart (torque vs UCL/LCL), defect Pareto, NCR tracker (NCR-118 → lot 88421), CE/UL/ISO audit status | P0 | L | 5 | QUAL.1, FND.14 | todo |
+| 66 | QUAL.1 | Quality data/API — SpcSample, NCR, Cert | P0 | S | 2 | FND.11 | done |
+| 67 | QUAL.2 | Quality screen — SPC control chart (torque vs UCL/LCL), defect Pareto, NCR tracker (NCR-118 → lot 88421), CE/UL/ISO audit status | P0 | L | 5 | QUAL.1, FND.14 | done |
 | 68 | QUAL.3 | Quality agents — inspection, SPC, root-cause, NCR/CAPA, calibration, compliance | P0 | M | 4 | QUAL.2, ART.2 | todo |
-| 69 | SALES.1 | Sales data/API — Deals (stages, feasibility) | P0 | S | 2 | FND.11 | todo |
-| 70 | SALES.2 | Sales screen — pipeline funnel + Q3 forecast, agent-checked deliverability badge (BMW at-risk +3w), CPQ configurator | P0 | L | 5 | SALES.1, FUL.1, MFG.1 | todo |
+| 69 | SALES.1 | Sales data/API — Deals (stages, feasibility) | P0 | S | 2 | FND.11 | done |
+| 70 | SALES.2 | Sales screen — pipeline funnel + Q3 forecast, agent-checked deliverability badge (BMW at-risk +3w), CPQ configurator | P0 | L | 5 | SALES.1, FUL.1, MFG.1 | done |
 | 71 | SALES.3 | Sales agents — lead-qualification, CPQ, feasibility, forecast, contract, renewal | P0 | M | 4 | SALES.2, ART.2 | todo |
-| 72 | MKT.1 | Marketing data/API — Campaigns | P1 | S | 2 | FND.11 | todo |
-| 73 | MKT.2 | Marketing screen — demand funnel, pipeline-by-channel attribution (events dominant), campaign cards, underperforming-paid flag | P1 | M | 3 | MKT.1, SALES.1 | todo |
+| 72 | MKT.1 | Marketing data/API — Campaigns | P1 | S | 2 | FND.11 | done |
+| 73 | MKT.2 | Marketing screen — demand funnel, pipeline-by-channel attribution (events dominant), campaign cards, underperforming-paid flag | P1 | M | 3 | MKT.1, SALES.1 | done |
 | 74 | MKT.3 | Marketing agents — campaign, content, ABM, lead-nurture, attribution, events | P1 | M | 3 | MKT.2, ART.2 | todo |
 
 ## E7 — Robotics · Track: Robotics
 
 | Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
 |---|---|---|---|---|---|---|---|
-| 75 | FLEET.1 | Fleet data/API — Robot + TelemetryPoint ingest | P0 | M | 3 | FND.11 | todo |
-| 76 | FLEET.2 | Fleet screen — units on map, uptime/telemetry, OTA firmware versions, predictive-failure alerts (SN-2196 thermal) → Field Service hand-off | P0 | L | 5 | FLEET.1, FND.14 | todo |
+| 75 | FLEET.1 | Fleet data/API — Robot + TelemetryPoint ingest | P0 | M | 3 | FND.11 | done |
+| 76 | FLEET.2 | Fleet screen — units on map, uptime/telemetry, OTA firmware versions, predictive-failure alerts (SN-2196 thermal) → Field Service hand-off | P0 | L | 5 | FLEET.1, FND.14 | done |
 | 77 | FLEET.3 | Fleet agents — telemetry, predictive-maintenance, uptime-SLA, OTA, anomaly, energy | P0 | M | 4 | FLEET.2, ART.2 | todo |
-| 78 | FIELD.1 | Field Service data/API — WorkOrderField, Technician | P0 | S | 2 | FND.11 | todo |
-| 79 | FIELD.2 | Field Service screen — tech dispatch board, work-order queue with live SLA countdowns, agent routing (cert + part, SN-2196 battery swap) | P0 | L | 5 | FIELD.1, FLEET.1 | todo |
+| 78 | FIELD.1 | Field Service data/API — WorkOrderField, Technician | P0 | S | 2 | FND.11 | done |
+| 79 | FIELD.2 | Field Service screen — tech dispatch board, work-order queue with live SLA countdowns, agent routing (cert + part, SN-2196 battery swap) | P0 | L | 5 | FIELD.1, FLEET.1 | done |
 | 80 | FIELD.3 | Field Service agents — dispatch, triage, parts, scheduling, knowledge, PM | P0 | M | 4 | FIELD.2, ART.2 | todo |
-| 81 | ENG.1 | Engineering data/API — ECO, FirmwareRelease, CompatCell | P0 | S | 2 | FND.11 | todo |
-| 82 | ENG.2 | Engineering screen — ECO board (Draft→Review→Approved→Released; ECO-318 from NCR-118), HW↔firmware compat matrix, firmware releases (v4.2.2-rc cert gate) | P0 | L | 5 | ENG.1, FND.14, RBAC.4 | todo |
+| 81 | ENG.1 | Engineering data/API — ECO, FirmwareRelease, CompatCell | P0 | S | 2 | FND.11 | done |
+| 82 | ENG.2 | Engineering screen — ECO board (Draft→Review→Approved→Released; ECO-318 from NCR-118), HW↔firmware compat matrix, firmware releases (v4.2.2-rc cert gate) | P0 | L | 5 | ENG.1, FND.14, RBAC.4 | done |
 | 83 | ENG.3 | Engineering agents — change, compatibility, firmware-release, impact, requirements, CAD/config | P0 | M | 4 | ENG.2, ART.2 | todo |
-| 84 | AUTO.1 | Autonomy data/API — AutonomyMetric, SafetyIncident, PolicyVersion | P0 | S | 2 | FND.11 | todo |
-| 85 | AUTO.2 | Autonomy screen — autonomy-rate trend (Site-3 p-13 regression), safety incidents (INC-201), policy versions + rollback, sim-validate-before-promote | P0 | L | 5 | AUTO.1, RBAC.4 | todo |
+| 84 | AUTO.1 | Autonomy data/API — AutonomyMetric, SafetyIncident, PolicyVersion | P0 | S | 2 | FND.11 | done |
+| 85 | AUTO.2 | Autonomy screen — autonomy-rate trend (Site-3 p-13 regression), safety incidents (INC-201), policy versions + rollback, sim-validate-before-promote | P0 | L | 5 | AUTO.1, RBAC.4 | done |
 | 86 | AUTO.3 | Autonomy agents — mission, intervention, safety, policy, simulation, SLA | P0 | M | 4 | AUTO.2, ART.2 | todo |
 
 ## E8 — Back Office · Track: Back Office
 
 | Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
 |---|---|---|---|---|---|---|---|
-| 87 | FIN.1 | Finance data/API — LedgerEntry, Invoice, UnitEconomic | P0 | S | 2 | FND.11 | todo |
-| 88 | FIN.2 | Finance screen — revenue split (lumpy hardware vs ratable RaaS), per-unit economics (HX-2 −2.1pt from ECO-318), cash/runway, AR aging (BMW net-60, overdue Kawasaki) | P0 | L | 5 | FIN.1, FND.14 | todo |
+| 87 | FIN.1 | Finance data/API — LedgerEntry, Invoice, UnitEconomic | P0 | S | 2 | FND.11 | done |
+| 88 | FIN.2 | Finance screen — revenue split (lumpy hardware vs ratable RaaS), per-unit economics (HX-2 −2.1pt from ECO-318), cash/runway, AR aging (BMW net-60, overdue Kawasaki) | P0 | L | 5 | FIN.1, FND.14 | done |
 | 89 | FIN.3 | Finance agents — revenue-recognition, unit-economics, collections, payables, FP&A, close | P0 | M | 4 | FIN.2, ART.2 | todo |
-| 90 | PPL.1 | People data/API — Technician cert matrix, Requisition | P0 | S | 2 | FND.11 | todo |
-| 91 | PPL.2 | People screen — field-tech certification matrix (cert expiry gates dispatch; Osei HV/battery −12d on SN-2196), field-team-vs-fleet growth, headcount by function | P0 | M | 4 | PPL.1, FIELD.1 | todo |
+| 90 | PPL.1 | People data/API — Technician cert matrix, Requisition | P0 | S | 2 | FND.11 | done |
+| 91 | PPL.2 | People screen — field-tech certification matrix (cert expiry gates dispatch; Osei HV/battery −12d on SN-2196), field-team-vs-fleet growth, headcount by function | P0 | M | 4 | PPL.1, FIELD.1 | done |
 | 92 | PPL.3 | People agents — certification, recruiting, onboarding, workforce-planning, skills, scheduling | P1 | M | 3 | PPL.2, ART.2 | todo |
-| 93 | SEC.1 | Security data/API — CVE + device posture | P0 | S | 2 | FND.11 | todo |
-| 94 | SEC.2 | Security screen — CVE triage (affected deployed units), device posture, access mgmt, signed-firmware patch rollout (Engineering cert gate) | P0 | M | 4 | SEC.1, ENG.1 | todo |
+| 93 | SEC.1 | Security data/API — CVE + device posture | P0 | S | 2 | FND.11 | done |
+| 94 | SEC.2 | Security screen — CVE triage (affected deployed units), device posture, access mgmt, signed-firmware patch rollout (Engineering cert gate) | P0 | M | 4 | SEC.1, ENG.1 | done |
 | 95 | SEC.3 | Security agents — CVE-triage, posture, access, patch, anomaly-traffic, audit | P1 | M | 3 | SEC.2, ART.2 | todo |
-| 96 | LEGAL.1 | Legal data/API — Obligation, ExportLicense, LegalMatter | P0 | S | 2 | FND.11 | todo |
-| 97 | LEGAL.2 | Legal screen — obligations vs live ops (BMW 99.5% SLA at-risk), export licensing (DLV-3312 EAR99 hold), liability/IP matters (INC-201, ECO-318 patent) linked to source modules | P0 | M | 4 | LEGAL.1, AUTO.1, FUL.1 | todo |
+| 96 | LEGAL.1 | Legal data/API — Obligation, ExportLicense, LegalMatter | P0 | S | 2 | FND.11 | done |
+| 97 | LEGAL.2 | Legal screen — obligations vs live ops (BMW 99.5% SLA at-risk), export licensing (DLV-3312 EAR99 hold), liability/IP matters (INC-201, ECO-318 patent) linked to source modules | P0 | M | 4 | LEGAL.1, AUTO.1, FUL.1 | done |
 | 98 | LEGAL.3 | Legal agents — obligations, contract, export-control, compliance, liability, IP | P1 | M | 3 | LEGAL.2, ART.2 | todo |
 
 ## E9 — Org & User Settings · Track: Platform
 
 | Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
 |---|---|---|---|---|---|---|---|
-| 99 | SET.1 | Org settings — profile, branding, module enablement, defaults | P1 | M | 3 | AUTH.4, RBAC.2 | todo |
-| 100 | SET.2 | Member & role administration — invite, change role, deactivate (ADMIN-gated) | P0 | M | 3 | RBAC.1, AUTH.5 | todo |
-| 101 | SET.3 | User settings — profile, password, sessions/devices | P1 | S | 2 | AUTH.1 | todo |
-| 102 | SET.4 | User notification preferences (channels + per-event opt-in) | P1 | S | 2 | NOTIF.1 | todo |
-| 103 | SET.5 | Integrations & SSO config + API keys (encrypted at rest) | P2 | M | 3 | AUTH.2, RBAC.2 | todo |
+| 99 | SET.1 | Org settings — profile, branding, module enablement, defaults | P1 | M | 3 | AUTH.4, RBAC.2 | done |
+| 100 | SET.2 | Member & role administration — invite, change role, deactivate (ADMIN-gated) | P0 | M | 3 | RBAC.1, AUTH.5 | done |
+| 101 | SET.3 | User settings — profile, password, sessions/devices | P1 | S | 2 | AUTH.1 | done |
+| 102 | SET.4 | User notification preferences (channels + per-event opt-in) | P1 | S | 2 | NOTIF.1 | done |
+| 103 | SET.5 | Integrations & SSO config + API keys (encrypted at rest) | P2 | M | 3 | AUTH.2, RBAC.2 | done |
 
 ## E10 — Billing & Subscription (Axona SaaS) · Track: Platform
 
@@ -270,7 +270,7 @@ another module.
 |---|---|---|---|---|---|---|---|
 | 104 | BILL.1 | Stripe integration — products/plans, customer per Org, webhook handling (idempotent) | P1 | M | 4 | AUTH.4 | todo |
 | 105 | BILL.2 | Subscription + seat management (sync seats to active Users) | P1 | M | 3 | BILL.1, SET.2 | todo |
-| 106 | BILL.3 | Billing settings screen — plan, payment method, invoice history | P1 | M | 3 | BILL.1 | todo |
+| 106 | BILL.3 | Billing settings screen — plan, payment method, invoice history | P1 | M | 3 | BILL.1 | done |
 | 107 | BILL.4 | Usage metering + entitlements/limits (agent runs, seats, modules) gating access | P2 | M | 4 | BILL.2, ART.5 | todo |
 | 108 | BILL.5 | Trial / paywall / dunning states + grace handling | P2 | M | 3 | BILL.2, EMAIL.1 | todo |
 
@@ -278,8 +278,8 @@ another module.
 
 | Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
 |---|---|---|---|---|---|---|---|
-| 109 | EMAIL.1 | Transactional email service (invites, verify, reset, receipts) — **Resend** + React Email templates; human-approved sends only | P0 | M | 3 | FND.1 | todo |
-| 110 | NOTIF.1 | Notification model + in-app notification center | P1 | M | 3 | FND.11 | todo |
+| 109 | EMAIL.1 | Transactional email service (invites, verify, reset, receipts) — **Resend** + React Email templates; human-approved sends only | P0 | M | 3 | FND.1 | done |
+| 110 | NOTIF.1 | Notification model + in-app notification center | P1 | M | 3 | FND.11 | done |
 | 111 | NOTIF.2 | Wire agent/workflow approvals + cross-module exceptions into notifications | P0 | M | 3 | NOTIF.1, RBAC.4, ART.5 | todo |
 | 112 | NOTIF.3 | Per-channel routing (in-app / email) honoring user preferences | P1 | S | 2 | NOTIF.2, EMAIL.1, SET.4 | todo |
 | 113 | EMAIL.2 | Scheduled digest email (daily/weekly cross-module summary) | P2 | S | 2 | NOTIF.1, EMAIL.1 | todo |
@@ -293,7 +293,7 @@ another module.
 
 | Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
 |---|---|---|---|---|---|---|---|
-| 114 | ONT.1 | Ontology objects + immutable event log (Unit·Part·Serial·Firmware·BOM·PO/RFQ·Supplier·WorkOrder·Machine/fixture·Human·Agent) over Postgres+pgvector | P0 | L | 6 | FND.11 | todo |
+| 114 | ONT.1 | Ontology objects + immutable event log (Unit·Part·Serial·Firmware·BOM·PO/RFQ·Supplier·WorkOrder·Machine/fixture·Human·Agent) over Postgres+pgvector | P0 | L | 6 | FND.11 | done |
 | 115 | ONT.2 | Per-unit genealogy spine captured **as-built** (Unit→Parts/Serials/Firmware), not reconstructed; capture-fidelity guarantees | P0 | L | 5 | ONT.1, MFG.1 | todo |
 | 116 | CONN.1 | Connector framework — pluggable ingest from ERP/PLM/MES, email, chat, machine telemetry; **speak MCP** as the tool/connector standard (Anthropic-native); use Arcade/Composio for authed external-SaaS connectors rather than hand-rolled OAuth | P1 | L | 6 | ONT.1 | todo |
 | 117 | CONN.2 | Normalize step — entity resolution + dedupe + diff-against-last-state → event log | P1 | L | 5 | CONN.1, ONT.1 | todo |
@@ -307,9 +307,9 @@ another module.
 
 | Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
 |---|---|---|---|---|---|---|---|
-| 119 | MEM.1 | Operational memory store — structured graph + vector over decisions/exceptions/approvals/genealogy/telemetry (**not** RAG-over-PDFs). **Build — do not buy Mem0/Letta** (they'd hold the moat); study Zep/Graphiti's temporal-KG as a reference. pgvector now; watch Turbopuffer if multi-tenant scale/cost bites | P0 | L | 6 | ONT.1 | todo |
+| 119 | MEM.1 | Operational memory store — structured graph + vector over decisions/exceptions/approvals/genealogy/telemetry (**not** RAG-over-PDFs). **Build — do not buy Mem0/Letta** (they'd hold the moat); study Zep/Graphiti's temporal-KG as a reference. pgvector now; watch Turbopuffer if multi-tenant scale/cost bites | P0 | L | 6 | ONT.1 | done |
 | 120 | MEM.2 | Context assembly + retrieval for operational decisions; feeds AgentRuntime context | P0 | L | 5 | MEM.1, ART.1 | todo |
-| 121 | CONF.1 | Calibrated **confidence** as a first-class field on every proposal — logged, surfaced, gates autonomy | P0 | M | 4 | ART.1, AUDIT.1 | todo |
+| 121 | CONF.1 | Calibrated **confidence** as a first-class field on every proposal — logged, surfaced, gates autonomy | P0 | M | 4 | ART.1, AUDIT.1 | done |
 | 122 | TRUST.1 | Progressive-trust / autonomy ladder — per-agent scope widening, measured + surfaced as a product surface | P1 | L | 5 | CONF.1, RBAC.4 | todo |
 | 123 | LOOP.1 | Outcome capture + reward modeling from **physical** outcomes (on-time / line-halt / pass-test) | P1 | L | 5 | ONT.1, MEM.1 | todo |
 | 124 | LOOP.2 | Continuous-learning loop — production-trace → train/distill → serve (online RL / self-distillation; OpenPipe-style trace fine-tuning as a bootstrap; Modal/E2B-class or own-VPC GPUs for compute) | P2 | XL | 8 | LOOP.1, SLM.1 | todo |
@@ -324,8 +324,8 @@ another module.
 | Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
 |---|---|---|---|---|---|---|---|
 | 127 | GUARD.1 | `guardrails.config` as enforced data — never auto-place an order · never claim stock without a source · never invent a supplier or lead time | P0 | M | 4 | WF.3, RBAC.4 | todo |
-| 128 | AUDIT.3 | Extend audit — every agent action records **model · confidence · approver** (makes propose→approve→audit literal) | P0 | S | 2 | AUDIT.1, CONF.1 | todo |
-| 129 | ISO.1 | Per-tenant isolation of **data and models** — no cross-tenant leak; protects the config-not-rebuild transfer story | P0 | M | 4 | RBAC.2, MEM.1 | todo |
+| 128 | AUDIT.3 | Extend audit — every agent action records **model · confidence · approver** (makes propose→approve→audit literal) | P0 | S | 2 | AUDIT.1, CONF.1 | done |
+| 129 | ISO.1 | Per-tenant isolation of **data and models** — no cross-tenant leak; protects the config-not-rebuild transfer story | P0 | M | 4 | RBAC.2, MEM.1 | done |
 | 130 | DEPLOY.1 | VPC / on-prem deployment posture + own-your-model SLM packaging | P2 | L | 6 | ISO.1, SLM.1 | todo |
 | 131 | PRIM.1 | Reusable-primitives inventory + recomposition-rate tracking (agents · memory · ontology · integrations · interfaces · SOPs) | P2 | M | 3 | ONT.1, MEM.1 | todo |
 
@@ -352,6 +352,90 @@ Two stories added from the research:
 |---|---|---|---|---|---|---|---|
 | 132 | OBS.1 | Agent tracing + eval substrate — adopt **Langfuse** (self-host/VPC); trace every AgentRun/WorkflowRun, power eval-driven dev + the LOOP.3 harness; complements (doesn't replace) the immutable audit log | P1 | M | 3 | ART.5 | todo |
 | 133 | AGENTID.1 | Agent-facing email + identity (WATCH/later) — outward-facing agents get inboxes (**AgentMail**) + **A2A** signed Agent Cards for supplier/customer agent interop | P2 | M | 4 | CONN.1, ART.2 | todo |
+
+---
+
+## E15 — Product Lifecycle Management (module #15, Engineering/PLM) · Track: PLM
+
+> CRO ruling (2026-07-20): **the wedge stays Procurement.** PLM ships as a **module on the same spine** — not a
+> pivot. Built in two halves: a **commercial slice** (Wave 1 below) then a **deferred tier** gated on buyer
+> evidence. `PLM.1a`'s `Unit` is also the **billing meter** (per-module pricing metered by units under
+> management → BILL.1). Screens defer 1:1 to the v8 `.dc.html` (DESIGN.2). Order = PRD-PLM-screens.md waves.
+
+| Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
+|---|---|---|---|---|---|---|---|
+| 134 | PLM.1a | Unit spine — ProductModel·PartMaster·PartRevision·BomLine·**Unit**·AsBuiltRecord·SoftwareRelease·UnitSoftwareState·ConfigurationVersion + EntityType ext + `resolveConfigAt`/`asBuiltDiff`/`affectedUnits` + CSV import + seed thread (the commercial slice's data layer; Unit = billing meter) | P0 | L | 6 | ONT.1, MFG.1, FLEET.1, ENG.1, QUAL.1 | todo |
+| 135 | PLM.2 | Unit registry `/units` — built+deployed, filters (model·config·sw·lot·site·status) URL-addressable, CSV import-first empty state | P0 | M | 4 | PLM.1a | todo |
+| 136 | PLM.3 | Unit page `/units/:serial` ★ — hero object; resolved config + as-built summary + config-at-each-event timeline | P0 | L | 5 | PLM.1a | todo |
+| 137 | PLM.4 | As-built diff `/units/:serial/as-built` (Q1) — as-designed BOM aligned to as-built by position; substitutions flagged in ink | P0 | M | 4 | PLM.1a | todo |
+| 138 | PLM.V3 | Manufacturing — **as-built capture** at build (scan/import → auto-diff → `AsBuiltRecord`); genealogy links to Unit page | P0 | M | 4 | PLM.1a, MFG.2 | todo |
+| 139 | PLM.5 | Blast radius `/blast-radius` — UI over ONT.1 `affectedUnits`/`getBlastRadius`; grouped by module w/ relation path | P0 | S | 2 | PLM.1a, ONT.1 | todo |
+| — | **STOP POINT** | **Commercial slice complete (Wave 1). PLM.1b + Waves 2–4 are the deferred tier — gated on buyer evidence, not built on default.** | — | — | — | — | — |
+| 140 | PLM.1b | Deferred data tier — TestRun·TestResult·FieldEvent·ChangeRequest·NCR.rootCause·`freezeConfigSnapshot` (kept cleanly separable from 1a) | P1 | M | 4 | PLM.1a | todo |
+| 141 | PLM.6 | Test explorer `/tests` (Q3) — TestRun list + compare mode (measurements + config deltas) | P1 | M | 4 | PLM.1b | todo |
+| 142 | PLM.7 | Test run `/tests/:code` — frozen `configSnapshot` is the hero (not a live re-resolve) | P1 | M | 3 | PLM.1b | todo |
+| 143 | PLM.V2 | Quality — test-traceability section + NCR root-cause field (SPC kept distinct from test runs) | P1 | M | 3 | PLM.1b, QUAL.2 | todo |
+| 144 | PLM.8 | RCA workspace `/rca/:ncrCode` (Q4) — evidence assembly + MEM.1 recall; classification → `NCR.rootCause`, RBAC+audited; usable agent-off | P1 | L | 5 | PLM.1b, MEM.1 | todo |
+| 145 | PLM.9 | Change order `/changes/:code` (Q5) — effectivity + affected units; approve via `decide()` (reuse RBAC.5 `eco.release`) | P1 | M | 4 | PLM.1b, RBAC.5 | todo |
+| 146 | PLM.V1 | Engineering becomes the **PLM hub** — entry band into registry/configurations/BOM/ECR→ECO (ECO table + compat matrix retained) | P1 | M | 3 | PLM.2, ENG.2 | todo |
+| 147 | PLM.10 | Configurations `/configurations` (Q2) — ConfigurationVersion list + matching-units count; lock/baseline via `decide()`, immutable when locked | P1 | M | 3 | PLM.1a | todo |
+| 148 | PLM.V4 | Fleet — config-version + sw-version columns/filters (resolved, not stored); each unit → Unit page (map/telemetry kept) | P2 | S | 2 | PLM.1a, FLEET.2 | todo |
+| 149 | PLM.V5 | Field Service — record a **field event/modification** that updates the unit's config (writes FieldEvent + UnitSoftwareState + frozen snapshot); the most-missed PLM path | P1 | M | 3 | PLM.1b, FIELD.2 | todo |
+| 150 | PLM.V6 | Inventory — part-master attributes (lifecycle·approved vendors·category) + lot traceability (lot → units via blast-radius façade) | P2 | S | 2 | PLM.1a, INV.2 | todo |
+
+## E16 — Shipped outside the original backlog · Track: various (reconciled from `git log`, HOUSE.1)
+
+> These landed off PRDs + a live task list without a backlog row. Recorded here as **done** so the next
+> session's "work the backlog in order" reads true. (Derived from `git log`, not an enumeration.)
+
+| Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
+|---|---|---|---|---|---|---|---|
+| 151 | DS.1 | Import + implement the canonical design system (claude_design); reconcile tokens + primitives; re-skin shell + Mission Control | P0 | L | 5 | FND.2 | done |
+| 152 | DESIGN.2 | Import the v8 design export (10 new screens: 9 PLM + Audit Trail; 6 updated module screens; canonical per-screen source) | P1 | M | 2 | DS.1 | done |
+| 153 | SRCH.4 | Fix universal search — self-heal FTS `tsv` on reindex; clean 503 not 500 | P0 | S | 2 | SRCH.2 | done |
+| 154 | SRCH.5 | Robust FTS-independent module search (ILIKE over Module; self-heal + degrade to 200 partial) | P0 | S | 2 | SRCH.2 | done |
+| 155 | SRCH.6 | Fix FTS raw-SQL parameter placement (remove double fragment interpolation; the real 42601 root cause) | P0 | S | 2 | SRCH.5 | done |
+| 156 | UX.1 | Screen polish — StatStrip clipped numbers, full trace render, default chat on /agents | P1 | S | 2 | FND.13 | done |
+| 157 | UX.2 | De-duplicate the agent pane on /agents (single chat surface) | P1 | XS | 1 | AGT.1 | done |
+| 158 | UX.3 | Land on Command Center at `/` (root → /core; Mission Control re-homed to /launcher) | P1 | S | 1 | CMD.2 | done |
+| 159 | UX.4 | Module screens scroll as one page (shared ScreenShell; single `<main>` scroll) | P1 | M | 3 | FND.13 | done |
+| 160 | UX.5 | Fix audit sticky-header bleed + procurement column misalignment | P1 | S | 1 | AUDIT.2 | done |
+| 161 | UX.6 | Fix members-table column alignment (shared grid + fixed actions slot) | P1 | S | 1 | SET.2 | done |
+| 162 | UX.7 | Move audit/notifications/settings into a user-name contextual menu (nav = modules only) | P1 | M | 2 | FND.13 | done |
+| 163 | UX.8 | Loading states — branded FullScreenLoader + shell ScreenSkeleton wired to Next `loading.tsx` | P1 | M | 2 | FND.13 | done |
+| 164 | UX.9 | Agent-chat trace open/close (collapsible sub-pane) | P1 | S | 1 | AGT.1 | done |
+| 165 | UX.10 | Agent-chat + trace-pane scroll containment (bounded chat column, auto-stick to newest) | P1 | M | 2 | UX.9 | done |
+| 166 | UX.11 | Table overflow sweep (min-w-0 + truncate across 23 tables) + Launcher one-click Ask | P1 | M | 2 | UX.4 | done |
+| 167 | UX.12 | Render markdown in agent answers | P1 | XS | 1 | ART.4 | done |
+| 168 | UX.13 | Table-surface consistency sweep (data rows on a white card) | P1 | S | 1 | UX.4 | done |
+| 169 | A11Y.1 | Contrast token (`--ink-faint` → WCAG AA 4.5:1) + landmarks/lang + skip-to-content | P1 | S | 2 | FND.13 | done |
+| 170 | RBAC.5 | Approvals fan-out over `decide()` (ECO release · policy rollback · credit-note issue; every decision audited) | P0 | M | 3 | RBAC.4 | done |
+| 171 | DEMO.2 | Seed fill to mock richness (SPC 8→24, NCRs →12, POs →11, ECOs →5, Fleet →15, files →51) | P1 | M | 3 | FND.12 | done |
+| 172 | DEMO.3 | Deck screen export (12 anonymized deck-ready crops; sample-data chips; `verify-demo-3`) | P1 | M | 2 | — | done |
+| 173 | DEMO.4 | Scripted investor demo click-through (one system → wedge → genealogy → blast radius → propose/approve/audit → loop) | P1 | S | 1 | — | done |
+| 174 | SEED.1 | Anonymize the narrative at the source (no real marque anywhere; banned-list scanner in `verify:seed-1`) | P0 | M | 3 | FND.12 | done |
+| 175 | ONT.1 | Entity-link graph + blast radius (the cross-module ripple; `getBlastRadius`) — also row 114 (E12) | P0 | L | 6 | FND.11 | done |
+| 176 | MEM.1 | Operational memory (structured graph + vector over the operational record) — also row 119 (E13) | P0 | L | 6 | ONT.1 | done |
+| 177 | MEM.1a | `recallMemory` resolves human code → id (graph-proximity path fix) | P1 | XS | 1 | MEM.1 | done |
+| 178 | CONF.1 | Calibrated confidence (per-tenant fitted map; gates autonomy) — also row 121 (E13) | P0 | M | 4 | ART.1, AUDIT.1 | done |
+| 179 | PROSPECT.1 | Generic, isolated prospect-demo tenant mechanism | P1 | M | 2 | SEED.1 | done |
+| 180 | PROSPECT.2 | De-hardcode the investor-demo narrative from the app (tenant renders its own identity) | P0 | M | 2 | PROSPECT.1 | done |
+| 181 | PROSPECT.2a | Fix the FinanceView sweep miss + strengthen the guard + brand the demo org | P0 | S | 1 | PROSPECT.2 | done |
+| 182 | GIT.1 | Hard non-overridable pre-push remote guard (refuse any push not targeting `nibaranowski-dotcom/axona-web-app`) | P0 | S | 1 | FND.4 | done |
+| 183 | LOGIN.1 | Diagnose + fix the recurring `/login` 500 (CommandPalette SSR under the Next-dev `_not-found` compile order) + root error/not-found boundaries | P0 | S | 2 | AUTH.1, FND.13 | done |
+
+## Newly tracked (open) · post-reconciliation — Track: various
+
+> Open work surfaced by HOUSE.1 that had no row. (TRUST.1·LOOP.1·MEM.2·TEL.1 already live in E12/E13.)
+
+| Pos | StoryID | Title | Pri | Size | Effort | Deps | Status |
+|---|---|---|---|---|---|---|---|
+| 184 | AUDIT.4 | Redesign `/audit` 1:1 to the new `Audit Trail.dc.html` (its first mock; **must preserve CONF.1's ReliabilityPanel**) | P1 | M | 3 | AUDIT.2, CONF.1, DESIGN.2 | todo |
+| 185 | GOLIVE.1 | Resend production sending (config, no code) — verified domain + `RESEND_API_KEY` so real invite/verify/reset mail sends | P1 | XS | 1 | EMAIL.1 | todo |
+| 186 | GOLIVE.2 | Railway deploy — web + BullMQ worker + Postgres/Redis; migrate deploy; env/secrets | P1 | M | 3 | — | todo |
+| 187 | GOLIVE.3 | Stripe go-live (a build, not config) — wires E10 `BILL.1` products/webhooks metered on `Unit` (PLM.1a) | P1 | M | 4 | BILL.1, PLM.1a | todo |
+| 188 | MEM.3 | Memory write-path from live operational events (decisions/exceptions/approvals continuously feed MEM.1) | P1 | M | 4 | MEM.1, AUDIT.1 | todo |
+| 189 | ONT.3 | Ontology write-path hardening — entity resolution/dedupe as events land (beyond the seed) | P1 | M | 4 | ONT.1 | todo |
 
 ---
 

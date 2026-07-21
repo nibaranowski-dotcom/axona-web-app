@@ -119,6 +119,16 @@ Non-negotiable engineering invariants (apply to every story, regardless of P-lev
   outcomes → data`. If it doesn't touch the loop, it's table stakes, not moat.
 - **Wedge = Procurement.** First domain co-pilot and the spine's proving ground (long-lead sourcing +
   BOM churn + genealogy). Moat-load-bearing stories: `MFG.1`, `FLEET.1`/`MACH.1`, `AUDIT.1`, `ART.5`.
+- **PLM = a module, not a pivot (CRO ruling 2026-07-20).** The wedge line above stands — Procurement is still
+  the wedge. PLM ships as **domain #15 (Engineering/PLM)** on the *same* spine (`ONT.1` genealogy + as-built
+  capture). The build splits into a **commercial slice** (`PLM.1a` unit spine + registry/unit page/as-built
+  diff/blast-radius/as-built capture) and a **deferred tier** (`PLM.1b` + test/RCA/change-order) that is
+  **gated on buyer evidence, not built by default**. **`Unit` is the billing meter** — pricing is per-module,
+  metered by units under management, so `Unit` needs a clean org-scoped countable identity (`BILL.1` meters on it).
+- **Copy guardrail — never lead with a category word.** In-product and in cold copy, don't say "ERP" (invites
+  SAP) or "PLM" (invites the incumbents our buyers actively reject). Engineering-facing copy = *"configuration
+  management and traceability"*; business-facing = *"the operating system for how robotics companies run."*
+  And don't lead with **AI** on the core PLM pain — buyers read these as data/plumbing problems first.
 
 ## Integrity / never (inherited from ../CLAUDE.md)
 - **NO real company/person/marque names anywhere in the repo** — seed, app source, exports, docs, full

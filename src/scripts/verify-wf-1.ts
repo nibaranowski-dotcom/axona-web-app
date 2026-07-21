@@ -6,6 +6,7 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { captureSeededState } from "./lib/self-clean";
 import {
   createWorkflowRun,
   evalCondition,
@@ -174,6 +175,13 @@ async function run(): Promise<void> {
     console.log("  SKIP engine/db checks — DATABASE_URL not set");
   } else {
     const { prisma, dbForOrg } = await import("@axona/db");
+    // HOUSE.1 — self-clean residue (runs/POs/audit) so verify:all is idempotent.
+    const _guard = await captureSeededState(prisma, [
+      "AuditLog",
+      "PurchaseOrder",
+      "WorkflowRun",
+      "AgentRun",
+    ]);
     const org = await prisma.org.findFirst({
       where: { name: "Axona" },
     });
@@ -361,6 +369,7 @@ async function run(): Promise<void> {
         },
       );
     }
+    await _guard.restore();
     await prisma.$disconnect();
   }
 

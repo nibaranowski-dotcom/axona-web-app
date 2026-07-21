@@ -12,6 +12,7 @@ import {
   extractColumn,
 } from "@axona/agents";
 import type { ModelClient } from "@axona/agents";
+import { captureSeededState } from "./lib/self-clean";
 
 let passed = 0;
 let failed = 0;
@@ -109,6 +110,13 @@ async function run(): Promise<void> {
     console.log("  SKIP live checks — DATABASE_URL not set");
   } else {
     const { prisma, dbForOrg } = await import("@axona/db");
+    // HOUSE.1 — self-clean residue (runs/POs/audit) so verify:all is idempotent.
+    const _guard = await captureSeededState(prisma, [
+      "AuditLog",
+      "PurchaseOrder",
+      "WorkflowRun",
+      "AgentRun",
+    ]);
     const { runColumnExtraction } = await import("@axona/agents");
     const { getProjectMatrix } = await import("../../apps/web/lib/matrix");
 
@@ -295,6 +303,7 @@ async function run(): Promise<void> {
         },
       );
     }
+    await _guard.restore();
     await prisma.$disconnect();
   }
 

@@ -2008,3 +2008,57 @@ looked "environmental" and got worked around with a fresh tab.
   `isPublic → allow()`); verify asserts it rather than assuming.
 - **Dev password:** `admin@axona-demo.test` / `axona-dev-2026!` (used to prove the authenticated shell stays
   200 under the same poisoning order).
+
+---
+
+## HOUSE.1 — housekeeping: backlog reconcile · PLM-as-module note · verify residue · provisioning doc
+
+**1 · Backlog reconciled to `git log`.** `backlog.md` flipped 88 shipped rows `todo→done`; added the **E15 PLM
+program** (PLM.1a→PLM.10 + PLM.V1–V6, in wave order, with the **stop point after the Wave-1 commercial
+slice**), an **E16 "shipped outside the original backlog"** table (UX.1–13, DEMO.2–4, PROSPECT.1/2/2a, DS.1,
+DESIGN.2, SRCH.4–6, SEED.1, GIT.1, LOGIN.1, RBAC.5, A11Y.1, MEM.1a, …), and **newly-tracked open rows**
+(AUDIT.4, GOLIVE.1/2/3, MEM.3, ONT.3).
+
+**2 · CLAUDE.md records the PLM decision — wedge unchanged.** Added, under the moat invariants: PLM ships as
+**module #15 (Engineering/PLM)** on the same spine (not a pivot); the build splits into a **commercial slice**
++ a **deferred tier gated on buyer evidence**; **`Unit` is the billing meter** (per-module pricing metered by
+units under management → BILL.1); and a **copy guardrail** (never lead with a category word — "ERP"/"PLM" — nor
+with AI on the core PLM pain). The two `Wedge = Procurement` lines (§ One-line, § moat invariants) are
+**unchanged, verbatim**.
+
+**3 · Verify scripts self-clean (MIGRATE.1).** Verify runs were leaving residue — `PurchaseOrder +1`,
+`AgentRun +11`, `AuditLog +5` per `verify:all` — so Procurement read **14** instead of the seeded **11**. Root
+causes: `art-2` (draftPurchaseOrder → a real PO, no cleanup), `art-4`/`rbac-4`/`audit-1`/`audit-3`/`wf-1`
+(runAgent/decide → `AgentRun`s), `mtx-1`/`wf-1` (`AuditLog`, whose `deleteMany` cleanup was a **silent no-op** —
+the AUDIT.1 `audit_no_delete` rule makes DELETE do nothing). Fix: a shared **`src/scripts/lib/self-clean.ts`
+`captureSeededState()`** guard — snapshots the id-set of the named models before the checks, then deletes
+**exactly** the rows they created (id-scoped, **never a pattern delete** — the `action LIKE 'po.approve.%'`
+delete that once nuked CONF.1's calibration history must never recur). For the append-only `AuditLog` it
+briefly disables/re-enables `audit_no_delete` for its **own** id-scoped rows only (verify/dev cleanup — the
+app's immutability guarantee is untouched). Applied to `art-2/art-4/rbac-4/audit-1/audit-3/wf-1/mtx-1`.
+**Result:** `verify:all` run twice on a fresh seed leaves **identical row counts** (PurchaseOrder stays 11).
+
+**4 · Local `verify:all` provisioning (against a real DB).** Running the DB-gated checks locally needs the full
+provisioning, not just `db:seed`:
+
+```
+pnpm --filter @axona/db exec prisma migrate reset --force --skip-seed   # (or ./dev.sh --fresh)
+pnpm --filter @axona/db run db:seed        # rows
+pnpm db:seed:blobs                         # upload placeholder blobs → MinIO (else FILE.1 "key does not exist")
+pnpm db:embed:backfill                     # extract + embed Files → pgvector (else FILE.2 semantic search fails)
+```
+
+`db:seed` alone leaves MinIO blobs + pgvector embeddings unpopulated, so the DB-gated file/search checks fail
+**misleadingly** (they look like real bugs). **CI sidesteps this by design** — it does **not** set
+`DATABASE_URL`, so every DB-gated check skips cleanly; the static/pure checks are the CI gate. So a local
+`verify:all` DB failure is an environment/provisioning issue, **not** a push blocker (the pre-push hook runs in
+git's env without `DATABASE_URL` too). Known-remaining local-only quirk: `verify:file-2`'s semanticSearch check
+passes in isolation after the sequence above but can fail *inside* a full `verify:all` run due to a search-index
+mutation earlier in the chain — orthogonal to HOUSE.1, skips in CI.
+
+**Automated**
+- `pnpm verify:house-1` — static: CLAUDE.md carries the PLM-as-module + billing-meter + copy-guardrail notes AND
+  the two `Wedge = Procurement` lines verbatim; `backlog.md` has the PLM program rows + open rows and the shipped
+  stories marked `done`; the `self-clean` guard exists and is imported by the previously-leaking verify scripts;
+  this provisioning note is present.
+- CI gate: install (frozen) · lint · turbo typecheck · verify:all · `pnpm build`.

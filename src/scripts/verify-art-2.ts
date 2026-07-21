@@ -5,6 +5,7 @@
  */
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { captureSeededState } from "./lib/self-clean";
 
 let passed = 0;
 let failed = 0;
@@ -78,6 +79,13 @@ async function run(): Promise<void> {
     console.log("  SKIP data checks — DATABASE_URL not set");
   } else {
     const { prisma, dbForOrg } = await import("@axona/db");
+    // HOUSE.1 — self-clean: draftPurchaseOrder here creates a real PO; restore the
+    // seeded state so Procurement stays at 11 and verify:all is idempotent.
+    const _guard = await captureSeededState(prisma, [
+      "AuditLog",
+      "PurchaseOrder",
+      "AgentRun",
+    ]);
     const org = await prisma.org.findFirst({
       where: { name: "Axona" },
     });
@@ -192,6 +200,7 @@ async function run(): Promise<void> {
       );
     }
 
+    await _guard.restore();
     await prisma.$disconnect();
   }
 

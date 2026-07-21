@@ -5,6 +5,7 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { captureSeededState } from "./lib/self-clean";
 
 let passed = 0;
 let failed = 0;
@@ -67,6 +68,13 @@ async function run(): Promise<void> {
   }
 
   const { prisma, dbForOrg } = await import("@axona/db");
+  // HOUSE.1 — self-clean residue (runs/POs/audit) so verify:all is idempotent.
+  const _guard = await captureSeededState(prisma, [
+    "AuditLog",
+    "PurchaseOrder",
+    "WorkflowRun",
+    "AgentRun",
+  ]);
   const { executeWorkflowRun, FakeModelClient } = await import("@axona/agents");
   const { decide } = await import("../../apps/web/lib/approvals");
   const fake = () =>
@@ -189,6 +197,7 @@ async function run(): Promise<void> {
   await prisma.$executeRawUnsafe(
     `ALTER TABLE "AuditLog" ENABLE RULE audit_no_delete`,
   );
+  await _guard.restore();
   await prisma.$disconnect();
   finish();
 }

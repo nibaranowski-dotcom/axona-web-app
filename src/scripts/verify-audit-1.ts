@@ -6,6 +6,7 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { captureSeededState } from "./lib/self-clean";
 
 let passed = 0;
 let failed = 0;
@@ -77,6 +78,13 @@ async function run(): Promise<void> {
     console.log("  SKIP live checks — DATABASE_URL not set");
   } else {
     const { prisma, dbForOrg, writeAudit } = await import("@axona/db");
+    // HOUSE.1 — self-clean residue (runs/POs/audit) so verify:all is idempotent.
+    const _guard = await captureSeededState(prisma, [
+      "AuditLog",
+      "PurchaseOrder",
+      "WorkflowRun",
+      "AgentRun",
+    ]);
     const { executeWorkflowRun, FakeModelClient } =
       await import("@axona/agents");
     const fake = () =>
@@ -245,6 +253,7 @@ async function run(): Promise<void> {
         where: { id: { in: createdRunIds } },
       });
     }
+    await _guard.restore();
     await prisma.$disconnect();
   }
 
