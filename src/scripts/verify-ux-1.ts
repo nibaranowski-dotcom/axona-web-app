@@ -73,6 +73,13 @@ check(
   },
 );
 
+// The signature being guarded is a hand-rolled STAT VALUE, not the type ramp.
+// A page <h1> may legitimately use the same 22px/bold/-0.03em setting (the v8
+// designs set unit serials that way — see `Unit.dc.html`), so headings are
+// excluded: this check is about strips drifting back, not about typography.
+const withoutHeadings = (src: string) =>
+  src.replace(/<h[12]\b[\s\S]*?<\/h[12]>/g, "");
+
 check("no module View still hand-rolls the clipped inline strip", () => {
   const dirs = readdirSync(comp, { withFileTypes: true })
     .filter((d) => d.isDirectory())
@@ -83,7 +90,7 @@ check("no module View still hand-rolls the clipped inline strip", () => {
     )) {
       if (
         /text-\[22px\] font-bold tracking-\[-0\.03em\]/.test(
-          read(join(comp, d, f)),
+          withoutHeadings(read(join(comp, d, f))),
         )
       )
         return false;

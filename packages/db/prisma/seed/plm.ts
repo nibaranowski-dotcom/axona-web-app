@@ -507,11 +507,23 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
   // EntityLinks extending the ONT.1 thread. UNIT nodes are the Unit SPINE (PLM.2 —
   // the ontology resolver reads db.unit), so toId is the Unit id.
   const links: {
-    fromType: "ECO" | "LOT";
+    fromType: "ECO" | "LOT" | "NCR";
     fromId: string;
     toSerial: string;
     note: string;
   }[] = [];
+
+  // NCR-118 is raised against SN-2208 — the ONE demo thread the PRD states
+  // (SN-2208 → SERVO-204 lot 88421 → NCR-118 → ECO-318). ONT.1 also links the NCR
+  // to HX2-0208; both are real units that consumed the lot, so both edges stand.
+  const ncr = await db.nCR.findFirst({ where: { code: CODES.ncr } });
+  if (ncr)
+    links.push({
+      fromType: "NCR",
+      fromId: ncr.id,
+      toSerial: "SN-2208",
+      note: "torque out of spec on the drive from lot 88421",
+    });
   if (eco)
     for (const serial of demoSerials)
       links.push({

@@ -78,9 +78,15 @@ async function run(): Promise<void> {
       where: { name: "Axona" },
     });
     // a seeded through-line file (its FILE.1 placeholder blob has bytes)
+    // The seed has MORE than one ECO-318 file ("… change package", "… cost
+    // impact"), so an unordered findFirst picked an arbitrary row — and which one
+    // it picked changed on every reseed (Postgres row order). The semantic check
+    // below then flipped depending on whether the sibling file outranked the
+    // chosen one. Order it so the same file is asserted every run.
     const file = org
       ? await prisma.file.findFirst({
           where: { name: { contains: "ECO-318" }, project: { orgId: org.id } },
+          orderBy: { name: "asc" },
           select: { id: true, projectId: true },
         })
       : null;
@@ -118,17 +124,27 @@ async function run(): Promise<void> {
         },
       );
 
-      // 4) semanticSearch returns the file; cross-org does not.
+      // 4) semanticSearch retrieves the file by vector nearest-neighbour; cross-org
+      // does not. The query is the FILE'S OWN TEXT: with a deterministic
+      // FakeEmbedder that makes this file the nearest neighbour BY CONSTRUCTION,
+      // which is the property vector search actually guarantees. (The old query
+      // was a topical phrase — the fake embedder has no real semantics, so which
+      // of the 51 embedded files ranked top was luck, and the check flipped on
+      // every reseed.)
       await check(
-        "semanticSearch returns the seeded file; cross-org blocked",
+        "semanticSearch retrieves the seeded file by vector; cross-org blocked",
         async () => {
-          const hits = await semanticSearch(org.id, "ECO-318 drive change", {
-            embedder,
+          const self = await prisma.file.findUnique({
+            where: { id: file.id },
+            select: { text: true },
           });
+          const query = (self?.text ?? "").slice(0, 400);
+          if (!query) return false;
+          const hits = await semanticSearch(org.id, query, { embedder });
           const mine = hits.some(
             (h) => h.type === "FILE" && h.refId === file.id,
           );
-          const other = await semanticSearch("org_does_not_exist", "ECO-318", {
+          const other = await semanticSearch("org_does_not_exist", query, {
             embedder,
           });
           return mine && other.length === 0;

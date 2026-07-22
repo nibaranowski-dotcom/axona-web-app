@@ -38,6 +38,12 @@
     transform: rotate(-90deg);
   }
 
+  /* PLM disclosure groups (Unit page diff summary, blast-radius module groups):
+     the right-pointing chevron rotates DOWN when the <details> is open. */
+  .dgroup[open] .dchev {
+    transform: rotate(90deg);
+  }
+
   /* Mission Control launchpad backdrop (dark): lime glow + dot grid + gradient. */
   .bg-mission {
     background-color: var(--md-bg);
