@@ -44,12 +44,21 @@ export default async function ShellLayout({
     "search",
     "notifications",
   ]);
+  // PLM.2–5 — the PLM screens are Engineering screens that live at top-level
+  // routes (a unit is a first-class object, not a sub-page of a module). They
+  // are gated WITH Engineering, not exempted: disabling Engineering must take
+  // the unit registry and blast radius with it.
+  const PLM_ROUTE_MODULE: Record<string, string> = {
+    units: "engineering",
+    "blast-radius": "engineering",
+  };
   const pathname = headers().get("x-pathname") ?? "";
   const seg = pathname.split("/").filter(Boolean)[0] ?? "core";
+  const moduleKey = PLM_ROUTE_MODULE[seg] ?? (seg === "" ? "core" : seg);
   const routeDisabled =
     !!user &&
     !NON_MODULE_ROUTES.has(seg) &&
-    !isModuleEnabled(enabledModules, seg === "" ? "core" : seg);
+    !isModuleEnabled(enabledModules, moduleKey);
 
   const [groups, ...rest] = await Promise.all([
     getNavModules(enabledModules),

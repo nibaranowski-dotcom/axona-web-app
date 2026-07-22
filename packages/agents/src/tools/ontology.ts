@@ -52,7 +52,10 @@ const MODULE: Record<EntityType, string> = {
   SUPPLIER: "Procurement",
   PURCHASE_ORDER: "Procurement",
   LOT: "Manufacturing",
-  UNIT: "Manufacturing",
+  // PLM.2 — units are their OWN group, not a Manufacturing sub-item. Once Unit
+  // became the spine (PLM.1a) "which units are affected" is the first question a
+  // blast radius answers, so `Blast Radius.dc.html` leads with a Units group.
+  UNIT: "Units",
   DELIVERY: "Fulfillment",
   WORK_ORDER: "Field Service",
   INVOICE: "Finance",
@@ -155,11 +158,19 @@ async function resolveByType(
         });
       break;
     }
+    // PLM.2 — a UNIT node resolves through the Unit SPINE, not the build record.
+    // Before PLM.1a a "unit" was split across WorkOrderMfg (build) and Robot
+    // (deploy), so the graph pointed at the build row and every consumer had to
+    // bridge serial→Unit itself. Unit is now the first-class per-serial identity,
+    // so the traversal resolves it directly and callers can link to /units/:serial.
     case "UNIT": {
-      for (const r of await db.workOrderMfg.findMany({ where }))
+      for (const r of await db.unit.findMany({
+        where,
+        include: { productModel: true },
+      }))
         out.set(r.id, {
           code: r.serial,
-          label: r.product,
+          label: r.productModel.name,
           status: r.status,
         });
       break;
@@ -207,9 +218,7 @@ async function resolveSeedId(
     case "PURCHASE_ORDER":
       return first(await db.purchaseOrder.findFirst({ where: { code } }));
     case "UNIT":
-      return first(
-        await db.workOrderMfg.findFirst({ where: { serial: code } }),
-      );
+      return first(await db.unit.findFirst({ where: { serial: code } }));
     case "DELIVERY":
       return first(await db.delivery.findFirst({ where: { code } }));
     case "WORK_ORDER":

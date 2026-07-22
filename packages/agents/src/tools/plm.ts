@@ -2,9 +2,11 @@ import type { OrgScopedDb } from "@axona/db";
 import { getBlastRadius } from "./ontology";
 
 // PLM.1a — the typed "which units are affected" façade. For an ECO it reuses the
-// ONT.1 blast-radius traversal (the cross-module ripple), then resolves the UNIT
-// nodes (whose code = serial) to the first-class Unit spine. For a lot / part
-// revision / software release it queries the captured records directly (the
+// ONT.1 blast-radius traversal (the cross-module ripple) and hydrates the UNIT
+// nodes (whose code = serial) into full Unit rows. Since PLM.2 the ontology's UNIT
+// resolver reads the Unit spine directly, so this is a hydration (node → row +
+// path), no longer a bridge across two different notions of "unit". For a lot /
+// part revision / software release it queries the captured records directly (the
 // precise "which units carry this" answer). Lives here (not @axona/db) because
 // getBlastRadius depends on @axona/db — a db-side façade would cycle.
 

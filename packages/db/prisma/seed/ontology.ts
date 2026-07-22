@@ -71,10 +71,13 @@ export async function seedOntology(db: OrgScopedDb): Promise<number> {
       `PO ${code}`,
       db.purchaseOrder.findFirst({ where: { code }, select: { id: true } }),
     );
+  // PLM.2 — a UNIT node is the Unit SPINE, not its build record. Unit is the
+  // first-class per-serial identity (and the billing meter); the graph points at
+  // it so every traversal that reaches a unit can link straight to /units/:serial.
   const unit = (serial: string) =>
     id(
       `UNIT ${serial}`,
-      db.workOrderMfg.findFirst({ where: { serial }, select: { id: true } }),
+      db.unit.findFirst({ where: { serial }, select: { id: true } }),
     );
   const delivery = (code: string) =>
     id(

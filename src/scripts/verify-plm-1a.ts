@@ -128,10 +128,10 @@ async function run(): Promise<void> {
       const atNow = await resolveConfigAt(db, sn2208.id, now);
       const atPast = await resolveConfigAt(db, sn2208.id, past);
       return (
-        atNow.sw?.version === "v4.2" &&
-        atPast.sw?.version === "v4.1" &&
-        atNow.configVersion?.name === "SBX-B-4.2" &&
-        atPast.configVersion?.name === "SBX-B-4.1" // distinct configs ⇒ time-resolution works
+        atNow.sw?.version === "v4.2.1" &&
+        atPast.sw?.version === "v4.1.0" &&
+        atNow.configVersion?.name === "CFG-HX2-r4.2" &&
+        atPast.configVersion?.name === "CFG-HX2-r4.1" // distinct configs ⇒ time-resolution works
       );
     },
   );
@@ -160,10 +160,10 @@ async function run(): Promise<void> {
       try {
         const csv = [
           "serial,model,status",
-          "SN-TEST-1,SBX-1,active", // valid
-          "SN-TEST-2,SBX-1,active", // valid
+          "SN-TEST-1,HX-2,active", // valid
+          "SN-TEST-2,HX-2,active", // valid
           "SN-TEST-3,NOPE,active", // malformed: unknown model
-          "SN-TEST-4,SBX-1,not_a_status", // malformed: bad enum
+          "SN-TEST-4,HX-2,not_a_status", // malformed: bad enum
         ].join("\n");
         const first = await importUnits(db, csv);
         const afterFirst = await db.unit.count({

@@ -171,9 +171,12 @@ async function main(): Promise<void> {
   const inventory = await seedInventory(db);
   await seedRobotics(db);
   await seedBackOffice(db);
-  // ONT.1 — the entity-link graph, LAST so every referenced record exists.
+  // PLM.1a — the Unit spine + as-built + config thread. Runs BEFORE the ontology
+  // graph because a UNIT node in that graph IS a Unit (PLM.2 reconciled the ONT.1
+  // resolver onto the spine), so the Units must exist before the edges reference them.
+  const plm = await seedPlm(db);
+  // ONT.1 — the entity-link graph, after the record seeds so every edge resolves.
   const ontologyLinks = await seedOntology(db);
-  const plm = await seedPlm(db); // PLM.1a — Unit spine + as-built + config thread
   const projects = await seedProjects(db);
   const matrix = await seedMatrix(db);
   const machines = await seedMachines(db);

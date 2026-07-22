@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
-import type { NavGroup } from "@/lib/nav";
+import { isNavItemActive, type NavGroup } from "@/lib/nav";
 
 // A collapsible nav group (Core / Value chain / Robotics / Back office) — a
 // native <details> (v2 shell). Mono uppercase eyebrow + a light-grey chevron
@@ -32,7 +32,7 @@ export function NavSection({
       </summary>
       <ul>
         {group.modules.map((m) => {
-          const active = pathname === m.href;
+          const active = isNavItemActive(pathname, m.href);
           const badge = alerts[m.key] ?? 0;
           return (
             <li key={m.key}>

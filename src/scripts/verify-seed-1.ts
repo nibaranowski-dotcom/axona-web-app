@@ -86,11 +86,13 @@ async function run(): Promise<void> {
   const db = dbForOrg("org_axona_demo");
   const r = await getBlastRadius(db, { entityType: "NCR", code: "NCR-118" });
 
-  // PLM.1a extended the thread with the Unit spine — NCR-118 now reaches the three
-  // affected units (SN-2208/2209/2210) via the ECO/LOT→UNIT edges, so 14→17 nodes;
-  // the units tag to Manufacturing (already one of the 7), so moduleCount holds at 7.
-  await check("NCR-118 cascade intact — 17 nodes / 7 modules", () => {
-    return r.found && r.nodeCount === 17 && r.moduleCount === 7;
+  // PLM.1a extended the thread with the Unit spine — NCR-118 reaches the affected
+  // units via the ECO/LOT→UNIT edges (14→17 nodes). PLM.2 then reconciled the UNIT
+  // node onto that spine and gave units their OWN module group ("Units"), because
+  // "which units are affected" is the first question a blast radius answers — so
+  // the same 17 nodes now group across 8 modules instead of 7.
+  await check("NCR-118 cascade intact — 17 nodes / 8 modules", () => {
+    return r.found && r.nodeCount === 17 && r.moduleCount === 8;
   });
   await check(
     "Fulfillment + Finance nodes read the anonymized OEM account (no marque)",

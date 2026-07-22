@@ -27,6 +27,22 @@ function hrefFor(key: string): string {
   return key === "mission-control" ? "/" : `/${key}`;
 }
 
+// PLM.2–5 — top-level routes that a MODULE owns in the nav. A unit is a
+// first-class object (its own route), but Engineering is the PLM hub, so the
+// unit registry / unit page / as-built diff / blast radius all keep Engineering
+// lit in the sidebar — which is what every PLM `.dc.html` shows.
+const MODULE_OWNED_ROUTES: Record<string, string[]> = {
+  "/engineering": ["/units", "/blast-radius"],
+};
+
+/** Is this nav item the active one for `pathname`? (exact, or an owned subtree) */
+export function isNavItemActive(pathname: string, href: string): boolean {
+  if (pathname === href) return true;
+  return (MODULE_OWNED_ROUTES[href] ?? []).some(
+    (r) => pathname === r || pathname.startsWith(`${r}/`),
+  );
+}
+
 // AUTH.6: `enabledModules` filters the nav to the org's enabled set. Null/empty ⇒
 // ALL (back-compat for the demo + pre-existing orgs). `core` + the palette entries
 // (mission-control/search, hidden from the left nav anyway) are always kept.
