@@ -34,22 +34,20 @@ function run(): void {
 
   const audit = read("components/audit/AuditView.tsx");
 
-  // --- BUG 1: /audit sticky column header ---
+  // --- BUG 1: /audit pinned header pins cleanly (AUDIT.4 rebuilt this screen to
+  //     the v8 day-grouped design: the pinned element is now the filter bar, not a
+  //     column header; the guarantee is unchanged — it pins below the topbar
+  //     against the shell's <main> scroll, nothing traps it, rows stay responsive) ---
   check(
-    "audit table region is NOT an overflow scroll container (won't trap the sticky header)",
+    "audit view has NO inner overflow scroll container (nothing traps the pinned bar)",
     () => {
-      // The `role="region" aria-label="Audit entries"` wrapper must not carry
-      // overflow-x-auto / overflow-y-auto / overflow-auto (any of which makes it a
-      // scroll container and traps the header's sticky inside it).
-      const cls = audit.match(
-        /role="region"\s+aria-label="Audit entries"\s+className="([^"]*)"/,
-      )?.[1];
-      if (cls === undefined) return false;
-      return !/overflow-(x-|y-)?auto|overflow-(hidden|scroll)/.test(cls);
+      // The whole screen scrolls via ScreenShell's <main>; the audit view must not
+      // introduce its own overflow-y/x scroll container (which would trap sticky).
+      return !/overflow-(x-|y-)?auto|overflow-scroll/.test(audit);
     },
   );
   check(
-    "audit column header is sticky top-[60px] with a raised z-index + opaque bg",
+    "audit filter bar is sticky top-[60px] with a raised z-index + opaque bg",
     () => {
       const m = audit.match(
         /sticky top-\[60px\] z-\[(\d+)\][^`"]*bg-(panel|paper)/,
@@ -58,9 +56,12 @@ function run(): void {
     },
   );
   check(
-    "audit table has no fixed min-width (responsive columns, no horizontal scroll needed)",
+    "audit rows use a responsive grid template (minmax, no fixed min-width column)",
     () => {
-      return !/min-w-\[\d+px\]/.test(audit) && /minmax\(/.test(audit);
+      // The ROW template drives the columns — it must be responsive (minmax) and
+      // carry no `min-w-[Npx]` that would force a horizontal scroll.
+      const rowTpl = audit.match(/const ROW =\s*\n?\s*"([^"]*)"/)?.[1] ?? "";
+      return /minmax\(/.test(rowTpl) && !/min-w-\[\d+px\]/.test(rowTpl);
     },
   );
 

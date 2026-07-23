@@ -35,48 +35,44 @@ function run(): void {
   console.log("\nVerifying UX.11 — table overflow + one-click ask\n");
 
   // ---- BUG 1: /audit table containment ----
+  // AUDIT.4 rebuilt this screen to the v8 day-grouped design (avatar · action+object
+  // · confidence · module · time; approver folds INTO the action line). The UX.11
+  // GUARANTEE is unchanged and still asserted strictly: every variable-text cell is
+  // min-w-0 + truncate + title, so nothing collides — including with the agent pane
+  // open. Only the row STRUCTURE moved; the containment contract did not.
   const audit = read("components/audit/AuditView.tsx");
   console.log("BUG 1 · /audit —");
   check(
-    "ActorBadge is a block flex min-w-0 (not inline-flex → no overflow)",
+    "actor cell is a block flex min-w-0 (label truncates, no overflow)",
     () => {
-      // the label must truncate inside a block flex that fills the grid track
-      return (
-        /<span className="flex min-w-0 items-center gap-1\.5">/.test(audit) &&
-        !/inline-flex min-w-0 items-center gap-1\.5/.test(audit)
-      );
+      return /<div className="flex min-w-0 items-center gap-2\.5">/.test(audit);
     },
   );
   check("actor label truncates with a title tooltip", () => {
-    return /truncate text-\[12px\] text-ink"\s*\n?\s*title=\{`\$\{type\} · \$\{label\}`\}/.test(
+    return /truncate text-\[12\.5px\] font-semibold text-ink"\s*\n?\s*title=\{`\$\{e\.actorType\} · \$\{e\.actorLabel\}`\}/.test(
       audit,
     );
   });
-  check("action cell truncates + title", () => {
-    return /className="truncate font-mono[^"]*"\s*\n?\s*title=\{e\.action\}/.test(
+  check("action + object cell is min-w-0 truncate + title", () => {
+    return /<div className="min-w-0 truncate text-\[13px\] text-ink" title=\{e\.summary\}>/.test(
       audit,
     );
-  });
-  check("target cell is min-w-0 truncate", () => {
-    return /<span className="min-w-0 truncate text-\[12px\]">/.test(audit);
   });
   check(
-    "approver cell is a flex min-w-0 with a truncating + titled label",
+    "approver folds into the truncating action line (no separate overflow)",
     () => {
-      return (
-        /<span className="flex min-w-0 items-center text-\[12px\]">/.test(
-          audit,
-        ) && /truncate text-ink" title=\{e\.approverLabel\}/.test(audit)
-      );
+      return /approved by \{e\.approverLabel\}/.test(audit);
     },
   );
-  check("summary cell truncates + title", () => {
-    return /min-w-0 truncate text-\[12\.5px\][^"]*"\s*\n?\s*title=\{e\.summary\}/.test(
+  check("module chip truncates + title (won't collide with time)", () => {
+    return /max-w-full truncate[^"]*"\s*\n?\s*title=\{moduleOf\(e\)\}/.test(
       audit,
     );
   });
-  check("design column widths preserved (grid-cols template intact)", () => {
-    return /grid grid-cols-\[76px_minmax\(110px,1\.1fr\)/.test(audit);
+  check("row grid template intact (responsive minmax columns)", () => {
+    return /const ROW =\s*\n?\s*"grid grid-cols-\[minmax\(150px,1\.4fr\)/.test(
+      audit,
+    );
   });
 
   // ---- BUG 1: swept tables gained truncate/title ----

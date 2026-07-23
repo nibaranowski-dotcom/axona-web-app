@@ -78,7 +78,10 @@ function run(): void {
     "engineering/EcoTable",
     "sales/DealsTable",
     "procurement/PoQueue",
-    "audit/AuditView",
+    // audit/AuditView left the carded-table convention in AUDIT.4: the v8
+    // `Audit Trail.dc.html` is a day-grouped log (hairline rows in a centred
+    // 1000px column on the panel bg), NOT a table-on-a-card. The design is the
+    // sole truth here, so /audit is intentionally no longer a canonical card.
     "settings/MembersView",
     "security/VulnerabilitiesTable",
     "field-service/WorkOrderQueue",
