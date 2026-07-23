@@ -1,4 +1,5 @@
 import type { OrgScopedDb } from "../../src";
+import { freezeConfigSnapshot } from "../../src";
 import { CODES } from "./constants";
 
 // PLM.1a (spine) + PLM.2–5 (screen richness) — seed the Unit spine, the as-designed
@@ -564,6 +565,139 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
         note: l.note,
       },
     });
+  }
+
+  // ── 9. PLM.1b — test traceability · RCA · field event · change request ────
+  // Extend (never fork) the SN-2208 thread with the deferred tier. Every frozen
+  // snapshot is materialized HERE, at the event's own time, so it captures the
+  // config-at-then — TR-8802 pre-upgrade (v4.1.0), TR-8841 post-upgrade (v4.2.1).
+  if (sn2208) {
+    const tr8802At = new Date(upgrade.getTime() - 5 * DAY); // pre-upgrade → v4.1.0
+    const tr8841At = new Date(now.getTime() - 2 * DAY); // post-upgrade → v4.2.1
+
+    // Prior PASS on the pre-upgrade build — the comparison the test explorer shows.
+    const pass = await db.testRun.create({
+      data: {
+        code: CODES.testPass,
+        unitId: sn2208.id,
+        procedure: "Payload endurance · SBX-B",
+        operatorId: null,
+        startedAt: tr8802At,
+        outcome: "pass",
+        configSnapshot: await freezeConfigSnapshot(db, sn2208.id, tr8802At),
+        environment: { tempC: 22, humidityPct: 45, rig: "SBX-B" },
+      },
+    });
+    await db.testResult.createMany({
+      data: [
+        {
+          orgId: db.$org,
+          testRunId: pass.id,
+          step: "Left drive torque",
+          measurement: 4.1,
+          unitOfMeasure: "N·m",
+          lowerLimit: 3.5,
+          upperLimit: 4.6,
+          passed: true,
+        },
+        {
+          orgId: db.$org,
+          testRunId: pass.id,
+          step: "Cycle time",
+          measurement: 2.9,
+          unitOfMeasure: "s",
+          lowerLimit: null,
+          upperLimit: 3.2,
+          passed: true,
+        },
+      ],
+    });
+
+    // The FAIL on the post-upgrade build — drive torque over UCL (the NCR-118 cause).
+    const fail = await db.testRun.create({
+      data: {
+        code: CODES.testFail,
+        unitId: sn2208.id,
+        procedure: "Payload endurance · SBX-B",
+        operatorId: null,
+        startedAt: tr8841At,
+        outcome: "fail",
+        configSnapshot: await freezeConfigSnapshot(db, sn2208.id, tr8841At),
+        environment: { tempC: 24, humidityPct: 44, rig: "SBX-B" },
+      },
+    });
+    await db.testResult.createMany({
+      data: [
+        {
+          orgId: db.$org,
+          testRunId: fail.id,
+          step: "Left drive torque",
+          measurement: 4.8, // over the 4.6 UCL — the failure
+          unitOfMeasure: "N·m",
+          lowerLimit: 3.5,
+          upperLimit: 4.6,
+          passed: false,
+        },
+        {
+          orgId: db.$org,
+          testRunId: fail.id,
+          step: "Cycle time",
+          measurement: 3.0,
+          unitOfMeasure: "s",
+          lowerLimit: null,
+          upperLimit: 3.2,
+          passed: true,
+        },
+      ],
+    });
+
+    // RCA on NCR-118 → component (the quarantined lot 88421 drive), linked to the
+    // unit + the failing test run, with the config-at-failure frozen in.
+    if (ncr) {
+      await db.nCR.update({
+        where: { id: ncr.id },
+        data: {
+          rootCause: "component",
+          unitId: sn2208.id,
+          testRunId: fail.id,
+          configSnapshot: await freezeConfigSnapshot(db, sn2208.id, tr8841At),
+        },
+      });
+    }
+
+    // A field modification: gripper swap at Site-3 — recorded + approved. Config
+    // drifts in the field; the snapshot freezes the config as it was at the swap.
+    const fieldAt = new Date(now.getTime() - 6 * DAY);
+    const admin = await db.user.findFirst({ where: { role: "ADMIN" } });
+    await db.fieldEvent.create({
+      data: {
+        unitId: sn2208.id,
+        kind: "field_modification",
+        summary:
+          "Gripper swap at Site-3 (GRIP-300 rev A → rev B) — recorded + approved",
+        occurredAt: fieldAt,
+        configSnapshot: await freezeConfigSnapshot(db, sn2208.id, fieldAt),
+        approvedById: admin?.id ?? null,
+      },
+    });
+
+    // The ECR that originated ECO-318 (the upstream "why"), linked to the ECO.
+    if (eco) {
+      await db.changeRequest.create({
+        data: {
+          code: CODES.changeReq,
+          title: "Supersede SERVO-204 after lot 88421 torque failures",
+          rationale:
+            "NCR-118 (drive torque over UCL) traced to lot 88421 (quarantined). Supersede SERVO-204 → SERVO-205.",
+          state: "released",
+          ecoId: eco.id,
+        },
+      });
+      await db.eCO.update({
+        where: { id: eco.id },
+        data: { changeRequestId: CODES.changeReq },
+      });
+    }
   }
 
   return { units: unitBySerial.size, substitutions };

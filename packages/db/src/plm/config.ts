@@ -88,6 +88,49 @@ export async function resolveConfigAt(
   return { unitId, at, hw, sw, configVersion };
 }
 
+/// PLM.1b — an IMMUTABLE, self-contained config snapshot. Written once into
+/// TestRun.configSnapshot / FieldEvent.configSnapshot and NEVER recomputed on read
+/// (a test result is inseparable from the config it ran on — safety-critical). It
+/// is a plain serializable object, not a live query, so nothing downstream can
+/// re-resolve it against the unit's CURRENT config.
+export interface FrozenConfigSnapshot {
+  frozen: true;
+  unitId: string;
+  serial: string;
+  /// The instant the config was frozen (the test/event time).
+  at: string;
+  hw: ResolvedHwLine[];
+  sw: { component: string; version: string } | null;
+  configVersion: { id: string; name: string; isBaseline: boolean } | null;
+}
+
+/**
+ * Materialize the unit's resolved config AT `at` as a frozen snapshot. Callers
+ * persist the returned object verbatim into a `configSnapshot` Json column; it must
+ * never be replaced by a live resolveConfigAt on read.
+ */
+export async function freezeConfigSnapshot(
+  db: OrgScopedDb,
+  unitId: string,
+  at: Date,
+): Promise<FrozenConfigSnapshot> {
+  const unit = await db.unit.findUnique({
+    where: { id: unitId },
+    select: { serial: true },
+  });
+  if (!unit) throw new Error(`Unit ${unitId} not found in this org`);
+  const resolved = await resolveConfigAt(db, unitId, at);
+  return {
+    frozen: true,
+    unitId,
+    serial: unit.serial,
+    at: at.toISOString(),
+    hw: resolved.hw,
+    sw: resolved.sw,
+    configVersion: resolved.configVersion,
+  };
+}
+
 export interface AsBuiltDiffLine {
   position: string;
   expected: { partNumber: string; rev: string } | null; // as-designed

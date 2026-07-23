@@ -5,10 +5,12 @@
 export {
   resolveConfigAt,
   asBuiltDiff,
+  freezeConfigSnapshot,
   type ResolvedConfig,
   type ResolvedHwLine,
   type AsBuiltDiffResult,
   type AsBuiltDiffLine,
+  type FrozenConfigSnapshot,
 } from "./config";
 export {
   importUnits,

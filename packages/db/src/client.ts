@@ -78,6 +78,11 @@ const TENANT_MODELS = new Set<string>([
   "SoftwareRelease",
   "UnitSoftwareState",
   "ConfigurationVersion",
+  // PLM.1b — the deferred tier (test traceability · field events · change requests)
+  "TestRun",
+  "TestResult",
+  "FieldEvent",
+  "ChangeRequest",
 ]);
 
 /** Operations whose `where` we tag with `orgId` (non-unique-target). */

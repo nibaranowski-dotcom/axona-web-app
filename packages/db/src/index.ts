@@ -93,6 +93,7 @@ export type {
 export {
   resolveConfigAt,
   asBuiltDiff,
+  freezeConfigSnapshot,
   captureAsBuilt,
   importUnits,
   importBom,
@@ -100,6 +101,7 @@ export {
   type ResolvedHwLine,
   type AsBuiltDiffResult,
   type AsBuiltDiffLine,
+  type FrozenConfigSnapshot,
   type CaptureInput,
   type CaptureResult,
   type ImportResult,

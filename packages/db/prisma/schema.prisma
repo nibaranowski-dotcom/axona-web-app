@@ -96,6 +96,10 @@ model Org {
   softwareReleases      SoftwareRelease[]
   unitSoftwareStates    UnitSoftwareState[]
   configurationVersions ConfigurationVersion[]
+  testRuns              TestRun[] // PLM.1b
+  testResults           TestResult[] // PLM.1b
+  fieldEvents           FieldEvent[] // PLM.1b
+  changeRequests        ChangeRequest[] // PLM.1b
 }
 
 model User {
@@ -488,16 +492,16 @@ enum RunStatus {
 }
 
 model AgentRun {
-  id        String    @id @default(cuid())
-  agentId   String
-  agent     Agent     @relation(fields: [agentId], references: [id])
-  input     Json
+  id               String    @id @default(cuid())
+  agentId          String
+  agent            Agent     @relation(fields: [agentId], references: [id])
+  input            Json
   /// Freeform run trace (scan/correlate/draft/policy-check/result). The
   /// immutable event log + calibrated `confidence` + `approver` columns land in
   /// ONT.1 / CONF.1 / AUDIT.3 — do not add those columns here yet.
-  trace     Json
-  status    RunStatus
-  createdAt DateTime  @default(now())
+  trace            Json
+  status           RunStatus
+  createdAt        DateTime  @default(now())
   /// RUNTIME.1 — per-run token observability (nullable; populated from the model
   /// client's usage). A column on the existing AgentRun — no isolation change
   /// (AgentRun is tenant-scoped through its Agent).
@@ -762,7 +766,18 @@ model NCR {
   severity Severity
   status   String
 
+  /// PLM.1b — RCA classification + evidence links. rootCause is the taxonomy the
+  /// RCA workspace writes; unitId/testRunId/fieldEventId are scalar references
+  /// (loose coupling, like linkedTo) resolved by query; configSnapshot is the
+  /// FROZEN config-at-failure copied in when the NCR is raised.
+  rootCause      RootCause?
+  unitId         String?
+  testRunId      String?
+  fieldEventId   String?
+  configSnapshot Json?
+
   @@index([orgId])
+  @@index([orgId, unitId])
 }
 
 enum Severity {
@@ -961,11 +976,12 @@ model ECO {
 
   /// PLM.1a — effectivity + rollout. `effectiveFromSerial`/`effectiveFromDate`
   /// scope which units the change applies to (from a serial/date onward);
-  /// `rolloutStatus` tracks fleet-wide progress. `changeRequestId` (the ECR that
-  /// originated this ECO) lands in PLM.1b — do not add it yet.
+  /// `rolloutStatus` tracks fleet-wide progress.
   effectiveFromSerial String?
   effectiveFromDate   DateTime?
   rolloutStatus       EcoRolloutStatus @default(pending)
+  /// PLM.1b — the ECR that originated this ECO (scalar link, loose coupling).
+  changeRequestId     String?
 
   @@index([orgId])
 }
@@ -1229,11 +1245,13 @@ enum EntityType {
   WORK_ORDER
   SPC_SAMPLE
   INVOICE
-  // PLM.1a — the golden thread reaches the PLM cluster (TEST_RUN / FIELD_EVENT
-  // land in PLM.1b).
+  // PLM.1a — the golden thread reaches the PLM cluster.
   PRODUCT_MODEL
   PART_REVISION
   CONFIG_VERSION
+  // PLM.1b — the golden thread reaches test traceability + field events.
+  TEST_RUN
+  FIELD_EVENT
 }
 
 enum LinkRelation {
@@ -1368,6 +1386,37 @@ enum EcoRolloutStatus {
   complete
 }
 
+// PLM.1b — the deferred tier: test traceability · field events · RCA · change requests.
+enum RootCause {
+  software
+  hardware
+  design
+  production
+  component
+  field_modification
+}
+
+enum FieldEventKind {
+  fault
+  maintenance
+  repair
+  field_modification
+}
+
+enum TestOutcome {
+  pass
+  fail
+  aborted
+}
+
+enum ChangeState {
+  draft
+  in_review
+  approved
+  rejected
+  released
+}
+
 /// A product design (e.g. a picking cell) + its current design revision. BOM +
 /// configurations hang off it.
 model ProductModel {
@@ -1467,6 +1516,8 @@ model Unit {
 
   asBuiltRecords AsBuiltRecord[]
   softwareStates UnitSoftwareState[]
+  testRuns       TestRun[] // PLM.1b
+  fieldEvents    FieldEvent[] // PLM.1b
 
   @@unique([orgId, serial])
   @@index([orgId])
@@ -1543,5 +1594,88 @@ model ConfigurationVersion {
   lockedById     String?
 
   @@unique([orgId, name])
+  @@index([orgId])
+}
+
+/// PLM.1b — a per-unit verification run. The hero invariant: `configSnapshot` is
+/// FROZEN at write time (freezeConfigSnapshot) and NEVER recomputed on read — a
+/// test result is inseparable from the config it ran on (safety-critical). The
+/// LIVE config resolves via resolveConfigAt; this is the immutable "as-tested" copy.
+model TestRun {
+  id             String      @id @default(cuid())
+  orgId          String
+  org            Org         @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  code           String
+  unitId         String
+  unit           Unit        @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  procedure      String
+  operatorId     String?
+  startedAt      DateTime
+  outcome        TestOutcome
+  /// FROZEN config-at-test — written once, never recomputed. Do not update.
+  configSnapshot Json
+  /// temp / humidity / rig — the test conditions.
+  environment    Json?
+  createdAt      DateTime    @default(now())
+
+  results TestResult[]
+
+  @@unique([orgId, code])
+  @@index([orgId, unitId])
+}
+
+/// PLM.1b — one measured step of a TestRun (value + limits + pass/fail).
+model TestResult {
+  id            String  @id @default(cuid())
+  orgId         String
+  org           Org     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  testRunId     String
+  testRun       TestRun @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+  step          String
+  measurement   Float?
+  unitOfMeasure String?
+  lowerLimit    Float?
+  upperLimit    Float?
+  passed        Boolean
+
+  @@index([orgId, testRunId])
+}
+
+/// PLM.1b — a field event on a deployed unit (fault · maintenance · repair ·
+/// field_modification). A field_modification updates the unit's CURRENT config (a
+/// new UnitSoftwareState / as-built delta) but its own `configSnapshot` is the
+/// FROZEN config-at-event — a prior TestRun's snapshot is never altered by it.
+model FieldEvent {
+  id             String         @id @default(cuid())
+  orgId          String
+  org            Org            @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  unitId         String
+  unit           Unit           @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  kind           FieldEventKind
+  summary        String
+  occurredAt     DateTime
+  /// FROZEN config-at-event — written once, never recomputed.
+  configSnapshot Json
+  approvedById   String?
+  createdAt      DateTime       @default(now())
+
+  @@index([orgId, unitId])
+}
+
+/// PLM.1b — an engineering change REQUEST (ECR) that may originate an ECO. The ECO
+/// carries the effectivity + rollout (PLM.1a); this is the upstream "why".
+model ChangeRequest {
+  id        String      @id @default(cuid())
+  orgId     String
+  org       Org         @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  code      String
+  title     String
+  rationale String
+  state     ChangeState @default(draft)
+  /// Scalar link to the ECO this ECR produced (loose coupling, like NCR.linkedTo).
+  ecoId     String?
+  createdAt DateTime    @default(now())
+
+  @@unique([orgId, code])
   @@index([orgId])
 }

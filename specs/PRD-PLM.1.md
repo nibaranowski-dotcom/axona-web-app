@@ -26,6 +26,16 @@ prospect resonated hardest on (per-unit config genealogy; fault → order the ex
 `ChangeRequest` · `NCR.rootCause` + its links · `freezeConfigSnapshot`. No buyer has budget against these yet;
 they're being built by founder decision, not by evidence. Keep them cleanly separable so the program can stop
 after 1a if time compresses.
+> **BUILT (PLM.1b, 2026-07-23).** Shipped on the PLM.1a spine (not a refork): the four models + the
+> `RootCause`/`FieldEventKind`/`TestOutcome`/`ChangeState` enums + `TEST_RUN`/`FIELD_EVENT` EntityType members;
+> `NCR.rootCause` + unit/test/field links + frozen `configSnapshot`; `ECO.changeRequestId`; **`freezeConfigSnapshot`**
+> (immutable, never recomputed on read). Seed extends the SN-2208 thread: **TR-8841** FAIL (frozen to the
+> post-upgrade config v4.2.1) vs prior **TR-8802** PASS (frozen to v4.1.0) — the test explorer's "how the builds
+> differed"; **NCR-118** rootCause = component + links; a **gripper-swap FieldEvent** (field_modification, approved)
+> at Site-3; **ECR-118** → ECO-318. All four models in `TENANT_MODELS`; migration hand-generated via
+> `migrate diff` (schema-to-schema, no `tsv` drop — MIGRATE.1); `migrate status` clean; per-tenant isolation holds.
+> Gate: `verify:plm-1b` (11 checks) incl. **a frozen snapshot resisting a live config change** and **a
+> field_modification changing `resolveConfigAt(now)` but not a prior frozen snapshot**. This unblocks PLM.6–10 + PLM.V2/V5.
 
 **Billing meter (CRO note — model for it now):** pricing will be **per module, metered by units under
 management**, so **`Unit` is also the billing meter**. Give `Unit` a clean, countable, org-scoped identity with

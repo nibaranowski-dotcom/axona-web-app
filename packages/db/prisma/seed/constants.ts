@@ -17,6 +17,11 @@ export const CODES = {
   policy: "p-13",
   product: "HX-2",
   incident: "INC-201",
+  // PLM.1b — the deferred-tier thread codes (extend the SN-2208 story).
+  testFail: "TR-8841", // FAIL on the post-upgrade config (v4.2.1)
+  testPass: "TR-8802", // prior PASS on the pre-upgrade config (v4.1.0)
+  fieldEvent: "FE-2208-1", // gripper swap at Site-3 (field_modification)
+  changeReq: "ECR-118", // the ECR that originated ECO-318
 } as const;
 
 /**
