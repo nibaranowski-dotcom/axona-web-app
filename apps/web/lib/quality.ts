@@ -1,5 +1,5 @@
 import { dbForOrg, paginateArgs, pageResult } from "@axona/db";
-import type { Severity } from "@axona/db";
+import type { Severity, FrozenConfigSnapshot } from "@axona/db";
 
 // QUAL.1 — Quality read/API layer (build-spec §4.13, §6). Read-only over the
 // existing models (SpcSample / NCR / Cert): no schema change, no mutations (the
@@ -33,7 +33,29 @@ export interface QualityNcr {
   linkedTo: string;
   severity: Severity;
   status: string;
+  // PLM.V2 — RCA classification + the test run that triggered it.
+  rootCause: string | null;
+  triggeredByRun: string | null;
+  triggeredByHref: string | null;
 }
+/** PLM.V2 — a test-traceability row (per-unit verification, distinct from SPC). */
+export interface TestTraceRow {
+  code: string;
+  serial: string;
+  procedure: string;
+  configVersion: string | null;
+  outcome: string;
+  href: string;
+}
+/** The RCA root-cause taxonomy (matches the RootCause enum). */
+export const ROOT_CAUSES = [
+  "software",
+  "hardware",
+  "design",
+  "production",
+  "component",
+  "field_modification",
+] as const;
 export interface QualityCert {
   id: string;
   name: string;
@@ -52,6 +74,8 @@ export interface QualityData {
   ncrs: QualityNcr[];
   certs: QualityCert[];
   defectPareto: DefectParetoBar[];
+  // PLM.V2 — per-unit test traceability (kept DISTINCT from SPC process monitoring).
+  testTrace: TestTraceRow[];
 }
 
 /**
@@ -65,56 +89,59 @@ export interface QualityData {
 export async function getQualityData(orgId: string): Promise<QualityData> {
   const db = dbForOrg(orgId);
 
-  const [samples, breachRows, ncrs, certRows, paretoRows] = await Promise.all([
-    db.spcSample.findMany({
-      orderBy: [{ characteristic: "asc" }, { ts: "asc" }],
-      take: SPC_SAMPLE_CAP,
-      select: {
-        characteristic: true,
-        serial: true,
-        value: true,
-        ucl: true,
-        lcl: true,
-        mean: true,
-        ts: true,
-      },
-    }),
-    // Out-of-control compare needs a column comparison — raw SQL, orgId pinned.
-    db.$queryRaw<{ characteristic: string; breaches: number }[]>`
+  const [samples, breachRows, ncrRows, certRows, paretoRows] =
+    await Promise.all([
+      db.spcSample.findMany({
+        orderBy: [{ characteristic: "asc" }, { ts: "asc" }],
+        take: SPC_SAMPLE_CAP,
+        select: {
+          characteristic: true,
+          serial: true,
+          value: true,
+          ucl: true,
+          lcl: true,
+          mean: true,
+          ts: true,
+        },
+      }),
+      // Out-of-control compare needs a column comparison — raw SQL, orgId pinned.
+      db.$queryRaw<{ characteristic: string; breaches: number }[]>`
       SELECT characteristic, COUNT(*)::int AS breaches
         FROM "SpcSample"
         WHERE "orgId" = ${orgId} AND (value > ucl OR value < lcl)
         GROUP BY characteristic`,
-    db.nCR.findMany({
-      where: { status: { not: "CLOSED" } },
-      orderBy: [{ severity: "desc" }, { code: "asc" }], // CRITICAL first
-      take: 200,
-      select: {
-        id: true,
-        code: true,
-        defect: true,
-        linkedTo: true,
-        severity: true,
-        status: true,
-      },
-    }),
-    db.cert.findMany({
-      orderBy: { validTo: "asc" },
-      take: 200,
-      select: {
-        id: true,
-        name: true,
-        scope: true,
-        validTo: true,
-        status: true,
-      },
-    }),
-    db.nCR.groupBy({
-      by: ["defect"],
-      _count: { defect: true },
-      orderBy: { _count: { defect: "desc" } },
-    }),
-  ]);
+      db.nCR.findMany({
+        where: { status: { not: "CLOSED" } },
+        orderBy: [{ severity: "desc" }, { code: "asc" }], // CRITICAL first
+        take: 200,
+        select: {
+          id: true,
+          code: true,
+          defect: true,
+          linkedTo: true,
+          severity: true,
+          status: true,
+          rootCause: true, // PLM.V2
+          testRunId: true, // PLM.V2 — the run that triggered it
+        },
+      }),
+      db.cert.findMany({
+        orderBy: { validTo: "asc" },
+        take: 200,
+        select: {
+          id: true,
+          name: true,
+          scope: true,
+          validTo: true,
+          status: true,
+        },
+      }),
+      db.nCR.groupBy({
+        by: ["defect"],
+        _count: { defect: true },
+        orderBy: { _count: { defect: "desc" } },
+      }),
+    ]);
 
   const breachByChar = new Map(
     breachRows.map((r) => [r.characteristic, Number(r.breaches) > 0]),
@@ -156,7 +183,64 @@ export async function getQualityData(orgId: string): Promise<QualityData> {
     count: r._count.defect,
   }));
 
-  return { spcSeries: [...seriesMap.values()], ncrs, certs, defectPareto };
+  // ── PLM.V2 — test traceability + NCR trigger resolution ───────────────────
+  // Recent per-unit test runs (DISTINCT from SPC): config-at-run from the frozen
+  // snapshot, so this section reads the same immutable copy the Test Run page does.
+  const testRuns = await db.testRun.findMany({
+    include: { unit: { select: { serial: true } } },
+    orderBy: { startedAt: "desc" },
+    take: 6,
+  });
+  const testTrace: TestTraceRow[] = testRuns.map((r) => {
+    const snap =
+      r.configSnapshot && typeof r.configSnapshot === "object"
+        ? (r.configSnapshot as unknown as FrozenConfigSnapshot)
+        : null;
+    return {
+      code: r.code,
+      serial: r.unit.serial,
+      procedure: r.procedure,
+      configVersion: snap?.configVersion?.name ?? null,
+      outcome: r.outcome,
+      href: `/tests/${encodeURIComponent(r.code)}`,
+    };
+  });
+
+  // Resolve each NCR's triggering test run (testRunId → code) in one batch.
+  const runIds = [
+    ...new Set(ncrRows.map((n) => n.testRunId).filter(Boolean) as string[]),
+  ];
+  const runById = new Map(
+    (runIds.length
+      ? await db.testRun.findMany({
+          where: { id: { in: runIds } },
+          select: { id: true, code: true },
+        })
+      : []
+    ).map((r) => [r.id, r.code]),
+  );
+  const ncrs: QualityNcr[] = ncrRows.map((n) => {
+    const runCode = n.testRunId ? (runById.get(n.testRunId) ?? null) : null;
+    return {
+      id: n.id,
+      code: n.code,
+      defect: n.defect,
+      linkedTo: n.linkedTo,
+      severity: n.severity,
+      status: n.status,
+      rootCause: n.rootCause,
+      triggeredByRun: runCode,
+      triggeredByHref: runCode ? `/tests/${encodeURIComponent(runCode)}` : null,
+    };
+  });
+
+  return {
+    spcSeries: [...seriesMap.values()],
+    ncrs,
+    certs,
+    defectPareto,
+    testTrace,
+  };
 }
 
 /** Paginated SPC samples (read-only), optionally filtered by characteristic. */

@@ -12,11 +12,14 @@ import { SpcChart } from "./SpcChart";
 import { DefectPareto } from "./DefectPareto";
 import { CertList } from "./CertList";
 import { NcrTable } from "./NcrTable";
+import { TestTraceability } from "./TestTraceability";
 import { StatStrip } from "@/components/shell/StatStrip";
 import { ScreenShell, ScreenMessage } from "@/components/shell/ScreenShell";
 
 export interface QualityScreenData extends QualityData {
   traceLines: { ts?: string; kind?: string; text?: string }[];
+  // PLM.V2 — is this user allowed to classify NCR root cause (RBAC).
+  canClassify: boolean;
 }
 
 // The Quality & Testing screen (QUAL.2, matching Quality.dc.html on the v2
@@ -139,7 +142,10 @@ export function QualityView({
             <CertList certs={data.certs} />
           </div>
 
-          <NcrTable ncrs={data.ncrs} />
+          {/* PLM.V2 — per-unit test traceability (DISTINCT from SPC above) */}
+          <TestTraceability rows={data.testTrace} />
+
+          <NcrTable ncrs={data.ncrs} canClassify={data.canClassify} />
 
           {trace.length > 0 && (
             <TraceConsole lines={trace} title="Agent trace · qa-orchestrator" />

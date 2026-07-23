@@ -1,5 +1,6 @@
 import { dbForOrg } from "@axona/db";
 import { getCurrentUser } from "@/lib/session";
+import { hasRole } from "@/lib/rbac";
 import { getQualityData } from "@/lib/quality";
 import {
   QualityView,
@@ -17,7 +18,9 @@ const EMPTY: QualityScreenData = {
   ncrs: [],
   certs: [],
   defectPareto: [],
+  testTrace: [],
   traceLines: [],
+  canClassify: false,
 };
 
 export default async function QualityPage() {
@@ -38,7 +41,15 @@ export default async function QualityPage() {
       ? (latestRun.trace as { ts?: string; kind?: string; text?: string }[])
       : [];
 
-    return <QualityView data={{ ...quality, traceLines }} />;
+    return (
+      <QualityView
+        data={{
+          ...quality,
+          traceLines,
+          canClassify: hasRole(user, ["ENGINEER", "OPS", "ADMIN"]),
+        }}
+      />
+    );
   } catch {
     return <QualityView data={EMPTY} error />;
   }
