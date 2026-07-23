@@ -18,8 +18,10 @@ the moat is the **multi-agent intelligence layer** (specialized models + memory 
 
 ## Brand invariants (do not drift — from build spec §0/§10, matches the site)
 Archivo (UI/display) + JetBrains Mono (data/labels) · paper `#ffffff`, panel `#f4f3ef`, ink `#0a0a0a` ·
-single accent **lime `#c6f24f`** · functional green `#1f9e6f` for live/approved (no invented reds —
-critical states use ink) · hairlines over shadows · dotted-grid motif · **no emoji**. Tokens: `design.md`.
+single accent **lime `#c6f24f`** · functional green `#197e59` for live/approved (darkened from `#1f9e6f`
+in A11Y.3 to clear WCAG AA ≥4.5:1 as small status text; same hue. The v8 `.dc.html` exports still show
+`#1f9e6f` — sync at the next design export. No invented reds — critical states use ink) · hairlines over
+shadows · dotted-grid motif · **no emoji**. Tokens: `design.md`.
 
 **Canonical design system = DS.1 (imported via the `claude_design` MCP → `Design System.dc.html`).** The
 implemented tokens + primitives in `design/` are the visual source of truth; `design.md` is reconciled to
