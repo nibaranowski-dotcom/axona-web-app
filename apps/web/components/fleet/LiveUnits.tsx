@@ -1,9 +1,16 @@
+import Link from "next/link";
 import type { FleetRobot, RobotTelemetry } from "@/lib/fleet";
+import type { ConfigSummary } from "@/lib/units";
 import { metaFor } from "./status";
 
-// Live units table (Fleet.dc.html) — per-unit dot, unit, uptime bar, firmware
-// (+ "old"), a telemetry sparkline, and the status pill. (The design's "Battery"
-// column isn't a Robot field → uptime is shown; see FLEET.2 notes.)
+// Live units table (Fleet.dc.html v8) — per-unit dot, unit (→ Unit page), uptime
+// bar, the resolved Config · SW column (+ "old" when behind the latest release),
+// a telemetry sparkline, and the status pill.
+//
+// PLM.V4: the Config · SW column is RESOLVED from the Unit spine (resolveConfig
+// Summaries — the software time-series + swSpec match), never the stored
+// Robot.firmware scalar; the serial links to /units/:serial (the hero object).
+// (The design's "Battery" column isn't a Robot field → uptime is shown; FLEET.2.)
 const COLS =
   "grid grid-cols-[14px_2fr_1.1fr_0.9fr_1.1fr_1.2fr] items-center gap-3 px-5";
 
@@ -25,11 +32,11 @@ function sparkPoints(points: { value: number }[]): string {
 export function LiveUnits({
   robots,
   telemetry,
-  latestFw,
+  configBySerial,
 }: {
   robots: FleetRobot[];
   telemetry: RobotTelemetry[];
-  latestFw: string;
+  configBySerial: Record<string, ConfigSummary>;
 }) {
   const teleByRobot = new Map<string, RobotTelemetry>();
   for (const t of telemetry)
@@ -52,14 +59,14 @@ export function LiveUnits({
         <span aria-hidden />
         <span>Unit</span>
         <span>Uptime</span>
-        <span>Firmware</span>
+        <span>Config · SW</span>
         <span>Telemetry</span>
         <span>Status</span>
       </div>
       {robots.map((r) => {
         const meta = metaFor(r.status);
         const series = teleByRobot.get(r.id);
-        const behind = r.firmware !== latestFw;
+        const cfg = configBySerial[r.serial];
         return (
           <div
             key={r.id}
@@ -67,12 +74,13 @@ export function LiveUnits({
           >
             <span aria-hidden className={`h-2 w-2 rounded-pill ${meta.dot}`} />
             <div className="min-w-0">
-              <div
-                className="truncate font-mono text-[12.5px] font-semibold text-ink"
+              <Link
+                href={`/units/${encodeURIComponent(r.serial)}`}
+                className="block truncate font-mono text-[12.5px] font-semibold text-ink underline decoration-transparent underline-offset-2 transition-colors hover:decoration-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 title={r.serial}
               >
                 {r.serial}
-              </div>
+              </Link>
               <div
                 className="mt-px truncate text-[11px] text-ink-muted"
                 title={`${r.model} · ${r.site}`}
@@ -92,14 +100,19 @@ export function LiveUnits({
               </span>
             </div>
             <div className="min-w-0">
-              <span className="font-mono text-[12px] text-ink">
-                {r.firmware}
-              </span>
-              {behind && (
-                <span className="ml-[5px] rounded-[4px] bg-accent px-1 py-px font-mono text-[8.5px] uppercase tracking-[0.04em] text-accent-ink">
-                  old
+              <div className="truncate font-mono text-[11.5px] text-ink">
+                {cfg?.configVersion ?? "—"}
+              </div>
+              <div className="flex items-center gap-[5px]">
+                <span className="font-mono text-[10px] text-ink-faint">
+                  {cfg?.swVersion ?? r.firmware}
                 </span>
-              )}
+                {cfg?.isBehind && (
+                  <span className="rounded-[4px] bg-accent px-1 py-px font-mono text-[8.5px] uppercase tracking-[0.04em] text-accent-ink">
+                    old
+                  </span>
+                )}
+              </div>
             </div>
             <svg
               width="100%"

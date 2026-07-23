@@ -295,3 +295,100 @@ export async function resolveUnitConfigNow(orgId: string, serial: string) {
   if (!unit) return null;
   return resolveConfigAt(db, unit.id, new Date());
 }
+
+// ── PLM.V4 · Fleet config resolution (resolved columns, not stored scalars) ──
+// Fleet reads the Robot model (deployed-ops); the config version + sw version it
+// now shows are RESOLVED from the Unit spine — the exact [effectiveFrom,
+// effectiveTo) window + swSpec-match rule getUnitRegistry uses, so Fleet and the
+// registry never disagree on what a unit is running. Batched per page.
+
+export interface ConfigSummary {
+  configVersion: string | null; // named ConfigurationVersion, when one matches
+  swVersion: string | null; // firmware resolved from the software time series
+  /** True when the resolved firmware is behind the latest release (the "old" tag). */
+  isBehind: boolean;
+}
+
+/** Compare "v4.2.1"-style versions numerically (so v4.10 > v4.2). */
+function versionRank(v: string): number[] {
+  return (v.match(/\d+/g) ?? []).map(Number);
+}
+function versionLt(a: string, b: string): boolean {
+  const x = versionRank(a);
+  const y = versionRank(b);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    const xi = x[i] ?? 0;
+    const yi = y[i] ?? 0;
+    if (xi !== yi) return xi < yi;
+  }
+  return false;
+}
+
+/**
+ * Resolve {configVersion, swVersion, isBehind} for a set of unit serials, org-
+ * scoped. Every value comes from captured/time-series records — nothing is a
+ * stored scalar on the Robot row. Serials with no Unit resolve to nulls.
+ */
+export async function resolveConfigSummaries(
+  orgId: string,
+  serials: string[],
+): Promise<Map<string, ConfigSummary>> {
+  const out = new Map<string, ConfigSummary>();
+  if (serials.length === 0) return out;
+  const db = dbForOrg(orgId);
+
+  const units = await db.unit.findMany({
+    where: { serial: { in: serials } },
+    select: { id: true, serial: true, productModelId: true },
+  });
+  if (units.length === 0) return out;
+  const unitIds = units.map((u) => u.id);
+
+  const [swStates, configs] = await Promise.all([
+    db.unitSoftwareState.findMany({
+      where: { unitId: { in: unitIds } },
+      include: { softwareRelease: true },
+      orderBy: { effectiveFrom: "desc" },
+    }),
+    db.configurationVersion.findMany(),
+  ]);
+
+  // The latest firmware release across the org → the "behind" baseline.
+  let latestFirmware: string | null = null;
+  for (const s of swStates) {
+    if (s.softwareRelease.component !== "firmware") continue;
+    const v = s.softwareRelease.version;
+    if (!latestFirmware || versionLt(latestFirmware, v)) latestFirmware = v;
+  }
+
+  const now = new Date();
+  const swByUnit = new Map<string, string>(); // firmware covering NOW
+  for (const s of swStates) {
+    if (s.softwareRelease.component !== "firmware") continue;
+    const coversNow =
+      s.effectiveFrom <= now && (s.effectiveTo === null || s.effectiveTo > now);
+    if (coversNow && !swByUnit.has(s.unitId))
+      swByUnit.set(s.unitId, s.softwareRelease.version);
+  }
+
+  const configFor = (productModelId: string, sw: string | null) => {
+    if (!sw) return null;
+    const match = configs.find(
+      (c) =>
+        c.productModelId === productModelId &&
+        (c.swSpec as Record<string, unknown> | null)?.["firmware"] === sw,
+    );
+    return match?.name ?? null;
+  };
+
+  for (const u of units) {
+    const sw = swByUnit.get(u.id) ?? null;
+    out.set(u.serial, {
+      configVersion: configFor(u.productModelId, sw),
+      swVersion: sw,
+      isBehind:
+        sw !== null && latestFirmware !== null && versionLt(sw, latestFirmware),
+    });
+  }
+  return out;
+}

@@ -2,6 +2,7 @@
 
 import { Plus } from "lucide-react";
 import type { FleetData } from "@/lib/fleet";
+import type { ConfigSummary } from "@/lib/units";
 import { useUi } from "@/lib/ui-store";
 import { useCopilotSeed } from "@/lib/copilot-seed";
 import {
@@ -15,6 +16,8 @@ import { LiveUnits } from "./LiveUnits";
 import { ScreenShell, ScreenMessage } from "@/components/shell/ScreenShell";
 
 export interface FleetScreenData extends FleetData {
+  // PLM.V4 — resolved config/sw per serial for the live-units table.
+  configBySerial: Record<string, ConfigSummary>;
   traceLines: { ts?: string; kind?: string; text?: string }[];
 }
 
@@ -120,7 +123,7 @@ export function FleetView({
           <LiveUnits
             robots={data.robots}
             telemetry={data.telemetry}
-            latestFw={latestFw}
+            configBySerial={data.configBySerial}
           />
 
           {trace.length > 0 && (
