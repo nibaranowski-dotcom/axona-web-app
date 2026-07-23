@@ -45,6 +45,13 @@ async function clearDemoOrg(): Promise<void> {
   await prisma.calibrationModel.deleteMany({ where: { orgId } }); // CONF.1 fitted model
   await prisma.memoryItem.deleteMany({ where: { orgId } }); // MEM.1 operational memory
   await prisma.entityLink.deleteMany({ where: { orgId } }); // ONT.1 link graph
+  // PLM.1b — the deferred tier (children before parents; before the Unit deletes).
+  // TestResult→TestRun and FieldEvent cascade off Unit, but ChangeRequest has no
+  // Unit FK, so it must be cleared explicitly or its unique (orgId, code) collides.
+  await prisma.testResult.deleteMany({ where: { orgId } });
+  await prisma.testRun.deleteMany({ where: { orgId } });
+  await prisma.fieldEvent.deleteMany({ where: { orgId } });
+  await prisma.changeRequest.deleteMany({ where: { orgId } });
   // PLM.1a — the Unit spine cluster (children before parents; Unit FKs ProductModel)
   await prisma.asBuiltRecord.deleteMany({ where: { orgId } });
   await prisma.unitSoftwareState.deleteMany({ where: { orgId } });

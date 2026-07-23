@@ -700,5 +700,97 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
     }
   }
 
+  // ── 10. PLM.6 — test-explorer richness (mock richness = seed richness) ─────
+  // A handful more runs across procedures + units so /tests renders grouped +
+  // populated like `Test Explorer.dc.html`. TR-8841/TR-8802 stay the hero pair;
+  // these are the surrounding fleet-scale context. Each frozen at its own time.
+  const RICH: {
+    code: string;
+    serial: string;
+    procedure: string;
+    outcome: "pass" | "fail";
+    torque: number; // the key measurement (N·m)
+    daysAgo: number;
+  }[] = [
+    {
+      code: "TR-8720",
+      serial: "SN-2196",
+      procedure: "Actuator torque test",
+      outcome: "pass",
+      torque: 4.0,
+      daysAgo: 40,
+    },
+    {
+      code: "TR-8402",
+      serial: "SN-2188",
+      procedure: "Actuator torque test",
+      outcome: "fail",
+      torque: 4.7,
+      daysAgo: 12,
+    },
+    {
+      code: "TR-8390",
+      serial: "SN-2184",
+      procedure: "Actuator torque test",
+      outcome: "pass",
+      torque: 4.2,
+      daysAgo: 20,
+    },
+    {
+      code: "TR-8615",
+      serial: "SN-2210",
+      procedure: "Payload load test",
+      outcome: "pass",
+      torque: 24.0,
+      daysAgo: 9,
+    },
+    {
+      code: "TR-8541",
+      serial: "SN-2196",
+      procedure: "Payload load test",
+      outcome: "fail",
+      torque: 26.1,
+      daysAgo: 4,
+    },
+    {
+      code: "TR-8712",
+      serial: "SN-2209",
+      procedure: "Acceptance · full",
+      outcome: "pass",
+      torque: 142,
+      daysAgo: 15,
+    },
+  ];
+  for (const r of RICH) {
+    const u = unitBySerial.get(r.serial);
+    if (!u) continue;
+    const at = new Date(now.getTime() - r.daysAgo * DAY);
+    const isTorque = r.procedure === "Actuator torque test";
+    const upper = isTorque ? 4.6 : 25.0;
+    const tr = await db.testRun.create({
+      data: {
+        code: r.code,
+        unitId: u.id,
+        procedure: `${r.procedure} · SBX-B`,
+        startedAt: at,
+        outcome: r.outcome,
+        configSnapshot: await freezeConfigSnapshot(db, u.id, at),
+        environment: { tempC: 22, humidityPct: 45, rig: "SBX-B" },
+      },
+    });
+    await db.testResult.create({
+      data: {
+        orgId: db.$org,
+        testRunId: tr.id,
+        step: isTorque ? "Left drive torque" : "Payload hold",
+        measurement: r.torque,
+        unitOfMeasure: isTorque ? "N·m" : "kg",
+        lowerLimit: isTorque ? 3.5 : null,
+        upperLimit: upper,
+        passed: r.outcome === "pass",
+      },
+    });
+  }
+
   return { units: unitBySerial.size, substitutions };
 }
