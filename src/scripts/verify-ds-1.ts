@@ -26,7 +26,7 @@ const IMPORTED = [
   "#707066", // ink-faint (A11Y.1 — darkened from #9a9a90 for WCAG AA on paper + panel)
   "#c6f24f", // accent
   "#bce83f", // accent-hover
-  "#1f9e6f", // success
+  "#197e59", // success (A11Y.3 — darkened from #1f9e6f, same hue, for WCAG AA on paper + success-tint)
   "#e9f7f0", // success-tint
 ];
 

@@ -98,12 +98,15 @@ function run(): void {
     );
   });
   check(
-    "a triage baseline exempts only pre-existing issues (new ones fail)",
+    "the baseline mechanism exists; entries (if any) are well-formed",
     () => {
+      // The mechanism must be wired (new serious/critical fail; baselined are
+      // reported not blocking). The list itself may be EMPTY — that's the goal
+      // state (A11Y.3 emptied it by fixing, not triaging). Any entry must carry a
+      // path · rule · reason.
       return (
         /isBaselined/.test(scan) &&
         /NEW serious\/critical/.test(scan) &&
-        A11Y_BASELINE.length >= 1 &&
         A11Y_BASELINE.every((b) => b.path && b.rule && b.note)
       );
     },

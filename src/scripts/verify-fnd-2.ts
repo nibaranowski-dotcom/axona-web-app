@@ -65,7 +65,7 @@ for (const v of requiredVars) {
 const valueChecks: Array<[string, string]> = [
   ["accent", "#c6f24f"],
   ["accent-ink", "#0a0a0a"],
-  ["success", "#1f9e6f"],
+  ["success", "#197e59"], // A11Y.3 — darkened from #1f9e6f (same hue) for WCAG AA
   ["paper", "#ffffff"],
   ["ink-strong", "#0a0a0a"],
 ];
@@ -87,7 +87,7 @@ const allowedHex = new Set(
     "#0a0a0a",
     "#6b6b63",
     "#707066",
-    "#8a8a82",
+    "#6f6f66", // mono-faint (A11Y.3 — darkened from #8a8a82 for WCAG AA)
     "#a7a79d",
     // hairlines
     "#ededed",
@@ -98,7 +98,7 @@ const allowedHex = new Set(
     // accent + status + skeleton
     "#c6f24f",
     "#bce83f",
-    "#1f9e6f",
+    "#197e59", // success (A11Y.3 — darkened from #1f9e6f for WCAG AA)
     "#e9f7f0",
     "#f0f0ec",
     // motif + dark launchpad

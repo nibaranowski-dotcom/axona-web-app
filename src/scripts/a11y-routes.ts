@@ -47,32 +47,20 @@ export const A11Y_ROUTES: A11yRoute[] = [
 
 // A11Y.2 TRIAGE BASELINE — serious/critical violations that already existed on
 // shipped screens when the served gate was stood up. Per the A11Y.2 PRD, standing
-// up the gate must NOT block on a pre-existing sweep: these are accepted-for-now
-// and become targeted per-route fix stories. The gate still FAILS on any serious/
-// critical NOT listed here — i.e. it catches every regression and every new route,
-// and the --selftest proves it's real. Burn this list down; never grow it.
+// up the gate must NOT block on a pre-existing sweep: entries here are accepted-
+// for-now and become targeted per-route fix stories. The gate still FAILS on any
+// serious/critical NOT listed here — it catches every regression and every new
+// route, and the --selftest proves it's real. Burn this list down; never grow it.
 //
-// Keyed by (route path, axe rule id). First run (2026-07-23): 3 color-contrast
-// violations on the PLM screens (the `text-ink-faint`/mono micro-labels on paper).
+// Keyed by (route path, axe rule id).
+//
+// EMPTY as of A11Y.3 — the 3 original entries (/units, /units/SN-2208,
+// /blast-radius · color-contrast) were the functional-green `--success` token
+// used as small status text; FIXED at the token level (darkened to AA), not
+// triaged. Nothing is deferred.
 export interface A11yBaselineEntry {
   path: string;
   rule: string;
   note: string;
 }
-export const A11Y_BASELINE: A11yBaselineEntry[] = [
-  {
-    path: "/units",
-    rule: "color-contrast",
-    note: "registry table micro-labels (mono/faint) — per-route fix story",
-  },
-  {
-    path: "/units/SN-2208",
-    rule: "color-contrast",
-    note: "unit page faint label — per-route fix story",
-  },
-  {
-    path: "/blast-radius",
-    rule: "color-contrast",
-    note: "blast-radius faint label — per-route fix story",
-  },
-];
+export const A11Y_BASELINE: A11yBaselineEntry[] = [];

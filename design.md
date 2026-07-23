@@ -37,7 +37,7 @@ type does the work (Archivo display + JetBrains Mono labels) · **no emoji**.
 
   /* Accent (lime) + status */
   --accent:#c6f24f; --accent-hover:#bce83f; --accent-ink:#0a0a0a;
-  --success:#1f9e6f; --success-tint:#e9f7f0;
+  --success:#197e59; --success-tint:#e9f7f0; /* A11Y.3: darkened from #1f9e6f (same hue) for WCAG AA */
   --skeleton:#f0f0ec; --selection-bg:var(--accent);
 
   /* Spacing (4px base) */ --space-1..--space-22 (4,8,12,16,20,24,32,40,48,64,72,88)

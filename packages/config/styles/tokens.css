@@ -57,7 +57,11 @@
   --ink-strong: #0a0a0a;
   --ink-muted: #6b6b63;
   --ink-faint: #707066;
-  --mono-faint: #8a8a82;
+  /* A11Y.3 — darkened (same warm-grey hue) so mono micro-labels clear WCAG AA
+     >=4.5:1 on paper (5.07), panel (4.57) AND panel-2 (4.55). The prior value was
+     3.13-3.48 (a latent fail); the served gate found the live offenders on
+     --success, but this token is now AA-safe for its intended use. */
+  --mono-faint: #6f6f66;
   --mono-ghost: #a7a79d;
   --on-dark: #ffffff;
   --on-dark-mut: rgba(255, 255, 255, 0.7);
@@ -76,7 +80,14 @@
   --accent-ink: #0a0a0a;
 
   /* — Functional status (no invented reds; critical = ink) — */
-  --success: #1f9e6f;
+  /* A11Y.3 — the functional green was the REAL cause of A11Y.2's 3 baselined
+     violations: the old green as small status text failed WCAG AA on paper (3.40)
+     and on its own success-tint (3.08). Darkened along the SAME hue (scaled ~0.8
+     toward black) to the lightest green clearing AA >=4.5:1 on paper (5.04),
+     success-tint (4.56) AND panel (4.54). Still the brand functional green for
+     live/approved — just AA-compliant. All call sites (text, dots, borders, pills)
+     inherit. NOTE: this shifts the brand-invariant functional green — flagged for review. */
+  --success: #197e59;
   --success-tint: #e9f7f0;
 
   /* — Skeleton / selection — */
