@@ -1,12 +1,81 @@
 import { zodToJsonSchema } from "zod-to-json-schema";
 import type { ModelClient, ModelMessage, ModelResponse } from "./model-client";
-import type { AgentContext, AgentDef, RunResult, Tool } from "./types";
+import type {
+  AgentContext,
+  AgentDef,
+  RunResult,
+  RunUsage,
+  Tool,
+} from "./types";
 
 // The tool-use loop over a ModelClient. Caps turns; Zod-validates every tool
 // input; try/catch per tool; gated tools propose (never execute). Every step is
 // a typed trace line.
 
 const MAX_TURNS = 8;
+
+// RUNTIME.1 — context pruning. The loop appends the assistant turn + every tool
+// result each turn, so an 8-turn run would carry all prior (often large) tool
+// payloads to every model call — the "relevance beats volume" failure. We keep
+// the transcript itself complete (source of truth for the next turn) but send a
+// PRUNED copy to the model: the initial task + the last few turns verbatim, with
+// older verbose tool payloads elided. This changes ONLY what is re-sent to the
+// model — tool behavior and the audit trace are untouched.
+const KEEP_RECENT_MESSAGES = 4; // ≈ the last two turns carried verbatim
+const MAX_TEXT_CHARS = 2000; // cap any single carried text/payload
+
+function capText(s: string): string {
+  return s.length > MAX_TEXT_CHARS
+    ? `${s.slice(0, MAX_TEXT_CHARS)}…[+${s.length - MAX_TEXT_CHARS} chars elided]`
+    : s;
+}
+
+// Elide a single content block from an OLDER turn — the big win is dropping the
+// verbose tool_result payloads once the model has moved past them.
+function elideBlock(block: unknown): unknown {
+  if (!block || typeof block !== "object") return block;
+  const b = block as Record<string, unknown>;
+  if (b.type === "tool_result") {
+    return {
+      type: "tool_result",
+      tool_use_id: b.tool_use_id,
+      content: "[tool result elided — older turn]",
+      ...(b.is_error ? { is_error: true } : {}),
+    };
+  }
+  if (b.type === "tool_use") {
+    // keep the call shape (id/name) but drop the (re-derivable) input payload
+    return { type: "tool_use", id: b.id, name: b.name, input: {} };
+  }
+  if (b.type === "text" && typeof b.text === "string") {
+    return { type: "text", text: capText(b.text) };
+  }
+  return block;
+}
+
+/**
+ * The transcript actually sent to the model each turn — BOUNDED, not linear in
+ * turns. Keeps the initial task (index 0) + the last `keepRecent` messages
+ * verbatim; older messages have their verbose tool payloads elided. Pure: returns
+ * a new array, never mutates the caller's transcript. Exported so verify can
+ * assert the carried size stays bounded across an 8-turn run.
+ */
+export function pruneMessages(
+  messages: ModelMessage[],
+  keepRecent = KEEP_RECENT_MESSAGES,
+): ModelMessage[] {
+  const n = messages.length;
+  return messages.map((m, i) => {
+    if (i === 0 || i >= n - keepRecent) return m; // task + recent window verbatim
+    if (Array.isArray(m.content)) {
+      return { role: m.role, content: m.content.map(elideBlock) };
+    }
+    if (typeof m.content === "string") {
+      return { role: m.role, content: capText(m.content) };
+    }
+    return m;
+  });
+}
 
 /**
  * RBAC.3 seam — permissive by default. Real per-role guardrails land in RBAC.3;
@@ -40,7 +109,12 @@ export async function runLoop(
   input: string,
   ctx: AgentContext,
   model: ModelClient,
-): Promise<{ text: string; status: RunResult["status"] }> {
+): Promise<{
+  text: string;
+  status: RunResult["status"];
+  truncated: boolean;
+  usage: RunUsage | null;
+}> {
   const toolSpecs = def.tools.map((t) => ({
     name: t.name,
     description: t.description,
@@ -49,19 +123,50 @@ export async function runLoop(
   const messages: ModelMessage[] = [{ role: "user", content: input }];
   ctx.trace.push("scan", `agent ${ctx.agentId} · scope ${def.scope}`);
 
+  // RUNTIME.1 — accumulate token usage across every model call in the run.
+  let promptTokens = 0;
+  let completionTokens = 0;
+  let sawUsage = false;
+  const usage = (): RunUsage | null =>
+    sawUsage
+      ? {
+          promptTokens,
+          completionTokens,
+          totalTokens: promptTokens + completionTokens,
+        }
+      : null;
+
   for (let turn = 0; turn < MAX_TURNS; turn++) {
     const res = await model.createMessage({
       system: def.systemPrompt,
-      messages,
+      // send a BOUNDED copy of the transcript — never the full linear history
+      messages: pruneMessages(messages),
       tools: toolSpecs,
     });
+    if (res.usage) {
+      promptTokens += res.usage.inputTokens;
+      completionTokens += res.usage.outputTokens;
+      sawUsage = true;
+    }
     ctx.trace.push("correlate", `model ${res.model} · stop ${res.stopReason}`, {
       model: res.model,
     });
 
     if (res.stopReason !== "tool_use") {
+      // RUNTIME.1 — a max_tokens stop means the answer was CUT. Surface it
+      // explicitly (trace + a visible marker) — never a silent truncation.
+      const truncated = res.stopReason === "max_tokens";
+      if (truncated) {
+        ctx.trace.push(
+          "error",
+          "answer hit the model token cap — flagged as truncated (not silently cut)",
+        );
+      }
       ctx.trace.push("result", res.text);
-      return { text: res.text, status: "SUCCEEDED" };
+      const text = truncated
+        ? `${res.text}\n\n_[Answer truncated at the model token cap — raise ANTHROPIC_MAX_TOKENS or narrow the question.]_`
+        : res.text;
+      return { text, status: "SUCCEEDED", truncated, usage: usage() };
     }
 
     messages.push({ role: "assistant", content: assistantBlocks(res) });
@@ -93,6 +198,8 @@ export async function runLoop(
         return {
           text: `Proposed ${tool.name}; awaiting approval.`,
           status: "AWAITING_APPROVAL",
+          truncated: false,
+          usage: usage(),
         };
       }
 
@@ -120,5 +227,10 @@ export async function runLoop(
   }
 
   ctx.trace.push("error", `turn cap (${MAX_TURNS}) reached`);
-  return { text: "Run exceeded the turn limit.", status: "FAILED" };
+  return {
+    text: "Run exceeded the turn limit.",
+    status: "FAILED",
+    truncated: false,
+    usage: usage(),
+  };
 }

@@ -498,6 +498,12 @@ model AgentRun {
   trace     Json
   status    RunStatus
   createdAt DateTime  @default(now())
+  /// RUNTIME.1 — per-run token observability (nullable; populated from the model
+  /// client's usage). A column on the existing AgentRun — no isolation change
+  /// (AgentRun is tenant-scoped through its Agent).
+  promptTokens     Int?
+  completionTokens Int?
+  totalTokens      Int?
 
   @@index([agentId])
 }

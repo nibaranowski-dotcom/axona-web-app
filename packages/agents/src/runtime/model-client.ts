@@ -19,12 +19,19 @@ export interface ModelToolSpec {
   description: string;
   input_schema: object;
 }
+/** Per-call token usage (RUNTIME.1 run observability). */
+export interface ModelUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
 export interface ModelResponse {
   stopReason: "end_turn" | "tool_use" | "max_tokens";
   /** concatenated text blocks */
   text: string;
   toolUses: { id: string; name: string; input: unknown }[];
   model: string;
+  /** Tokens spent on this call, when the client reports them (RUNTIME.1). */
+  usage?: ModelUsage;
 }
 export interface ModelClient {
   createMessage(args: {
@@ -37,6 +44,15 @@ export interface ModelClient {
 // Sonnet-tier default; confirmed current id (docs.claude.com). NEVER hardcode a
 // stale literal in call sites — read it here from env, default below.
 const DEFAULT_MODEL = "claude-sonnet-4-6";
+
+// RUNTIME.1 — the old 1024 answer cap truncated blast-radius/RCA markdown tables
+// mid-answer. Raise it to a sensible default (overridable via env) so long answers
+// aren't silently cut; the loop still detects `max_tokens` and flags truncation.
+const DEFAULT_MAX_TOKENS = 4096;
+function resolveMaxTokens(): number {
+  const n = Number.parseInt(process.env.ANTHROPIC_MAX_TOKENS ?? "", 10);
+  return Number.isFinite(n) && n > 0 ? n : DEFAULT_MAX_TOKENS;
+}
 
 /** Real impl — wraps @anthropic-ai/sdk (loaded lazily). Model + key from env. */
 export class AnthropicModelClient implements ModelClient {
@@ -68,7 +84,7 @@ export class AnthropicModelClient implements ModelClient {
     const client = await this.getClient();
     const res = await client.messages.create({
       model: this.model,
-      max_tokens: 1024,
+      max_tokens: resolveMaxTokens(),
       system: args.system,
       messages: args.messages as Anthropic.MessageParam[],
       tools: args.tools.map((t) => ({
@@ -92,7 +108,16 @@ export class AnthropicModelClient implements ModelClient {
           ? "max_tokens"
           : "end_turn";
 
-    return { stopReason, text, toolUses, model: res.model };
+    return {
+      stopReason,
+      text,
+      toolUses,
+      model: res.model,
+      usage: {
+        inputTokens: res.usage?.input_tokens ?? 0,
+        outputTokens: res.usage?.output_tokens ?? 0,
+      },
+    };
   }
 }
 

@@ -68,9 +68,20 @@ export interface AgentDef {
 
 export type RunStatusResult = "SUCCEEDED" | "FAILED" | "AWAITING_APPROVAL";
 
+/** RUNTIME.1 — tokens spent across a run's model calls (nullable until observed). */
+export interface RunUsage {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+}
+
 export interface RunResult {
   runId: string;
   text: string;
   trace: TraceLine[];
   status: RunStatusResult;
+  /** RUNTIME.1 — true when the final answer hit the model's token cap (never a silent cut). */
+  truncated: boolean;
+  /** RUNTIME.1 — aggregate token usage, when the model client reports it. */
+  usage: RunUsage | null;
 }

@@ -32,10 +32,14 @@ export async function runAgent(
 
   let status: RunResult["status"] = "FAILED";
   let text = "";
+  let truncated = false;
+  let usage: RunResult["usage"] = null;
   try {
     const r = await runLoop(def, input, ctx, model);
     text = r.text;
     status = r.status;
+    truncated = r.truncated;
+    usage = r.usage;
   } catch (e) {
     trace.push("error", (e as Error).message);
   }
@@ -56,8 +60,12 @@ export async function runAgent(
       input: { input },
       trace: trace.lines as unknown as Prisma.InputJsonValue,
       status: persisted,
+      // RUNTIME.1 — per-run token observability (nullable until the client reports usage).
+      promptTokens: usage?.promptTokens ?? null,
+      completionTokens: usage?.completionTokens ?? null,
+      totalTokens: usage?.totalTokens ?? null,
     },
   });
 
-  return { runId: run.id, text, trace: trace.lines, status };
+  return { runId: run.id, text, trace: trace.lines, status, truncated, usage };
 }

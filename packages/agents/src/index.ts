@@ -32,11 +32,13 @@ export type {
   ModelMessage,
   ModelResponse,
   ModelToolSpec,
+  ModelUsage,
 } from "./runtime/model-client";
+export type { RunUsage } from "./runtime/types";
 
 // Runtime
 export { TraceCollector } from "./runtime/trace";
-export { runLoop, canUseTool } from "./runtime/runtime";
+export { runLoop, canUseTool, pruneMessages } from "./runtime/runtime";
 export { runAgent } from "./runtime/run-agent";
 
 // General Axona agent (GA.1) — cross-module read-only copilot.
