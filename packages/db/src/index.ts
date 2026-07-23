@@ -93,12 +93,15 @@ export type {
 export {
   resolveConfigAt,
   asBuiltDiff,
+  captureAsBuilt,
   importUnits,
   importBom,
   type ResolvedConfig,
   type ResolvedHwLine,
   type AsBuiltDiffResult,
   type AsBuiltDiffLine,
+  type CaptureInput,
+  type CaptureResult,
   type ImportResult,
   type RowError,
 } from "./plm";

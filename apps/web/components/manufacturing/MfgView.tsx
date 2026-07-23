@@ -1,7 +1,11 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import type { GenealogyStep, ManufacturingData } from "@/lib/manufacturing";
+import type {
+  AsBuiltCapture as CaptureData,
+  GenealogyStep,
+  ManufacturingData,
+} from "@/lib/manufacturing";
 import { useUi } from "@/lib/ui-store";
 import { useCopilotSeed } from "@/lib/copilot-seed";
 import {
@@ -9,6 +13,7 @@ import {
   type TraceLine as ConsoleLine,
 } from "@/components/shell/TraceConsole";
 import { LineFlowBoard } from "./LineFlowBoard";
+import { AsBuiltCapture } from "./AsBuiltCapture";
 import { BuildGenealogy } from "./BuildGenealogy";
 import { ThroughputPanel } from "./ThroughputPanel";
 import { StatStrip } from "@/components/shell/StatStrip";
@@ -18,6 +23,8 @@ export interface MfgScreenData extends ManufacturingData {
   genealogySerial: string;
   genealogySteps: GenealogyStep[];
   heldSerial: string | null;
+  capture: CaptureData | null; // PLM.V3 — as-built capture for the focused unit
+  canCapture: boolean; // RBAC — is this user allowed to record a capture
   traceLines: { ts?: string; kind?: string; text?: string }[];
 }
 
@@ -160,6 +167,14 @@ export function MfgView({
           <StatStrip stats={stats} />
 
           <LineFlowBoard lineFlow={data.lineFlow} />
+
+          {/* PLM.V3 — as-built capture at build (the genealogy write) */}
+          {data.capture && (
+            <AsBuiltCapture
+              capture={data.capture}
+              canCapture={data.canCapture}
+            />
+          )}
 
           <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-[1.45fr_1fr]">
             <BuildGenealogy

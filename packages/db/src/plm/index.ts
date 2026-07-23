@@ -16,3 +16,8 @@ export {
   type ImportResult,
   type RowError,
 } from "./import";
+export {
+  captureAsBuilt,
+  type CaptureInput,
+  type CaptureResult,
+} from "./capture";

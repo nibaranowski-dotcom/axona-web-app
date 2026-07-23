@@ -1,4 +1,4 @@
-import { dbForOrg, paginateArgs, pageResult } from "@axona/db";
+import { dbForOrg, asBuiltDiff, paginateArgs, pageResult } from "@axona/db";
 
 // MFG.1 — Manufacturing (MES) read/API layer (build-spec §4.11, §6). Read-only
 // over the existing WorkOrderMfg model: no schema change, no mutations (the
@@ -191,6 +191,124 @@ export async function getGenealogy(
         (a.startedAt?.getTime() ?? 0) - (b.startedAt?.getTime() ?? 0),
     );
   return { serial, steps };
+}
+
+// ── PLM.V3 · as-built capture (the build-time genealogy write) ───────────────
+// The Manufacturing screen gains the capture step: components are scanned against
+// the BOM at build, lots + revisions recorded, and the diff computed AT WRITE TIME
+// (captureAsBuilt stores isSubstitution — never reconstructed). This read model
+// assembles the capture card for the focused unit; the write is a gated action.
+
+export interface CapturedComponent {
+  position: string;
+  partNumber: string;
+  rev: string;
+  lotCode: string | null;
+  isSubstitution: boolean;
+  captured: boolean;
+}
+export interface OpenPosition {
+  position: string;
+  partNumber: string;
+  rev: string;
+  partRevisionId: string;
+}
+export interface AsBuiltCapture {
+  serial: string;
+  bomRevision: string; // the as-designed BOM the capture diffs against
+  scanned: number; // positions with an as-built record
+  total: number; // BOM positions
+  substitutions: number;
+  lastCapturedAt: Date | null;
+  components: CapturedComponent[]; // substitutions first (the story), then matches
+  openPositions: OpenPosition[]; // BOM positions not yet captured (scan targets)
+  asBuiltHref: string; // → PLM.4 full diff
+}
+
+/**
+ * The as-built capture state for a single unit (PLM.V3). Reads the captured
+ * records aligned to the BOM (asBuiltDiff), plus the as-designed part per open
+ * position so a scan can be recorded. Org-scoped, read-only — the capture WRITE
+ * is captureComponentAction (RBAC-gated + audited).
+ */
+export async function getAsBuiltCapture(
+  orgId: string,
+  serial: string,
+): Promise<AsBuiltCapture | null> {
+  const db = dbForOrg(orgId);
+  const unit = await db.unit.findFirst({
+    where: { serial },
+    select: { id: true, serial: true, productModelId: true },
+  });
+  if (!unit) return null;
+
+  const [diff, model, bom, lastRecord] = await Promise.all([
+    asBuiltDiff(db, unit.id),
+    db.productModel.findUnique({
+      where: { id: unit.productModelId },
+      select: { designRevision: true },
+    }),
+    db.bomLine.findMany({
+      where: { productModelId: unit.productModelId },
+      select: {
+        position: true,
+        partRevisionId: true,
+        partRevision: {
+          select: { rev: true, partMaster: { select: { partNumber: true } } },
+        },
+      },
+    }),
+    db.asBuiltRecord.findFirst({
+      where: { unitId: unit.id },
+      orderBy: { installedAt: "desc" },
+      select: { installedAt: true },
+    }),
+  ]);
+
+  const total = diff.lines.filter((l) => l.expected !== null).length;
+  const scanned = diff.lines.filter((l) => l.actual !== null).length;
+
+  const components: CapturedComponent[] = diff.lines
+    .filter((l) => l.actual !== null)
+    .map((l) => ({
+      position: l.position,
+      partNumber: l.actual!.partNumber,
+      rev: l.actual!.rev,
+      lotCode: l.actual!.lotCode,
+      isSubstitution: l.isSubstitution,
+      captured: true,
+    }))
+    // substitutions lead — they are the reason this screen exists
+    .sort(
+      (a, b) =>
+        Number(b.isSubstitution) - Number(a.isSubstitution) ||
+        a.position.localeCompare(b.position),
+    );
+
+  const capturedPositions = new Set(
+    diff.lines.filter((l) => l.actual !== null).map((l) => l.position),
+  );
+  const openPositions: OpenPosition[] = bom
+    .filter((b) => !capturedPositions.has(b.position))
+    .map((b) => ({
+      position: b.position,
+      partNumber: b.partRevision.partMaster.partNumber,
+      rev: b.partRevision.rev,
+      partRevisionId: b.partRevisionId,
+    }))
+    .sort((a, b) => a.position.localeCompare(b.position));
+
+  return {
+    serial: unit.serial,
+    bomRevision: model?.designRevision ?? "—",
+    scanned,
+    total,
+    substitutions: diff.summary.substitutions,
+    lastCapturedAt: lastRecord?.installedAt ?? null,
+    components,
+    openPositions,
+    asBuiltHref: `/units/${encodeURIComponent(unit.serial)}/as-built`,
+  };
 }
 
 /** Paginated work-order list (read-only), optionally filtered by station. */

@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import type { GenealogyStep } from "@/lib/manufacturing";
 import { statusBadge, titleCase } from "./format";
 
@@ -18,9 +20,27 @@ export function BuildGenealogy({
   return (
     <div className="rounded-card border border-line bg-paper px-5 pb-2 pt-[18px]">
       <div className="mb-1.5 flex items-center justify-between">
-        <h2 className="text-[15px] font-semibold text-ink">
-          Build genealogy · {serial || "—"}
-        </h2>
+        {serial ? (
+          // PLM.V3 — the genealogy links to the unit's hero page (PLM.3), not a
+          // dead end: the build record and the Unit spine are the same object.
+          <Link
+            href={`/units/${encodeURIComponent(serial)}`}
+            className="inline-flex items-center gap-[7px] text-ink transition-colors hover:text-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <h2 className="text-[15px] font-semibold">
+              Build genealogy · {serial}
+            </h2>
+            <ArrowUpRight
+              className="h-3.5 w-3.5 text-ink-faint"
+              strokeWidth={2}
+              aria-hidden
+            />
+          </Link>
+        ) : (
+          <h2 className="text-[15px] font-semibold text-ink">
+            Build genealogy · —
+          </h2>
+        )}
         <span className="font-mono text-[10px] uppercase tracking-[0.04em] text-ink-muted">
           {steps.length} station{steps.length === 1 ? "" : "s"}
         </span>

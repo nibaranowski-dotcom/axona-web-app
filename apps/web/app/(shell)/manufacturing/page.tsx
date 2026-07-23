@@ -1,6 +1,11 @@
 import { dbForOrg } from "@axona/db";
 import { getCurrentUser } from "@/lib/session";
-import { getManufacturingData, getGenealogy } from "@/lib/manufacturing";
+import { hasRole } from "@/lib/rbac";
+import {
+  getManufacturingData,
+  getGenealogy,
+  getAsBuiltCapture,
+} from "@/lib/manufacturing";
 import {
   MfgView,
   type MfgScreenData,
@@ -20,6 +25,8 @@ const EMPTY: MfgScreenData = {
   genealogySerial: "",
   genealogySteps: [],
   heldSerial: null,
+  capture: null,
+  canCapture: false,
   traceLines: [],
 };
 
@@ -48,9 +55,14 @@ export default async function ManufacturingPage({
       current.find((w) => HELD.has(w.status.toUpperCase()))?.serial ?? null;
     const genealogySerial =
       searchParams?.serial ?? heldSerial ?? current[0]?.serial ?? "";
-    const { steps } = genealogySerial
-      ? await getGenealogy(user.orgId, genealogySerial)
-      : { steps: [] };
+    const [{ steps }, capture] = await Promise.all([
+      genealogySerial
+        ? getGenealogy(user.orgId, genealogySerial)
+        : Promise.resolve({ steps: [] }),
+      genealogySerial
+        ? getAsBuiltCapture(user.orgId, genealogySerial)
+        : Promise.resolve(null),
+    ]);
 
     const traceLines = Array.isArray(latestRun?.trace)
       ? (latestRun.trace as { ts?: string; kind?: string; text?: string }[])
@@ -63,6 +75,8 @@ export default async function ManufacturingPage({
           genealogySerial,
           genealogySteps: steps,
           heldSerial,
+          capture,
+          canCapture: hasRole(user, ["OPS", "ADMIN", "ENGINEER"]),
           traceLines,
         }}
       />
