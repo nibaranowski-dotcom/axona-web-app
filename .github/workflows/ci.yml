@@ -53,3 +53,91 @@ jobs:
       # (edge bundle, Auth.js). Pages are force-dynamic, so no live DB is hit.
       - name: Build
         run: pnpm --filter @axona/web build
+
+  # A11Y.2 — the SERVED accessibility gate. Unlike `verify` (which has no DB and
+  # never boots the app), this job seeds a real Postgres, builds + starts the app,
+  # signs in as the seeded admin, and runs axe-core over the route set. It fails on
+  # any NEW serious/critical violation (the A11Y.2 triage baseline exempts the
+  # pre-existing ones), and a --selftest step proves the gate actually catches a
+  # violation. This is the required check that makes the "a11y 0 on route" DoD real.
+  a11y:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://axona:axona@localhost:5432/axona
+      AUTH_SECRET: ci-dummy-secret-not-used-for-real-sessions-0123456789
+      REDIS_URL: redis://localhost:6379
+      # S3 env is present so config never throws at boot; the scanned routes never
+      # hit the blob store, so no MinIO service is needed.
+      S3_ENDPOINT: http://localhost:9000
+      S3_BUCKET: axona-files
+      S3_ACCESS_KEY: axona
+      S3_SECRET_KEY: axona-secret
+      A11Y_BASE_URL: http://localhost:3001
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: axona
+          POSTGRES_PASSWORD: axona
+          POSTGRES_DB: axona
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U axona -d axona"
+          --health-interval 10s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @axona/db db:generate
+
+      - name: Apply migrations
+        run: pnpm --filter @axona/db exec prisma migrate deploy
+
+      - name: Seed the demo data
+        run: pnpm --filter @axona/db db:seed
+
+      - name: Install Playwright chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build web
+        run: pnpm --filter @axona/web build
+
+      - name: Serve + axe (selftest proves the gate, then the real scan)
+        run: |
+          PORT=3001 pnpm --filter @axona/web start &
+          APP_PID=$!
+          echo "waiting for the app on :3001…"
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/login || true)
+            if [ "$code" = "200" ]; then echo "app ready"; break; fi
+            if [ "$i" = "60" ]; then echo "app did not start"; exit 1; fi
+            sleep 2
+          done
+          set -e
+          echo "── selftest: the gate must CATCH a seeded violation ──"
+          pnpm a11y:scan --selftest
+          echo "── real scan: fail on any NEW serious/critical ──"
+          pnpm a11y:scan
+          kill "$APP_PID" 2>/dev/null || true
