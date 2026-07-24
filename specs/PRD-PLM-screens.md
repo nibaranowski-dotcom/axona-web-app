@@ -21,8 +21,8 @@ design conflict, **the design wins**; flag it to Nicolas rather than diverging.
 - **One demo thread everywhere:** `SN-2208 → SERVO-204 lot 88421 (quarantined) → NCR-118 → ECO-318 (supersede
   → SERVO-205) → affected units → field service` (seeded by PLM.1).
 - **Import-first empty states** — Unit registry and BOM must be usable from a CSV import on day one. Design the
-  empty state as a real first-run surface, not an afterthought. Time-to-value is the reason Helsing rejected an
-  incumbent PLM.
+  empty state as a real first-run surface, not an afterthought. Time-to-value is the reason a defense-robotics
+  prospect rejected an incumbent PLM.
 - **Substitution & version churn are the normal case**, never error states.
 - **Credible with AI off** — agent output appears as *assistance* (candidate causes, drafted changes) with
   **calibrated confidence** (CONF.1) and always **propose → approve**. No screen depends on the agent to function.

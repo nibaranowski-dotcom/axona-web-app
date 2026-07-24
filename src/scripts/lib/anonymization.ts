@@ -41,6 +41,14 @@ export const BANNED_MARQUES = [
   "Stellantis",
   "Rivian",
   "General Motors",
+  // PROSPECT.3 — a real prospect + advisor named only in gitignored tenant configs,
+  // never in committed code. Banned so the name can never re-enter a tracked doc.
+  // "Helsing" (the prospect) + "Marcel Gordon" / "Marcel" (the advisor); standalone
+  // "Gordon" is deliberately omitted — it collides with the finance "Gordon growth
+  // model". Real usage lives ONLY under the gitignored `prospects/` dir (IGNORE_DIRS).
+  "Helsing",
+  "Marcel Gordon",
+  "Marcel",
 ] as const;
 
 /** Case-insensitive, word-bounded matcher over the banned list. */

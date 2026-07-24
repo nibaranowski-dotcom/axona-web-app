@@ -3,7 +3,7 @@
 **Story:** PLM.1 — Introduce the PLM data layer: a first-class **Unit** spine, as-designed BOM + part
 revisions, **as-built** records, **time-resolved configuration** (hw + sw), test traceability, field events,
 and RCA classification — seeded around one coherent thread. **The prerequisite for every PLM screen.**
-**Spec ref:** the PLM MVP spec (Marcel Gordon / ex-VP Product Helsing interview); `specs/PLM-design-brief.md`;
+**Spec ref:** the PLM MVP spec (a robotics-PLM product advisor interview — ex-VP Product at a European defense-AI manufacturer); `specs/PLM-design-brief.md`;
 `specs/architecture-learnings.md` (**L1 Foundation — capture fidelity caps the moat**).
 **Pri/size:** P0 · L. **Track:** PLM (E15). **Depth:** Full CPRD — **moat-load-bearing** (this *is* the
 capture layer the whole moat compounds on).

@@ -1,7 +1,7 @@
 # Design brief — PLM (configuration & traceability) screens
 
 **For:** Claude Design (produces the per-screen `.dc.html` in the Axona v2 system).
-**From:** Head of Product. **Grounded in:** the PLM MVP spec (Marcel Gordon interview, ex-VP Product Helsing).
+**From:** Head of Product. **Grounded in:** the PLM MVP spec (a robotics-PLM product advisor interview — ex-VP Product at a European defense-AI manufacturer).
 **Goal:** design the screens that let a user answer the five questions below — inside the existing Axona v2
 design system, so each screen drops into the app as a route.
 
@@ -155,7 +155,7 @@ the most commonly missed PLM path: config drifts in the field and nobody records
 **Wave 1 — the wedge ("Unit registry + as-built configuration"):** **D1 · D2 · D5**, then **V3** (capture) and
 **D10** (the traversal already exists — this is just its UI). This alone answers Q1, Q2 and most of Q5.
 
-**Wave 2 — the "wow" (test traceability):** **D6 · D7**, then **V2**. Marcel's highest-value UX.
+**Wave 2 — the "wow" (test traceability):** **D6 · D7**, then **V2**. The advisor's highest-value UX.
 
 **Wave 3 — diagnosis + governance:** **D8** (RCA), **D9** + **V1** (change control), **D3** (baselines).
 

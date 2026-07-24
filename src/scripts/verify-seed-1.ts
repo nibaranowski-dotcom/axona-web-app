@@ -2,15 +2,20 @@
  * Verify SEED.1 — anonymize the narrative at the source.
  * Run: pnpm verify:seed-1
  *
- *   1. ZERO real-marque hits across apps/ + packages/ + exports/ + docs/ (the
- *      whole banned list — BMW, Kawasaki, Tesla, …). The scan must have actually
- *      visited files (guards against a silent empty scan false-passing).
+ *   1. ZERO real-marque hits across apps/ + packages/ + exports/ + docs/ (the whole
+ *      banned list — BMW, Kawasaki, Tesla, …). The scan must have actually visited
+ *      files (guards against a silent empty scan false-passing).
+ *   2b. PROSPECT.3 — the prospect/advisor names (Helsing / Marcel) are banned AND
+ *      absent from specs/ and the whole tracked tree (a name reintroduced into any
+ *      committed doc — specs included — fails CI). The gitignored prospects/ tenant
+ *      config legitimately uses the real name and is never scanned.
  *   2. No-regression on the DEMO.3 export: both export files exist and are clean.
  *   3. The seed still produces the same cross-module narrative — getBlastRadius
  *      for NCR-118 is 17 nodes / 7 modules (PLM.1a added the Unit spine), and the Fulfillment/Finance
  *      nodes now read the anonymized account ("Tier-1 Auto OEM", never a marque).
  *      (DB check — gated behind DATABASE_URL so the pre-push hook runs statics.)
  */
+import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { BANNED_MARQUES, BANNED_RE, scanForMarques } from "./lib/anonymization";
@@ -73,6 +78,45 @@ async function run(): Promise<void> {
       return !BANNED_RE.test(readFileSync(p, "utf8"));
     });
   });
+
+  // 2b. PROSPECT.3 — the prospect/advisor names are banned + the scan reaches specs/
+  await check("banned list includes the prospect + advisor names", () => {
+    const has = (m: string) =>
+      (BANNED_MARQUES as readonly string[]).includes(m);
+    return has("Helsing") && has("Marcel Gordon") && has("Marcel");
+  });
+  await check("specs/ is free of the prospect + advisor names", () => {
+    // Enforce the PROSPECT.3 names over specs/ explicitly (the general marque scan
+    // stays on apps/packages/exports/docs; specs/ carries a separate pre-existing
+    // BMW/Kawasaki cleanup that is out of PROSPECT.3's scope — flagged, not swept).
+    const out = execSync(
+      "git grep -iI -c -e helsing -e marcel -e gordon -- specs/ || true",
+      { cwd: root },
+    )
+      .toString()
+      .trim();
+    if (out)
+      console.log(`      specs hits:\n${out.replace(/^/gm, "        ")}`);
+    return out.length === 0;
+  });
+  await check(
+    "tracked tree has ZERO helsing/marcel/gordon (git grep, excl. enforcement files)",
+    () => {
+      // Exclude the gitignored tenant dir + the two enforcement files that MUST
+      // name them (the banned list + this verify) — everything else must be clean.
+      const out = execSync(
+        "git grep -iI -c -e helsing -e marcel -e gordon -- . " +
+          '":(exclude)prospects/" ' +
+          '":(exclude)src/scripts/lib/anonymization.ts" ' +
+          '":(exclude)src/scripts/verify-seed-1.ts" || true',
+        { cwd: root },
+      )
+        .toString()
+        .trim();
+      if (out) console.log(`      hits:\n${out.replace(/^/gm, "        ")}`);
+      return out.length === 0;
+    },
+  );
 
   // 3. narrative integrity — the NCR-118 cascade is unchanged (DB)
   if (!process.env.DATABASE_URL) {
