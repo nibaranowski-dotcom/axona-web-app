@@ -24,7 +24,10 @@ export type EntityType =
   // PLM.1a — must stay in sync with Prisma's EntityType enum
   | "PRODUCT_MODEL"
   | "PART_REVISION"
-  | "CONFIG_VERSION";
+  | "CONFIG_VERSION"
+  // PLM.8
+  | "TEST_RUN"
+  | "FIELD_EVENT";
 
 const ENTITY_TYPES = [
   "NCR",
@@ -41,6 +44,8 @@ const ENTITY_TYPES = [
   "PRODUCT_MODEL",
   "PART_REVISION",
   "CONFIG_VERSION",
+  "TEST_RUN",
+  "FIELD_EVENT",
 ] as const;
 
 /** The module each entity type belongs to (drives the grouped answer). */
@@ -63,6 +68,9 @@ const MODULE: Record<EntityType, string> = {
   PRODUCT_MODEL: "Engineering",
   PART_REVISION: "Engineering",
   CONFIG_VERSION: "Engineering",
+  // PLM.8 — test runs are Quality (per-unit verification); field events are Field Service.
+  TEST_RUN: "Quality",
+  FIELD_EVENT: "Field Service",
 };
 
 const MAX_NODES = 200;
@@ -194,6 +202,25 @@ async function resolveByType(
         out.set(r.id, { code: r.code, label: r.account, status: r.status });
       break;
     }
+    // PLM.8 — the deferred-tier nodes reached via NCR/Unit edges.
+    case "TEST_RUN": {
+      for (const r of await db.testRun.findMany({ where }))
+        out.set(r.id, {
+          code: r.code,
+          label: r.procedure,
+          status: r.outcome,
+        });
+      break;
+    }
+    case "FIELD_EVENT": {
+      for (const r of await db.fieldEvent.findMany({ where }))
+        out.set(r.id, {
+          code: `FE-${r.id.slice(-6)}`,
+          label: r.summary,
+          status: r.kind,
+        });
+      break;
+    }
   }
   return out;
 }
@@ -227,6 +254,8 @@ async function resolveSeedId(
       return first(await db.invoice.findFirst({ where: { code } }));
     case "SPC_SAMPLE":
       return first(await db.spcSample.findFirst({ where: { serial: code } }));
+    case "TEST_RUN":
+      return first(await db.testRun.findFirst({ where: { code } }));
     default:
       // PLM.1a types (PRODUCT_MODEL/PART_REVISION/CONFIG_VERSION) are graph
       // members but not yet seeded as blast-radius roots — resolve nothing.

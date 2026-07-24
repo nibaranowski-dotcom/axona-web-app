@@ -22,7 +22,9 @@ type EType =
   | "DELIVERY"
   | "WORK_ORDER"
   | "SPC_SAMPLE"
-  | "INVOICE";
+  | "INVOICE"
+  | "TEST_RUN" // PLM.8
+  | "FIELD_EVENT"; // PLM.8
 
 type Relation =
   | "CAUSED_BY"
@@ -94,6 +96,22 @@ export async function seedOntology(db: OrgScopedDb): Promise<number> {
       `INVOICE ${code}`,
       db.invoice.findFirst({ where: { code }, select: { id: true } }),
     );
+  // PLM.8 — the deferred-tier nodes (TR-8841 · the SN-2208 field modification).
+  const testRun = (code: string) =>
+    id(
+      `TEST_RUN ${code}`,
+      db.testRun.findFirst({ where: { code }, select: { id: true } }),
+    );
+  const fieldEventFor = (serial: string) =>
+    id(
+      `FIELD_EVENT ${serial}`,
+      db.fieldEvent
+        .findFirst({
+          where: { kind: "field_modification", unit: { serial } },
+          select: { id: true },
+        })
+        .then((r) => r),
+    );
 
   // The two drive-torque samples over UCL — the breach evidence behind NCR-118.
   const torque = await db.spcSample.findMany({
@@ -110,6 +128,8 @@ export async function seedOntology(db: OrgScopedDb): Promise<number> {
   // resolve the shared nodes
   const NCR118 = await ncr(CODES.ncr); // NCR-118
   const NCR114 = await ncr("NCR-114");
+  const TR8841 = await testRun(CODES.testFail); // TR-8841 (the failing run)
+  const FE2208 = await fieldEventFor("SN-2208"); // the gripper-swap field mod
   const ECO318 = await eco(CODES.eco); // ECO-318 supersede
   const ECO316 = await eco("ECO-316"); // firmware torque comp
   const SERVO204 = await part(CODES.servoOld); // SERVO-204 actuator
@@ -208,6 +228,23 @@ export async function seedOntology(db: OrgScopedDb): Promise<number> {
       "ECO",
       ECO318,
       "contained by the supersede",
+    ),
+    // ── PLM.8: the deferred-tier nodes reach the graph (test run + field event) ──
+    E(
+      "NCR",
+      NCR118,
+      "CAUSED_BY",
+      "TEST_RUN",
+      TR8841,
+      "surfaced by the failing acceptance test",
+    ),
+    E(
+      "FIELD_EVENT",
+      FE2208,
+      "AFFECTS",
+      "UNIT",
+      await unit("SN-2208"),
+      "gripper swap changed the unit config",
     ),
   ];
 
