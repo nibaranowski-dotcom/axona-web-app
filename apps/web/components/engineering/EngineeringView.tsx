@@ -1,6 +1,13 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import {
+  Plus,
+  Boxes,
+  Layers,
+  GitPullRequestArrow,
+  FlaskConical,
+} from "lucide-react";
 import type { EngineeringData } from "@/lib/engineering";
 import { useUi } from "@/lib/ui-store";
 import { useCopilotSeed } from "@/lib/copilot-seed";
@@ -115,6 +122,13 @@ export function EngineeringView({
           {/* summary strip */}
           <StatStrip stats={stats} />
 
+          {/* PLM.V1 — the configuration-management entry-point band (Engineering is
+              the hub for the configuration + traceability screens). NOTE: the v8
+              Engineering.dc.html export does NOT include this band; it is an additive
+              nav surface (flagged for review). The band copy is engineering-facing
+              per the CRO ruling — it never leads with a category word. */}
+          <PlmHubBand demoChange={data.ecos[0]?.code ?? "ECO-318"} />
+
           <EcoTable ecos={data.ecos} canAdvance={data.canAdvance} />
 
           <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-[1.5fr_1fr]">
@@ -131,5 +145,70 @@ export function EngineeringView({
         </>
       )}
     </ScreenShell>
+  );
+}
+
+// PLM.V1 — the entry-point band into the configuration-management + traceability
+// surfaces (the PLM screens), reached from Engineering (the hub). Static nav.
+function PlmHubBand({ demoChange }: { demoChange: string }) {
+  const tiles = [
+    {
+      href: "/units",
+      icon: Boxes,
+      title: "Unit registry",
+      sub: "Which units run what · as-built",
+    },
+    {
+      href: "/configurations",
+      icon: Layers,
+      title: "Configurations",
+      sub: "Named baselines · lock & diff",
+    },
+    {
+      href: `/changes/${encodeURIComponent(demoChange)}`,
+      icon: GitPullRequestArrow,
+      title: "Change orders",
+      sub: "ECR → ECO · effectivity · rollout",
+    },
+    {
+      href: "/tests",
+      icon: FlaskConical,
+      title: "Test traceability",
+      sub: "Per-unit runs · config-at-test",
+    },
+  ];
+  return (
+    <section
+      aria-label="Configuration management and traceability"
+      className="rounded-card border border-line bg-paper px-5 py-4"
+    >
+      <div className="mb-3 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-faint">
+        Configuration management &amp; traceability
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {tiles.map((t) => (
+          <Link
+            key={t.href}
+            href={t.href}
+            className="group flex items-start gap-3 rounded-[11px] border border-line px-3.5 py-3 transition-colors hover:border-ink-strong hover:bg-panel-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <span
+              aria-hidden
+              className="inline-flex h-[30px] w-[30px] flex-none items-center justify-center rounded-[8px] bg-panel-2 text-ink"
+            >
+              <t.icon className="h-4 w-4" strokeWidth={1.7} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[13.5px] font-semibold text-ink">
+                {t.title}
+              </span>
+              <span className="mt-0.5 block truncate text-[11.5px] text-ink-muted">
+                {t.sub}
+              </span>
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
