@@ -43,6 +43,14 @@ async function run(): Promise<void> {
     ),
   );
 
+  // ENG.3 — the h1 leads with the function, never the category word "PLM" (CRO
+  // copy guardrail); matches the v8 design ("Engineering").
+  await check("h1 reads 'Engineering' (no leading category word)", () => {
+    const v = read(join(base, "components/engineering/EngineeringView.tsx"));
+    const h1 = /<h1[^>]*>\s*([^<]+?)\s*<\/h1>/.exec(v)?.[1] ?? "";
+    return h1 === "Engineering" && !/PLM/.test(h1);
+  });
+
   await check(
     "change orders is a TABLE (ECO·Change·Type·Affected·Stage)",
     () => {

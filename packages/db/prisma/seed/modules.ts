@@ -62,7 +62,9 @@ export const MODULES: Mod[] = [
   },
   {
     key: "engineering",
-    name: "Engineering & PLM",
+    // ENG.3 — the nav label leads with the function, never the category word "PLM"
+    // (CRO copy guardrail); matches the v8 design nav ("Engineering").
+    name: "Engineering",
     group: "ROBOTICS",
     orderIndex: 16,
   },

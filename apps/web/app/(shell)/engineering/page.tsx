@@ -7,7 +7,7 @@ import {
   type EngineeringScreenData,
 } from "@/components/engineering/EngineeringView";
 
-// /engineering (build-spec §4.18) — the Engineering & PLM screen: the ECO stage
+// /engineering (build-spec §4.18) — the Engineering screen: the ECO stage
 // board + the HW↔firmware compatibility matrix (signature artifacts) + firmware
 // releases. Data from ENG.1 getEngineeringData (org-scoped); release advance is
 // the role-gated server action. Static shell route → precedence over [module].

@@ -26,7 +26,7 @@ export interface EngineeringScreenData extends EngineeringData {
   canAdvance: boolean;
 }
 
-// The Engineering & PLM screen (ENG.2, matching Engineering.dc.html on the v2
+// The Engineering screen (ENG.2, matching Engineering.dc.html on the v2
 // shell): the change-orders table + the HW↔firmware compat matrix lead
 // (signature artifacts), then firmware releases + the agent trace. Read-only from
 // ENG.1; release advance is the role-gated server action. Engineering agents come
@@ -78,7 +78,7 @@ export function EngineeringView({
               Robotics · product platform
             </div>
             <h1 className="mt-0.5 text-[19px] font-semibold tracking-[-0.02em] text-ink">
-              Engineering &amp; PLM
+              Engineering
             </h1>
           </div>
           <div className="flex items-center gap-[14px]">

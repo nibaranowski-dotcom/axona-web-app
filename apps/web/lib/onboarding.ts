@@ -54,7 +54,7 @@ export const ONBOARDING_GROUPS: WizardGroup[] = [
     modules: [
       { key: "fleet", name: "Fleet", defaultOn: true },
       { key: "field-service", name: "Field Service", defaultOn: true },
-      { key: "engineering", name: "Engineering & PLM", defaultOn: true },
+      { key: "engineering", name: "Engineering", defaultOn: true },
       { key: "autonomy", name: "Autonomy", defaultOn: false },
     ],
   },
