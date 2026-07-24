@@ -1,7 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { Plus } from "lucide-react";
-import type { EdgeCache, InventoryData, LocationStock } from "@/lib/inventory";
+import type {
+  EdgeCache,
+  InventoryData,
+  LocationStock,
+  PartMasterRow,
+} from "@/lib/inventory";
 import { useUi } from "@/lib/ui-store";
 import { useCopilotSeed } from "@/lib/copilot-seed";
 import { StatStrip } from "@/components/shell/StatStrip";
@@ -18,6 +24,17 @@ export interface InventoryScreenData extends InventoryData {
 
 const PARTS_COLS =
   "grid grid-cols-[1.7fr_0.8fr_0.8fr_1.5fr_1.1fr] items-center gap-3";
+const PM_COLS =
+  "grid grid-cols-[1.3fr_1fr_1fr_0.9fr_1fr_0.9fr] items-center gap-3";
+
+// PLM.V6 lifecycle badge — sanctioned tokens only (ink for attention, success for
+// live). ncr_hold reads ink-strong (a hold needs to stand out; ink is the brand's
+// critical color — never an invented red).
+const LIFECYCLE_BADGE: Record<PartMasterRow["lifecycleTone"], string> = {
+  active: "bg-success-tint text-success",
+  eol: "bg-ink-strong text-on-dark",
+  hold: "bg-ink-strong text-on-dark",
+};
 
 // The Inventory & Warehouse screen (INV.2, matching Inventory.dc.html on the v2
 // shell): stat strip · stock-by-echelon · critical parts (cover vs build
@@ -246,6 +263,75 @@ export function InventoryView({
               </p>
             </section>
           </div>
+
+          {/* part master · lot traceability (PLM.V6) */}
+          {data.partMaster.length > 0 && (
+            <section className="shrink-0 overflow-hidden rounded-card border border-line bg-paper">
+              <div className="flex items-center justify-between px-5 pb-3 pt-[15px]">
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-[15px] font-semibold text-ink">
+                    Part master · lot traceability
+                  </h2>
+                  <span className="rounded-[5px] border border-line-panel bg-panel px-[7px] py-0.5 font-mono text-[9.5px] uppercase tracking-[0.04em] text-ink-muted">
+                    lot → units
+                  </span>
+                </div>
+                <Link
+                  href="/blast-radius?type=lot&value=88421"
+                  className="text-[12.5px] font-semibold text-ink underline decoration-line-strong underline-offset-2 transition-colors hover:decoration-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  Trace a lot →
+                </Link>
+              </div>
+              <div
+                className={`${PM_COLS} border-t border-line px-5 py-2.5 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted`}
+              >
+                <span>Part</span>
+                <span>Category</span>
+                <span>Vendors</span>
+                <span>Lifecycle</span>
+                <span>Lot</span>
+                <span>In units</span>
+              </div>
+              {data.partMaster.slice(0, 8).map((p) => (
+                <Link
+                  key={p.id}
+                  href={p.blastHref}
+                  className={`${PM_COLS} border-t border-line px-5 py-3 transition-colors hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent`}
+                >
+                  <div className="min-w-0">
+                    <div className="font-mono text-[12px] font-semibold text-ink">
+                      {p.partNumber}
+                    </div>
+                    <div className="mt-px truncate text-[10.5px] text-ink-faint">
+                      {p.name}
+                    </div>
+                  </div>
+                  <span className="text-[12px] text-ink-muted">
+                    {p.category}
+                  </span>
+                  <span className="text-[12px] text-ink-muted">
+                    {p.vendors}
+                  </span>
+                  <span>
+                    <span
+                      className={`inline-flex items-center rounded-[5px] px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.03em] ${LIFECYCLE_BADGE[p.lifecycleTone]}`}
+                    >
+                      {p.lifecycle}
+                    </span>
+                  </span>
+                  <span
+                    className={`font-mono text-[11px] ${p.lotQuarantine ? "font-semibold text-ink-strong" : "text-ink-muted"}`}
+                  >
+                    {p.lot ?? "—"}
+                  </span>
+                  <span className="font-mono text-[11.5px] font-semibold text-ink">
+                    {p.unitsInField}
+                  </span>
+                </Link>
+              ))}
+            </section>
+          )}
 
           {/* inv-orchestrator trace */}
           {trace.length > 0 && (

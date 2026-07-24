@@ -16,6 +16,7 @@ const EMPTY: InventoryScreenData = {
   criticalParts: [],
   stockByLocation: [],
   edgeCaches: [],
+  partMaster: [],
   rollup: {
     criticalCount: 0,
     reorderNeeded: 0,

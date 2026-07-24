@@ -1,5 +1,6 @@
 import { dbForOrg, paginateArgs, pageResult } from "@axona/db";
 import type { InventoryKind } from "@axona/db";
+import { affectedUnits } from "@axona/agents";
 
 // INV.1 — Inventory read/API layer (build-spec §4.11b, §6). Read-only over the
 // EXISTING Part + PurchaseOrder models plus the bounded INV.1 InventoryStock
@@ -72,11 +73,131 @@ export interface InventoryRollup {
   sparesNearFleet: number; // edge-cache on-hand
   totalValueUsd: number;
 }
+// PLM.V6 — part master + lot traceability. Part master attributes (lifecycle,
+// approved vendors, category) plus "which lot → which units", resolved through the
+// SAME affectedUnits façade PLM.5's blast radius uses (never a second traversal).
+export interface PartMasterRow {
+  id: string;
+  partNumber: string;
+  name: string;
+  category: string;
+  vendors: string; // "Vendor A" (1) · "N approved" (many)
+  lifecycle: string; // display label
+  lifecycleTone: "eol" | "active" | "hold";
+  lot: string | null; // a representative captured lot (the quarantined one wins)
+  lotQuarantine: boolean;
+  unitsInField: number; // units carrying this lot (via affectedUnits — PLM.5's façade)
+  blastHref: string; // trace this lot on /blast-radius
+}
+
 export interface InventoryData {
   criticalParts: CriticalPart[];
   stockByLocation: LocationStock[];
   edgeCaches: EdgeCache[];
   rollup: InventoryRollup;
+  partMaster: PartMasterRow[]; // PLM.V6
+}
+
+const QUARANTINE_LOT = "88421"; // the demo thread's suspect lot (NCR-118)
+
+function lifecycleDisplay(status: string): {
+  label: string;
+  tone: PartMasterRow["lifecycleTone"];
+} {
+  switch (status) {
+    case "active":
+      return { label: "Active", tone: "active" };
+    case "ncr_hold":
+      return { label: "NCR hold", tone: "hold" };
+    case "superseded":
+      return { label: "Superseded", tone: "eol" };
+    case "obsolete":
+      return { label: "Obsolete", tone: "eol" };
+    default:
+      return { label: status, tone: "hold" };
+  }
+}
+
+function vendorLabel(ids: string[]): string {
+  if (ids.length === 0) return "—";
+  if (ids.length === 1) return ids[0]!;
+  return `${ids.length} approved`;
+}
+
+/**
+ * Part master + lot traceability (PLM.V6): each part's lifecycle · approved
+ * vendors · category, plus a representative captured lot and HOW MANY deployed
+ * units carry it — resolved through `affectedUnits({ lot })`, the exact façade
+ * PLM.5's blast radius uses (lot 88421 → the affected units, one source of truth).
+ */
+export async function listPartMasterTrace(
+  orgId: string,
+): Promise<PartMasterRow[]> {
+  const db = dbForOrg(orgId);
+  const [parts, asBuilt] = await Promise.all([
+    db.partMaster.findMany({
+      orderBy: { partNumber: "asc" },
+      take: 200,
+      select: {
+        id: true,
+        partNumber: true,
+        description: true,
+        category: true,
+        lifecycleStatus: true,
+        approvedVendorIds: true,
+        revisions: { select: { id: true } },
+      },
+    }),
+    db.asBuiltRecord.findMany({
+      where: { lotCode: { not: null } },
+      select: { lotCode: true, partRevisionId: true },
+    }),
+  ]);
+
+  // lot codes captured against each part revision (as-built, never reconstructed)
+  const lotsByRev = new Map<string, string[]>();
+  for (const r of asBuilt) {
+    if (!r.lotCode) continue;
+    const list = lotsByRev.get(r.partRevisionId) ?? [];
+    if (!list.includes(r.lotCode)) list.push(r.lotCode);
+    lotsByRev.set(r.partRevisionId, list);
+  }
+
+  const rows: PartMasterRow[] = [];
+  for (const p of parts) {
+    const lots = p.revisions.flatMap((rev) => lotsByRev.get(rev.id) ?? []);
+    const lot = lots.includes(QUARANTINE_LOT)
+      ? QUARANTINE_LOT
+      : (lots[0] ?? null);
+    const lc = lifecycleDisplay(p.lifecycleStatus);
+    // lot → units through the SAME façade PLM.5 uses (as-built capture cohort).
+    const unitsInField = lot
+      ? (await affectedUnits(db, { lot })).units.length
+      : 0;
+    rows.push({
+      id: p.id,
+      partNumber: p.partNumber,
+      name: p.description,
+      category: p.category ?? "—",
+      vendors: vendorLabel(p.approvedVendorIds),
+      lifecycle: lc.label,
+      lifecycleTone: lc.tone,
+      lot,
+      lotQuarantine: lot === QUARANTINE_LOT,
+      unitsInField,
+      blastHref: lot
+        ? `/blast-radius?type=lot&value=${encodeURIComponent(lot)}`
+        : "/blast-radius",
+    });
+  }
+
+  // Traceable rows (a captured lot) lead; the quarantined lot first, then by reach.
+  rows.sort((a, b) => {
+    if (!!a.lot !== !!b.lot) return a.lot ? -1 : 1;
+    if (a.lotQuarantine !== b.lotQuarantine) return a.lotQuarantine ? -1 : 1;
+    return b.unitsInField - a.unitsInField;
+  });
+  return rows;
 }
 
 const coverStatus = (
@@ -105,6 +226,7 @@ const isFinishedUnit = (sku: string) => /-UNIT$/i.test(sku);
  */
 export async function getInventoryData(orgId: string): Promise<InventoryData> {
   const db = dbForOrg(orgId);
+  const partMasterP = listPartMasterTrace(orgId); // PLM.V6 (own dbForOrg scope)
   const [parts, stock] = await Promise.all([
     db.part.findMany({
       orderBy: { sku: "asc" },
@@ -240,6 +362,7 @@ export async function getInventoryData(orgId: string): Promise<InventoryData> {
     criticalParts,
     stockByLocation,
     edgeCaches,
+    partMaster: await partMasterP,
     rollup: {
       criticalCount: criticalParts.filter(
         (p) => p.status === "REORDER" || p.status === "WATCH",

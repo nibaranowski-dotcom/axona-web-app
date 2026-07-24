@@ -104,11 +104,15 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
   });
 
   // ── 2. Part masters + revisions ───────────────────────────────────────────
+  // PLM.V6 — approvedVendorIds carries anonymized vendor LABELS (SEED.1: no real
+  // marques). The inventory part-master table renders 1 → the label, >1 → "N
+  // approved". Multi-source parts (BATT-48V) show "2 approved".
   const mkPart = async (
     partNumber: string,
     description: string,
     category: string,
     lifecycleStatus: string,
+    approvedVendorIds: string[] = ["Vendor A"],
   ) =>
     db.partMaster.create({
       data: {
@@ -116,7 +120,7 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
         description,
         category,
         lifecycleStatus,
-        approvedVendorIds: [],
+        approvedVendorIds,
       },
     });
 
@@ -162,6 +166,7 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
     "Main wiring harness",
     "harness",
     "active",
+    ["Vendor B"],
   );
   const harnRevA = await db.partRevision.create({
     data: {
@@ -180,13 +185,20 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
     },
   });
 
-  const simpleParts: [string, string, string, string][] = [
-    ["SENS-12", "Vision sensor", "sensor", "2"],
-    ["BATT-48V", "48V battery pack", "power", "2"],
-    ["BMS-9", "Battery management board", "electronics", "4"],
-    ["CHASSIS-2", "Chassis frame", "structure", "B"],
-    ["CTRL-100", "Motion controller", "electronics", "A"],
-    ["GRIP-300", "Adaptive gripper", "end-effector", "A"],
+  // partNumber, description, category, rev, approvedVendorIds (anonymized labels).
+  const simpleParts: [string, string, string, string, string[]][] = [
+    ["SENS-12", "Vision sensor", "sensor", "2", ["Vendor A"]],
+    ["BATT-48V", "48V battery pack", "power", "2", ["Vendor A", "Vendor C"]],
+    ["BMS-9", "Battery management board", "electronics", "4", ["Vendor C"]],
+    ["CHASSIS-2", "Chassis frame", "structure", "B", ["Vendor D"]],
+    [
+      "CTRL-100",
+      "Motion controller",
+      "electronics",
+      "A",
+      ["Vendor A", "Vendor C"],
+    ],
+    ["GRIP-300", "Adaptive gripper", "end-effector", "A", ["Vendor B"]],
   ];
   // partNumber:rev → PartRevision id (the BOM + as-built both resolve through this)
   const revByKey = new Map<string, string>([
@@ -195,8 +207,14 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
     ["HARN-220:A", harnRevA.id],
     ["HARN-220:B", harnRevB.id],
   ]);
-  for (const [partNumber, description, category, rev] of simpleParts) {
-    const pm = await mkPart(partNumber, description, category, "active");
+  for (const [partNumber, description, category, rev, vendors] of simpleParts) {
+    const pm = await mkPart(
+      partNumber,
+      description,
+      category,
+      "active",
+      vendors,
+    );
     const pr = await db.partRevision.create({
       data: { partMasterId: pm.id, rev, effectiveFrom: revBFrom },
     });
