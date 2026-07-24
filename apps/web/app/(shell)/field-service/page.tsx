@@ -1,5 +1,6 @@
 import { dbForOrg } from "@axona/db";
 import { getCurrentUser } from "@/lib/session";
+import { hasRole } from "@/lib/rbac";
 import { getFieldServiceData } from "@/lib/field-service";
 import {
   FieldServiceView,
@@ -16,7 +17,10 @@ const EMPTY: FieldServiceScreenData = {
   technicians: [],
   board: [],
   sla: { open: 0, dueSoon: 0, breached: 0 },
+  fieldMods: [],
+  recordForm: { units: [], softwareReleases: [] },
   traceLines: [],
+  canRecord: false,
 };
 
 export default async function FieldServicePage() {
@@ -37,7 +41,8 @@ export default async function FieldServicePage() {
       ? (latestRun.trace as { ts?: string; kind?: string; text?: string }[])
       : [];
 
-    return <FieldServiceView data={{ ...field, traceLines }} />;
+    const canRecord = hasRole(user, ["OPS", "ADMIN", "ENGINEER", "TECH"]);
+    return <FieldServiceView data={{ ...field, traceLines, canRecord }} />;
   } catch {
     return <FieldServiceView data={EMPTY} error />;
   }

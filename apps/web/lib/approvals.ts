@@ -1,6 +1,8 @@
 import {
   dbForOrg,
   writeAudit,
+  applyFieldModification,
+  rejectFieldModification,
   type OrgScopedDb,
   type Role,
   type POStatus,
@@ -23,7 +25,8 @@ export type ApprovalKind =
   | "policy.rollback"
   | "creditnote.issue"
   | "workflow.gate"
-  | "config.lock"; // PLM.10 — baseline/lock a ConfigurationVersion
+  | "config.lock" // PLM.10 — baseline/lock a ConfigurationVersion
+  | "field.mod"; // PLM.V5 — approve a recorded field modification (applies the delta)
 
 export type Decision = "APPROVE" | "REJECT";
 
@@ -210,6 +213,40 @@ const REGISTRY: { [K in ApprovalKind]: ApprovalDef<unknown> } = {
       return {
         output: { status: "draft", name: cfg.name },
         summary: `configuration ${cfg.name} lock declined`,
+      };
+    },
+  } as ApprovalDef<unknown>,
+
+  // PLM.V5 — approve a recorded field modification. The pending FieldEvent IS the
+  // decide() target (a human tech proposed it; an engineer/ops approves). onApprove
+  // APPLIES the config delta (new UnitSoftwareState / as-built delta) so
+  // resolveConfigAt(now) moves forward; the event's frozen snapshot is untouched.
+  "field.mod": {
+    kind: "field.mod",
+    roles: ["ENGINEER", "OPS", "ADMIN"],
+    targetType: "FieldEvent",
+    load: (db, _org, id) => db.fieldEvent.findFirst({ where: { id } }),
+    isPending: (e) =>
+      (e as { kind: string; state: string }).kind === "field_modification" &&
+      (e as { state: string }).state === "pending",
+    onApprove: async (db, _org, t, by) => {
+      const ev = t as { id: string; summary: string; effect: string | null };
+      const res = await applyFieldModification(db, ev.id, { id: by.id });
+      return {
+        output: {
+          status: "approved",
+          changedConfig: res.changedConfig,
+          effect: ev.effect,
+        },
+        summary: res.summary,
+      };
+    },
+    onReject: async (db, _org, t, by) => {
+      const ev = t as { id: string; summary: string };
+      await rejectFieldModification(db, ev.id, { id: by.id });
+      return {
+        output: { status: "rejected" },
+        summary: `field modification rejected — ${ev.summary}`,
       };
     },
   } as ApprovalDef<unknown>,

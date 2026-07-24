@@ -665,21 +665,80 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
       });
     }
 
-    // A field modification: gripper swap at Site-3 — recorded + approved. Config
-    // drifts in the field; the snapshot freezes the config as it was at the swap.
+    // PLM.V5 — field modifications: config drifts in the field and nobody records
+    // it (the most commonly missed PLM path). An APPROVED mod has already moved the
+    // unit's resolved config forward; a PENDING one awaits a human approver
+    // (decide("field.mod")). The frozen snapshot freezes the config as it was at
+    // the event — a later mod never alters a prior snapshot. Seed a populated
+    // table (mock richness) — an approved gripper swap on the hero unit plus a
+    // pending battery swap and an approved sensor replacement across the fleet.
     const fieldAt = new Date(now.getTime() - 6 * DAY);
     const admin = await db.user.findFirst({ where: { role: "ADMIN" } });
     await db.fieldEvent.create({
       data: {
         unitId: sn2208.id,
         kind: "field_modification",
-        summary:
-          "Gripper swap at Site-3 (GRIP-300 rev A → rev B) — recorded + approved",
+        summary: "Gripper swap at Site-3",
         occurredAt: fieldAt,
         configSnapshot: await freezeConfigSnapshot(db, sn2208.id, fieldAt),
+        state: "approved",
+        effect: "GRIP-300 → rev B",
+        techLabel: "K. Tanaka",
         approvedById: admin?.id ?? null,
       },
     });
+
+    // Two more across other deployed units so /field-service renders as populated
+    // as `Field Service.dc.html` (1 pending, 2 approved). proposedChange is left
+    // null on these display rows — approving one is safe (no delta to apply);
+    // the live record→approve path is exercised end-to-end by verify:plm-v5.
+    const deployedSerials = [...robotBySerial.keys()].filter(
+      (s) => s !== "SN-2208",
+    );
+    const moreMods: {
+      serial: string | undefined;
+      summary: string;
+      effect: string;
+      tech: string;
+      state: string;
+      daysAgo: number;
+    }[] = [
+      {
+        serial: deployedSerials[0],
+        summary: "Battery pack swap",
+        effect: "BATT-48V · lot 7741 → 9920",
+        tech: "M. Osei",
+        state: "pending",
+        daysAgo: 0,
+      },
+      {
+        serial: deployedSerials[1],
+        summary: "Proximity sensor replacement",
+        effect: "SENS-12 → rev 3",
+        tech: "A. Brandt",
+        state: "approved",
+        daysAgo: 3,
+      },
+    ];
+    for (const m of moreMods) {
+      if (!m.serial) continue;
+      const u = unitBySerial.get(m.serial);
+      if (!u) continue;
+      const at = new Date(now.getTime() - m.daysAgo * DAY - 3 * 3600 * 1000);
+      await db.fieldEvent.create({
+        data: {
+          unitId: u.id,
+          kind: "field_modification",
+          summary: m.summary,
+          occurredAt: at,
+          configSnapshot: await freezeConfigSnapshot(db, u.id, at),
+          state: m.state,
+          effect: m.effect,
+          techLabel: m.tech,
+          approvedById: m.state === "approved" ? (admin?.id ?? null) : null,
+        },
+      });
+    }
 
     // The ECR that originated ECO-318 (the upstream "why"), linked to the ECO.
     if (eco) {

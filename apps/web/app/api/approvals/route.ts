@@ -13,6 +13,7 @@ const KINDS: ApprovalKind[] = [
   "policy.rollback",
   "creditnote.issue",
   "workflow.gate",
+  "field.mod",
 ];
 
 export async function POST(req: Request) {

@@ -23,3 +23,13 @@ export {
   type CaptureInput,
   type CaptureResult,
 } from "./capture";
+export {
+  recordFieldModification,
+  applyFieldModification,
+  rejectFieldModification,
+  effectLabel,
+  type FieldModChange,
+  type RecordFieldModInput,
+  type RecordFieldModResult,
+  type ApplyFieldModResult,
+} from "./field-modification";

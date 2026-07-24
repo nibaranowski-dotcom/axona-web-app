@@ -1658,6 +1658,20 @@ model FieldEvent {
   configSnapshot Json
   approvedById   String?
   createdAt      DateTime       @default(now())
+  /// PLM.V5 — the approval lifecycle of a field_modification: pending | approved |
+  /// rejected. Non-modification events (fault/maintenance/repair) are immutable
+  /// history and stay "recorded" (the default). Only an approved modification
+  /// applies its config delta → resolveConfigAt(now) changes.
+  state          String         @default("recorded")
+  /// PLM.V5 — human-readable config effect ("SERVO-204 rev A → rev B"). Null for a
+  /// non-modification event.
+  effect         String?
+  /// PLM.V5 — the machine-readable delta applied on approval (hw part swap · sw
+  /// update · calibration). Read only by applyFieldModification; never a live query.
+  proposedChange Json?
+  /// PLM.V5 — the technician who performed the field change (display label; the
+  /// on-site actor need not be an Axona User).
+  techLabel      String?
 
   @@index([orgId, unitId])
 }

@@ -10,11 +10,13 @@ import {
 } from "@/components/shell/TraceConsole";
 import { DispatchBoard } from "./DispatchBoard";
 import { WorkOrderQueue } from "./WorkOrderQueue";
+import { FieldModifications } from "./FieldModifications";
 import { StatStrip } from "@/components/shell/StatStrip";
 import { ScreenShell, ScreenMessage } from "@/components/shell/ScreenShell";
 
 export interface FieldServiceScreenData extends FieldServiceData {
   traceLines: { ts?: string; kind?: string; text?: string }[];
+  canRecord: boolean; // RBAC — may this user record a field modification (PLM.V5)
 }
 
 // The Field Service & Maintenance screen (FIELD.2, matching Field Service.dc.html
@@ -115,6 +117,12 @@ export function FieldServiceView({
           <StatStrip stats={stats} />
 
           <DispatchBoard board={data.board} />
+
+          <FieldModifications
+            rows={data.fieldMods}
+            recordForm={data.recordForm}
+            canRecord={data.canRecord}
+          />
 
           <WorkOrderQueue
             workOrders={data.workOrders}
