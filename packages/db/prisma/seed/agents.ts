@@ -3,8 +3,28 @@ import type { OrgScopedDb } from "../../src";
 // ~6 agents per agent-bearing module (build-spec §4 rosters). These power the
 // Agents screen, chats, and traces. code = "<prefix>-NN"; roles/descriptions are
 // the spec's real agent set (not placeholders).
+//
+// AGT.3 — the PLM config-management + traceability specialists join the base
+// Engineering/Quality/Manufacturing/Inventory rosters (so every org, incl. the
+// investor demo, gets them). Each carries an ENFORCED guardrail that pins
+// autoAct:false — it DRAFTS/monitors only; a human approves via decide() (RBAC.4).
 
-type AgentDef = { role: string; description: string };
+type AgentDef = {
+  role: string;
+  description: string;
+  /** Explicit display name (else derived from role). */
+  name?: string;
+  /** AGT.3 — enforced guardrail (the moat invariant). autoAct:false = never acts. */
+  guardrails?: Record<string, unknown>;
+};
+
+/** A no-auto-act guardrail: draft/monitor only, human approves via decide(). */
+const noAutoAct = (mode: "draft" | "monitor", never: string[]) => ({
+  autoAct: false,
+  mode,
+  approval: "human-via-decide",
+  never,
+});
 
 const ROSTER: Record<string, { prefix: string; agents: AgentDef[] }> = {
   procurement: {
@@ -57,6 +77,14 @@ const ROSTER: Record<string, { prefix: string; agents: AgentDef[] }> = {
         description: "Stages parts/kits ahead of each station.",
       },
       { role: "PM", description: "Plans preventive maintenance windows." },
+      // AGT.3 — PLM as-built genealogy specialist (capture only, never fabricates).
+      {
+        role: "AS_BUILT_GENEALOGY",
+        name: "As-built genealogy agent",
+        description:
+          "Captures as-built genealogy at build (parts·serials·firmware) and flags substitutions vs the as-designed BOM — never fabricates a record.",
+        guardrails: noAutoAct("draft", ["auto_substitute", "auto_capture"]),
+      },
     ],
   },
   inventory: {
@@ -79,6 +107,14 @@ const ROSTER: Record<string, { prefix: string; agents: AgentDef[] }> = {
       {
         role: "EDGE_CACHE",
         description: "Pre-positions spares near the fleet.",
+      },
+      // AGT.3 — PLM lot-traceability specialist (monitor only, never quarantines).
+      {
+        role: "LOT_TRACEABILITY",
+        name: "Lot-traceability agent",
+        description:
+          "Resolves a production lot to the exact units that carry it and its quarantine reach across factories — proposes containment; a human decides.",
+        guardrails: noAutoAct("monitor", ["auto_quarantine", "auto_hold"]),
       },
     ],
   },
@@ -122,6 +158,22 @@ const ROSTER: Record<string, { prefix: string; agents: AgentDef[] }> = {
       {
         role: "COMPLIANCE",
         description: "Keeps CE/UL/ISO evidence audit-ready.",
+      },
+      // AGT.3 — PLM test-traceability + RCA specialists (draft only; the agent
+      // NEVER auto-classifies — a human confirms the cause).
+      {
+        role: "TEST_TRACEABILITY",
+        name: "Test-traceability agent",
+        description:
+          "Links each test run to its exact unit + frozen config and flags config→outcome deltas between a pass and a fail — assistance only.",
+        guardrails: noAutoAct("monitor", ["auto_classify", "auto_pass_fail"]),
+      },
+      {
+        role: "RCA",
+        name: "Root-cause agent",
+        description:
+          "Proposes candidate root causes from config diffs, shared lots and MEM.1 recall of prior failures — with calibrated confidence; a human classifies.",
+        guardrails: noAutoAct("draft", ["auto_classify_rca"]),
       },
     ],
   },
@@ -214,6 +266,25 @@ const ROSTER: Record<string, { prefix: string; agents: AgentDef[] }> = {
       { role: "IMPACT", description: "Assesses change impact across modules." },
       { role: "REQUIREMENTS", description: "Tracks requirements to changes." },
       { role: "CAD_CONFIG", description: "Manages CAD/config variants." },
+      // AGT.3 — PLM configuration + change-order specialists. Draft only: the
+      // config agent NEVER auto-baselines; the change agent NEVER auto-releases.
+      {
+        role: "CONFIGURATION",
+        name: "Configuration agent",
+        description:
+          "Drafts and validates named production config baselines and surfaces which units match a baseline — a human locks it via decide().",
+        guardrails: noAutoAct("draft", ["auto_baseline", "auto_lock"]),
+      },
+      {
+        role: "CHANGE_ORDER",
+        name: "Change-order agent",
+        description:
+          "Drafts an ECR→ECO with effectivity and computes the affected-units rollout across factories — a human releases it via decide().",
+        guardrails: noAutoAct("draft", [
+          "auto_release_eco",
+          "auto_effectivity",
+        ]),
+      },
     ],
   },
   autonomy: {
@@ -350,17 +421,21 @@ export async function seedAgents(db: OrgScopedDb): Promise<number> {
     let i = 1;
     for (const a of agents) {
       const code = `${prefix}-${String(i).padStart(2, "0")}`;
-      const name = `${a.role
-        .toLowerCase()
-        .replace(/_/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase())} agent`;
+      const name =
+        a.name ??
+        `${a.role
+          .toLowerCase()
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase())} agent`;
       await db.agent.create({
         data: {
+          orgId: db.$org,
           moduleKey,
           name,
           code,
           role: a.role,
           description: a.description,
+          guardrails: (a.guardrails ?? undefined) as never,
         },
       });
       count++;
@@ -373,6 +448,7 @@ export async function seedAgents(db: OrgScopedDb): Promise<number> {
   // db→agents dependency). getAxonaAgent() also ensures this row idempotently.
   await db.agent.create({
     data: {
+      orgId: db.$org,
       moduleKey: "core",
       name: "Axona agent",
       code: "axona-00",

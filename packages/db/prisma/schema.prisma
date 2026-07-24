@@ -392,6 +392,11 @@ model Agent {
   role        String // "SOURCING"
   description String // one-liner: what it does
   state       AgentState @default(LIVE)
+  /// AGT.3 — enforced guardrail config (the moat invariant "guardrails.config is
+  /// enforced data"). For the PLM specialists this pins `autoAct:false` so the
+  /// agent DRAFTS/monitors only; a human approves via decide() (RBAC.4). Null =
+  /// the legacy permissive seam (unchanged for existing agents).
+  guardrails  Json?
   runs        AgentRun[]
 
   draftedPurchaseOrders PurchaseOrder[] // POs this agent drafted (PurchaseOrder.draftedByAgentId)

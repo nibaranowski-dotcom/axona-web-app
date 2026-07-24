@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/shell/Sidebar";
 import { AgentPane, type PaneAgent } from "@/components/shell/AgentPane";
 import { CommandPaletteMount } from "@/components/search/CommandPaletteMount";
 import { getNavModules } from "@/lib/nav";
+import { owningModuleFor } from "@/lib/plm-routes";
 import { getModuleAlerts } from "@/lib/module-alerts";
 import { getCurrentUser } from "@/lib/session";
 import { getOrgOnboarding, isModuleEnabled } from "@/lib/onboarding";
@@ -44,17 +45,14 @@ export default async function ShellLayout({
     "search",
     "notifications",
   ]);
-  // PLM.2–5 — the PLM screens are Engineering screens that live at top-level
-  // routes (a unit is a first-class object, not a sub-page of a module). They
-  // are gated WITH Engineering, not exempted: disabling Engineering must take
-  // the unit registry and blast radius with it.
-  const PLM_ROUTE_MODULE: Record<string, string> = {
-    units: "engineering",
-    "blast-radius": "engineering",
-  };
+  // PLM.2–5 / AGT.3 — the PLM screens are Engineering/Quality screens at top-level
+  // routes (a unit/config/test/RCA/change is a first-class object, not a module
+  // sub-page). They gate WITH their owning module (disabling Engineering takes the
+  // unit registry / configs / blast radius / changes with it; Quality takes
+  // tests / rca). The owning-module map is shared with the AgentPane (lib/plm-routes).
   const pathname = headers().get("x-pathname") ?? "";
   const seg = pathname.split("/").filter(Boolean)[0] ?? "core";
-  const moduleKey = PLM_ROUTE_MODULE[seg] ?? (seg === "" ? "core" : seg);
+  const moduleKey = owningModuleFor(pathname);
   const routeDisabled =
     !!user &&
     !NON_MODULE_ROUTES.has(seg) &&

@@ -8,6 +8,7 @@ import { useMounted, useUi } from "@/lib/ui-store";
 import { AgentRail } from "./AgentRail";
 import { PaneChat } from "./PaneChat";
 import { suggestionsFor } from "@/lib/agent-suggestions";
+import { owningModuleFor } from "@/lib/plm-routes";
 
 // The shared right agent pane (Axona v2) — resizable (drag the left handle) and
 // collapsible to a rail; width + collapsed persist via the UI store (FND.13).
@@ -51,7 +52,10 @@ export function AgentPane({
   const draggingRef = useRef(false);
   const pathname = usePathname();
 
-  const moduleKey = pathname.split("/")[1] || "core";
+  // AGT.3 — PLM sub-app routes (/units, /configurations, /blast-radius, /changes,
+  // /tests, /rca) inherit their OWNING module's roster (Engineering / Quality) so
+  // the module's specialists are reachable inside the sub-app, not just the hub.
+  const moduleKey = owningModuleFor(pathname);
   const moduleAgents = agentsByModule[moduleKey] ?? [];
   const moduleMode = moduleKey !== "core" && moduleAgents.length > 0;
 
