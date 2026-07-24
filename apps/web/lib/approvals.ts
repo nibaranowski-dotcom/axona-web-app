@@ -22,7 +22,8 @@ export type ApprovalKind =
   | "eco.release"
   | "policy.rollback"
   | "creditnote.issue"
-  | "workflow.gate";
+  | "workflow.gate"
+  | "config.lock"; // PLM.10 — baseline/lock a ConfigurationVersion
 
 export type Decision = "APPROVE" | "REJECT";
 
@@ -179,6 +180,36 @@ const REGISTRY: { [K in ApprovalKind]: ApprovalDef<unknown> } = {
       return {
         output: { status: pol.state },
         summary: `policy ${pol.version} rollback rejected`,
+      };
+    },
+  } as ApprovalDef<unknown>,
+
+  // PLM.10 — lock/baseline a ConfigurationVersion. A locked config is IMMUTABLE:
+  // isPending is false once lockedAt is set, so decide() refuses a second lock, and
+  // the app offers no edit path. Gated (ENGINEER/ADMIN) + audited via decide().
+  "config.lock": {
+    kind: "config.lock",
+    roles: ["ENGINEER", "ADMIN"],
+    targetType: "ConfigurationVersion",
+    load: (db, _org, id) =>
+      db.configurationVersion.findFirst({ where: { id } }),
+    isPending: (c) => (c as { lockedAt: Date | null }).lockedAt === null,
+    onApprove: async (db, _org, t, by) => {
+      const cfg = t as { id: string; name: string };
+      await db.configurationVersion.updateMany({
+        where: { id: cfg.id },
+        data: { lockedAt: new Date(), lockedById: by.id, isBaseline: true },
+      });
+      return {
+        output: { status: "locked", name: cfg.name },
+        summary: `configuration ${cfg.name} locked as a baseline`,
+      };
+    },
+    onReject: async (_db, _org, t) => {
+      const cfg = t as { name: string };
+      return {
+        output: { status: "draft", name: cfg.name },
+        summary: `configuration ${cfg.name} lock declined`,
       };
     },
   } as ApprovalDef<unknown>,
