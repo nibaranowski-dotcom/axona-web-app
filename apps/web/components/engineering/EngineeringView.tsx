@@ -127,7 +127,7 @@ export function EngineeringView({
               Engineering.dc.html export does NOT include this band; it is an additive
               nav surface (flagged for review). The band copy is engineering-facing
               per the CRO ruling — it never leads with a category word. */}
-          <PlmHubBand demoChange={data.ecos[0]?.code ?? "ECO-318"} />
+          <PlmHubBand changeCode={data.ecos[0]?.code ?? null} />
 
           <EcoTable ecos={data.ecos} canAdvance={data.canAdvance} />
 
@@ -150,7 +150,7 @@ export function EngineeringView({
 
 // PLM.V1 — the entry-point band into the configuration-management + traceability
 // surfaces (the PLM screens), reached from Engineering (the hub). Static nav.
-function PlmHubBand({ demoChange }: { demoChange: string }) {
+function PlmHubBand({ changeCode }: { changeCode: string | null }) {
   const tiles = [
     {
       href: "/units",
@@ -165,7 +165,10 @@ function PlmHubBand({ demoChange }: { demoChange: string }) {
       sub: "Named baselines · lock & diff",
     },
     {
-      href: `/changes/${encodeURIComponent(demoChange)}`,
+      // data-driven: the first open ECO (falls back to the module screen when none).
+      href: changeCode
+        ? `/changes/${encodeURIComponent(changeCode)}`
+        : "/engineering",
       icon: GitPullRequestArrow,
       title: "Change orders",
       sub: "ECR → ECO · effectivity · rollout",
