@@ -2062,3 +2062,32 @@ mutation earlier in the chain — orthogonal to HOUSE.1, skips in CI.
   stories marked `done`; the `self-clean` guard exists and is imported by the previously-leaking verify scripts;
   this provisioning note is present.
 - CI gate: install (frozen) · lint · turbo typecheck · verify:all · `pnpm build`.
+
+## EVAL.1 — agent & prompt evaluation harness
+
+The eval harness regression-tests agent *behavior* — tool selection, structured-output robustness,
+grounding/no-fabrication, and the moat headline behaviors (blast radius · memory recall · calibrated
+confidence) — plus a prompt-contract case that fails if the Axona system prompt drops its cite /
+recall-precedent / no-fabrication / read-and-route instructions.
+
+**Offline tier (the gate — automated, no key).**
+```
+DATABASE_URL=postgresql://axona:axona@localhost:5432/axona pnpm eval
+```
+Deterministic: scripts the `FakeModelClient` to drive the REAL runtime + REAL tools against the seeded
+golden thread, asserts the tool loop + real tool output (not model prose), and exits non-zero on any
+regression. Needs the seeded demo data; without `DATABASE_URL` it skips cleanly (exit 0). Runs in CI as
+its own `eval` job (seeded Postgres → `pnpm eval`); `verify:eval-1` (in `verify:all`) covers the wiring +
+a functional green run. The harness creates an ephemeral `org_eval_ephemeral` fixture and deletes it on
+teardown (self-clean).
+
+**Live tier (opt-in — real model, NOT in CI).** Exercises real tool-selection + grounding against the
+Anthropic API. Requires a real key and the opt-in flag; never runs in the default gate:
+```
+EVAL_LIVE=1 ANTHROPIC_API_KEY=sk-... DATABASE_URL=postgresql://axona:axona@localhost:5432/axona pnpm eval
+```
+LIVE-1 asserts the real model calls `getBlastRadius` for a blast-radius question; LIVE-2 asserts the answer
+grounds in the NCR-114 precedent.
+
+**Prove it catches a regression:** drop the recall-precedent line from `axonaSystemPrompt()` →
+`pnpm eval` fails `OFF-8` (naming the missing contract) with exit 1; restore it → green.

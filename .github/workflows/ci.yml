@@ -141,3 +141,54 @@ jobs:
           echo "── real scan: fail on any NEW serious/critical ──"
           pnpm a11y:scan
           kill "$APP_PID" 2>/dev/null || true
+
+  # EVAL.1 — the offline agent/prompt eval gate. Runs the scenario set with the
+  # FakeModelClient (deterministic, no API key) against a seeded Postgres, so it
+  # asserts the REAL tool loop + real tool output on the golden thread and fails on
+  # any behavioral regression (a dropped prompt contract, an unwired tool, a broken
+  # fallback). The live tier (EVAL_LIVE=1 + a real key) is opt-in and never runs here.
+  eval:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://axona:axona@localhost:5432/axona
+      AUTH_SECRET: ci-dummy-secret-not-used-for-real-sessions-0123456789
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: axona
+          POSTGRES_PASSWORD: axona
+          POSTGRES_DB: axona
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U axona -d axona"
+          --health-interval 10s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @axona/db db:generate
+
+      - name: Apply migrations
+        run: pnpm --filter @axona/db exec prisma migrate deploy
+
+      - name: Seed the demo data
+        run: pnpm --filter @axona/db db:seed
+
+      - name: Run the offline eval gate
+        run: pnpm eval
