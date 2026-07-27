@@ -15,9 +15,10 @@ import {
   Settings,
   ShieldCheck,
 } from "lucide-react";
-import type { NavGroup } from "@/lib/nav";
+import { isNavItemActive, type NavGroup } from "@/lib/nav";
 import { useMounted, useUi } from "@/lib/ui-store";
 import { NavSection } from "./NavSection";
+import { moduleIcon } from "./module-icons";
 
 export interface SidebarUser {
   name: string;
@@ -74,22 +75,35 @@ export function Sidebar({
 
   // Hydration-safe: first paint = expanded (matches the server), then reflect
   // the persisted collapse state.
+  //
+  // UX.14 — the collapsed rail keeps ICON-ONLY module nav: every visible module is
+  // reachable without expanding (Lucide icon + aria-label + hover tooltip), the
+  // active module gets the same panel fill the expanded nav uses, and per-module
+  // alert counts collapse to a small accent dot. Search + expand toggle stay at the
+  // top; the identity/UX.7 menu stays reachable at the bottom (icon-triggered).
   if (mounted && collapsed) {
     return (
       <nav
         aria-label="Primary"
         className="flex h-dvh w-[60px] flex-none flex-col items-center border-r border-line bg-paper py-[18px]"
       >
-        <span
-          aria-hidden
-          className="h-3 w-3 flex-none bg-ink-strong"
-          style={{ borderRadius: "0 7px 0 7px" }}
-        />
+        <Link
+          href="/launcher"
+          aria-label={`${org?.name ?? "Axona"} — Mission Control`}
+          className="flex-none rounded-[7px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          <span
+            aria-hidden
+            className="block h-3 w-3 bg-ink-strong"
+            style={{ borderRadius: "0 7px 0 7px" }}
+          />
+        </Link>
         <button
           type="button"
           onClick={toggleSidebar}
           aria-label="Expand sidebar"
-          className="mt-4 flex h-7 w-7 items-center justify-center rounded-[7px] border border-line text-ink-muted transition-colors hover:bg-panel hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          title="Expand sidebar"
+          className="mt-4 flex h-7 w-7 flex-none items-center justify-center rounded-[7px] border border-line text-ink-muted transition-colors hover:bg-panel hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <PanelLeftOpen className="h-4 w-4" strokeWidth={1.7} aria-hidden />
         </button>
@@ -97,10 +111,63 @@ export function Sidebar({
           type="button"
           onClick={goToSearch}
           aria-label="Search"
-          className="mt-2 flex h-7 w-7 items-center justify-center rounded-[7px] border border-line-strong text-ink-muted transition-colors hover:bg-panel hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          title="Search"
+          className="mt-2 flex h-7 w-7 flex-none items-center justify-center rounded-[7px] border border-line-strong text-ink-muted transition-colors hover:bg-panel hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <Search className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
         </button>
+
+        {/* Icon-only module nav — every visible module reachable (scrolls if tall) */}
+        <div className="mt-3 flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto border-t border-line pt-3">
+          {navGroups.map((g, gi) => (
+            <div
+              key={g.group}
+              className={`flex flex-col items-center gap-1 ${gi > 0 ? "mt-2 border-t border-line pt-2" : ""}`}
+            >
+              {g.modules.map((m) => {
+                const active = isNavItemActive(pathname, m.href);
+                const badge = alerts[m.key] ?? 0;
+                const Icon = moduleIcon(m.key);
+                return (
+                  <Link
+                    key={m.key}
+                    href={m.href}
+                    aria-label={
+                      badge > 0 ? `${m.name}, ${badge} alerts` : m.name
+                    }
+                    aria-current={active ? "page" : undefined}
+                    title={m.name}
+                    className={`relative flex h-9 w-9 flex-none items-center justify-center rounded-[8px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                      active
+                        ? "bg-panel text-ink"
+                        : "text-ink-muted hover:bg-panel hover:text-ink"
+                    }`}
+                  >
+                    <Icon
+                      className="h-[18px] w-[18px]"
+                      strokeWidth={1.7}
+                      aria-hidden
+                    />
+                    {badge > 0 && (
+                      <span
+                        aria-hidden
+                        className="absolute right-[5px] top-[5px] h-[7px] w-[7px] rounded-full border border-paper bg-accent"
+                      />
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+
+        {/* Identity/UX.7 menu — reachable from the rail (icon-triggered) */}
+        <UserMenu
+          user={user}
+          unreadCount={unreadCount}
+          pathname={pathname}
+          collapsed
+        />
       </nav>
     );
   }
@@ -200,10 +267,14 @@ function UserMenu({
   user,
   unreadCount,
   pathname,
+  collapsed = false,
 }: {
   user?: SidebarUser | null;
   unreadCount: number;
   pathname: string;
+  // UX.14 — collapsed rail: an avatar-only trigger + a fixed-width upward popover
+  // (the same UX.7 menu items) so audit/notifications/settings/sign-out stay reachable.
+  collapsed?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -246,14 +317,19 @@ function UserMenu({
   const close = () => setOpen(false);
 
   return (
-    <div ref={containerRef} className="relative mt-2">
+    <div
+      ref={containerRef}
+      className={collapsed ? "relative mt-2 flex-none" : "relative mt-2"}
+    >
       {open && (
         <div
           ref={menuRef}
           id={menuId}
           role="menu"
           aria-label="Account menu"
-          className="absolute bottom-[calc(100%+8px)] left-0 right-0 z-30 flex flex-col gap-0.5 rounded-card border border-line-strong bg-paper p-2 shadow-[0_-8px_28px_-12px_rgba(10,10,10,0.28)]"
+          className={`absolute bottom-[calc(100%+8px)] left-0 z-30 flex flex-col gap-0.5 rounded-card border border-line-strong bg-paper p-2 shadow-[0_-8px_28px_-12px_rgba(10,10,10,0.28)] ${
+            collapsed ? "w-[236px]" : "right-0"
+          }`}
         >
           <Link
             href="/audit"
@@ -338,43 +414,59 @@ function UserMenu({
         </div>
       )}
 
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={open ? menuId : undefined}
-        className="flex w-full items-center gap-[10px] border-t border-line px-2 pb-0.5 pt-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-      >
-        <span
-          aria-hidden
-          className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-accent text-[11px] font-bold text-accent-ink"
+      {collapsed ? (
+        <button
+          ref={buttonRef}
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-controls={open ? menuId : undefined}
+          aria-label="Account menu"
+          title={user?.name ?? "Account"}
+          className="mt-3 flex h-9 w-9 flex-none items-center justify-center rounded-full border-t border-line bg-accent text-[11px] font-bold text-accent-ink transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           {initials(user?.name)}
-        </span>
-        <span className="min-w-0 flex-1 text-[12.5px] leading-[1.3]">
-          <span className="block truncate font-semibold text-ink">
-            {user?.name ?? "Signed in"}
-          </span>
-          <span className="block truncate text-ink-muted">
-            {roleLabel(user?.role)}
-          </span>
-        </span>
-        {open ? (
-          <ChevronDown
-            className="h-4 w-4 flex-none text-ink-muted"
-            strokeWidth={1.7}
+        </button>
+      ) : (
+        <button
+          ref={buttonRef}
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-controls={open ? menuId : undefined}
+          className="flex w-full items-center gap-[10px] border-t border-line px-2 pb-0.5 pt-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          <span
             aria-hidden
-          />
-        ) : (
-          <ChevronUp
-            className="h-4 w-4 flex-none text-ink-muted"
-            strokeWidth={1.7}
-            aria-hidden
-          />
-        )}
-      </button>
+            className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-accent text-[11px] font-bold text-accent-ink"
+          >
+            {initials(user?.name)}
+          </span>
+          <span className="min-w-0 flex-1 text-[12.5px] leading-[1.3]">
+            <span className="block truncate font-semibold text-ink">
+              {user?.name ?? "Signed in"}
+            </span>
+            <span className="block truncate text-ink-muted">
+              {roleLabel(user?.role)}
+            </span>
+          </span>
+          {open ? (
+            <ChevronDown
+              className="h-4 w-4 flex-none text-ink-muted"
+              strokeWidth={1.7}
+              aria-hidden
+            />
+          ) : (
+            <ChevronUp
+              className="h-4 w-4 flex-none text-ink-muted"
+              strokeWidth={1.7}
+              aria-hidden
+            />
+          )}
+        </button>
+      )}
     </div>
   );
 }

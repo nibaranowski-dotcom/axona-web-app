@@ -73,6 +73,24 @@ async function visit(page: Page, path: string): Promise<void> {
   await page.waitForTimeout(700);
 }
 
+// UX.14 — collapse the left sidebar to its icon rail (click the toggle, then let
+// the rail settle) so axe scans the collapsed state.
+async function collapseSidebar(page: Page): Promise<void> {
+  const btn = page.getByRole("button", { name: "Collapse sidebar" });
+  if ((await btn.count()) > 0) {
+    await btn.first().click();
+    await page
+      .waitForSelector(
+        'nav[aria-label="Primary"] a[aria-label="Command Center"]',
+        {
+          timeout: 5_000,
+        },
+      )
+      .catch(() => undefined);
+    await page.waitForTimeout(300);
+  }
+}
+
 async function analyze(page: Page): Promise<AxeViolation[]> {
   const results = await new AxeBuilder({ page }).analyze();
   return results.violations as unknown as AxeViolation[];
@@ -139,6 +157,10 @@ async function main(): Promise<void> {
     }
     try {
       await visit(page, route.path);
+      // UX.14 — scan the collapsed icon rail: click "Collapse sidebar" after load
+      // (mutates the store directly — no localStorage/init-script fight). The next
+      // route's navigation re-hydrates expanded, so the state never leaks forward.
+      if (route.collapseSidebar) await collapseSidebar(page);
       const violations = await analyze(page);
       const counts: Record<string, number> = {};
       for (const v of violations) {

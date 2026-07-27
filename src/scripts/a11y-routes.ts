@@ -12,6 +12,8 @@ export interface A11yRoute {
   auth: boolean;
   /** Force the right agent pane open before scanning (agent surface coverage). */
   openAgentPane?: boolean;
+  /** UX.14 — scan with the LEFT sidebar collapsed (the icon-only rail). */
+  collapseSidebar?: boolean;
 }
 
 // One concrete serial for the PLM detail routes (the demo thread's hero unit).
@@ -20,6 +22,12 @@ export const A11Y_DETAIL_SERIAL = "SN-2208";
 export const A11Y_ROUTES: A11yRoute[] = [
   { path: "/login", label: "Login (public auth page)", auth: false },
   { path: "/core", label: "Command Center (dense shell)", auth: true },
+  {
+    path: "/core",
+    label: "Command Center — collapsed icon rail (UX.14)",
+    auth: true,
+    collapseSidebar: true,
+  },
   {
     path: "/audit",
     label: "Audit trail (ReliabilityPanel)",
