@@ -15,7 +15,9 @@ export type TraceKind =
   | "tool-result"
   | "result"
   | "error"
-  | "proposal";
+  | "proposal"
+  // MEM.2 — auto-injected operational-memory line (legible + auditable).
+  | "memory";
 
 /** One timestamped trace line (feeds the ART.5 console + AUDIT.3). */
 export interface TraceLine {

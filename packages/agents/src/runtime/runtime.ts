@@ -1,4 +1,5 @@
 import { zodToJsonSchema } from "zod-to-json-schema";
+import { assembleContext, type MemoryEntityType } from "@axona/db";
 import type { ModelClient, ModelMessage, ModelResponse } from "./model-client";
 import type {
   AgentContext,
@@ -104,6 +105,79 @@ function toolError(id: string, msg: string): unknown {
   return { type: "tool_result", tool_use_id: id, content: msg, is_error: true };
 }
 
+// MEM.2 — auto-inject operational memory. Detect the subject ENTITY in the user's
+// question (an NCR/ECO/unit/part/lot code) or a "have we seen this before" precedent
+// cue, so the runtime can assemble the relevant prior episodes WITHOUT the agent
+// having to call recallMemory by hand. The explicit recallMemory tool stays too.
+const SUBJECT_PATTERNS: { re: RegExp; type: MemoryEntityType }[] = [
+  { re: /\bNCR-[A-Z]?\d+\b/i, type: "NCR" },
+  { re: /\bECO-[A-Z]?\d+\b/i, type: "ECO" },
+  { re: /\bSN-[A-Z0-9-]+\b/i, type: "UNIT" },
+  {
+    re: /\b(?:SERVO|HARN|BATT|SENS|SENSOR|COMPUTE|GRIP|CHASSIS|CTRL|BMS|POWER|AIRFRAME)-[A-Z0-9]+\b/i,
+    type: "PART",
+  },
+  { re: /\blot\s*[- ]?\d{4,}\b/i, type: "LOT" },
+  { re: /\bDLV-[A-Z]?\d+\b/i, type: "DELIVERY" },
+  { re: /\bPO-[A-Z0-9]+\b/i, type: "PURCHASE_ORDER" },
+];
+const PRECEDENT_CUE =
+  /\b(seen this|before|prior|precedent|last time|have we|previously|recurr|happened again|history)\b/i;
+
+/** The first recognized subject entity in the text (its human code), if any. */
+function detectSubject(
+  text: string,
+): { type: MemoryEntityType; id: string } | undefined {
+  for (const { re, type } of SUBJECT_PATTERNS) {
+    const m = text.match(re);
+    if (m) return { type, id: m[0].toUpperCase() };
+  }
+  return undefined;
+}
+
+/**
+ * MEM.2 — assemble + return the operational-memory block for this turn (or "" when
+ * nothing should be injected), pushing the legible `memory` trace line either way
+ * (injected N · or the honest no-inject reason). Only fires when a subject is in
+ * play or the question implies precedent — never on unrelated turns.
+ */
+async function injectMemory(input: string, ctx: AgentContext): Promise<string> {
+  const subject = detectSubject(input);
+  const impliesPrecedent = PRECEDENT_CUE.test(input);
+  if (!subject && !impliesPrecedent) return "";
+
+  const assembled = await assembleContext(ctx.db, {
+    orgId: ctx.orgId,
+    subject,
+    query: input,
+  });
+
+  if (assembled.injected > 0 && assembled.top) {
+    const t = assembled.top;
+    const anchor = t.subjectCode ?? t.kind;
+    const out = t.outcome ? ` ${t.outcome.toUpperCase()}` : "";
+    ctx.trace.push(
+      "memory",
+      `injected ${assembled.injected} prior episode${
+        assembled.injected === 1 ? "" : "s"
+      }, top = ${anchor}${out} conf ${t.confidence.toFixed(2)}`,
+      {
+        injected: assembled.injected,
+        tokensUsed: assembled.tokensUsed,
+        budget: assembled.budget,
+        top: t.provenance,
+      },
+    );
+    return assembled.block;
+  }
+
+  // Honest no-inject: cold-start / below-floor / no-subject — the trace shows the decision.
+  ctx.trace.push("memory", `no prior episodes injected (${assembled.reason})`, {
+    reason: assembled.reason,
+  });
+  return "";
+}
+
 export async function runLoop(
   def: AgentDef,
   input: string,
@@ -123,6 +197,16 @@ export async function runLoop(
   const messages: ModelMessage[] = [{ role: "user", content: input }];
   ctx.trace.push("scan", `agent ${ctx.agentId} · scope ${def.scope}`);
 
+  // MEM.2 — auto-inject relevant operational memory into the system context for
+  // this run (retrieval-augmentation that FIRES, no manual recallMemory call). The
+  // block is bounded (its own token budget) and lands in the system prompt, so it
+  // never blows RUNTIME.1's transcript window. Memory INFORMS; the agent still
+  // proposes→approve→audit. Empty on cold-start / below-floor (honest).
+  const memoryBlock = await injectMemory(input, ctx);
+  const systemPrompt = memoryBlock
+    ? `${def.systemPrompt}\n\n${memoryBlock}`
+    : def.systemPrompt;
+
   // RUNTIME.1 — accumulate token usage across every model call in the run.
   let promptTokens = 0;
   let completionTokens = 0;
@@ -138,7 +222,7 @@ export async function runLoop(
 
   for (let turn = 0; turn < MAX_TURNS; turn++) {
     const res = await model.createMessage({
-      system: def.systemPrompt,
+      system: systemPrompt, // MEM.2 — def prompt + the injected memory block (if any)
       // send a BOUNDED copy of the transcript — never the full linear history
       messages: pruneMessages(messages),
       tools: toolSpecs,

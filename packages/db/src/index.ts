@@ -63,7 +63,19 @@ export {
   recallMemory,
   type RecallInput,
   type MemoryHit,
+  // aliased — the bare `EntityType` name is the Prisma enum (via `export *` below).
+  type EntityType as MemoryEntityType,
 } from "./memory/recall";
+// MEM.2 — context assembly (auto-inject operational memory into agent context).
+export {
+  assembleContext,
+  MEMORY_TOKEN_BUDGET,
+  MEMORY_CONFIDENCE_FLOOR,
+  type AssembleContextInput,
+  type AssembledMemory,
+  type AssembledHit,
+  type AssembleReason,
+} from "./memory/context";
 
 // PROSPECT.1 — the generic (marque-free) prospect-demo tenant mechanism. Only the
 // TYPES live in @axona/db (so a prospect config can import them + the web build stays
