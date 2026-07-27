@@ -3,9 +3,13 @@ import {
   writeAudit,
   applyFieldModification,
   rejectFieldModification,
+  isGatedActionKind,
+  trustForTarget,
   type OrgScopedDb,
   type Role,
   type POStatus,
+  type TrustRung,
+  type TrustCell,
 } from "@axona/db";
 import { resumeParkedRun } from "@axona/agents";
 import { requireRole } from "./rbac";
@@ -57,9 +61,44 @@ interface ApprovalDef<T> {
   onReject(db: OrgScopedDb, orgId: string, t: T, by: Approver): Promise<Effect>;
 }
 
+// TRUST.1 — the advisory consult decide() records on every decision. `rung` is the
+// proposing agent's earned rung for this (agent, actionKind); `frictionRelaxEligible`
+// is the ADVISORY hint for a future non-gated auto-path — HARD-false for any gated
+// (money/safety/contract) kind. This story acts on NONE of it: the human still decides.
+export interface TrustConsult {
+  rung: TrustRung;
+  gated: boolean;
+  frictionRelaxEligible: boolean;
+}
+
 export type DecideResult =
-  | { ok: true; decision: Decision; status: string; summary: string }
+  | {
+      ok: true;
+      decision: Decision;
+      status: string;
+      summary: string;
+      /** TRUST.1 — the rung recorded on this decision (advisory; no autonomy granted). */
+      trust: TrustConsult;
+    }
   | { ok: false; reason: "not_found" | "already_decided"; message: string };
+
+/**
+ * TRUST.1 hard ceiling. Computes the advisory autonomy hint for a decision. NEVER true
+ * for a gated action-kind — a money/safety/contract decision can never be auto-approved
+ * regardless of the rung or confidence. The auto rung stays disabled; decide() ignores
+ * this for its flow (still fully human-in-the-loop). It exists so LOOP.1/Act can read it.
+ */
+function advisoryAutonomy(
+  kind: ApprovalKind,
+  cell: TrustCell | null,
+): TrustConsult {
+  const rung: TrustRung = cell?.rung ?? "SUGGEST";
+  // Gated if EITHER the decide-kind or the proposing cell's kind is gated (defense in depth).
+  const gated = isGatedActionKind(kind) || (cell?.gated ?? false);
+  const frictionRelaxEligible =
+    !gated && (rung === "REVIEW_LIGHT" || rung === "AUTO_BOUNDED");
+  return { rung, gated, frictionRelaxEligible };
+}
 
 // PO advance chain (forward transitions). REJECTED is the terminal reject state.
 const PO_NEXT: Partial<Record<POStatus, POStatus>> = {
@@ -315,6 +354,12 @@ export async function decide(
     };
   }
 
+  // TRUST.1 — consult the proposing agent's earned rung (advisory + recorded). The
+  // consult NEVER changes the flow here (human-in-the-loop stays intact) and NEVER
+  // auto-approves a gated kind — it only annotates the decision + audit entry.
+  const cell = await trustForTarget(db, user.orgId, def.targetType, targetId);
+  const trust = advisoryAutonomy(kind, cell);
+
   const by: Approver = { id: user.id, label: user.name ?? user.email };
   const eff =
     decision === "APPROVE"
@@ -327,7 +372,14 @@ export async function decide(
     action: `${kind}.${decision.toLowerCase()}`,
     target: { type: def.targetType, id: targetId },
     summary: eff.summary,
-    output: eff.output,
+    // TRUST.1 — record the rung on the decision (no schema change; the rung rides in
+    // the existing output JSON). Nothing bypasses the immutable log.
+    output: {
+      ...eff.output,
+      trustRung: trust.rung,
+      trustGated: trust.gated,
+      frictionRelaxEligible: trust.frictionRelaxEligible,
+    },
     // AUDIT.3 — a human decision records the approver (model/confidence null).
     approver: { id: by.id, label: by.label },
   });
@@ -337,5 +389,6 @@ export async function decide(
     decision,
     status: String(eff.output.status ?? "done"),
     summary: eff.summary,
+    trust,
   };
 }

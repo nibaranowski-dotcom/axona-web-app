@@ -100,6 +100,32 @@ export type {
   CalibratedConfidence,
 } from "./confidence/calibration";
 
+// TRUST.1 — the progressive-trust ladder: computeTrust (pure, deterministic) + the
+// org-scoped read layer (rung computed from AUDIT.1, no stored rung). Grants no new
+// autonomy — gated kinds have a hard auto ceiling; AUTO_BOUNDED is defined + disabled.
+export {
+  computeTrust,
+  isGatedActionKind,
+  ceilingFor,
+  RUNG_ORDER,
+  TRUST_THRESHOLDS,
+  CALIBRATION_DELTA,
+  AUTO_BOUNDED_ENABLED,
+} from "./trust/ladder";
+export type {
+  TrustRung,
+  TrustInput,
+  TrustResult,
+  TrustMetrics,
+  CappedBy,
+} from "./trust/ladder";
+export {
+  agentTrustLadder,
+  computeAgentTrust,
+  trustForTarget,
+} from "./trust/read";
+export type { TrustCell } from "./trust/read";
+
 // PLM.1a — the Unit spine core logic: resolveConfigAt · asBuiltDiff · CSV import.
 // (affectedUnits lives in @axona/agents — it reuses ONT.1 getBlastRadius.)
 export {

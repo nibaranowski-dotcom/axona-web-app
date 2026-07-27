@@ -1,4 +1,4 @@
-import { dbForOrg, prisma } from "@axona/db";
+import { dbForOrg, prisma, agentTrustLadder } from "@axona/db";
 import { getCurrentUser } from "@/lib/session";
 import { AgentsView, type AgentGroup } from "@/components/agents/AgentsView";
 
@@ -9,12 +9,14 @@ export const dynamic = "force-dynamic";
 
 export default async function AgentsPage() {
   const user = await getCurrentUser();
-  if (!user) return <AgentsView groups={[]} />;
+  if (!user) return <AgentsView groups={[]} trust={[]} />;
 
   const db = dbForOrg(user.orgId);
-  const [agents, modules] = await Promise.all([
+  const [agents, modules, trust] = await Promise.all([
     db.agent.findMany({ orderBy: [{ moduleKey: "asc" }, { code: "asc" }] }),
     prisma.module.findMany({ orderBy: { orderIndex: "asc" } }), // Module is global
+    // TRUST.1 — the earned-autonomy ladder, computed on read from AUDIT.1, org-scoped.
+    agentTrustLadder(db, user.orgId),
   ]);
 
   const byModule = new Map<string, typeof agents>();
@@ -41,5 +43,5 @@ export default async function AgentsPage() {
     }))
     .filter((g) => g.agents.length > 0);
 
-  return <AgentsView groups={groups} />;
+  return <AgentsView groups={groups} trust={trust} />;
 }

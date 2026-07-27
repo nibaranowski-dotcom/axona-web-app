@@ -29,6 +29,7 @@ import {
   DEMO_CALIBRATION,
   ISOLATION_CALIBRATION,
 } from "./seed/calibration";
+import { seedTrustHistory } from "./seed/trust";
 
 /** Delete the demo org's tenant rows, children before parents, scoped to its
  *  orgId. NEVER a bare deleteMany — other tenants must be untouched. The Org row
@@ -218,6 +219,12 @@ async function main(): Promise<void> {
   );
   const calib = await calibrate(db, DEMO_ORG_ID);
 
+  // TRUST.1 — decided-proposal histories for the trust ladder (demo org only). These
+  // carry NO confidence, so they DON'T feed calibrate() (CONF.1 model stays untouched);
+  // they let the ladder show a non-gated cell climb to REVIEW_LIGHT and a gated cell be
+  // capped at RECOMMEND by the hard ceiling. Grants no autonomy — just the track record.
+  const trustHistory = await seedTrustHistory(db, DEMO_ORG_ID, nowMs);
+
   // 5. Second org (isolation contrast) — its OWN, disjoint calibration (under-confident).
   const secondDb = dbForOrg(SECOND_ORG_ID);
   await seedSecondOrg(secondDb);
@@ -240,7 +247,8 @@ async function main(): Promise<void> {
       `audit: ${audit.entries} log entries, ` +
       `ontology: ${ontologyLinks} entity links, ` +
       `memory: ${memory.created} items (${memory.embedded} embedded), ` +
-      `calibration: ${calHistory} decided proposals → n=${calib.sampleSize} (ECE ${calib.ece}).`,
+      `calibration: ${calHistory} decided proposals → n=${calib.sampleSize} (ECE ${calib.ece}), ` +
+      `trust: ${trustHistory} decided proposals (ladder).`,
   );
 }
 

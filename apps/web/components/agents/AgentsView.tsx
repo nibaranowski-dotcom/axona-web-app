@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import type { TrustCell } from "@axona/db";
 import { Pill } from "@/components/ui";
 import { AgentCard, type AgentSummary } from "./AgentCard";
 import { AgentChat } from "./AgentChat";
+import { TrustLadder } from "./TrustLadder";
 
 // /agents — module-grouped roster (left) + a live chat for the selected agent
 // (right). "Needs attention" narrows to CRITICAL-state agents.
@@ -26,7 +28,13 @@ function pickDefaultAgent(groups: AgentGroup[]): AgentSummary | null {
   return axona ?? all[0] ?? null;
 }
 
-export function AgentsView({ groups }: { groups: AgentGroup[] }) {
+export function AgentsView({
+  groups,
+  trust,
+}: {
+  groups: AgentGroup[];
+  trust: TrustCell[];
+}) {
   const [needsAttention, setNeedsAttention] = useState(false);
   const [selected, setSelected] = useState<AgentSummary | null>(() =>
     pickDefaultAgent(groups),
@@ -72,6 +80,9 @@ export function AgentsView({ groups }: { groups: AgentGroup[] }) {
             </span>
           </Pill>
         </header>
+
+        {/* TRUST.1 — the earned-autonomy ladder leads the roster (measured + visible). */}
+        <TrustLadder cells={trust} />
 
         {total === 0 ? (
           <p className="py-10 text-center text-sm text-ink-muted">
