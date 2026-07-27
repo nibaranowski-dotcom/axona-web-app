@@ -97,26 +97,54 @@ async function run(): Promise<void> {
   });
 
   // 2) through-line seed populates the feed; getNotifications grouped + unread; org-scoped.
+  // VERIFY.1 — the "Today" bucket is proven with a freshly-injected (now-dated)
+  // canary rather than the seed's wall-clock timestamps, so the check is stable on
+  // any day (no same-day reseed needed). The grouping logic is still exercised for
+  // real: the canary must land in a group labelled exactly "Today". Self-cleans.
+  const TODAY_CANARY = "VERIFY1-TODAY-CANARY";
   await check(
-    "seed populates the feed; getNotifications grouped + unreadCount; org-scoped",
+    "seed populates the feed; getNotifications buckets a now-dated item into Today; org-scoped",
     async () => {
-      const feed = await getNotifications(demo!.id, ops!.id);
-      const hasGroups =
-        feed.groups.length >= 1 && feed.groups.some((g) => g.label === "Today");
-      const hasPO = feed.groups
-        .flatMap((g) => g.items)
-        .some((i) => i.object === "PO-9007");
-      // second org sees none of the demo's notifications
-      const secondFeed = second
-        ? await getNotifications(second.id, ops!.id)
-        : { total: 0 };
-      return (
-        feed.total >= 10 &&
-        feed.unreadCount >= 1 &&
-        hasGroups &&
-        hasPO &&
-        secondFeed.total === 0
-      );
+      await prisma.notification.deleteMany({
+        where: { orgId: demo!.id, targetId: TODAY_CANARY },
+      });
+      await notify({
+        orgId: demo!.id,
+        userId: ops!.id,
+        type: "SYSTEM",
+        title: "Verify today-bucket canary",
+        body: "Date-stable fixture for the Today grouping check.",
+        target: { type: "Verify", id: TODAY_CANARY },
+        url: "/notifications",
+      });
+      try {
+        const feed = await getNotifications(demo!.id, ops!.id);
+        // the injected now-dated item is bucketed under a "Today" group
+        const todayHasCanary = feed.groups.some(
+          (g) =>
+            g.label === "Today" &&
+            g.items.some((i) => i.object === TODAY_CANARY),
+        );
+        // seed volume + a seeded object are still asserted (date-independent)
+        const hasPO = feed.groups
+          .flatMap((g) => g.items)
+          .some((i) => i.object === "PO-9007");
+        // second org sees none of the demo's notifications
+        const secondFeed = second
+          ? await getNotifications(second.id, ops!.id)
+          : { total: 0 };
+        return (
+          feed.total >= 10 &&
+          feed.unreadCount >= 1 &&
+          todayHasCanary &&
+          hasPO &&
+          secondFeed.total === 0
+        );
+      } finally {
+        await prisma.notification.deleteMany({
+          where: { orgId: demo!.id, targetId: TODAY_CANARY },
+        });
+      }
     },
   );
 
