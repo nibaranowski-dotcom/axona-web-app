@@ -1504,6 +1504,11 @@ model BomLine {
 /// field. `workOrderMfgId`/`robotId` are the two legacy anchors (scalar; the
 /// existing MFG/Fleet screens keep reading their own rows). `@@unique([orgId,
 /// serial])` gives the clean countable identity BILL.1 meters on.
+/// SENSE (SEAMS.1 seam a): station-level sensor/event streams tie to THIS spine —
+/// a `StationSignal`/`StationEvent` (packages/db/src/plm/sense-seam.ts) is
+/// {unitId? · station · ts · metric·value / eventType·payload}, mirroring
+/// TelemetryPoint/MachineSignal. NOT captured yet — SENSE.1 builds the ingest and
+/// decides if it needs a table. Interface + pointer only; no table added here.
 model Unit {
   id             String       @id @default(cuid())
   orgId          String

@@ -112,6 +112,13 @@ export {
   type RecordFieldModInput,
   type RecordFieldModResult,
   type ApplyFieldModResult,
+  // SEAMS.1 — Predict substrate (read-only) + Sense input seam (types only).
+  unitOutcomes,
+  type UnitOutcome,
+  type UnitOutcomeKind,
+  type StationSignal,
+  type StationEvent,
+  type StationInput,
   type ImportResult,
   type RowError,
 } from "./plm";

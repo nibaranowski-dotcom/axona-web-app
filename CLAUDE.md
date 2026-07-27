@@ -103,6 +103,19 @@ Four layers over one spine: **L1 Foundation** (connectors · ontology · genealo
 **L3 Domain apps** (the 24 modules) → **L4 Vertical editions**. **Only L2 compounds — it is the moat;**
 L1/L3/L4 are competitive necessities. Build/care follows that asymmetry.
 
+## Product north star — Record → Sense → Predict → Act (build only Record now)
+The product's data-maturity arc is four layers: **1 · Record** (the AI-native operating system for how a
+robotics company runs — per-unit genealogy · procurement · quality · as-built · test · RCA · change control;
+**the wedge and the labeled-data bootstrap**) → **2 · Sense** (live station-level process/sensor signal on the
+line) → **3 · Predict** (failure/defect prediction from the assembled substrate) → **4 · Act** (autonomous
+execution, human-approved). **Build only Record now** — hold the wedge there until it's a business; design the
+seams (station-signal + per-unit-outcome) so the upper layers plug in without a retrofit, but ship no Sense/
+Predict/Act feature. **The propose→approve→audit runtime IS the path to Act** — `decide()` (RBAC.4) + AUDIT.1
+are kind-agnostic, so Act is the same loop with more earned trust (CONF.1 confidence + the TRUST.1 ladder), not
+a new system. This data-maturity axis crosses the L1–L4 software-layer axis cleanly (Record ≈ L3-on-L1 capture;
+Sense/Predict ≈ new typed inputs + L2 spine; Act ≈ the runtime at full autonomy). **Fuller narrative +
+roadmap:** `specs/product-north-star.md`. The Procurement **wedge** line below is unchanged by this framing.
+
 Non-negotiable engineering invariants (apply to every story, regardless of P-level):
 - **Capture fidelity caps the moat.** Per-unit genealogy is captured **as-built** (parts·serials·firmware),
   never reconstructed. Telemetry (fleet + plant) is a **first-class typed input**, not an afterthought.

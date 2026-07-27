@@ -33,3 +33,14 @@ export {
   type RecordFieldModResult,
   type ApplyFieldModResult,
 } from "./field-modification";
+// SEAMS.1 — Predict-layer substrate (read-only) + Sense-layer input seam (types only).
+export {
+  unitOutcomes,
+  type UnitOutcome,
+  type UnitOutcomeKind,
+} from "./outcomes";
+export {
+  type StationSignal,
+  type StationEvent,
+  type StationInput,
+} from "./sense-seam";

@@ -29,6 +29,8 @@ The defensible asset is **not the UI**. It's the data exhaust of how a specific 
 
 **Learning:** L1, L3, L4 are *competitive necessities* — they have to be good, but they are buildable by anyone with engineers. **L2 is the only layer that compounds.** Resourcing should reflect that asymmetry: the spine is where the hardest people and the most research time go. The rest is execution.
 
+**Axis mapping (data-maturity ↔ software-layer, so the two framings don't drift):** the **Record → Sense → Predict → Act** data-maturity arc (`specs/product-north-star.md`) crosses this L1–L4 software-layer axis — **Record** = the L3 domain apps + PLM capturing on the L1 foundation; **Sense/Predict** = new typed station inputs feeding the L2 spine (memory · specialized models · learning loop); **Act** = that same propose→approve→audit runtime at full, earned autonomy. Build only Record now; design the seams (SEAMS.1).
+
 ---
 
 ## 3. The foundation decides whether the moat is even possible
