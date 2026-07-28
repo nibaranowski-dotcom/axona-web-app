@@ -119,11 +119,12 @@ hand-edited — its `&` breaks the design's find/replace scripts), Marketing, Se
 (FILE.2 / MTX.1). Agents screen + Mission Control body = retrofits once their backends exist.
 
 **Cross-module narrative (the through-line — keep every new screen consistent with it):** the
-BMW / Kawasaki sample deal → **ECO-318** (engineering change) → **SERVO-204 vs SERVO-205** drive →
+Tier-1 Auto OEM / OEM-2 sample deal → **ECO-318** (engineering change) → **SERVO-204 vs SERVO-205** drive →
 **lot-88421** defect → **NCR-118** (the quality nonconformance) → held unit **HX2-0208** at Test →
 **M. Osei's** expiring HV/battery cert gating field dispatch. It's now told across ~10 module screens.
-BMW/Kawasaki are **fictional sample data** — fine inside the app (labeled), must be anonymized in
-anything that leaves the app (decks/screenshots) → "Tier-1 auto OEM," etc.
+Tier-1 Auto OEM/OEM-2 are **anonymized fictional labels** — anonymized at the source (SEED.1; no real marque
+anywhere in the repo or app). Anything that leaves the app (decks/screenshots) also carries a "sample data —
+illustrative" label.
 
 **Backlog order** lives in `backlog.md` (133 stories / 15 epics). Work it in order; "next" = the next
 runnable row. Rows are CPRD-triggerable if Nicolas wants a full PRD first.

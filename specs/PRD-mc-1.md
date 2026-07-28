@@ -15,7 +15,7 @@
 post-login landing — a Mac-launchpad-style grid of every module, grouped Core / Value chain / Robotics /
 Back office, each tile a one-line description plus a live alert count so a user lands and immediately
 sees where attention is needed (build-spec §4.1). Without it, the home is dead and the seeded narrative
-(NCR-118, SN-2196, DLV-3312, p-13, overdue Kawasaki invoice…) is invisible at the top level. This story
+(NCR-118, SN-2196, DLV-3312, p-13, overdue OEM-2 invoice…) is invisible at the top level. This story
 replaces the placeholder with the real launcher and the first cross-module alert rollup.
 
 ## Success Metrics
@@ -56,7 +56,7 @@ replaces the placeholder with the real launcher and the first cross-module alert
 ## Acceptance Criteria
 
 - [ ] `/` shows the launcher: four labeled bands, 22 tiles total, each with name + one-line description.
-- [ ] Tiles for modules with live exceptions show an alert count chip (e.g. Quality ≥1 from NCR-118, Fleet ≥1 from SN-2196 WATCH, Finance ≥1 from the overdue Kawasaki invoice, Procurement ≥1 from the agent-drafted PO awaiting approval); modules with no alerts show no chip.
+- [ ] Tiles for modules with live exceptions show an alert count chip (e.g. Quality ≥1 from NCR-118, Fleet ≥1 from SN-2196 WATCH, Finance ≥1 from the overdue OEM-2 invoice, Procurement ≥1 from the agent-drafted PO awaiting approval); modules with no alerts show no chip.
 - [ ] Alert counts come from the demo org's seeded rows through `dbForOrg`, not hardcoded.
 - [ ] Clicking a tile navigates to `/<key>`; the launcher's own entry doesn't self-link.
 - [ ] Typing in the search field and submitting routes to `/search?q=…`; ⌘K focuses it.

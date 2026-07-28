@@ -31,8 +31,9 @@ The deck designer will place each snippet inside a light browser/device frame on
   **Archivo** + **JetBrains Mono**; hairlines over shadows; dotted-grid where the app uses it; **no emoji**.
 - **Simplify for a slide:** ~6–10 rows max per table, one chart, legible at slide scale (min ~16px on-screen
   ≈ readable when projected). Cut chrome that doesn't tell the story; keep the agent-trace + the approve action.
-- **Anonymize + label.** No real companies/people — the build-spec narrative names **BMW/Kawasaki**; replace
-  with **"Tier-1 Auto OEM" / "OEM-2"**. Every screen carries a small **"sample data — illustrative"** chip.
+- **Anonymize + label.** No real companies/people — the narrative already uses the anonymized OEM labels
+  **"Tier-1 Auto OEM" / "OEM-2"** at the source (SEED.1; no real marque anywhere in the repo or app). Every
+  screen carries a small **"sample data — illustrative"** chip.
   Keep the propose→approve→audit fields visible (inputs, output, model, confidence, approver).
 - **Self-contained:** each snippet renders standalone (so the deck tool can paste it). No app data calls.
 - Show the **built** screens (don't fabricate modules that aren't designed).

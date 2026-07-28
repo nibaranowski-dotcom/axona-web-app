@@ -15,7 +15,7 @@ runs on ART.2's core read tools; agent-to-agent orchestration (ART.3) isn't requ
 
 Module agents (AGT.1) are scoped to one domain. What's missing is the **general Axona agent** — a
 read-only copilot with cross-module scope that can answer "what's blocked across the company?", "what's
-the status of the BMW order?", "which agents need attention?", always **citing the source objects** it
+the status of the Tier-1 Auto OEM order?", "which agents need attention?", always **citing the source objects** it
 read. The right-side agent pane (a placeholder since FND.13) is the natural home: a copilot available on
 every screen. This story defines that agent and wires the global pane to it via the ART.4 stream, with
 citation rendering. It's also exactly what the Command Center copilot (CMD.2) will reuse.
@@ -111,10 +111,10 @@ current screen's module can be passed as light context in the message (optional:
 
 ```
 [any shell screen] ─ right agent pane ▸ "Axona agent"
-   user ▸ "what's blocking the BMW order?"
-   stream: scan → tool searchOperations("BMW") → tool-result {hits, sources}
+   user ▸ "what's blocking the Tier-1 Auto OEM order?"
+   stream: scan → tool searchOperations("Tier-1 Auto OEM") → tool-result {hits, sources}
            → tool getModuleSummary(...) → result
-   agent ◂ "The BMW 24-unit order (DLV-3312) is held at Osaka customs (EAR99) and at-risk +3w
+   agent ◂ "The Tier-1 Auto OEM 24-unit order (DLV-3312) is held at Osaka customs (EAR99) and at-risk +3w
             from ECO-318. The autonomy regression also puts the 99.5% SLA at risk."
         citations: [DLV-3312] [ECO-318] [NCR-118]   ← DS.1 chips, link to the object
    user ▸ "place the replacement PO"
@@ -212,7 +212,7 @@ run();
 
 **Manual (real key, ./dev.sh)**
 - [ ] On any shell screen, open the right agent pane → it's the "Axona agent".
-- [ ] Ask "what's blocking the BMW order?" → reasoning streams, answer cites DLV-3312 / ECO-318 (chips link to the objects).
+- [ ] Ask "what's blocking the Tier-1 Auto OEM order?" → reasoning streams, answer cites DLV-3312 / ECO-318 (chips link to the objects).
 - [ ] Ask "place the replacement PO" → it declines and routes you to the Procurement agent (no action taken).
 - [ ] Citations are real (link to existing routes); no fabricated refs.
 - [ ] Matches design/prototypes/ agent pane; no emoji; hairlines; lime = signal. accessibility-review 0 violations.
