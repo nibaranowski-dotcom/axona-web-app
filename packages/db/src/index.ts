@@ -126,6 +126,21 @@ export {
 } from "./trust/read";
 export type { TrustCell } from "./trust/read";
 
+// LOOP.1 — the learning-loop writeback edge: recordOutcome (verdict → MEM.1 OUTCOME
+// episode, idempotent + linked to AUDIT.1) + decisionOutcomes (the read-only labeled
+// substrate CONF.1 calibrates against). Reuses the MEM.1 store; grants no autonomy.
+export {
+  recordOutcome,
+  type RecordOutcomeInput,
+  type RecordOutcomeResult,
+  type OutcomeVerdict,
+} from "./loop/writeback";
+export {
+  decisionOutcomes,
+  type DecisionOutcome,
+  type DecisionOutcomesFilter,
+} from "./loop/outcomes";
+
 // PLM.1a — the Unit spine core logic: resolveConfigAt · asBuiltDiff · CSV import.
 // (affectedUnits lives in @axona/agents — it reuses ONT.1 getBlastRadius.)
 export {

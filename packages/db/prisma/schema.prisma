@@ -1307,6 +1307,10 @@ enum MemoryKind {
   RESOLUTION
   GENEALOGY_EVENT
   TELEMETRY_ANOMALY
+  // LOOP.1 — a human's verdict on an agent proposal (approve/override/reversal),
+  // written back into the MEM.1 store so MEM.2 injects it into the next proposal and
+  // CONF.1 can calibrate against it. Reuses the MemoryItem shape (no new store).
+  OUTCOME
 }
 
 model MemoryItem {

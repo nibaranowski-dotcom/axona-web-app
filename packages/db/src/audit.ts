@@ -43,9 +43,9 @@ const asJson = (v: unknown): Prisma.InputJsonValue =>
 export async function writeAudit(
   db: OrgScopedDb,
   e: WriteAuditInput,
-): Promise<void> {
+): Promise<string | null> {
   try {
-    await db.auditLog.create({
+    const row = await db.auditLog.create({
       data: {
         orgId: e.orgId,
         actorType: e.actor.type,
@@ -63,13 +63,18 @@ export async function writeAudit(
         approverId: e.approver?.id ?? null,
         approverLabel: e.approver?.label ?? null,
       },
+      select: { id: true },
     });
+    // LOOP.1 — the created entry id, so a caller can LINK a writeback episode to this
+    // immutable entry (never mutate it). Existing callers ignore the return.
+    return row.id;
   } catch (err) {
     // Durability is best-effort; the mutation already committed. Do not re-throw.
     console.error(
       `[writeAudit] failed to log ${e.action} on ${e.target.type}:${e.target.id} —`,
       (err as Error).message,
     );
+    return null;
   }
 }
 

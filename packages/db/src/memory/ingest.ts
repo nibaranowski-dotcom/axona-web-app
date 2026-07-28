@@ -53,7 +53,9 @@ interface MemRow {
 // AuditLog.targetType (a Prisma model name) → the ONT.1 EntityType it anchors to.
 // Non-ontology targets (File, MatrixColumn, WorkflowRun, Org, …) anchor to null —
 // the episode is still recallable by vector + recency, just not by graph proximity.
-const TARGET_TO_ENTITY: Record<string, EntityType> = {
+// Exported so LOOP.1's writeback anchors an outcome episode to the SAME ontology
+// entity MEM.1 ingest would (one convention → recall surfaces both).
+export const TARGET_TO_ENTITY: Record<string, EntityType> = {
   NCR: "NCR",
   ECO: "ECO",
   PurchaseOrder: "PURCHASE_ORDER",
@@ -231,8 +233,9 @@ export async function ingestMemory(
 
 /** Embed every MemoryItem for this org that has no vector yet. Raw SQL both ways
  *  (Prisma can't read/write the `Unsupported("vector")` column). Org-filtered so a
- *  tenant's memory never leaks. */
-async function embedPending(
+ *  tenant's memory never leaks. Exported so LOOP.1's writeback reuses the SAME embed
+ *  path (no parallel embedding) — an OUTCOME episode is immediately recall-able. */
+export async function embedPending(
   orgId: string,
   embedderOpt?: Embedder,
 ): Promise<number> {

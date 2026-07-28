@@ -5,6 +5,7 @@ import {
   rejectFieldModification,
   isGatedActionKind,
   trustForTarget,
+  recordOutcome,
   type OrgScopedDb,
   type Role,
   type POStatus,
@@ -79,6 +80,8 @@ export type DecideResult =
       summary: string;
       /** TRUST.1 — the rung recorded on this decision (advisory; no autonomy granted). */
       trust: TrustConsult;
+      /** LOOP.1 — the `loop` writeback trace line (outcome → MEM.1 episode). */
+      loop: string;
     }
   | { ok: false; reason: "not_found" | "already_decided"; message: string };
 
@@ -366,7 +369,7 @@ export async function decide(
       ? await def.onApprove(db, user.orgId, target, by)
       : await def.onReject(db, user.orgId, target, by);
 
-  await writeAudit(db, {
+  const auditEntryId = await writeAudit(db, {
     orgId: user.orgId,
     actor: { type: "HUMAN", id: user.id, label: by.label },
     action: `${kind}.${decision.toLowerCase()}`,
@@ -384,11 +387,29 @@ export async function decide(
     approver: { id: by.id, label: by.label },
   });
 
+  // LOOP.1 — writeback: turn this verdict into an OUTCOME episode in the MEM.1 store so
+  // MEM.2 injects it into the next similar proposal + CONF.1 gets a label. Linked to the
+  // audit entry (never mutates it), idempotent, org-scoped. Outcomes INFORM — the human
+  // still decided above; nothing here grants autonomy. Best-effort (never undoes the decision).
+  const outcome = auditEntryId
+    ? await recordOutcome(db, {
+        auditEntryId,
+        decision,
+        actionKind: kind,
+        targetType: def.targetType,
+        targetId,
+        approverLabel: by.label,
+        occurredAt: new Date(),
+      })
+    : null;
+
   return {
     ok: true,
     decision,
     status: String(eff.output.status ?? "done"),
     summary: eff.summary,
     trust,
+    loop:
+      outcome?.trace ?? "recorded outcome: (audit unavailable — no writeback)",
   };
 }

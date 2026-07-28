@@ -17,7 +17,9 @@ export type TraceKind =
   | "error"
   | "proposal"
   // MEM.2 — auto-injected operational-memory line (legible + auditable).
-  | "memory";
+  | "memory"
+  // LOOP.1 — learning-loop writeback line ("recorded outcome: … → memory ep MEM-…").
+  | "loop";
 
 /** One timestamped trace line (feeds the ART.5 console + AUDIT.3). */
 export interface TraceLine {

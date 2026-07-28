@@ -71,6 +71,9 @@ const MAX_NEIGHBORHOOD = 200;
 // How much each episode kind reads as precedent for "how was it handled".
 const KIND_SCORE: Record<string, number> = {
   RESOLUTION: 1.0,
+  // LOOP.1 — a human's verdict on a proposal is strong "how it was handled" precedent
+  // ("last time the human overrode this"), just under a full RESOLUTION.
+  OUTCOME: 0.9,
   APPROVAL: 0.7,
   EXCEPTION: 0.5,
   GENEALOGY_EVENT: 0.5,
