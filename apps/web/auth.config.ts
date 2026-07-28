@@ -15,6 +15,7 @@ const PUBLIC = [
   /^\/verify/, // AUTH.7 — email verification link
   /^\/invite/,
   /^\/api\/auth/,
+  /^\/api\/health/, // GOLIVE.2a — unauthenticated liveness probe (Railway healthcheck)
 ];
 
 export const authConfig = {

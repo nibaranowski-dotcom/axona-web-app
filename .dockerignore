@@ -1,0 +1,36 @@
+# GOLIVE.2a — keep the Docker build context lean + NEVER ship secrets or local state.
+# The Dockerfiles COPY the repo root then `turbo prune`; everything here is excluded
+# from that context (reinstalled/rebuilt in-image, or must never enter an image).
+
+# reinstalled inside the image
+**/node_modules
+# rebuilt inside the image
+**/.next
+**/dist
+**/.turbo
+
+# secrets + local env — NEVER in an image (Railway injects env at runtime)
+.env
+.env.*
+!.env.production.example
+
+# vcs + local tooling
+.git
+.gitignore
+.husky
+
+# local dev infra (Railway provides Postgres/Redis; R2 is the prod blob store)
+docker
+docker-compose.yml
+
+# large / irrelevant to the build
+design
+exports
+research
+playbooks
+prospects
+**/uploads
+**/screenshots
+**/*.log
+**/.DS_Store
+coverage
