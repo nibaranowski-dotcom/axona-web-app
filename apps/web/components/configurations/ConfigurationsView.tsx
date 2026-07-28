@@ -131,9 +131,13 @@ export function ConfigurationsView({
                     </button>
                     <div>
                       <div className="flex items-center gap-2.5">
-                        <span className="font-mono text-[14px] font-semibold text-ink">
+                        {/* PLM.11 — the card name links into the Configuration detail. */}
+                        <Link
+                          href={`/configurations/${encodeURIComponent(c.name)}`}
+                          className="font-mono text-[14px] font-semibold text-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                        >
                           {c.name}
-                        </span>
+                        </Link>
                         <span className="font-mono text-[10.5px] text-ink-muted">
                           {c.model}
                         </span>

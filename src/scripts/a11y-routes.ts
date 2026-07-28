@@ -41,6 +41,11 @@ export const A11Y_ROUTES: A11yRoute[] = [
   },
   { path: "/blast-radius", label: "Blast radius (PLM traversal)", auth: true },
   {
+    path: "/configurations/CFG-HX2-r4.2",
+    label: "Configuration detail (PLM.11 · baseline)",
+    auth: true,
+  },
+  {
     path: "/agents",
     label: "Agents (agent pane open)",
     auth: true,

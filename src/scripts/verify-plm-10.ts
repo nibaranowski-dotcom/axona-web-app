@@ -86,7 +86,7 @@ async function run(): Promise<void> {
     await import("../../apps/web/lib/configurations");
   const { getUnitRegistry } = await import("../../apps/web/lib/units");
   const { decide } = await import("../../apps/web/lib/approvals");
-  const { prisma } = await import("@axona/db");
+  const { prisma, Prisma } = await import("@axona/db");
 
   // ── 2: matching-units count equals the registry filtered by that config ──
   await check(
@@ -116,43 +116,69 @@ async function run(): Promise<void> {
     },
   );
 
-  // ── 3 (exercised): lock is gated + audited + immutable (second lock refused) ──
+  // ── 3 (exercised): lock is gated + DUAL-APPROVER + audited + immutable (PLM.11) ──
   await check(
-    "decide('config.lock') locks + audits; a locked config is immutable",
+    "decide('config.lock') is dual-approver: one proposes, a second finalizes; then immutable",
     async () => {
       const draft = await prisma.configurationVersion.findFirst({
-        where: { orgId: DEMO, lockedAt: null },
+        where: { orgId: DEMO, lockedAt: null, lockProposedById: null },
         select: { id: true, name: true, isBaseline: true },
       });
       if (!draft) return false;
-      const guard = await captureSeededState(prisma as never, ["AuditLog"]);
+      // MemoryItem too — decide() now writes a LOOP.1 OUTCOME episode per verdict.
+      const guard = await captureSeededState(prisma as never, [
+        "AuditLog",
+        "MemoryItem",
+      ]);
       try {
-        const user = {
-          id: "verify",
+        const a = {
+          id: "verify-eng",
           role: "ENGINEER" as const,
-          email: "verify@axona-demo.test",
-          name: "verify",
+          email: "eng@axona-demo.test",
+          name: "Eng A",
           orgId: DEMO,
         };
-        const first = await decide("config.lock", draft.id, "APPROVE", user);
-        const locked = await prisma.configurationVersion.findUnique({
+        const b = {
+          id: "verify-adm",
+          role: "ADMIN" as const,
+          email: "adm@axona-demo.test",
+          name: "Adm B",
+          orgId: DEMO,
+        };
+        // first approver → proposes only (still a draft, not locked)
+        const first = await decide("config.lock", draft.id, "APPROVE", a);
+        const afterFirst = await prisma.configurationVersion.findUnique({
           where: { id: draft.id },
         });
-        const audit = await prisma.auditLog.findFirst({
+        // same approver again → cannot finalize alone
+        await decide("config.lock", draft.id, "APPROVE", a);
+        const afterSolo = await prisma.configurationVersion.findUnique({
+          where: { id: draft.id },
+        });
+        // a DIFFERENT second approver → locks + freezes the manifest (immutable)
+        const second = await decide("config.lock", draft.id, "APPROVE", b);
+        const afterSecond = await prisma.configurationVersion.findUnique({
+          where: { id: draft.id },
+        });
+        // locked → a further lock is refused (already decided)
+        const third = await decide("config.lock", draft.id, "APPROVE", a);
+        const audits = await prisma.auditLog.count({
           where: {
             orgId: DEMO,
             action: "config.lock.approve",
             targetId: draft.id,
           },
         });
-        // a locked config is immutable — a second lock is refused (already decided)
-        const second = await decide("config.lock", draft.id, "APPROVE", user);
         return (
           first.ok === true &&
-          locked?.lockedAt !== null &&
-          locked?.isBaseline === true &&
-          !!audit &&
-          second.ok === false
+          afterFirst?.lockedAt === null && // proposed, not yet locked
+          afterSolo?.lockedAt === null && // single approver can't finalize
+          second.ok === true &&
+          afterSecond?.lockedAt !== null &&
+          afterSecond?.isBaseline === true &&
+          afterSecond?.frozenManifest !== null && // manifest frozen at lock
+          third.ok === false && // immutable
+          audits >= 3
         );
       } finally {
         await prisma.configurationVersion.update({
@@ -161,6 +187,9 @@ async function run(): Promise<void> {
             lockedAt: null,
             lockedById: null,
             isBaseline: draft.isBaseline,
+            lockProposedById: null,
+            lockProposedAt: null,
+            frozenManifest: Prisma.DbNull,
           },
         });
         await guard.restore();

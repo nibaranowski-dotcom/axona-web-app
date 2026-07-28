@@ -6,11 +6,18 @@ export {
   resolveConfigAt,
   asBuiltDiff,
   freezeConfigSnapshot,
+  // PLM.11 — the Configuration manifest (resolved live / frozen at baseline).
+  resolveConfigManifest,
+  freezeConfigManifest,
+  readConfigManifest,
   type ResolvedConfig,
   type ResolvedHwLine,
   type AsBuiltDiffResult,
   type AsBuiltDiffLine,
   type FrozenConfigSnapshot,
+  type ConfigManifest,
+  type ConfigHwPosition,
+  type ConfigSwItem,
 } from "./config";
 export {
   importUnits,

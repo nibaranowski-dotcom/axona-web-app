@@ -1,5 +1,5 @@
 import type { OrgScopedDb } from "../../src";
-import { freezeConfigSnapshot } from "../../src";
+import { freezeConfigSnapshot, freezeConfigManifest } from "../../src";
 import { CODES } from "./constants";
 
 // PLM.1a (spine) + PLM.2–5 (screen richness) — seed the Unit spine, the as-designed
@@ -261,67 +261,146 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
     swByVersion.set(version, r.id);
   }
 
-  // Named configurations = (hw rev, firmware) pairs. CFG-HX2-r4.2 is the locked
-  // baseline the demo unit resolves to today.
+  // Named configurations = (hw rev, firmware + policy/os/cal) tuples with a lineage.
+  // CFG-HX2-r4.2 is the locked baseline the demo unit resolves to today (PLM.1a pins
+  // NOW→r4.2, PAST→r4.1 by firmware — keep those firmwares). PLM.11: richer swSpec so
+  // the manifest SW section is populated; supersedes chains the lineage; baselines are
+  // dual-approver locked (proposer + finalizer) with a FROZEN manifest snapshot.
   const configs: {
     name: string;
     model: string;
     hwRev: string;
-    fw: string;
+    sw: Record<string, string>;
     baseline: boolean;
+    supersedes: string | null;
   }[] = [
     {
       name: "CFG-HX2-r4.0",
       model: "HX-2",
-      hwRev: "B",
-      fw: "v4.0.2",
+      hwRev: "A",
+      sw: {
+        firmware: "v4.0.2",
+        policy: "p-11.0",
+        os: "ROS 2 · 22.04",
+        cal: "cal-2026.03",
+      },
       baseline: false,
+      supersedes: null,
     },
     {
       name: "CFG-HX2-r4.1",
       model: "HX-2",
-      hwRev: "B",
-      fw: "v4.1.0",
+      hwRev: "A",
+      sw: {
+        firmware: "v4.1.0",
+        policy: "p-12.0",
+        os: "ROS 2 · 24.04",
+        cal: "cal-2026.04",
+      },
       baseline: false,
+      supersedes: "CFG-HX2-r4.0",
     },
     {
       name: "CFG-HX2-r4.1b",
       model: "HX-2",
       hwRev: "B",
-      fw: "v4.2.0",
+      sw: {
+        firmware: "v4.2.0",
+        policy: "p-12.4",
+        os: "ROS 2 · 24.04",
+        cal: "cal-2026.05",
+      },
       baseline: false,
+      supersedes: null,
     },
     {
       name: "CFG-HX2-r4.2",
       model: "HX-2",
       hwRev: "B",
-      fw: "v4.2.1",
+      sw: {
+        firmware: "v4.2.1",
+        policy: "p-12.4",
+        os: "ROS 2 · 24.04",
+        cal: "cal-2026.05",
+      },
       baseline: true,
+      supersedes: "CFG-HX2-r4.1",
+    },
+    {
+      name: "CFG-HX2-r4.3",
+      model: "HX-2",
+      hwRev: "B",
+      sw: {
+        firmware: "v4.2.2",
+        policy: "p-13.0",
+        os: "ROS 2 · 24.04",
+        cal: "cal-2026.05",
+      },
+      baseline: false,
+      supersedes: "CFG-HX2-r4.2",
     },
     {
       name: "CFG-HX1-r4.9",
       model: "HX-1",
       hwRev: "A",
-      fw: "v4.1.0",
+      sw: { firmware: "v4.1.0", policy: "p-12.0" },
       baseline: false,
+      supersedes: null,
     },
     {
       name: "CFG-HX1-r5.0",
       model: "HX-1",
       hwRev: "A",
-      fw: "v4.2.1",
+      sw: { firmware: "v4.2.1", policy: "p-12.4" },
       baseline: true,
+      supersedes: "CFG-HX1-r4.9",
     },
   ];
+
+  // Two distinct approvers for the dual-approver baselines (proposer + finalizer).
+  const [engineer, admin] = await Promise.all([
+    db.user.findFirst({ where: { role: "ENGINEER" }, select: { id: true } }),
+    db.user.findFirst({ where: { role: "ADMIN" }, select: { id: true } }),
+  ]);
+
+  const cfgIdByName = new Map<string, string>();
   for (const c of configs) {
-    await db.configurationVersion.create({
+    const created = await db.configurationVersion.create({
       data: {
         name: c.name,
         productModelId: c.model === "HX-1" ? hx1.id : hx2.id,
         hwSpec: { rev: c.hwRev },
-        swSpec: { firmware: c.fw },
+        swSpec: c.sw,
         isBaseline: c.baseline,
+        lockProposedById: c.baseline ? (engineer?.id ?? null) : null,
+        lockProposedAt: c.baseline ? baselinedAt : null,
         lockedAt: c.baseline ? baselinedAt : null,
+        lockedById: c.baseline ? (admin?.id ?? null) : null,
+      },
+    });
+    cfgIdByName.set(c.name, created.id);
+  }
+  // Second pass — lineage (supersedesId) + the frozen manifest for each baseline.
+  for (const c of configs) {
+    const id = cfgIdByName.get(c.name)!;
+    const supersedesId = c.supersedes
+      ? (cfgIdByName.get(c.supersedes) ?? null)
+      : null;
+    const created = await db.configurationVersion.findUnique({
+      where: { id },
+      select: { productModelId: true, swSpec: true, isBaseline: true },
+    });
+    const frozen = c.baseline
+      ? await freezeConfigManifest(db, {
+          productModelId: created!.productModelId,
+          swSpec: created!.swSpec,
+        })
+      : null;
+    await db.configurationVersion.update({
+      where: { id },
+      data: {
+        supersedesId,
+        ...(frozen ? { frozenManifest: frozen as never } : {}),
       },
     });
   }

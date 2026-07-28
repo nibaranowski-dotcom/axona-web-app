@@ -131,6 +131,114 @@ export async function freezeConfigSnapshot(
   };
 }
 
+// ── PLM.11 · the Configuration MANIFEST (the config-detail hero) ────────────────
+// A named config's resolved content: HW positions (from the product model's BOM) +
+// SW items (from swSpec). A DRAFT resolves this live; a BASELINE freezes it at lock
+// time into ConfigurationVersion.frozenManifest and renders THAT — so changing an
+// underlying part revision can never alter a baselined manifest (immutability).
+
+export interface ConfigHwPosition {
+  position: string;
+  name: string; // the part's human description
+  partNumber: string;
+  rev: string;
+  qty: number;
+}
+export interface ConfigSwItem {
+  kind: string; // FIRMWARE | POLICY | OS | CAL …
+  name: string;
+  version: string;
+  certState: string; // "Certified" | "Current" | …
+}
+export interface ConfigManifest {
+  hw: ConfigHwPosition[];
+  sw: ConfigSwItem[];
+  hwCount: number;
+}
+
+// swSpec key → (kind, display name, cert state). Presentational mapping — the config's
+// swSpec stays a plain {key: version} map; unknown keys degrade to a sensible default.
+const SW_KINDS: Record<string, { kind: string; name: string; cert: string }> = {
+  firmware: { kind: "FIRMWARE", name: "Robot firmware", cert: "Certified" },
+  policy: { kind: "POLICY", name: "Autonomy policy", cert: "Certified" },
+  os: { kind: "OS", name: "Edge runtime", cert: "Certified" },
+  cal: { kind: "CAL", name: "Calibration profile", cert: "Current" },
+};
+
+function swItemsFromSpec(swSpec: unknown): ConfigSwItem[] {
+  if (!swSpec || typeof swSpec !== "object") return [];
+  return Object.entries(swSpec as Record<string, unknown>).map(([key, ver]) => {
+    const meta = SW_KINDS[key] ?? {
+      kind: key.toUpperCase(),
+      name: key,
+      cert: "Current",
+    };
+    return {
+      kind: meta.kind,
+      name: meta.name,
+      version: String(ver),
+      certState: meta.cert,
+    };
+  });
+}
+
+/**
+ * Resolve a named config's LIVE manifest — HW positions from the product model's BOM
+ * (position → part revision → qty) + SW items from swSpec. Draft configs render this;
+ * baselined configs render their frozen snapshot (see freezeConfigManifest). Org-scoped.
+ */
+export async function resolveConfigManifest(
+  db: OrgScopedDb,
+  config: { productModelId: string; swSpec: unknown },
+): Promise<ConfigManifest> {
+  const bom = await db.bomLine.findMany({
+    where: { productModelId: config.productModelId },
+    include: { partRevision: { include: { partMaster: true } } },
+    orderBy: { position: "asc" },
+  });
+  const hw: ConfigHwPosition[] = bom.map((b) => ({
+    position: b.position,
+    name: b.partRevision.partMaster.description,
+    partNumber: b.partRevision.partMaster.partNumber,
+    rev: b.partRevision.rev,
+    qty: b.qty,
+  }));
+  return { hw, sw: swItemsFromSpec(config.swSpec), hwCount: hw.length };
+}
+
+/**
+ * Materialize the config's manifest as a FROZEN snapshot to persist in
+ * `frozenManifest` at lock time. Plain serializable object — never re-resolved on read.
+ */
+export async function freezeConfigManifest(
+  db: OrgScopedDb,
+  config: { productModelId: string; swSpec: unknown },
+): Promise<ConfigManifest & { frozen: true; at: string }> {
+  const m = await resolveConfigManifest(db, config);
+  return { frozen: true, at: new Date().toISOString(), ...m };
+}
+
+/** Read a config's manifest: the frozen snapshot when baselined, else live. This is
+ *  the single immutability boundary — a baselined manifest never re-resolves. */
+export function readConfigManifest(config: {
+  lockedAt: Date | null;
+  frozenManifest: unknown;
+  liveManifest: ConfigManifest;
+}): { manifest: ConfigManifest; frozen: boolean } {
+  if (config.lockedAt && config.frozenManifest) {
+    const f = config.frozenManifest as Partial<ConfigManifest>;
+    return {
+      manifest: {
+        hw: f.hw ?? [],
+        sw: f.sw ?? [],
+        hwCount: f.hwCount ?? f.hw?.length ?? 0,
+      },
+      frozen: true,
+    };
+  }
+  return { manifest: config.liveManifest, frozen: false };
+}
+
 export interface AsBuiltDiffLine {
   position: string;
   expected: { partNumber: string; rev: string } | null; // as-designed

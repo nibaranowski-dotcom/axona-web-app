@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .profmenu{position:relative}
+  .profmenu summary{list-style:none;cursor:pointer}
+  .profmenu summary::-webkit-details-marker{display:none}
+  .profmenu summary:hover{background:var(--panel)}
+  .profmenu[open] .profchev{transform:rotate(180deg)}
+  .profchev{transition:transform .15s;flex:none}
+  .pm-item{transition:background .15s}
+  .pm-item:hover{background:var(--panel)}
+  .pm-signout{transition:border-color .15s,color .15s}
+  .pm-signout:hover{border-color:var(--ink-strong);color:var(--ink)}
+  .navitem{transition:background .15s,color .15s}
+  .navitem:hover{background:var(--panel)}
+  .navgroup summary{list-style:none}
+  .navgroup summary::-webkit-details-marker{display:none}
+  .navgroup summary:hover .navchev{stroke:var(--ink-muted)}
+  .navchev{transition:transform .15s;flex:none}
+  .navgroup:not([open]) .navchev{transform:rotate(-90deg)}
+  .navsearch{transition:border-color .15s,background .15s}
+  .navsearch:hover{border-color:var(--ink-strong);background:var(--panel-2)}
+  .crumb{transition:color .15s}
+  .crumb:hover{color:var(--ink)}
+  .mrow:hover{background:var(--panel-2)}
+  .unitlink{transition:border-color .15s}
+  .unitlink:hover{border-color:var(--ink-strong)}
+  .chrow:hover{background:var(--panel-2)}
+  .vsel{transition:border-color .15s}
+  .vsel:hover{border-color:var(--ink-strong)}
+  .scarea::-webkit-scrollbar{width:8px}
+  .scarea::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+</style>
+<script>document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key&&e.key.toLowerCase()==='k'){e.preventDefault();window.location.href='Mission Control.dc.html';}});</script>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden;font-family:var(--font-sans);color:var(--ink);background:var(--panel)">
+
+  <aside style="width:240px;flex:none;background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 14px">
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 8px 18px">
+      <span style="font-size:21px;font-weight:700;letter-spacing:-.04em;color:var(--ink-strong)">axona</span>
+      <span style="width:12px;height:12px;background:var(--ink-strong);border-radius:0 7px 0 7px"></span>
+    </div>
+    <a href="Mission Control.dc.html" class="navsearch" style="display:flex;align-items:center;gap:9px;margin:0 4px 10px;padding:8px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--panel);cursor:pointer;text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <span style="flex:1;font-size:13px;color:var(--ink-faint)">Search</span>
+      <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px">⌘K</span>
+    </a>
+    <div class="scarea" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;margin:0 -4px;padding:0 4px">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <details open="open" class="navgroup">
+          <summary style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;padding:14px 10px 6px;cursor:pointer"><span style="flex:1">{{ g.label }}</span><svg class="navchev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--line-strong)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></summary>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+          <a class="navitem" href="{{ it.href }}" style="display:flex;align-items:center;gap:11px;padding:8px 10px 8px {{ it.pad }};border-radius:8px;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.weight }};font-size:14px;text-decoration:none">
+            <span style="width:6px;height:6px;border-radius:2px;background:{{ it.marker }};flex:none"></span>
+            <span style="flex:1">{{ it.name }}</span>
+            <sc-if value="{{ it.badge }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:10px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 7px;font-weight:600">{{ it.badge }}</span></sc-if>
+          </a>
+        </sc-for>
+        </details>
+      </sc-for>
+    </div>
+    <details class="profmenu" style="border-top:1px solid var(--line);margin-top:8px;padding-top:8px">
+      <summary style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px">
+        <span style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink);flex:none">LC</span>
+        <div style="flex:1;min-width:0;font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Head of Ops</div></div>
+        <svg class="profchev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"></path></svg>
+      </summary>
+      <div style="position:absolute;bottom:calc(100% + 8px);left:0;right:0;background:var(--paper);border:1px solid var(--line);border-radius:13px;box-shadow:0 18px 40px rgba(0,0,0,.12);padding:6px;z-index:40">
+        <a class="pm-item" href="Audit Trail.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500"><span style="flex:1">Audit trail</span></a>
+        <a class="pm-item" href="Notifications.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500"><span style="flex:1">Notifications</span><span style="font-family:var(--font-mono);font-size:11px;font-weight:700;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:2px 9px">5</span></a>
+        <a class="pm-item" href="Settings — Organization.dc.html" style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:13.5px;font-weight:500"><span style="flex:1">Settings</span></a>
+        <div style="height:1px;background:var(--line);margin:6px 4px"></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px">
+          <span style="width:30px;height:30px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent-ink);flex:none">LC</span>
+          <div style="flex:1;min-width:0;font-size:12.5px;line-height:1.3"><div style="font-weight:600">Lauren C.</div><div style="color:var(--ink-faint)">Admin</div></div>
+          <a class="pm-signout" href="Login.dc.html" title="Sign out" style="width:32px;height:32px;border:1px solid var(--line-strong);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-muted);text-decoration:none;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg></a>
+        </div>
+      </div>
+    </details>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--panel)">
+
+    <!-- identity header -->
+    <div style="flex:none;border-bottom:1px solid var(--line);background:var(--paper);padding:14px 24px 16px">
+      <div style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">
+        <a href="Engineering.dc.html" class="crumb" style="color:var(--ink-faint);text-decoration:none">Engineering</a><span>/</span><a href="Configurations.dc.html" class="crumb" style="color:var(--ink-faint);text-decoration:none">Configurations</a><span>/</span><span style="color:var(--ink-muted)">CFG-HX2-r4.2</span>
+      </div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:9px">
+        <div style="min-width:0">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <h1 style="margin:0;font-family:var(--font-mono);font-size:24px;font-weight:700;letter-spacing:-.02em">CFG-HX2-r4.2</h1>
+            <span style="display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;letter-spacing:.03em;padding:4px 11px;border-radius:999px;background:var(--success-tint);color:var(--success)">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              Baseline · locked
+            </span>
+          </div>
+          <div style="display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-muted);margin-top:7px;flex-wrap:wrap">
+            <span>HX-2 Humanoid</span><span style="color:var(--line-strong)">·</span>
+            <span style="font-family:var(--font-mono);font-size:12px">Baselined 2026-06-18</span><span style="color:var(--line-strong)">·</span>
+            <span style="font-family:var(--font-mono);font-size:12px">O. Haddad</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex:none">
+          <button class="vsel" style="font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;padding:9px 14px;font-size:13px;background:transparent;color:var(--ink);border:1px solid var(--line-strong);display:inline-flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v4a1 1 0 0 1-1 1H3"></path><path d="M21 8h-4a1 1 0 0 1-1-1V3"></path><path d="M3 16h4a1 1 0 0 1 1 1v4"></path><path d="M16 21v-4a1 1 0 0 1 1-1h4"></path></svg>Duplicate as draft</button>
+          <button style="font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;padding:9px 15px;font-size:13px;background:var(--ink-strong);color:#fff;border:1px solid var(--ink-strong)">Request unlock</button>
+        </div>
+      </div>
+
+      <!-- lineage -->
+      <div style="display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:13px;border-top:1px solid var(--line);flex-wrap:wrap">
+        <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Lineage</span>
+        <a href="Configuration.dc.html" style="font-family:var(--font-mono);font-size:11.5px;color:var(--ink-muted);text-decoration:none;background:var(--panel);border:1px solid var(--line-panel);border-radius:6px;padding:3px 9px">CFG-HX2-r4.1</a>
+        <span style="color:var(--line-strong);font-size:12px">→</span>
+        <span style="font-family:var(--font-mono);font-size:11.5px;font-weight:600;background:var(--ink-strong);color:#fff;border-radius:6px;padding:3px 9px">CFG-HX2-r4.2</span>
+        <span style="color:var(--line-strong);font-size:12px">→</span>
+        <a href="Configuration.dc.html" style="font-family:var(--font-mono);font-size:11.5px;color:var(--ink-muted);text-decoration:none;background:var(--panel);border:1px solid var(--line-panel);border-radius:6px;padding:3px 9px">CFG-HX2-r4.3 · draft</a>
+        <span style="font-size:12px;color:var(--ink-faint);margin-left:4px">Supersedes r4.1 · succeeded by the r4.3 draft (ECO-318)</span>
+      </div>
+    </div>
+
+    <div class="scarea" style="flex:1;min-width:0;min-height:0;overflow:hidden;display:flex">
+
+      <!-- main column -->
+      <div style="flex:1;min-width:0;overflow-y:auto;padding:20px 24px 28px;display:flex;flex-direction:column;gap:18px">
+
+        <!-- MANIFEST (signature artifact) -->
+        <div style="flex:none;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:15px 20px 13px;border-bottom:1px solid var(--line)">
+            <div>
+              <h2 style="margin:0;font-size:15px;font-weight:600">Resolved configuration</h2>
+              <div style="font-size:12px;color:var(--ink-muted);margin-top:3px">Everything a unit on this configuration is built and running.</div>
+            </div>
+            <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;color:var(--ink-faint);text-transform:uppercase">Immutable · baseline</span>
+          </div>
+
+          <!-- hardware -->
+          <div style="padding:14px 20px 4px;display:flex;align-items:center;gap:10px">
+            <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Hardware · 142 positions</span>
+            <span style="flex:1;height:1px;background:var(--line)"></span>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">HX-2 rev 4</span>
+          </div>
+          <sc-for list="{{ hw }}" as="h" hint-placeholder-count="6">
+            <div class="mrow" style="display:grid;grid-template-columns:74px 1.9fr 1fr 84px;gap:12px;align-items:center;padding:11px 20px;border-top:1px solid var(--line)">
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)">{{ h.pos }}</span>
+              <span style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ h.name }}</span>
+              <span style="font-family:var(--font-mono);font-size:12px;font-weight:600">{{ h.rev }}</span>
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-muted);text-align:right">{{ h.qty }}</span>
+            </div>
+          </sc-for>
+          <div style="padding:10px 20px;border-top:1px solid var(--line)">
+            <a href="Engineering.dc.html" style="font-size:12.5px;font-weight:600;color:var(--ink);text-decoration:none">View all 142 positions in the BOM →</a>
+          </div>
+
+          <!-- software -->
+          <div style="padding:16px 20px 4px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px">
+            <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Software · firmware</span>
+            <span style="flex:1;height:1px;background:var(--line)"></span>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--success)">Certified</span>
+          </div>
+          <sc-for list="{{ sw }}" as="s" hint-placeholder-count="4">
+            <div class="mrow" style="display:grid;grid-template-columns:74px 1.9fr 1fr 84px;gap:12px;align-items:center;padding:11px 20px;border-top:1px solid var(--line)">
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)">{{ s.kind }}</span>
+              <span style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.name }}</span>
+              <span style="font-family:var(--font-mono);font-size:12px;font-weight:600">{{ s.ver }}</span>
+              <span style="font-family:var(--font-mono);font-size:10.5px;color:{{ s.stColor }};text-align:right">{{ s.state }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- DIFF vs version -->
+        <div style="flex:none;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:15px 20px 13px;border-bottom:1px solid var(--line)">
+            <h2 style="margin:0;font-size:15px;font-weight:600">Changes from the previous baseline</h2>
+            <div style="display:flex;align-items:center;gap:9px">
+              <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Compare to</span>
+              <button class="vsel" style="display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11.5px;font-weight:600;color:var(--ink);background:var(--panel);border:1px solid var(--line-strong);border-radius:8px;padding:6px 11px;cursor:pointer">CFG-HX2-r4.1<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:74px 1.7fr 1fr 1fr;gap:12px;padding:10px 20px;border-bottom:1px solid var(--line);font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">
+            <span>Pos</span><span>Item</span><span>r4.1</span><span>r4.2</span>
+          </div>
+          <sc-for list="{{ diff }}" as="d" hint-placeholder-count="4">
+            <div class="mrow" style="display:grid;grid-template-columns:74px 1.7fr 1fr 1fr;gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid var(--line);opacity:{{ d.op }}">
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)">{{ d.pos }}</span>
+              <div style="min-width:0">
+                <div style="font-size:13px;font-weight:{{ d.weight }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ d.name }}</div>
+                <sc-if value="{{ d.note }}" hint-placeholder-val="{{ false }}"><div style="font-size:11px;color:var(--ink-faint);margin-top:2px">{{ d.note }}</div></sc-if>
+              </div>
+              <span style="font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);text-decoration:{{ d.strike }}">{{ d.from }}</span>
+              <span style="font-family:var(--font-mono);font-size:12px;font-weight:{{ d.weight }};color:{{ d.toColor }}">{{ d.to }}</span>
+            </div>
+          </sc-for>
+          <div style="padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink)"><span style="font-weight:700">3</span> changes</span>
+            <span style="color:var(--line-strong)">·</span>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-muted)">2 hardware · 1 software</span>
+            <a href="As-Built Diff.dc.html" style="margin-left:auto;font-size:12.5px;font-weight:600;color:var(--ink);text-decoration:none">Full diff →</a>
+          </div>
+        </div>
+
+        <!-- change history -->
+        <div style="flex:none;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+          <div style="padding:15px 20px 13px;border-bottom:1px solid var(--line)">
+            <h2 style="margin:0;font-size:15px;font-weight:600">Change history</h2>
+            <div style="font-size:12px;color:var(--ink-muted);margin-top:3px">The changes that produced this configuration, and what's queued against it.</div>
+          </div>
+          <sc-for list="{{ changes }}" as="c" hint-placeholder-count="3">
+            <a class="chrow" href="Change Order.dc.html" style="display:grid;grid-template-columns:90px 1.9fr 1fr 96px;gap:12px;align-items:center;padding:13px 20px;border-bottom:1px solid var(--line);text-decoration:none;color:inherit">
+              <span style="font-family:var(--font-mono);font-size:12px;font-weight:600">{{ c.id }}</span>
+              <span style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.title }}</span>
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-muted)">{{ c.effectivity }}</span>
+              <span style="justify-self:end"><span style="display:inline-flex;align-items:center;font-size:10px;font-weight:600;letter-spacing:.03em;padding:3px 9px;border-radius:999px;background:{{ c.stBg }};color:{{ c.stFg }}">{{ c.state }}</span></span>
+            </a>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- right rail -->
+      <div style="width:308px;flex:none;border-left:1px solid var(--line);background:var(--paper);overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px">
+
+        <!-- matching units -->
+        <a class="unitlink" href="Unit Registry.dc.html" style="flex:none;display:block;border:1px solid var(--line);border-radius:13px;padding:18px;text-decoration:none;color:inherit">
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Units on this configuration</div>
+          <div style="display:flex;align-items:baseline;gap:9px;margin-top:8px">
+            <span style="font-family:var(--font-mono);font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1">44</span>
+            <span style="font-size:12.5px;color:var(--ink-muted)">of 148 built</span>
+          </div>
+          <div style="height:7px;border-radius:999px;background:var(--skeleton);overflow:hidden;margin-top:12px"><span style="display:block;height:7px;width:30%;background:var(--ink-strong)"></span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:11px">
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">4 SITES · 3 CUSTOMERS</span>
+            <span style="font-size:12px;font-weight:600;color:var(--ink)">View →</span>
+          </div>
+        </a>
+
+        <!-- lock state -->
+        <div style="flex:none;border:1px solid var(--line);border-radius:13px;padding:16px">
+          <div style="display:flex;align-items:center;gap:9px">
+            <span style="width:26px;height:26px;border-radius:7px;background:var(--success-tint);display:inline-flex;align-items:center;justify-content:center;color:var(--success);flex:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+            <div style="min-width:0"><div style="font-size:13px;font-weight:600">Locked baseline</div><div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);margin-top:1px">IMMUTABLE</div></div>
+          </div>
+          <div style="font-size:12px;color:var(--ink-muted);line-height:1.5;margin-top:11px">Contents can't change. To revise, duplicate as a draft or raise a change order — unlocking needs a second approver.</div>
+          <div style="display:flex;flex-direction:column;gap:0;margin-top:13px;padding-top:12px;border-top:1px solid var(--line)">
+            <sc-for list="{{ approvals }}" as="a" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0">
+                <span style="font-size:12.5px;color:var(--ink-muted)">{{ a.role }}</span>
+                <span style="font-family:var(--font-mono);font-size:11px;font-weight:600">{{ a.who }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- agent proposal -->
+        <div style="flex:none;border:1px solid var(--line);border-radius:13px;padding:16px">
+          <div style="display:flex;align-items:center;gap:9px">
+            <span style="flex:none;display:inline-flex"><svg width="20" height="20" viewBox="0 0 24 24" fill="#1b1b1f"><circle cx="12" cy="4.6" r="1.55"></circle><circle cx="15.7" cy="5.6" r="1.55"></circle><circle cx="18.4" cy="8.3" r="1.55"></circle><circle cx="19.4" cy="12" r="1.55"></circle><circle cx="18.4" cy="15.7" r="1.55"></circle><circle cx="15.7" cy="18.4" r="1.55"></circle><circle cx="12" cy="19.4" r="1.55"></circle><circle cx="8.3" cy="18.4" r="1.55"></circle><circle cx="5.6" cy="15.7" r="1.55"></circle><circle cx="4.6" cy="12" r="1.55"></circle><circle cx="5.6" cy="8.3" r="1.55"></circle><circle cx="8.3" cy="5.6" r="1.55"></circle></svg></span>
+            <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600">Configuration agent</div><div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase">Proposal · 82% confidence</div></div>
+          </div>
+          <div style="font-size:12.5px;color:var(--ink);line-height:1.5;margin-top:11px">3 units on this baseline show drift — a field swap on SN-2231 wasn't captured as a configuration change.</div>
+          <div style="display:flex;gap:8px;margin-top:13px">
+            <button style="flex:1;font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;padding:8px 12px;font-size:12px;background:var(--accent);color:var(--accent-ink);border:none">Review drift</button>
+            <button style="font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;padding:8px 12px;font-size:12px;background:transparent;color:var(--ink-muted);border:1px solid var(--line-strong)">Dismiss</button>
+          </div>
+        </div>
+
+        <!-- related -->
+        <div style="flex:none;border:1px solid var(--line);border-radius:13px;overflow:hidden">
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;padding:13px 16px 10px">Related</div>
+          <sc-for list="{{ related }}" as="r" hint-placeholder-count="4">
+            <a class="pm-item" href="{{ r.href }}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 16px;border-top:1px solid var(--line);text-decoration:none;color:var(--ink);font-size:13px">
+              <span>{{ r.label }}</span>
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)">{{ r.meta }}</span>
+            </a>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){
+    const hw = [
+      { pos:'P-001', name:'Compute module', rev:'COMPUTE-720 rev C', qty:'×1' },
+      { pos:'P-014', name:'Harmonic drive · shoulder', rev:'SERVO-204 rev B', qty:'×2' },
+      { pos:'P-022', name:'Lidar module', rev:'LIDAR-88 rev D', qty:'×1' },
+      { pos:'P-031', name:'Battery pack 48V', rev:'BATT-48V rev F', qty:'×1' },
+      { pos:'P-047', name:'Wiring harness · torso', rev:'HARN-220 rev H', qty:'×1' },
+      { pos:'P-058', name:'Vision sensor kit', rev:'VIS-310 rev B', qty:'×2' },
+    ];
+
+    const sw = [
+      { kind:'FIRMWARE', name:'Robot firmware', ver:'v4.2.1', state:'Certified', stColor:'var(--success)' },
+      { kind:'POLICY', name:'Autonomy policy', ver:'p-12.4', state:'Certified', stColor:'var(--success)' },
+      { kind:'OS', name:'Edge runtime', ver:'ROS 2 · 24.04', state:'Certified', stColor:'var(--success)' },
+      { kind:'CAL', name:'Calibration profile', ver:'cal-2026.05', state:'Current', stColor:'var(--ink-muted)' },
+    ];
+
+    const d = (pos, name, from, to, changed, note) => ({
+      pos, name, from, to, note: note || null,
+      weight: changed ? 600 : 400,
+      op: changed ? '1' : '0.5',
+      strike: changed ? 'line-through' : 'none',
+      toColor: changed ? 'var(--ink-strong)' : 'var(--ink-muted)',
+    });
+    const diff = [
+      d('P-022','Lidar module','LIDAR-88 rev C','LIDAR-88 rev D', true, 'Revision bump · ECO-311'),
+      d('P-047','Wiring harness · torso','HARN-220 rev G','HARN-220 rev H', true, 'Connector keying fix · ECO-314'),
+      d('FIRMWARE','Robot firmware','v4.2.0','v4.2.1', true, 'Torque compensation'),
+      d('P-001','Compute module','COMPUTE-720 rev C','COMPUTE-720 rev C', false),
+      d('P-031','Battery pack 48V','BATT-48V rev F','BATT-48V rev F', false),
+    ];
+
+    const st = (t) => t==='released' ? { stBg:'var(--success-tint)', stFg:'var(--success)' }
+      : t==='review' ? { stBg:'var(--accent)', stFg:'var(--accent-ink)' }
+      : { stBg:'var(--panel)', stFg:'var(--ink-muted)' };
+    const changes = [
+      { id:'ECO-318', title:'Supersede SERVO-204 → -205 (tighter tolerance)', effectivity:'From SN-2260', state:'In review', ...st('review') },
+      { id:'ECO-314', title:'Harness connector keying (mis-mate fix)', effectivity:'From SN-2190', state:'Released', ...st('released') },
+      { id:'ECO-311', title:'Lidar module revision bump rev C → D', effectivity:'From SN-2172', state:'Released', ...st('released') },
+    ];
+
+    const approvals = [
+      { role:'Baselined by', who:'O. Haddad' },
+      { role:'Approved by', who:'L. Chen' },
+    ];
+
+    const related = [
+      { label:'BOM · as-designed', meta:'HX-2 rev 4', href:'Engineering.dc.html' },
+      { label:'Test runs on this config', meta:'38 runs', href:'Test Explorer.dc.html' },
+      { label:'Blast radius', meta:'44 units', href:'Blast Radius.dc.html' },
+      { label:'Compat matrix', meta:'HW ↔ FW', href:'Engineering.dc.html' },
+    ];
+
+    return { navGroups: this._nav(), hw, sw, diff, changes, approvals, related };
+  }
+  _nav(){
+    const navRaw = [
+      { label:'Core', items:[ { name:'Command Center', href:'Mission Control.dc.html' }, { name:'Agents', href:'Agents.dc.html' }, { name:'Workflows', href:'Workflows.dc.html' }, { name:'Projects', href:'Projects.dc.html' }, { name:'Machines', href:'Machines.dc.html' } ] },
+      { label:'Value chain', items:[ { name:'Procurement', badge:'6' }, { name:'Manufacturing' }, { name:'Inventory' }, { name:'Fulfillment', badge:'3' }, { name:'Quality' }, { name:'Sales & CRM' }, { name:'Marketing' } ] },
+      { label:'Robotics', items:[ { name:'Fleet' }, { name:'Field Service' }, { name:'Engineering', active:true }, { name:'Autonomy' } ] },
+      { label:'Back office', items:[ { name:'Finance', badge:'6' }, { name:'People' }, { name:'Security' }, { name:'Legal' } ] },
+    ];
+    return navRaw.map(g => ({
+      label: g.label || null,
+      items: g.items.map(it => ({
+        name: it.name, badge: it.badge || null, href: it.href || (it.name + '.dc.html'), pad: it.sub ? '24px' : '10px',
+        bg: it.active ? 'var(--panel)' : 'transparent',
+        fg: it.active ? 'var(--ink)' : 'var(--ink-muted)',
+        weight: it.active ? 600 : 400,
+        marker: it.active ? 'var(--ink-strong)' : 'var(--line-strong)',
+      })),
+    }));
+  }
+}
+</script>
+</body>
+</html>

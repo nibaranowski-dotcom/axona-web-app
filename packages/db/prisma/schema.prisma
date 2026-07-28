@@ -1604,11 +1604,26 @@ model ConfigurationVersion {
   hwSpec         Json
   swSpec         Json
   isBaseline     Boolean      @default(false)
-  lockedAt       DateTime?
-  lockedById     String?
+  /// PLM.11 dual-approver lock: `lockProposedBy*` is the FIRST approver (a draft is
+  /// then "awaiting second"); `lockedAt`/`lockedById` is the SECOND, finalizing
+  /// approver = the baseline instant + approver. A single approver can never finalize.
+  lockProposedById String?
+  lockProposedAt   DateTime?
+  lockedAt         DateTime?
+  lockedById       String?
+  /// PLM.11 — the manifest FROZEN at lock time (same immutability pattern as
+  /// TestRun.configSnapshot): a baselined config renders this, NOT a live re-resolve,
+  /// so changing an underlying part revision can never alter a baselined manifest.
+  frozenManifest Json?
+  /// PLM.11 lineage — the predecessor this config supersedes (self-relation). The
+  /// reverse (`supersededBy`) is the successor(s) that supersede THIS one.
+  supersedesId String?
+  supersedes   ConfigurationVersion?  @relation("ConfigLineage", fields: [supersedesId], references: [id], onDelete: SetNull)
+  supersededBy ConfigurationVersion[] @relation("ConfigLineage")
 
   @@unique([orgId, name])
   @@index([orgId])
+  @@index([supersedesId])
 }
 
 /// PLM.1b — a per-unit verification run. The hero invariant: `configSnapshot` is

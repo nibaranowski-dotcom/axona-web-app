@@ -100,7 +100,7 @@
       <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:12px">Named configurations · 6</div>
       <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
         <sc-for list="{{ configs }}" as="c" hint-placeholder-count="4">
-          <div class="cfgcard" style="background:var(--paper);border:1px solid {{ c.border }};border-radius:14px;padding:18px 20px">
+          <a class="cfgcard" href="Configuration.dc.html" style="display:block;text-decoration:none;color:inherit;background:var(--paper);border:1px solid {{ c.border }};border-radius:14px;padding:18px 20px">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
               <div>
                 <div style="display:flex;align-items:center;gap:10px">
@@ -112,8 +112,7 @@
               <a href="Unit Registry.dc.html" style="text-align:right;text-decoration:none;color:inherit;flex:none">
                 <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;letter-spacing:-.02em">{{ c.units }}</div>
                 <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.04em;color:var(--ink-faint);text-transform:uppercase">units match →</div>
-              </a>
-            </div>
+              </a>            </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:16px">
               <div style="padding:12px 14px;border-right:1px solid var(--line)">
                 <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;color:var(--ink-faint);text-transform:uppercase">Hardware</div>
@@ -131,7 +130,7 @@
               <sc-if value="{{ c.draft }}" hint-placeholder-val="{{ false }}"><button style="font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;padding:7px 13px;font-size:12px;background:var(--accent);color:var(--accent-ink);border:none;display:inline-flex;align-items:center;gap:7px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Lock &amp; baseline</button></sc-if>
               <a href="As-Built Diff.dc.html" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--ink);text-decoration:none">Diff →</a>
             </div>
-          </div>
+          </a>
         </sc-for>
       </div>
     </div>

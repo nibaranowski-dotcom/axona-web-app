@@ -6,6 +6,7 @@ import {
   isGatedActionKind,
   trustForTarget,
   recordOutcome,
+  freezeConfigManifest,
   type OrgScopedDb,
   type Role,
   type POStatus,
@@ -30,7 +31,8 @@ export type ApprovalKind =
   | "policy.rollback"
   | "creditnote.issue"
   | "workflow.gate"
-  | "config.lock" // PLM.10 — baseline/lock a ConfigurationVersion
+  | "config.lock" // PLM.10/11 — baseline/lock a ConfigurationVersion (dual-approver)
+  | "config.unlock" // PLM.11 — unlock a baselined ConfigurationVersion (second approver)
   | "field.mod"; // PLM.V5 — approve a recorded field modification (applies the delta)
 
 export type Decision = "APPROVE" | "REJECT";
@@ -232,6 +234,10 @@ const REGISTRY: { [K in ApprovalKind]: ApprovalDef<unknown> } = {
   // PLM.10 — lock/baseline a ConfigurationVersion. A locked config is IMMUTABLE:
   // isPending is false once lockedAt is set, so decide() refuses a second lock, and
   // the app offers no edit path. Gated (ENGINEER/ADMIN) + audited via decide().
+  // PLM.11 — lock/baseline a draft config. DUAL-APPROVER: the first approver PROPOSES
+  // the lock (draft → awaiting-second); a DIFFERENT second approver finalizes, which
+  // FREEZES the manifest (immutable) and baselines it. A single approver can never
+  // finalize alone. Each step writes its own AUDIT.1 entry (both approvers on record).
   "config.lock": {
     kind: "config.lock",
     roles: ["ENGINEER", "ADMIN"],
@@ -240,21 +246,105 @@ const REGISTRY: { [K in ApprovalKind]: ApprovalDef<unknown> } = {
       db.configurationVersion.findFirst({ where: { id } }),
     isPending: (c) => (c as { lockedAt: Date | null }).lockedAt === null,
     onApprove: async (db, _org, t, by) => {
-      const cfg = t as { id: string; name: string };
+      const cfg = t as {
+        id: string;
+        name: string;
+        productModelId: string;
+        swSpec: unknown;
+        lockProposedById: string | null;
+      };
+      // First approver → propose (still a draft, awaiting a second approver).
+      if (!cfg.lockProposedById) {
+        await db.configurationVersion.updateMany({
+          where: { id: cfg.id },
+          data: { lockProposedById: by.id, lockProposedAt: new Date() },
+        });
+        return {
+          output: { status: "awaiting_second", name: cfg.name },
+          summary: `configuration ${cfg.name} lock proposed by ${by.label} — awaiting a second approver`,
+        };
+      }
+      // Same approver again → cannot finalize alone (dual-control).
+      if (cfg.lockProposedById === by.id) {
+        return {
+          output: { status: "awaiting_second", name: cfg.name },
+          summary: `configuration ${cfg.name} still awaiting a SECOND approver (a single approver cannot finalize)`,
+        };
+      }
+      // A different second approver → FREEZE the manifest + baseline (immutable).
+      const frozen = await freezeConfigManifest(db, {
+        productModelId: cfg.productModelId,
+        swSpec: cfg.swSpec,
+      });
       await db.configurationVersion.updateMany({
         where: { id: cfg.id },
-        data: { lockedAt: new Date(), lockedById: by.id, isBaseline: true },
+        data: {
+          lockedAt: new Date(),
+          lockedById: by.id,
+          isBaseline: true,
+          frozenManifest: frozen as never,
+        },
       });
       return {
         output: { status: "locked", name: cfg.name },
-        summary: `configuration ${cfg.name} locked as a baseline`,
+        summary: `configuration ${cfg.name} baselined + locked (immutable) — second approver ${by.label}`,
+      };
+    },
+    onReject: async (db, _org, t) => {
+      const cfg = t as { id: string; name: string };
+      // Decline clears any pending lock proposal (back to a clean draft).
+      await db.configurationVersion.updateMany({
+        where: { id: cfg.id },
+        data: { lockProposedById: null, lockProposedAt: null },
+      });
+      return {
+        output: { status: "draft", name: cfg.name },
+        summary: `configuration ${cfg.name} lock declined`,
+      };
+    },
+  } as ApprovalDef<unknown>,
+
+  // PLM.11 — unlock a baselined config. Separation of duties: the unlocking approver
+  // must be DIFFERENT from the approver who locked it ("unlock needs a second
+  // approver"). Reverts to a draft (the manifest resolves live again); RBAC + audited.
+  "config.unlock": {
+    kind: "config.unlock",
+    roles: ["ENGINEER", "ADMIN"],
+    targetType: "ConfigurationVersion",
+    load: (db, _org, id) =>
+      db.configurationVersion.findFirst({ where: { id } }),
+    isPending: (c) => (c as { lockedAt: Date | null }).lockedAt !== null,
+    onApprove: async (db, _org, t, by) => {
+      const cfg = t as { id: string; name: string; lockedById: string | null };
+      // The locker cannot unlock their own baseline — a second person must.
+      if (cfg.lockedById && cfg.lockedById === by.id) {
+        return {
+          output: { status: "locked", name: cfg.name },
+          summary: `configuration ${cfg.name} stays locked — unlock needs a SECOND approver (not the locker)`,
+        };
+      }
+      // Back to a draft: lockedAt=null → readConfigManifest resolves LIVE again, so the
+      // now-stale frozenManifest is simply ignored (no need to clear the Json column).
+      await db.configurationVersion.updateMany({
+        where: { id: cfg.id },
+        data: {
+          lockedAt: null,
+          lockedById: null,
+          isBaseline: false,
+          lockProposedById: null,
+          lockProposedAt: null,
+        },
+      });
+      return {
+        output: { status: "draft", name: cfg.name },
+        summary: `configuration ${cfg.name} unlocked by ${by.label} — back to draft`,
       };
     },
     onReject: async (_db, _org, t) => {
       const cfg = t as { name: string };
       return {
-        output: { status: "draft", name: cfg.name },
-        summary: `configuration ${cfg.name} lock declined`,
+        output: { status: "locked", name: cfg.name },
+        summary: `configuration ${cfg.name} unlock declined`,
       };
     },
   } as ApprovalDef<unknown>,
