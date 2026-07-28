@@ -46,6 +46,11 @@ export const A11Y_ROUTES: A11yRoute[] = [
     auth: true,
   },
   {
+    path: "/changes",
+    label: "Change orders list (PLM.12 · change queue)",
+    auth: true,
+  },
+  {
     path: "/agents",
     label: "Agents (agent pane open)",
     auth: true,

@@ -73,7 +73,12 @@ export function ChangeOrderView({
               </Link>
             </li>
             <li aria-hidden>/</li>
-            <li>Change orders</li>
+            <li>
+              {/* PLM.12 — the breadcrumb now resolves to the change-orders list. */}
+              <Link href="/changes" className="hover:text-ink">
+                Change orders
+              </Link>
+            </li>
             <li aria-hidden>/</li>
             <li className="text-ink-muted">{data.code}</li>
           </ol>

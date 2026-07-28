@@ -83,6 +83,8 @@ const TENANT_MODELS = new Set<string>([
   "TestResult",
   "FieldEvent",
   "ChangeRequest",
+  // PLM.12 — the ECO review roster (per-reviewer approval; awaiting-me is org-scoped).
+  "EcoReviewer",
 ]);
 
 /** Operations whose `where` we tag with `orgId` (non-unique-target). */

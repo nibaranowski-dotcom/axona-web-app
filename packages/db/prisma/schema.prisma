@@ -987,8 +987,47 @@ model ECO {
   rolloutStatus       EcoRolloutStatus @default(pending)
   /// PLM.1b — the ECR that originated this ECO (scalar link, loose coupling).
   changeRequestId     String?
+  /// PLM.12 — the change CLASSIFICATION for the change-queue (SUPERSEDE · REVISE ·
+  /// DEVIATION). Distinct from `changeType` (the HW/FW/SW discipline shown in the
+  /// Engineering ECO table). Nullable → falls back to a title-derived class.
+  changeClass String?
+  /// PLM.12 — where the change originated (a human-readable label, e.g. "From NCR-118"
+  /// / "From lot review" / "Design study" / "Fleet-wide").
+  source String?
+  /// PLM.12 — agent-drafted provenance (loose scalar, like NCR.linkedTo). Null ⇒
+  /// human-drafted. `confidence` is the agent's EMITTED (uncalibrated) signal (CONF.1).
+  draftedByAgentId String?
+  confidence       Float?
+
+  /// PLM.12 — the per-ECO review roster (per-reviewer approval state). Drives the
+  /// approval column + the first-class "awaiting my approval" server-side query.
+  reviewers EcoReviewer[]
 
   @@index([orgId])
+}
+
+/// PLM.12 — one reviewer's standing on an ECO. `state` is per-reviewer (pending /
+/// approved / rejected); "awaiting my approval" is a server-side query over the rows
+/// where (userId = current user AND state = pending). Loose ecoId link (FND.11 style).
+model EcoReviewer {
+  id     String        @id @default(cuid())
+  orgId  String
+  ecoId  String
+  eco    ECO           @relation(fields: [ecoId], references: [id], onDelete: Cascade)
+  userId String
+  /// Denormalized display (initials/name) — the roster renders without a User join.
+  label  String
+  state  ReviewerState @default(pending)
+
+  @@unique([ecoId, userId])
+  @@index([orgId])
+  @@index([userId, state])
+}
+
+enum ReviewerState {
+  pending
+  approved
+  rejected
 }
 
 model FirmwareRelease {

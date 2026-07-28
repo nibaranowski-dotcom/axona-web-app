@@ -498,51 +498,185 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
 
   // Engineering — the NCR-118 → ECO-318 change thread, plus the surrounding ECO
   // board, firmware ladder, and HW↔firmware compat matrix (Engineering.dc.html).
-  await db.eCO.create({
-    data: {
+  // PLM.12 — each ECO carries a change CLASS (SUPERSEDE/REVISE/DEVIATION), a source,
+  // agent-drafted provenance, and a reviewer roster (per-reviewer approval state).
+  const ecoSpecs: {
+    code: string;
+    title: string;
+    changeType: string;
+    changeClass: string;
+    affected: string;
+    stage: string;
+    source: string | null;
+    agent?: { conf: number };
+    effectiveFromSerial?: string;
+    /** [initials-role, pending?] — role ∈ admin|engineer|ops. */
+    reviewers: { role: "admin" | "engineer" | "ops"; pending: boolean }[];
+  }[] = [
+    {
       code: CODES.eco, // ECO-318
       title: `Supersede ${CODES.servoOld} → -205 (tighter tolerance)`,
       changeType: "HW",
+      changeClass: "SUPERSEDE",
       affected: `${CODES.lot} · 3 units · ${CODES.ncr} · Tier-1 Auto OEM order`,
       stage: "REVIEW",
+      source: `From ${CODES.ncr}`,
+      agent: { conf: 0.86 },
+      reviewers: [
+        { role: "admin", pending: true },
+        { role: "engineer", pending: false },
+      ],
     },
-  });
-  await db.eCO.create({
-    data: {
+    {
+      code: "ECO-321",
+      title: "Deviation · accept lot 88422 at ±3.1%",
+      changeType: "HW",
+      changeClass: "DEVIATION",
+      affected: "6 units · lot-scoped",
+      stage: "REVIEW",
+      source: "From lot review",
+      agent: { conf: 0.74 },
+      reviewers: [
+        { role: "admin", pending: true },
+        { role: "ops", pending: false },
+      ],
+    },
+    {
       code: "ECO-316",
       title: "Firmware v4.2.2 — actuator torque compensation",
       changeType: "FW",
+      changeClass: "REVISE",
       affected: "fleet-wide",
       stage: "REVIEW",
+      source: "Fleet-wide",
+      reviewers: [
+        { role: "admin", pending: true },
+        { role: "engineer", pending: false },
+      ],
     },
-  });
-  await db.eCO.create({
-    data: {
+    {
+      code: "ECO-319",
+      title: "Revise calibration profile cal-2026.06",
+      changeType: "SW",
+      changeClass: "REVISE",
+      affected: "44 units",
+      stage: "REVIEW",
+      source: "Design study",
+      effectiveFromSerial: "SN-2242",
+      reviewers: [
+        { role: "engineer", pending: false },
+        { role: "ops", pending: true },
+      ],
+    },
+    {
       code: "ECO-314",
       title: "Harness connector keying (mis-mate fix)",
       changeType: "HW",
+      changeClass: "REVISE",
       affected: "in production",
       stage: "APPROVED",
+      source: "From NCR-114",
+      effectiveFromSerial: "SN-2190",
+      reviewers: [{ role: "ops", pending: false }],
     },
-  });
-  await db.eCO.create({
-    data: {
+    {
       code: "ECO-310",
       title: "Battery pack thermal shim (cell-4 hotspot)",
       changeType: "HW",
+      changeClass: "REVISE",
       affected: `HX-2 · ${CODES.robot} thermal watch`,
       stage: "APPROVED",
+      source: "From field service",
+      reviewers: [{ role: "ops", pending: false }],
     },
-  });
-  await db.eCO.create({
-    data: {
+    {
+      code: "ECO-322",
+      title: "Chassis weight reduction −1.2 kg",
+      changeType: "HW",
+      changeClass: "REVISE",
+      affected: "next build",
+      stage: "DRAFT",
+      source: "Design study",
+      reviewers: [],
+    },
+    {
+      code: "ECO-320",
+      title: "Deviation · single-source LIDAR-88 rev C",
+      changeType: "HW",
+      changeClass: "DEVIATION",
+      affected: "3 units · lot-scoped",
+      stage: "DRAFT",
+      source: null,
+      reviewers: [],
+    },
+    {
       code: "ECO-305",
       title: "Autonomy stack update — obstacle re-plan latency",
       changeType: "SW",
+      changeClass: "REVISE",
       affected: "fleet-wide · Site-3 canary",
       stage: "RELEASED",
+      source: "Fleet-wide",
+      reviewers: [
+        { role: "ops", pending: false },
+        { role: "engineer", pending: false },
+      ],
     },
-  });
+    {
+      code: "ECO-311",
+      title: "Lidar module revision bump rev C → D",
+      changeType: "HW",
+      changeClass: "REVISE",
+      affected: "96 units",
+      stage: "RELEASED",
+      source: "From design study",
+      effectiveFromSerial: "SN-2172",
+      reviewers: [{ role: "ops", pending: false }],
+    },
+  ];
+
+  // Resolve reviewer users once (admin/engineer/ops) for the roster below.
+  const reviewerUsers = {
+    admin: await db.user.findFirst({ where: { role: "ADMIN" } }),
+    engineer: await db.user.findFirst({ where: { role: "ENGINEER" } }),
+    ops: await db.user.findFirst({ where: { role: "OPS" } }),
+  };
+  const initials = (name: string | null | undefined) =>
+    (name ?? "??")
+      .split(/\s+/)
+      .map((w) => w[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+
+  for (const spec of ecoSpecs) {
+    const eco = await db.eCO.create({
+      data: {
+        code: spec.code,
+        title: spec.title,
+        changeType: spec.changeType,
+        changeClass: spec.changeClass,
+        affected: spec.affected,
+        stage: spec.stage,
+        source: spec.source,
+        effectiveFromSerial: spec.effectiveFromSerial ?? null,
+        draftedByAgentId: spec.agent ? "agent:engineering" : null,
+        confidence: spec.agent?.conf ?? null,
+      },
+    });
+    for (const r of spec.reviewers) {
+      const u = reviewerUsers[r.role];
+      if (!u) continue;
+      await db.ecoReviewer.create({
+        data: {
+          ecoId: eco.id,
+          userId: u.id,
+          label: initials(u.name),
+          state: r.pending ? "pending" : "approved",
+        },
+      });
+    }
+  }
 
   await db.firmwareRelease.create({
     data: {
