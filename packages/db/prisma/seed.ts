@@ -234,6 +234,85 @@ async function main(): Promise<void> {
   });
   await calibrate(secondDb, SECOND_ORG_ID);
 
+  // LEAD.1 — a few Axona-INTERNAL contact-sales leads (NOT tenant data — bare prisma,
+  // no orgId). Fictional prospects only (SEED.1). Idempotent via workEmail dedupe.
+  const demoLeads: {
+    name: string;
+    workEmail: string;
+    company: string;
+    role?: string;
+    fleetSize?: string;
+    useCase?: string;
+    message?: string;
+    status: "NEW" | "CONTACTED" | "QUALIFIED" | "CLOSED";
+    daysAgo: number;
+  }[] = [
+    {
+      name: "Priya Anand",
+      workEmail: "priya.anand@example-humanoid.test",
+      company: "Meridian Humanoids",
+      role: "VP Operations",
+      fleetSize: "50–200",
+      useCase: "Procurement",
+      message: "Long-lead actuator sourcing is killing our build schedule.",
+      status: "NEW",
+      daysAgo: 0,
+    },
+    {
+      name: "Tomas Berg",
+      workEmail: "t.berg@example-mobility.test",
+      company: "Northwind Mobility",
+      role: "Head of Manufacturing",
+      fleetSize: "200–500",
+      useCase: "Traceability",
+      message: "Need per-unit genealogy for a defense program audit.",
+      status: "CONTACTED",
+      daysAgo: 3,
+    },
+    {
+      name: "Sofia Marchetti",
+      workEmail: "sofia@example-logistics.test",
+      company: "Cambez Logistics Robotics",
+      role: "COO",
+      fleetSize: "500+",
+      useCase: "Change control",
+      status: "QUALIFIED",
+      daysAgo: 9,
+    },
+    {
+      name: "Dan Whitfield",
+      workEmail: "dwhitfield@example-defense.test",
+      company: "Sable Defense Systems",
+      role: "Program Director",
+      fleetSize: "50–200",
+      useCase: "Quality",
+      status: "CLOSED",
+      daysAgo: 21,
+    },
+  ];
+  for (const l of demoLeads) {
+    const exists = await prisma.lead.findFirst({
+      where: { workEmail: l.workEmail },
+      select: { id: true },
+    });
+    if (exists) continue;
+    await prisma.lead.create({
+      data: {
+        name: l.name,
+        workEmail: l.workEmail,
+        company: l.company,
+        role: l.role ?? null,
+        fleetSize: l.fleetSize ?? null,
+        useCase: l.useCase ?? null,
+        message: l.message ?? null,
+        consent: true,
+        source: "homepage-contact",
+        status: l.status,
+        createdAt: new Date(nowMs - l.daysAgo * 86_400_000),
+      },
+    });
+  }
+
   // 6. Build the unified search index (SRCH.1) — globals + all tenants; idempotent.
   await reindex();
 

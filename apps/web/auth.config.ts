@@ -16,6 +16,7 @@ const PUBLIC = [
   /^\/invite/,
   /^\/api\/auth/,
   /^\/api\/health/, // GOLIVE.2a — unauthenticated liveness probe (Railway healthcheck)
+  /^\/api\/leads/, // LEAD.1 — public contact-sales capture (hardened in the route)
 ];
 
 export const authConfig = {

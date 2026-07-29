@@ -51,6 +51,11 @@ export const A11Y_ROUTES: A11yRoute[] = [
     auth: true,
   },
   {
+    path: "/leads",
+    label: "Leads triage (LEAD.1 · admin-gated)",
+    auth: true,
+  },
+  {
     path: "/agents",
     label: "Agents (agent pane open)",
     auth: true,

@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import { useEffect, useId, useRef, useState } from "react";
 import {
   Bell,
+  Contact,
   ChevronDown,
   ChevronUp,
   LogOut,
@@ -344,6 +345,22 @@ function UserMenu({
             />
             Audit trail
           </Link>
+          {/* LEAD.1 — internal Leads triage, admin-only (the page also RBAC-gates). */}
+          {user?.role === "ADMIN" && (
+            <Link
+              href="/leads"
+              role="menuitem"
+              onClick={close}
+              className={itemFor(pathname === "/leads")}
+            >
+              <Contact
+                className="h-[15px] w-[15px] flex-none"
+                strokeWidth={1.7}
+                aria-hidden
+              />
+              Leads
+            </Link>
+          )}
           <Link
             href="/notifications"
             role="menuitem"

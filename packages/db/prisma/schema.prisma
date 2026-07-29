@@ -1761,3 +1761,42 @@ model ChangeRequest {
   @@unique([orgId, code])
   @@index([orgId])
 }
+
+/// LEAD.1 — a contact-sales inquiry captured by the PUBLIC /api/leads endpoint (the
+/// marketing site's Contact Sales form posts here). AXONA-INTERNAL, NOT tenant data:
+/// this model has NO `orgId` and NO Org relation, so it can never be part of the
+/// per-tenant `dbForOrg` scoping and never lands in / is visible from a customer
+/// tenant. The endpoint creates a Lead and nothing else (no User/Org/session/access).
+model Lead {
+  id        String     @id @default(cuid())
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  name      String
+  workEmail String
+  company   String
+  role      String?
+  fleetSize String?
+  useCase   String?
+  message   String?
+  consent   Boolean    @default(false)
+  /// Where the lead came from (e.g. "homepage-contact"). Set server-side.
+  source    String
+  status    LeadStatus @default(NEW)
+  /// A SHA-256 hash of the source IP (never the raw IP) — for abuse/rate-limit
+  /// forensics only. Nullable; no raw PII is ever stored.
+  ipHash    String?
+  /// Internal triage fields (set from the Leads view, not the public endpoint).
+  owner String?
+  note  String?
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([workEmail, company]) // dedupe lookup (same email+company within a window)
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CLOSED
+}
