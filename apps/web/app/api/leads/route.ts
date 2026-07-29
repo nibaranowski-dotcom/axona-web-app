@@ -107,6 +107,9 @@ export async function POST(req: Request) {
       name: data.name,
       company: data.company,
       workEmail: data.workEmail,
+      role: data.role ?? null,
+      fleetSize: data.fleetSize ?? null,
+      message: data.message ?? null,
       useCase: data.useCase ?? null,
       source: data.source ?? "homepage-contact",
     }).catch(() => undefined);

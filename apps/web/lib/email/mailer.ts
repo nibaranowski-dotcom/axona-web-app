@@ -59,7 +59,10 @@ let singleton: Mailer | null = null;
 export function getMailer(): Mailer {
   if (singleton) return singleton;
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM ?? "Axona <no-reply@axonahq.com>";
+  // GOLIVE.1 — the from address is EMAIL_FROM; the fallback stays on the VERIFIED
+  // sending domain (send.axonahq.com) so a key-set/EMAIL_FROM-unset prod still sends
+  // from a domain Resend will accept. Set EMAIL_FROM in prod to override.
+  const from = process.env.EMAIL_FROM ?? "Axona <no-reply@send.axonahq.com>";
   singleton = key ? new ResendMailer(key, from) : new FakeMailer();
   return singleton;
 }

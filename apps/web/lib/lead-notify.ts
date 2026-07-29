@@ -1,21 +1,58 @@
 import { prisma } from "@axona/db";
 import { notify } from "./notifications";
+import { getMailer, type Mailer } from "./email/mailer";
+// Email HTML needs literal colors (email clients don't support CSS vars) — reuse the
+// shared email palette (defined in the token-exempt templates layout), not raw hex.
+import { emailStyles } from "./email/templates/layout";
 
-// LEAD.1 — the pluggable lead-notify seam. On a new lead it (a) writes an in-app
-// notification to Axona's internal org (so it shows in the Leads view + the bell),
-// (b) if LEAD_NOTIFY_WEBHOOK_URL is set, POSTs a summary (Slack/webhook), and (c)
-// leaves a /// NOTIFY-EMAIL seam for Resend (GOLIVE.1) later. Every arm is BEST-EFFORT
-// and wrapped: a notify failure must NEVER fail the capture (the Lead is already saved).
-//
-// No hard dep on Resend — email is a comment seam, not a call.
+// LEAD.1 + GOLIVE.1 — the pluggable lead-notify seam. On a new lead it (a) writes an
+// in-app notification to Axona's internal org (so it shows in the Leads view + the
+// bell), (b) if LEAD_NOTIFY_WEBHOOK_URL is set, POSTs a summary (Slack/webhook), and
+// (c) GOLIVE.1: if RESEND_API_KEY + LEAD_NOTIFY_EMAIL are set, sends a notification
+// email via the app's shared Resend mailer (FROM EMAIL_FROM, TO LEAD_NOTIFY_EMAIL,
+// replyTo = the lead's work email). Every arm is BEST-EFFORT and wrapped: a notify
+// failure — or an unset RESEND_API_KEY/LEAD_NOTIFY_EMAIL — must NEVER fail the capture
+// (the Lead is already saved). Reuses getMailer() (no new client, no hard dep).
 
 export interface LeadNotifyInput {
   id: string;
   name: string;
   company: string;
   workEmail: string;
+  role?: string | null;
+  fleetSize?: string | null;
+  message?: string | null;
   useCase?: string | null;
   source: string;
+}
+
+const esc = (s: string) =>
+  s.replace(/[<>&"]/g, (c) =>
+    c === "<" ? "&lt;" : c === ">" ? "&gt;" : c === "&" ? "&amp;" : "&quot;",
+  );
+
+/** A plain, internal HTML summary of the lead for the sales alert email. */
+function leadEmailHtml(lead: LeadNotifyInput): string {
+  const { ink, muted } = emailStyles;
+  const row = (label: string, value: string | null | undefined) =>
+    value
+      ? `<tr><td style="padding:2px 12px 2px 0;color:${muted}">${label}</td><td>${esc(value)}</td></tr>`
+      : "";
+  return [
+    `<div style="font-family:system-ui,sans-serif;font-size:14px;color:${ink}">`,
+    `<p style="font-size:15px;font-weight:600;margin:0 0 12px">New sales lead — ${esc(lead.company)}</p>`,
+    `<table style="border-collapse:collapse;font-size:13.5px">`,
+    row("Name", lead.name),
+    row("Company", lead.company),
+    row("Work email", lead.workEmail),
+    row("Role", lead.role),
+    row("Fleet size", lead.fleetSize),
+    row("Message", lead.message ?? lead.useCase),
+    row("Source", lead.source),
+    `</table>`,
+    `<p style="margin:14px 0 0;color:${muted};font-size:12.5px">Reply to this email to reach ${esc(lead.name)} directly.</p>`,
+    `</div>`,
+  ].join("");
 }
 
 /**
@@ -33,11 +70,13 @@ async function internalOrgId(): Promise<string | null> {
   return first?.id ?? null;
 }
 
-/** Fire all configured notify channels. Never throws; returns which arms delivered. */
+/** Fire all configured notify channels. Never throws; returns which arms delivered.
+ *  `opts.mailer` injects a mailer for tests; production uses the shared getMailer(). */
 export async function notifyNewLead(
   lead: LeadNotifyInput,
-): Promise<{ inApp: boolean; webhook: boolean }> {
-  const result = { inApp: false, webhook: false };
+  opts?: { mailer?: Mailer },
+): Promise<{ inApp: boolean; webhook: boolean; email: boolean }> {
+  const result = { inApp: false, webhook: false, email: false };
 
   // (a) in-app notification — an org broadcast to the internal org's members.
   try {
@@ -92,9 +131,26 @@ export async function notifyNewLead(
     }
   }
 
-  // (c) /// NOTIFY-EMAIL — Resend seam (GOLIVE.1). When email is wired, send the
-  // sales team a templated alert here (EMAIL_FROM → sales inbox). Left intentionally
-  // unbuilt: LEAD.1 has no hard dep on Resend, and capture must not depend on email.
+  // (c) GOLIVE.1 — notification email via the shared Resend mailer. Only when BOTH
+  // RESEND_API_KEY (email is wired) and LEAD_NOTIFY_EMAIL (a destination) are set;
+  // otherwise skip entirely (send nothing). FROM = EMAIL_FROM (getMailer), TO =
+  // LEAD_NOTIFY_EMAIL, replyTo = the lead's work email so a reply reaches them.
+  // Best-effort — a send failure never fails the capture.
+  const emailTo = process.env.LEAD_NOTIFY_EMAIL;
+  if (process.env.RESEND_API_KEY && emailTo) {
+    try {
+      const mailer = opts?.mailer ?? getMailer();
+      await mailer.send({
+        to: emailTo,
+        subject: `New sales lead: ${lead.company} — ${lead.name}`,
+        html: leadEmailHtml(lead),
+        replyTo: lead.workEmail,
+      });
+      result.email = true;
+    } catch (err) {
+      console.error("[lead-notify] email failed:", (err as Error).message);
+    }
+  }
 
   return result;
 }

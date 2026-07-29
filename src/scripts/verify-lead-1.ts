@@ -101,12 +101,13 @@ async function run(): Promise<void> {
     },
   );
   await check(
-    "notify is best-effort (never fails capture) + has a Resend email seam",
+    "notify is best-effort (never fails capture) + wires webhook + email (GOLIVE.1)",
     () => {
       return (
         /best-effort/i.test(notifyLib) &&
-        /NOTIFY-EMAIL/.test(notifyLib) &&
         /LEAD_NOTIFY_WEBHOOK_URL/.test(notifyLib) &&
+        // GOLIVE.1 — the NOTIFY-EMAIL seam is now implemented via the shared mailer.
+        /LEAD_NOTIFY_EMAIL/.test(notifyLib) &&
         // the route fires notify fire-and-forget (void … .catch)
         /void notifyNewLead\(/.test(route)
       );
