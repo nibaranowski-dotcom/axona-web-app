@@ -78,9 +78,14 @@ async function run(): Promise<void> {
     "shell wordmark is data-driven (Sidebar renders the org's name/logo)",
     () => {
       const sidebar = read(`${C}/shell/Sidebar.tsx`);
+      // SIDEBAR.1 refactored the org-branding reads into a pure resolver
+      // (shell/sidebar-brand.ts). The shell is still fully data-driven — it just
+      // consumes `resolveSidebarBrand(org)` instead of reading org fields inline.
+      const brand = read(`${C}/shell/sidebar-brand.ts`);
       return (
-        /org\?\.logoUrl/.test(sidebar) &&
-        /org\?\.name/.test(sidebar) &&
+        /resolveSidebarBrand\(org\)/.test(sidebar) &&
+        /org\?\.logoUrl/.test(brand) &&
+        /org\?\.name/.test(brand) &&
         // no longer a bare hardcoded "axona" wordmark span
         !/>\s*axona\s*<\/span>/.test(sidebar)
       );

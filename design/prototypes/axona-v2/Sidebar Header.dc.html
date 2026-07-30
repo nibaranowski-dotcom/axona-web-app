@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body{margin:0}
+  ::selection{background:var(--accent)}
+  .ws{transition:background .15s}
+  .ws:hover{background:var(--panel)}
+  .ws:hover .wschev{color:var(--ink-muted)}
+  .wschev{transition:color .15s;flex:none}
+  .cbtn{transition:background .15s,color .15s,border-color .15s}
+  .cbtn:hover{background:var(--panel);color:var(--ink)}
+  .railtile{transition:border-color .15s}
+  .railtile:hover{border-color:var(--ink-strong)}
+  .hatch{background-image:repeating-linear-gradient(135deg,#e2e1db 0 2px,transparent 2px 6px)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</helmet>
+<div style="min-height:100vh;box-sizing:border-box;padding:44px 40px 60px;font-family:var(--font-sans);color:var(--ink);background:var(--panel)">
+
+  <div style="max-width:1180px;margin:0 auto">
+    <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--ink-faint);text-transform:uppercase">Axona v2 · sidebar</div>
+    <h1 style="margin:8px 0 0;font-size:30px;font-weight:600;letter-spacing:-.03em">Sidebar header · co-branding</h1>
+    <p style="margin:10px 0 0;font-size:14.5px;color:var(--ink-muted);max-width:62ch;line-height:1.5">The workspace is the hero; Axona is the quiet platform marker. One row, one hairline, one microlabel — never two competing logos.</p>
+
+    <!-- expanded states -->
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px;margin-top:36px">
+      <sc-for list="{{ states }}" as="s" hint-placeholder-count="2">
+        <div>
+          <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px">
+            <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:.07em;color:var(--ink);text-transform:uppercase">{{ s.tag }}</span>
+            <span style="font-size:12.5px;color:var(--ink-muted)">{{ s.note }}</span>
+          </div>
+
+          <div style="width:240px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+            <!-- HEADER REGION -->
+            <div style="padding:10px 10px 12px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="ws" style="flex:1;min-width:0;display:flex;align-items:center;gap:9px;padding:6px 7px;border-radius:9px;cursor:pointer">
+                  <sc-if value="{{ s.showLogo }}" hint-placeholder-val="{{ false }}">
+                    <span class="hatch" style="width:24px;height:24px;flex:none;border-radius:6px;border:1px solid var(--line-strong);background-color:var(--paper);display:inline-flex;align-items:center;justify-content:center;overflow:hidden">
+                      <span style="font-family:var(--font-mono);font-size:7px;letter-spacing:.02em;color:var(--ink-muted);background:var(--paper);padding:1px 2px;border-radius:2px">LOGO</span>
+                    </span>
+                  </sc-if>
+                  <sc-if value="{{ s.axonaOnly }}" hint-placeholder-val="{{ true }}">
+                    <span style="width:24px;height:24px;flex:none;background:var(--ink-strong);border-radius:0 8px 0 8px"></span>
+                  </sc-if>
+                  <span style="flex:1;min-width:0;font-size:14px;font-weight:600;letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.name }}</span>
+                  <svg class="wschev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+                </div>
+                <button class="cbtn" title="Collapse" style="width:28px;height:28px;flex:none;border:1px solid var(--line);border-radius:7px;background:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-faint);padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18"></path><path d="m15 9-3 3 3 3"></path></svg></button>
+              </div>
+
+              <!-- platform marker -->
+              <sc-if value="{{ s.coBranded }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:7px;margin:10px 7px 0;padding-top:9px;border-top:1px solid var(--line)">
+                  <span style="width:9px;height:9px;flex:none;background:var(--ink-strong);border-radius:0 3px 0 3px"></span>
+                  <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.09em;color:var(--ink-faint);text-transform:uppercase">On Axona</span>
+                </div>
+              </sc-if>
+            </div>
+
+            <!-- context: nav below, dimmed -->
+            <div style="border-top:1px solid var(--line);padding:11px 14px 16px;opacity:.5">
+              <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;padding:2px 4px 8px">Core</div>
+              <sc-for list="{{ ghostRows }}" as="w" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:11px;padding:7px 4px">
+                  <span style="width:6px;height:6px;border-radius:2px;background:var(--line-strong);flex:none"></span>
+                  <span style="height:9px;border-radius:5px;background:var(--skeleton);width:{{ w }}"></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="font-size:12.5px;color:var(--ink-muted);margin-top:12px;max-width:34ch;line-height:1.5">{{ s.rationale }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- collapsed rail -->
+    <div style="margin-top:44px;padding-top:32px;border-top:1px solid var(--line)">
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px">
+        <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:.07em;color:var(--ink);text-transform:uppercase">Collapsed rail · 60px</span>
+        <span style="font-size:12.5px;color:var(--ink-muted)">The customer mark holds the top; the Axona square persists beneath it.</span>
+      </div>
+
+      <div style="display:flex;gap:28px;margin-top:20px;flex-wrap:wrap">
+        <sc-for list="{{ rails }}" as="r" hint-placeholder-count="2">
+          <div>
+            <div style="width:60px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:10px 0 14px;gap:9px">
+              <sc-if value="{{ r.coBranded }}" hint-placeholder-val="{{ false }}">
+                <span class="hatch railtile" style="width:28px;height:28px;border-radius:7px;border:1px solid var(--line-strong);background-color:var(--paper);display:inline-flex;align-items:center;justify-content:center">
+                  <span style="font-family:var(--font-mono);font-size:7px;color:var(--ink-muted);background:var(--paper);padding:1px 2px;border-radius:2px">LG</span>
+                </span>
+                <span style="width:18px;height:1px;background:var(--line)"></span>
+                <span style="width:13px;height:13px;background:var(--ink-strong);border-radius:0 4px 0 4px"></span>
+              </sc-if>
+              <sc-if value="{{ r.axonaOnly }}" hint-placeholder-val="{{ true }}">
+                <span style="width:28px;height:28px;background:var(--ink-strong);border-radius:0 9px 0 9px"></span>
+              </sc-if>
+              <button class="cbtn" title="Expand" style="width:28px;height:28px;border:1px solid var(--line);border-radius:7px;background:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-faint);padding:0;margin-top:3px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18"></path><path d="m13 9 3 3-3 3"></path></svg></button>
+              <span style="width:24px;height:1px;background:var(--line);margin-top:2px"></span>
+              <sc-for list="{{ railGhosts }}" as="g" hint-placeholder-count="4">
+                <span style="width:6px;height:6px;border-radius:2px;background:var(--line-strong)"></span>
+              </sc-for>
+            </div>
+            <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;margin-top:11px;text-align:center;width:60px">{{ r.tag }}</div>
+          </div>
+        </sc-for>
+
+        <!-- rules -->
+        <div style="flex:1;min-width:340px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px 22px">
+          <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:.07em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:14px">Rules</div>
+          <sc-for list="{{ rules }}" as="rl" hint-placeholder-count="5">
+            <div style="display:flex;gap:11px;padding:9px 0;border-top:1px solid var(--line)">
+              <span style="width:6px;height:6px;border-radius:2px;background:var(--ink-strong);flex:none;margin-top:6px"></span>
+              <div style="min-width:0">
+                <div style="font-size:13px;font-weight:600">{{ rl.t }}</div>
+                <div style="font-size:12.5px;color:var(--ink-muted);margin-top:2px;line-height:1.45">{{ rl.d }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1260,&quot;height&quot;:900},&quot;customerName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Customer Co.&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Tenant&quot;},&quot;coBranded&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Tenant&quot;},&quot;showMicrolabel&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Tenant&quot;}}">
+class Component extends DCLogic {
+  renderVals(){
+    const custName = this.props.customerName ?? 'Customer Co.';
+    const co = this.props.coBranded ?? true;
+    const micro = this.props.showMicrolabel ?? true;
+    return {
+      custName, co, micro,
+      ghostRows: ['64%','48%','72%'],
+      railGhosts: [0,1,2,3],
+      states: [
+        { tag:'State A · Axona-only', note:'our org, no customer logo',
+          axonaOnly:true, showLogo:false, coBranded:false, name:'Axona',
+          rationale:'No tenant logo set: the Axona square carries the workspace row itself. No microlabel — the platform is the workspace, so repeating "on Axona" would be redundant.' },
+        { tag:'State B · Co-branded', note:'a tenant logo is set',
+          axonaOnly:!co, showLogo:co, coBranded:co && micro, name: co ? custName : 'Axona',
+          rationale:'The customer logo and name own the row — same slot the Axona mark held. Axona drops below a hairline as a 9px square plus an UPPERCASE MONO microlabel: present, subordinate, never a second logo.' },
+      ],
+      rails: [
+        { tag:'Co-branded', coBranded:true, axonaOnly:false },
+        { tag:'Axona-only', coBranded:false, axonaOnly:true },
+      ],
+      rules: [
+        { t:'Logo hygiene', d:'Max 24px tall expanded, object-contain, on neutral paper with a hairline tile. Never recolored, never cropped — wide wordmarks and square marks both sit correctly.' },
+        { t:'One hairline, no rule', d:'A single 1px --line divider expresses "customer × Axona". No heavy rule, no boxed "powered by" badge.' },
+        { t:'Axona stays quiet', d:'A 9px asymmetric square + "ON AXONA" in mono. The platform marker never competes with the tenant identity for size or color.' },
+        { t:'Rail degradation', d:'At 60px the customer tile leads at 28px, a short hairline separates, and the Axona square persists at 13px. The expand affordance keeps its own row.' },
+        { t:'No lime here', d:'The accent is reserved for signal elsewhere in the app. The header is ink-on-paper so arbitrary brand colors never clash.' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

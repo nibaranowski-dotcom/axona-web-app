@@ -20,6 +20,7 @@ import { isNavItemActive, type NavGroup } from "@/lib/nav";
 import { useMounted, useUi } from "@/lib/ui-store";
 import { NavSection } from "./NavSection";
 import { moduleIcon } from "./module-icons";
+import { resolveSidebarBrand, type ResolvedBrand } from "./sidebar-brand";
 
 export interface SidebarUser {
   name: string;
@@ -55,9 +56,17 @@ export function Sidebar({
   alerts: Record<string, number>;
   user?: SidebarUser | null;
   // PROSPECT.2 — the workspace's OWN identity (each tenant renders its own brand).
-  org?: { name: string; logoUrl: string | null } | null;
+  // SIDEBAR.1 — `showMicrolabel` is the SECOND, independent flag (the ON AXONA marker),
+  // separate from the logo; defaults on when co-branded.
+  org?: {
+    name: string;
+    logoUrl: string | null;
+    showMicrolabel?: boolean;
+  } | null;
   unreadCount?: number;
 }) {
+  // SIDEBAR.1 — the co-branding decision (two independent flags), resolved once.
+  const brand = resolveSidebarBrand(org);
   const router = useRouter();
   const pathname = usePathname();
   const collapsed = useUi((s) => s.sidebarCollapsed);
@@ -88,16 +97,37 @@ export function Sidebar({
         aria-label="Primary"
         className="flex h-dvh w-[60px] flex-none flex-col items-center border-r border-line bg-paper py-[18px]"
       >
+        {/* SIDEBAR.1 — co-branded rail: customer tile (28px) · short hairline · Axona
+            square (13px). Axona-only: just the 28px square. Links to Mission Control. */}
         <Link
           href="/launcher"
-          aria-label={`${org?.name ?? "Axona"} — Mission Control`}
-          className="flex-none rounded-[7px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          aria-label={`${brand.alt} — Mission Control`}
+          className="flex flex-none flex-col items-center gap-[9px] rounded-[7px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
-          <span
-            aria-hidden
-            className="block h-3 w-3 bg-ink-strong"
-            style={{ borderRadius: "0 7px 0 7px" }}
-          />
+          {brand.coBranded ? (
+            <>
+              <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-[7px] border border-line-strong bg-paper">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={brand.logoUrl!}
+                  alt={brand.alt}
+                  className="max-h-[28px] max-w-[28px] object-contain"
+                />
+              </span>
+              <span aria-hidden className="h-px w-[18px] bg-line" />
+              <span
+                aria-hidden
+                className="h-[13px] w-[13px] bg-ink-strong"
+                style={{ borderRadius: "0 4px 0 4px" }}
+              />
+            </>
+          ) : (
+            <span
+              aria-hidden
+              className="block h-7 w-7 bg-ink-strong"
+              style={{ borderRadius: "0 9px 0 9px" }}
+            />
+          )}
         </Link>
         <button
           type="button"
@@ -178,45 +208,40 @@ export function Sidebar({
       aria-label="Primary"
       className="flex h-dvh w-[240px] flex-none flex-col border-r border-line bg-paper px-[14px] py-[18px]"
     >
-      {/* Wordmark + asymmetric square mark · collapse-menu button */}
-      <div className="flex items-center justify-between gap-2 px-2 pb-[18px] pt-1">
-        <Link
-          href="/launcher"
-          aria-label={`${org?.name ?? "Axona"} — Mission Control`}
-          className="flex min-w-0 items-center gap-2 rounded-[7px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          {/* Workspace identity: the org's logo if set, else its name. The Axona
-              square mark stays as the product marker. */}
-          {org?.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={org.logoUrl}
-              alt={org.name}
-              className="h-[22px] w-auto max-w-[150px] flex-none object-contain"
+      {/* SIDEBAR.1 — co-brand switcher header (1:1 with Sidebar Header.dc.html). The
+          workspace is the hero (customer logo + name, or the Axona square + "Axona");
+          Axona is a quiet platform marker below one hairline. No lime; ink-on-paper. */}
+      <div className="px-1 pb-[10px] pt-1">
+        <div className="flex items-center gap-2">
+          <WorkspaceSwitcher brand={brand} />
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            aria-label="Collapse sidebar"
+            className="flex h-7 w-7 flex-none items-center justify-center rounded-[7px] border border-line bg-paper text-ink-muted transition-colors hover:bg-panel hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <PanelLeftClose
+              className="h-[15px] w-[15px]"
+              strokeWidth={1.7}
+              aria-hidden
             />
-          ) : (
-            <span className="min-w-0 truncate text-[19px] font-bold tracking-[-0.03em] text-ink-strong">
-              {org?.name ?? "Axona"}
+          </button>
+        </div>
+
+        {/* Platform marker — flag 2 (independent of the logo). Below ONE hairline: a
+            9px demoted Axona square + ON AXONA (uppercase mono). Never a second logo. */}
+        {brand.showMicrolabel && (
+          <div className="mx-[7px] mt-[10px] flex items-center gap-[7px] border-t border-line pt-[9px]">
+            <span
+              aria-hidden
+              className="h-[9px] w-[9px] flex-none bg-ink-strong"
+              style={{ borderRadius: "0 3px 0 3px" }}
+            />
+            <span className="font-mono text-[9px] uppercase tracking-[0.09em] text-ink-faint">
+              On Axona
             </span>
-          )}
-          <span
-            aria-hidden
-            className="h-3 w-3 flex-none bg-ink-strong"
-            style={{ borderRadius: "0 7px 0 7px" }}
-          />
-        </Link>
-        <button
-          type="button"
-          onClick={toggleSidebar}
-          aria-label="Collapse sidebar"
-          className="flex h-7 w-7 flex-none items-center justify-center rounded-[7px] border border-line bg-paper text-ink-muted transition-colors hover:bg-panel hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          <PanelLeftClose
-            className="h-[15px] w-[15px]"
-            strokeWidth={1.7}
-            aria-hidden
-          />
-        </button>
+          </div>
+        )}
       </div>
 
       {/* Search bar → Mission Control (search ready). ⌘K palette = SRCH.3. */}
@@ -256,6 +281,122 @@ export function Sidebar({
           (with the unread badge) / settings + the user & sign-out. */}
       <UserMenu user={user} unreadCount={unreadCount} pathname={pathname} />
     </nav>
+  );
+}
+
+// SIDEBAR.1 — the workspace switcher row (1:1 with Sidebar Header.dc.html). The
+// customer logo tile + name (State B) or the Axona square + "Axona" (State A) own the
+// row; a chevron opens the workspace/identity menu (reuse of the UX.7 popover pattern:
+// aria-haspopup/expanded, Esc + click-outside close, focus restored to the trigger).
+//
+// FLAGGED — multi-workspace SWITCHING is out of scope: the User model carries a single
+// orgId (no multi-org membership), so the menu is workspace identity + a link to
+// Workspace settings, not a workspace picker. When membership lands, add the picker here.
+//
+// Logo hygiene IN CODE: the tile is height-capped (24px), object-contain, on a neutral
+// paper tile with a hairline; width is flexible up to a cap so a WIDE wordmark reads at
+// full height AND a square mark sits centered — neither recolored nor cropped. (The
+// design file's fixed 24×24 square is the hatch PLACEHOLDER; a real wide wordmark needs
+// the height-capped / flexible-width tile to not shrink to a sliver — PRD hygiene wins.)
+function WorkspaceSwitcher({ brand }: { brand: ResolvedBrand }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: MouseEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    };
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative min-w-0 flex-1">
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        aria-label={`${brand.displayName} workspace menu`}
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full min-w-0 items-center gap-[9px] rounded-[9px] px-[7px] py-[6px] transition-colors hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      >
+        {brand.showLogo ? (
+          <span className="inline-flex h-[24px] w-auto min-w-[24px] max-w-[132px] flex-none items-center justify-center overflow-hidden rounded-[6px] border border-line-strong bg-paper">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={brand.logoUrl!}
+              alt={brand.alt}
+              className="max-h-[24px] w-auto max-w-full object-contain"
+            />
+          </span>
+        ) : (
+          <span
+            aria-hidden
+            className="h-[24px] w-[24px] flex-none bg-ink-strong"
+            style={{ borderRadius: "0 8px 0 8px" }}
+          />
+        )}
+        <span className="min-w-0 flex-1 truncate text-left text-[14px] font-semibold tracking-[-0.02em] text-ink">
+          {brand.displayName}
+        </span>
+        <ChevronDown
+          className="h-[13px] w-[13px] flex-none text-ink-faint"
+          strokeWidth={2}
+          aria-hidden
+        />
+      </button>
+
+      {open && (
+        <div
+          ref={menuRef}
+          id={menuId}
+          role="menu"
+          aria-label="Workspace menu"
+          className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 flex flex-col gap-0.5 rounded-card border border-line-strong bg-paper p-2 shadow-[0_12px_28px_-12px_rgba(10,10,10,0.28)]"
+        >
+          <div className="px-2.5 pb-1.5 pt-1">
+            <div className="truncate text-[13px] font-semibold text-ink">
+              {brand.displayName}
+            </div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.05em] text-ink-faint">
+              Workspace
+            </div>
+          </div>
+          <div className="my-1 h-px bg-line" />
+          <Link
+            href="/settings/org"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-[13px] text-ink-muted transition-colors hover:bg-panel hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <Settings
+              className="h-[15px] w-[15px] flex-none"
+              strokeWidth={1.7}
+              aria-hidden
+            />
+            Workspace settings
+          </Link>
+        </div>
+      )}
+    </div>
   );
 }
 
