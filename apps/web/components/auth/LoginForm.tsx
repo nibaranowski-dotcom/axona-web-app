@@ -8,10 +8,15 @@ import { AlertTriangle, Eye, EyeOff, Lock } from "lucide-react";
 // AUTH.1 — the login card (1:1 with Login.dc.html): axona mark + "Sign in to your
 // workspace", an ink error banner on failure, Work email + Password (with a
 // show/hide eye), a stubbed "Forgot password?" (AUTH.7), the primary Log in, an
-// "or" divider, a DISABLED "Continue with SSO" (AUTH.2), and a footer link to
-// signup. On submit → Auth.js signIn("credentials"); success → ?next or /. v2
-// tokens only, no invented reds (the error state is ink).
-export function LoginForm() {
+// "or" divider, "Continue with Google" (AUTH.SSO — enabled when configured), and a
+// footer link to signup. On submit → Auth.js signIn("credentials"); success →
+// ?next or /. v2 tokens only, no invented reds (the error state is ink).
+export function LoginForm({
+  googleEnabled = false,
+}: {
+  /** AUTH.SSO — the Google button activates only when the provider is configured. */
+  googleEnabled?: boolean;
+}) {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/";
@@ -21,6 +26,18 @@ export function LoginForm() {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // AUTH.SSO — a denied Google sign-in redirects back with a legible reason.
+  const errorParam = params.get("error");
+  const ssoMessage =
+    errorParam === "SSONoAccount"
+      ? "No Axona account for that email — ask your admin, or contact sales."
+      : errorParam === "SSOUnverified"
+        ? "That Google email isn’t verified. Verify it with Google, then try again."
+        : errorParam === "AccessDenied"
+          ? "That sign-in was denied."
+          : null;
+  const showError = error || !!ssoMessage;
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,7 +107,7 @@ export function LoginForm() {
             </div>
 
             {/* error banner (ink — never red) */}
-            {error && (
+            {showError && (
               <div
                 role="alert"
                 className="mb-4 flex items-start gap-2.5 rounded-[10px] bg-ink-strong px-3.5 py-3"
@@ -105,7 +122,7 @@ export function LoginForm() {
                     Sign-in failed
                   </div>
                   <span className="text-[12.5px] font-medium text-on-dark">
-                    That email or password doesn’t match.
+                    {ssoMessage ?? "That email or password doesn’t match."}
                   </span>
                 </div>
               </div>
@@ -206,16 +223,30 @@ export function LoginForm() {
               <span className="h-px flex-1 bg-line" />
             </div>
 
-            {/* SSO — present but disabled (AUTH.2) */}
-            <button
-              type="button"
-              disabled
-              title="SSO lands in AUTH.2"
-              className="flex w-full cursor-not-allowed items-center justify-center gap-2.5 rounded-[9px] border border-line-strong bg-paper py-3 text-[13.5px] font-semibold text-ink opacity-60"
-            >
-              <Lock className="h-4 w-4" strokeWidth={1.8} aria-hidden />
-              Continue with SSO
-            </button>
+            {/* AUTH.SSO — Google Workspace sign-in. Enabled only when the provider
+                is configured (GOOGLE_CLIENT_ID/SECRET); otherwise it stays the
+                disabled placeholder (graceful — no crash). Same session as a
+                password login; links by verified email, never self-provisions. */}
+            {googleEnabled ? (
+              <button
+                type="button"
+                onClick={() => signIn("google", { redirectTo: next })}
+                className="flex w-full items-center justify-center gap-2.5 rounded-[9px] border border-line-strong bg-paper py-3 text-[13.5px] font-semibold text-ink transition-colors hover:border-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                <GoogleGlyph />
+                Continue with Google
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled
+                title="SSO is not configured on this workspace"
+                className="flex w-full cursor-not-allowed items-center justify-center gap-2.5 rounded-[9px] border border-line-strong bg-paper py-3 text-[13.5px] font-semibold text-ink opacity-60"
+              >
+                <Lock className="h-4 w-4" strokeWidth={1.8} aria-hidden />
+                Continue with SSO
+              </button>
+            )}
           </div>
 
           {/* footer strip */}
@@ -237,5 +268,20 @@ export function LoginForm() {
         </div>
       </div>
     </main>
+  );
+}
+
+// A monochrome Google "G" (currentColor) — on-brand (ink-on-paper, no multi-colour
+// marque, no emoji), recognizable as the Google sign-in affordance.
+function GoogleGlyph() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="currentColor"
+      aria-hidden
+    >
+      <path d="M12.24 10.4v3.36h4.68c-.2 1.2-1.44 3.52-4.68 3.52-2.82 0-5.12-2.34-5.12-5.28s2.3-5.28 5.12-5.28c1.6 0 2.68.68 3.3 1.26l2.26-2.18C16.62 3.3 14.66 2.4 12.24 2.4 7.6 2.4 3.84 6.16 3.84 12s3.76 9.6 8.4 9.6c4.85 0 8.04-3.41 8.04-8.2 0-.56-.06-.98-.14-1.4l-7.9.4z" />
+    </svg>
   );
 }
