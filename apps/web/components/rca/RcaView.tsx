@@ -7,6 +7,8 @@ import { Lightbulb, Check, Radius } from "lucide-react";
 import type { RcaWorkspace } from "@/lib/rca";
 import { ROOT_CAUSES } from "@/lib/quality";
 import { setNcrRootCauseAction } from "@/app/(shell)/quality/actions";
+import { ConnectedObjects } from "@/components/ontology/ConnectedObjects";
+import type { ConnectedGroup } from "@/lib/connected-objects";
 
 // PLM.8 — the RCA workspace (`RCA.dc.html` 1:1 on DS.1 primitives). Evidence is
 // assembled by the system; the AGENT PROPOSES a candidate cause with calibrated
@@ -26,9 +28,11 @@ const LABEL: Record<string, string> = {
 export function RcaView({
   rca,
   canClassify,
+  connected,
 }: {
   rca: RcaWorkspace;
   canClassify: boolean;
+  connected: ConnectedGroup[];
 }) {
   const router = useRouter();
   const [choice, setChoice] = useState(rca.rootCause ?? "");
@@ -300,6 +304,9 @@ export function RcaView({
             </Link>
           </div>
         </div>
+
+        {/* LINK.1 — directly connected records (1-hop); blast radius owns N-hop. */}
+        <ConnectedObjects groups={connected} className="mt-[18px]" />
       </div>
     </div>
   );

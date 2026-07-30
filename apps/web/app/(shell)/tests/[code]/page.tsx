@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/session";
 import { getTestRun } from "@/lib/tests";
+import { getConnectedObjects } from "@/lib/connected-objects";
 import { TestRunView } from "@/components/tests/TestRunView";
 import { ScreenShell, ScreenMessage } from "@/components/shell/ScreenShell";
 
@@ -42,7 +43,8 @@ export default async function TestRunPage({
     );
   }
 
-  return <TestRunView run={run} />;
+  const connected = await getConnectedObjects(user.orgId, "TEST_RUN", code);
+  return <TestRunView run={run} connected={connected} />;
 }
 
 function Header({ code }: { code: string }) {

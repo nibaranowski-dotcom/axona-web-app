@@ -1,5 +1,6 @@
 import { prisma, type OrgScopedDb } from "../client";
 import { getEmbedder, toVectorLiteral, type Embedder } from "../embed/embedder";
+import { getEntityLinks, resolveEntityId } from "../ontology/links";
 
 // MEM.1 — retrieval. recallMemory is a HYBRID over operational memory:
 //   vector similarity  ⊕  entity-graph proximity  ⊕  recency
@@ -110,21 +111,19 @@ async function neighborhood(
     if (frontier.length === 0) break;
     const next: NeighborNode[] = [];
     for (const node of frontier) {
-      const edges = await db.entityLink.findMany({
-        where: {
-          OR: [
-            { fromType: node.type, fromId: node.id },
-            { toType: node.type, toId: node.id },
-          ],
-        },
+      // LINK.1 — walk the ONE shared 1-hop primitive (resolve:false — the memory
+      // neighborhood only needs node ids + depth). Same neighbors, same order as
+      // the inline edge loop this replaced; org-scoping inherited from `db`.
+      const neighbors = await getEntityLinks(db, {
+        type: node.type,
+        id: node.id,
+        resolve: false,
       });
-      for (const e of edges) {
-        const fromIsNode = e.fromType === node.type && e.fromId === node.id;
-        const nType = (fromIsNode ? e.toType : e.fromType) as EntityType;
-        const nId = fromIsNode ? e.toId : e.fromId;
-        const k = key(nType, nId);
+      for (const n of neighbors) {
+        const nType = n.type as EntityType;
+        const k = key(nType, n.id);
         if (seen.has(k)) continue;
-        const nn = { type: nType, id: nId, depth: d + 1 };
+        const nn = { type: nType, id: n.id, depth: d + 1 };
         seen.set(k, nn);
         next.push(nn);
         if (seen.size >= MAX_NEIGHBORHOOD) break;
@@ -232,93 +231,10 @@ async function resolveSubjectId(
   type: EntityType,
   value: string,
 ): Promise<string> {
-  const pick = <T extends { id: string }>(r: T | null): string | null =>
-    r?.id ?? null;
-  let hit: string | null = null;
-  switch (type) {
-    case "NCR":
-      hit = pick(
-        await db.nCR.findFirst({
-          where: { code: value },
-          select: { id: true },
-        }),
-      );
-      break;
-    case "ECO":
-      hit = pick(
-        await db.eCO.findFirst({
-          where: { code: value },
-          select: { id: true },
-        }),
-      );
-      break;
-    case "PART":
-    case "LOT":
-      hit = pick(
-        await db.part.findFirst({
-          where: { sku: value },
-          select: { id: true },
-        }),
-      );
-      break;
-    case "SUPPLIER":
-      hit = pick(
-        await db.supplier.findFirst({
-          where: { name: value },
-          select: { id: true },
-        }),
-      );
-      break;
-    case "PURCHASE_ORDER":
-      hit = pick(
-        await db.purchaseOrder.findFirst({
-          where: { code: value },
-          select: { id: true },
-        }),
-      );
-      break;
-    case "UNIT":
-      hit = pick(
-        await db.workOrderMfg.findFirst({
-          where: { serial: value },
-          select: { id: true },
-        }),
-      );
-      break;
-    case "DELIVERY":
-      hit = pick(
-        await db.delivery.findFirst({
-          where: { code: value },
-          select: { id: true },
-        }),
-      );
-      break;
-    case "WORK_ORDER":
-      hit = pick(
-        await db.workOrderField.findFirst({
-          where: { code: value },
-          select: { id: true },
-        }),
-      );
-      break;
-    case "INVOICE":
-      hit = pick(
-        await db.invoice.findFirst({
-          where: { code: value },
-          select: { id: true },
-        }),
-      );
-      break;
-    case "SPC_SAMPLE":
-      hit = pick(
-        await db.spcSample.findFirst({
-          where: { serial: value },
-          select: { id: true },
-        }),
-      );
-      break;
-  }
-  return hit ?? value; // resolved code→id, or a raw cuid passed through unchanged
+  // LINK.1 — delegate to the single canonical code→id resolver (no forked natural
+  // keys). A raw cuid resolves to nothing there and passes through unchanged
+  // (backward compatible). recall's EntityType is a subset of the resolver's.
+  return (await resolveEntityId(db, type, value)) ?? value;
 }
 
 export async function recallMemory(

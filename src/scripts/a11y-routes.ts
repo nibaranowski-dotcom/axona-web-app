@@ -41,7 +41,22 @@ export const A11Y_ROUTES: A11yRoute[] = [
   },
   {
     path: `/units/${A11Y_DETAIL_SERIAL}`,
-    label: "Unit page (PLM detail)",
+    label: "Unit page (PLM detail · LINK.1 connected objects)",
+    auth: true,
+  },
+  {
+    path: "/rca/NCR-118",
+    label: "RCA workspace (PLM.8 · LINK.1 connected objects)",
+    auth: true,
+  },
+  {
+    path: "/changes/ECO-305",
+    label: "Change order detail (PLM.9 · LINK.1 connected objects)",
+    auth: true,
+  },
+  {
+    path: "/tests/TR-8390",
+    label: "Test run detail (PLM.8 · LINK.1 connected objects)",
     auth: true,
   },
   { path: "/blast-radius", label: "Blast radius (PLM traversal)", auth: true },

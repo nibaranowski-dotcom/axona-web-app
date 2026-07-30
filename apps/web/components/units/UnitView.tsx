@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ChevronRight, Lock } from "lucide-react";
 import type { UnitDetail, TimelineKind } from "@/lib/unit-detail";
 import { STATUS_LABEL } from "@/lib/units";
+import { ConnectedObjects } from "@/components/ontology/ConnectedObjects";
+import type { ConnectedGroup } from "@/lib/connected-objects";
 
 // PLM.3 — the Unit page (`Unit.dc.html` 1:1 on the DS.1 primitives). THE hero
 // object: everything in PLM links here. Identity + the configuration resolved NOW,
@@ -13,7 +15,13 @@ import { STATUS_LABEL } from "@/lib/units";
 // Test runs and field events are PLM.1b — their sections render as an explicit,
 // honest empty seam rather than fake rows.
 
-export function UnitView({ unit }: { unit: UnitDetail }) {
+export function UnitView({
+  unit,
+  connected,
+}: {
+  unit: UnitDetail;
+  connected: ConnectedGroup[];
+}) {
   const subCount = unit.diff.summary.substitutions;
 
   return (
@@ -179,6 +187,9 @@ export function UnitView({ unit }: { unit: UnitDetail }) {
               ))
             )}
           </RailSection>
+
+          {/* LINK.1 — directly connected records across the graph (1-hop). */}
+          <ConnectedObjects groups={connected} />
         </aside>
       </div>
     </div>

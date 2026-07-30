@@ -1,6 +1,7 @@
 import { getCurrentUser } from "@/lib/session";
 import { hasRole } from "@/lib/rbac";
 import { getConfigurationDetail } from "@/lib/configurations";
+import { getConnectedObjects } from "@/lib/connected-objects";
 import { ConfigurationDetailView } from "@/components/configurations/ConfigurationDetailView";
 import { ScreenShell, ScreenMessage } from "@/components/shell/ScreenShell";
 
@@ -44,10 +45,16 @@ export default async function ConfigurationDetailPage({
     );
   }
 
+  const connected = await getConnectedObjects(
+    user.orgId,
+    "CONFIG_VERSION",
+    code,
+  );
   return (
     <ConfigurationDetailView
       data={data}
       canLock={hasRole(user, ["ENGINEER", "ADMIN"])}
+      connected={connected}
     />
   );
 }

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Lock, TriangleAlert } from "lucide-react";
 import type { TestRunDetail } from "@/lib/tests-types";
+import { ConnectedObjects } from "@/components/ontology/ConnectedObjects";
+import type { ConnectedGroup } from "@/lib/connected-objects";
 
 // PLM.7 — the Test Run (`Test Run.dc.html` 1:1 on DS.1 primitives). The FROZEN
 // configuration snapshot is the signature artifact: it is rendered verbatim from
@@ -23,7 +25,13 @@ function limitLabel(lower: number | null, upper: number | null): string {
   return "—";
 }
 
-export function TestRunView({ run }: { run: TestRunDetail }) {
+export function TestRunView({
+  run,
+  connected,
+}: {
+  run: TestRunDetail;
+  connected: ConnectedGroup[];
+}) {
   const failed = run.outcome === "fail";
   const snap = run.snapshot;
 
@@ -268,6 +276,9 @@ export function TestRunView({ run }: { run: TestRunDetail }) {
             </Link>
           </aside>
         </div>
+
+        {/* LINK.1 — directly connected records (1-hop); blast radius owns N-hop. */}
+        <ConnectedObjects groups={connected} className="mt-[18px]" />
       </div>
     </div>
   );

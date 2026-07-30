@@ -1,5 +1,6 @@
-import { dbForOrg } from "@axona/db";
+import { dbForOrg, entityRoute } from "@axona/db";
 import { getBlastRadius, affectedUnits } from "@axona/agents";
+import type { EntityType } from "@axona/db";
 
 // PLM.5 — the blast-radius UI read model. The traversal already ships (ONT.1
 // getBlastRadius); this assembles it for the screen: results grouped by module,
@@ -33,35 +34,14 @@ import type {
 } from "./blast-radius-shared";
 import { TRACE_LABEL } from "./blast-radius-shared";
 
-/** Where a node of each module/type should link. */
+/**
+ * Where a node of each type links — delegates to the single centralized
+ * `entityRoute` map (LINK.1) so the blast-radius drill-in and the
+ * <ConnectedObjects> panel share one route resolver. UNIT/NCR/ECO/CONFIG/TEST_RUN
+ * now go to their real detail routes; the rest to their module screen.
+ */
 function hrefFor(type: string, code: string): string {
-  switch (type) {
-    case "UNIT":
-      // THE point of this screen: a unit goes to its Unit page.
-      return `/units/${encodeURIComponent(code)}`;
-    case "NCR":
-    case "SPC_SAMPLE":
-      return "/quality";
-    case "ECO":
-    case "PRODUCT_MODEL":
-    case "PART_REVISION":
-    case "CONFIG_VERSION":
-      return "/engineering";
-    case "PART":
-    case "LOT":
-      return "/inventory";
-    case "SUPPLIER":
-    case "PURCHASE_ORDER":
-      return "/procurement";
-    case "DELIVERY":
-      return "/fulfillment";
-    case "WORK_ORDER":
-      return "/field-service";
-    case "INVOICE":
-      return "/finance";
-    default:
-      return "/engineering";
-  }
+  return entityRoute(type as EntityType, code);
 }
 
 /** Human one-liner per module group (the design's summary column). */

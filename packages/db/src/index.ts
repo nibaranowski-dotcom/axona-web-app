@@ -57,6 +57,17 @@ export {
 } from "./embed/process";
 
 // MEM.1 — operational memory: ingestion (derive from the substrate) + hybrid
+// LINK.1 — the shared 1-hop EntityLink primitive + the natural-key/label + route
+// resolvers (getBlastRadius + recall + the <ConnectedObjects> panel all use these).
+export {
+  getEntityLinks,
+  entityRoute,
+  relationLabel,
+  resolveEntityId,
+  type EntityLinkNeighbor,
+  type LinkDirection,
+} from "./ontology/links";
+
 // recall (vector ⊕ graph proximity ⊕ recency).
 export { ingestMemory, type IngestResult } from "./memory/ingest";
 export {

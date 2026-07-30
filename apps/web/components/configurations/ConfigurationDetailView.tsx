@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Lock, Copy, Frame, ChevronDown } from "lucide-react";
 import type { ConfigDetail, ConfigState } from "@/lib/configurations";
+import { ConnectedObjects } from "@/components/ontology/ConnectedObjects";
+import type { ConnectedGroup } from "@/lib/connected-objects";
 import {
   lockConfigAction,
   unlockConfigAction,
@@ -40,9 +42,11 @@ const STATE_PILL: Record<
 export function ConfigurationDetailView({
   data,
   canLock,
+  connected,
 }: {
   data: ConfigDetail;
   canLock: boolean;
+  connected: ConnectedGroup[];
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -548,6 +552,9 @@ export function ConfigurationDetailView({
               </Link>
             ))}
           </div>
+
+          {/* LINK.1 — directly connected records across the graph (1-hop). */}
+          <ConnectedObjects groups={connected} />
         </aside>
       </div>
     </div>

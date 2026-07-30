@@ -1,6 +1,7 @@
 import { getCurrentUser } from "@/lib/session";
 import { hasRole } from "@/lib/rbac";
 import { getRcaWorkspace } from "@/lib/rca";
+import { getConnectedObjects } from "@/lib/connected-objects";
 import { RcaView } from "@/components/rca/RcaView";
 import { ScreenShell, ScreenMessage } from "@/components/shell/ScreenShell";
 
@@ -40,10 +41,12 @@ export default async function RcaPage({
     );
   }
 
+  const connected = await getConnectedObjects(user.orgId, "NCR", code);
   return (
     <RcaView
       rca={rca}
       canClassify={hasRole(user, ["ENGINEER", "OPS", "ADMIN"])}
+      connected={connected}
     />
   );
 }

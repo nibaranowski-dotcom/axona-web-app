@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { getUnitDetail } from "@/lib/unit-detail";
+import { getConnectedObjects } from "@/lib/connected-objects";
 import { UnitView } from "@/components/units/UnitView";
 import { ScreenShell, ScreenMessage } from "@/components/shell/ScreenShell";
 
@@ -31,7 +32,8 @@ export default async function UnitPage({
   const unit = await getUnitDetail(user.orgId, serial);
   if (!unit) notFound();
 
-  return <UnitView unit={unit} />;
+  const connected = await getConnectedObjects(user.orgId, "UNIT", serial);
+  return <UnitView unit={unit} connected={connected} />;
 }
 
 function Header({ serial }: { serial: string }) {

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, MessageSquare } from "lucide-react";
 import type { ChangeOrderData, RolloutState } from "@/lib/change-order";
+import { ConnectedObjects } from "@/components/ontology/ConnectedObjects";
+import type { ConnectedGroup } from "@/lib/connected-objects";
 import {
   approveChangeOrder,
   requestChangesOnOrder,
@@ -32,9 +34,11 @@ const COLS = "grid grid-cols-[1.2fr_1fr_1fr_0.9fr] items-center gap-3 px-5";
 export function ChangeOrderView({
   data,
   canDecide,
+  connected,
 }: {
   data: ChangeOrderData;
   canDecide: boolean;
+  connected: ConnectedGroup[];
 }) {
   const router = useRouter();
   const [stage, setStage] = useState(data.stage);
@@ -260,6 +264,9 @@ export function ChangeOrderView({
             )}
           </section>
         </div>
+
+        {/* LINK.1 — directly connected records (1-hop); blast radius owns N-hop. */}
+        <ConnectedObjects groups={connected} className="mt-[18px]" />
       </div>
     </div>
   );

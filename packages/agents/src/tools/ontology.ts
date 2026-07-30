@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { OrgScopedDb } from "@axona/db";
+import { getEntityLinks, type OrgScopedDb } from "@axona/db";
 import type { Tool } from "../runtime/types";
 
 // ONT.1 — the entity-link graph traversal (the cross-module ripple). getBlastRadius
@@ -310,28 +310,27 @@ export async function getBlastRadius(
   while (queue.length > 0 && visited.size < MAX_NODES) {
     const cur = visited.get(queue.shift()!)!;
     if (cur.depth >= maxDepth) continue;
-    const edges = await db.entityLink.findMany({
-      where: {
-        OR: [
-          { fromType: cur.type, fromId: cur.id },
-          { toType: cur.type, toId: cur.id },
-        ],
-      },
+    // LINK.1 — the 1-hop neighbor fetch is now the shared `getEntityLinks`
+    // primitive (resolve:false — the BFS only needs type·id·relation·direction).
+    // Behavior is byte-identical to the inline edge loop this replaced: one
+    // neighbor per edge, in edge order; `forward` ⟺ this node is the edge's `from`.
+    const neighbors = await getEntityLinks(db, {
+      type: cur.type,
+      id: cur.id,
+      resolve: false,
     });
-    for (const e of edges) {
-      const parentIsFrom = e.fromType === cur.type && e.fromId === cur.id;
-      const nType = (parentIsFrom ? e.toType : e.fromType) as EntityType;
-      const nId = parentIsFrom ? e.toId : e.fromId;
-      const nKey = key(nType, nId);
+    for (const n of neighbors) {
+      const nType = n.type as EntityType;
+      const nKey = key(nType, n.id);
       if (visited.has(nKey)) continue;
       if (visited.size >= MAX_NODES) break;
       visited.set(nKey, {
         type: nType,
-        id: nId,
+        id: n.id,
         depth: cur.depth + 1,
         parent: key(cur.type, cur.id),
-        relation: e.relation,
-        forward: parentIsFrom,
+        relation: n.relation,
+        forward: n.direction === "out",
       });
       queue.push(nKey);
     }
