@@ -26,8 +26,13 @@ export interface ProspectConfig {
   name: string;
   slug: string;
   industry?: string;
-  /** Optional logo asset (path relative to the config dir) → uploaded to the org's
-   *  blob prefix and set as Org.logoKey (SET.1). Skipped when S3 isn't configured. */
+  /** Optional logo asset → uploaded to the org's blob prefix at seed time and set as
+   *  Org.logoKey (SET.1); the sidebar then resolves org.logoUrl (no UI change).
+   *  PROSPECT.3: this is a LOCAL file path that may live OUTSIDE the repo — an absolute
+   *  path, a `~/…` home path (e.g. "~/Desktop/logos/acme.png"), or a path relative to
+   *  the (gitignored) config dir. Real logo bytes/paths are NEVER committed (SEED.1);
+   *  the asset is read + uploaded at seed time using the S3/R2 env provided at run time.
+   *  Skipped when S3 isn't configured. */
   logoFile?: string;
   /** A demo login scoped to THIS org (e.g. demo@<name>-demo.test). */
   demoUser: {

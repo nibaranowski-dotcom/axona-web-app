@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { extname, isAbsolute, resolve } from "node:path";
 import bcrypt from "bcryptjs";
 import {
@@ -7,8 +8,29 @@ import {
   putObject,
   s3Configured,
   ensureBucket,
+  ingestMemory,
   type ProspectConfig,
+  type OrgScopedDb,
 } from "@axona/db";
+
+// PROSPECT.3 — the SAME cross-module generators the base/investor seed uses, run for
+// the prospect org so every non-PLM module screen renders as populated. The prisma
+// seed files (packages/db/prisma/seed/*) are tsx-run and intentionally NOT in any tsc
+// project (they omit orgId, relying on the org-scoped client's runtime injection), so
+// we load the wrapper via a computed specifier — tsc doesn't pull its un-typechecked
+// deps into src/scripts's program; the local type keeps the call site safe.
+type SeedTenantModules = (
+  db: OrgScopedDb,
+  orgId: string,
+  opts: { nowMs: number; adminUserId: string },
+) => Promise<unknown>;
+const TENANT_SEED_MODULE = "../../../packages/db/prisma/seed/tenant";
+async function loadSeedTenantModules(): Promise<SeedTenantModules> {
+  const mod = (await import(TENANT_SEED_MODULE)) as {
+    seedTenantModules: SeedTenantModules;
+  };
+  return mod.seedTenantModules;
+}
 
 // PROSPECT.1 — the generic prospect-seed runtime. Lives in src/scripts/ (NOT in
 // @axona/db) so its node:fs / node:path imports are never pulled into the web
@@ -144,12 +166,19 @@ export async function seedProspectOrg(
   // 2. clear ONLY this org's tenant rows (isolation-safe)
   await clearOrgData(orgId);
 
-  // 3. logo → the org's blob prefix (SET.1). Skipped without S3.
+  // 3. logo → the org's blob prefix (SET.1). PROSPECT.3: the logo path may be a LOCAL
+  //    file OUTSIDE the repo (real logos are never committed — SEED.1) — an absolute
+  //    path, a `~/…` home path, or a path relative to the (gitignored) config dir. Read
+  //    at seed time and uploaded to the configured S3/R2 blob store (skipped without S3;
+  //    point S3 at prod R2 to upload there). Bytes/paths never enter the repo.
   let logoUploaded = false;
   if (config.logoFile && s3Configured()) {
-    const path = isAbsolute(config.logoFile)
-      ? config.logoFile
-      : resolve(opts.configDir, config.logoFile);
+    const expanded = config.logoFile.startsWith("~/")
+      ? resolve(homedir(), config.logoFile.slice(2))
+      : config.logoFile;
+    const path = isAbsolute(expanded)
+      ? expanded
+      : resolve(opts.configDir, expanded);
     const bytes = readFileSync(path);
     const ext = extname(path).toLowerCase();
     const key = `org/${orgId}/branding/logo${ext}`;
@@ -167,7 +196,7 @@ export async function seedProspectOrg(
 
   // 4. the org-scoped demo login (bcrypt; unique email cleared above → create fresh)
   const passwordHash = await bcrypt.hash(config.demoUser.password, 10);
-  await db.user.create({
+  const demoUser = await db.user.create({
     data: {
       // org-scoped client re-injects orgId at runtime; set it here for the type.
       orgId,
@@ -176,10 +205,35 @@ export async function seedProspectOrg(
       role: config.demoUser.role,
       passwordHash,
     },
+    select: { id: true },
   });
 
-  // 5. tailored data (over existing models, org-scoped by construction)
+  // 5. PROSPECT.3 — the full cross-module narrative (procurement · quality · mfg · sales
+  //    · fleet · field service · finance · people · autonomy · legal · security ·
+  //    inventory · marketing · machines · projects · workflows · billing · notifications
+  //    · integrations · audit), reusing the base generators, org-scoped → isolated. This
+  //    is the FOUNDATION the config's identity + PLM + agents overlay sits on top of.
+  const seedTenantModules = await loadSeedTenantModules();
+  await seedTenantModules(db, orgId, {
+    nowMs: Date.now(),
+    adminUserId: demoUser.id,
+  });
+
+  // 6. tailored overlay (identity + PLM golden thread + agents), over existing models,
+  //    org-scoped by construction. Runs AFTER the base narrative so it layers on top.
   await config.seed({ db, orgId, configDir: opts.configDir });
+
+  // 7. PROSPECT.3 — derive operational memory from the full substrate (base modules +
+  //    the config's PLM thread), so the prospect's Axona agent can recall precedent.
+  //    Best-effort: a memory-ingest failure must not fail the seed.
+  try {
+    await ingestMemory(db);
+  } catch (err) {
+    console.error(
+      `[prospect-seed] ingestMemory skipped for ${orgId}:`,
+      (err as Error).message,
+    );
+  }
 
   return { orgId, name: config.name, logoUploaded };
 }

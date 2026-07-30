@@ -132,16 +132,31 @@ async function run(): Promise<void> {
     );
 
     await check(
-      "isolation: the prospect org CANNOT see the demo org's data",
+      "isolation: the prospect org CANNOT see the demo org's SPECIFIC rows",
       async () => {
-        // the demo org has "Tier-1 Actuator Co" + NCR-118 (SEED.1/ONT.1)
-        const demoSupplier = await prospectDb.supplier.findFirst({
+        // PROSPECT.3: the prospect now carries the full base narrative, so it has its
+        // OWN "Tier-1 Actuator Co" + NCR-118 (org-scoped copies, different rows). True
+        // isolation = the prospect's scoped client cannot retrieve the DEMO's specific
+        // rows (by id) — org-scoping injects the prospect orgId, so a demo id never matches.
+        const demoSupplier = await demoDb.supplier.findFirst({
           where: { name: "Tier-1 Actuator Co" },
+          select: { id: true },
         });
-        const demoNcr = await prospectDb.nCR.findFirst({
+        const demoNcr = await demoDb.nCR.findFirst({
           where: { code: "NCR-118" },
+          select: { id: true },
         });
-        return demoSupplier === null && demoNcr === null;
+        const prospectSeesDemoSupplier = demoSupplier
+          ? await prospectDb.supplier.findFirst({
+              where: { id: demoSupplier.id },
+            })
+          : null;
+        const prospectSeesDemoNcr = demoNcr
+          ? await prospectDb.nCR.findFirst({ where: { id: demoNcr.id } })
+          : null;
+        return (
+          prospectSeesDemoSupplier === null && prospectSeesDemoNcr === null
+        );
       },
     );
   } finally {
