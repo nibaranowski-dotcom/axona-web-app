@@ -1,8 +1,11 @@
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { getUnitDetail } from "@/lib/unit-detail";
+import { hasRole } from "@/lib/rbac";
 import { getConnectedObjects } from "@/lib/connected-objects";
 import { recordHistoryFor } from "@/lib/audit-trail";
+import { attachmentsFor } from "@/lib/attachments";
+import { CAN_ATTACH } from "@/lib/attach-roles";
 import { UnitView } from "@/components/units/UnitView";
 import { ScreenShell, ScreenMessage } from "@/components/shell/ScreenShell";
 
@@ -35,8 +38,15 @@ export default async function UnitPage({
 
   const connected = await getConnectedObjects(user.orgId, "UNIT", serial);
   const history = await recordHistoryFor(user.orgId, "UNIT", serial);
+  const attachments = await attachmentsFor(user.orgId, "UNIT", serial);
   return (
-    <UnitView unit={unit} connected={connected} history={history.entries} />
+    <UnitView
+      unit={unit}
+      connected={connected}
+      history={history.entries}
+      attachments={attachments}
+      canManage={hasRole(user, CAN_ATTACH)}
+    />
   );
 }
 

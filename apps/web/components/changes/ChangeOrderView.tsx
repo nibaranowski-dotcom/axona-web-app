@@ -9,6 +9,8 @@ import { ConnectedObjects } from "@/components/ontology/ConnectedObjects";
 import type { ConnectedGroup } from "@/lib/connected-objects";
 import { RecordHistory } from "@/components/audit/RecordHistory";
 import type { AuditEntry } from "@/lib/audit-trail";
+import { Attachments } from "@/components/attachments/Attachments";
+import type { RecordAttachments } from "@/lib/attachments";
 import {
   approveChangeOrder,
   requestChangesOnOrder,
@@ -38,11 +40,15 @@ export function ChangeOrderView({
   canDecide,
   connected,
   history,
+  attachments,
+  canManage,
 }: {
   data: ChangeOrderData;
   canDecide: boolean;
   connected: ConnectedGroup[];
   history: AuditEntry[];
+  attachments: RecordAttachments;
+  canManage: boolean;
 }) {
   const router = useRouter();
   const [stage, setStage] = useState(data.stage);
@@ -274,6 +280,13 @@ export function ChangeOrderView({
 
         {/* HIST.1 — this change order's audited change history (AUDIT.1). */}
         <RecordHistory entries={history} className="mt-[18px]" />
+
+        {/* ATTACH.1 — files attached to this change order (FILE.1 extended). */}
+        <Attachments
+          attachments={attachments}
+          canManage={canManage}
+          className="mt-[18px]"
+        />
       </div>
     </div>
   );

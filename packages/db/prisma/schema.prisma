@@ -544,9 +544,31 @@ enum ProjectStatus {
 }
 
 model File {
-  id        String                 @id @default(cuid())
-  projectId String
-  project   Project                @relation(fields: [projectId], references: [id])
+  id String @id @default(cuid())
+  // ATTACH.1 — projectId is now NULLABLE: a file attaches to a project OR an
+  // entity ({targetType,targetId}) OR the org. Existing project files are unchanged
+  // (projectId set, scoped via project.orgId). Additive-nullable, migrate dev only.
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  // ATTACH.1 — org scope for entity/org attachments (File is NOT in TENANT_MODELS;
+  // project files leave this null and scope via project.orgId as before).
+  orgId String?
+  // ATTACH.1 — the entity a file is attached to (audit-style target strings, e.g.
+  // "Unit"/"NCR"/"ECO"; both null for a plain project file).
+  targetType String?
+  targetId   String?
+  // ATTACH.1 — versioning: re-upload to the same attach point → a NEW version;
+  // prior versions are RETAINED (soft-superseded), never overwritten.
+  version      Int     @default(1)
+  supersedesId String?
+  supersedes   File?   @relation("FileVersions", fields: [supersedesId], references: [id])
+  supersededBy File[]  @relation("FileVersions")
+  // ATTACH.1 — soft delete (retain the blob + row; a delete never hard-overwrites).
+  deletedAt DateTime?
+  // ATTACH.1 — who/when for the Attachments panel.
+  uploadedById    String?
+  uploadedByLabel String?
+  createdAt       DateTime @default(now())
   name      String
   ext       String
   sizeBytes Int
@@ -570,6 +592,8 @@ model File {
   modifiedAt DateTime @updatedAt
 
   @@index([projectId])
+  // ATTACH.1 — the attach-point query (a record's attachments, org-scoped).
+  @@index([orgId, targetType, targetId])
 }
 
 // Answers live in File.extracted[columnId].

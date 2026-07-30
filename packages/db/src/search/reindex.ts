@@ -140,14 +140,22 @@ export async function reindex(orgId?: string): Promise<void> {
     where: orgId ? { project: { orgId } } : {},
   });
   for (const f of files) {
-    let org = projectOrg.get(f.projectId) ?? null;
-    if (org === null && !projectOrg.has(f.projectId)) {
-      const proj = await prisma.project.findUnique({
-        where: { id: f.projectId },
-        select: { orgId: true },
-      });
-      org = proj?.orgId ?? null;
+    // ATTACH.1 — a project file resolves its org via project.orgId; an entity
+    // attachment (nullable projectId) carries File.orgId directly.
+    let org: string | null;
+    if (f.projectId) {
+      org = projectOrg.get(f.projectId) ?? null;
+      if (org === null && !projectOrg.has(f.projectId)) {
+        const proj = await prisma.project.findUnique({
+          where: { id: f.projectId },
+          select: { orgId: true },
+        });
+        org = proj?.orgId ?? null;
+      }
+    } else {
+      org = f.orgId ?? null;
     }
+    if (!org) continue; // unscopable file → skip (never index cross-org)
     await upsertDoc({
       orgId: org,
       type: "FILE",
@@ -155,7 +163,7 @@ export async function reindex(orgId?: string): Promise<void> {
       title: f.name,
       subtitle: f.type,
       body: f.linkedTo,
-      url: `/projects/${f.projectId}`,
+      url: f.projectId ? `/projects/${f.projectId}` : "",
     });
   }
 

@@ -34,9 +34,12 @@ export async function processFile(
   const { fileId, orgId } = job;
   const db = dbForOrg(orgId);
 
-  // Org-scoped load: File has no orgId, so join through project.orgId.
+  // Org-scoped load: a project file joins through project.orgId; an ATTACH.1 entity
+  // attachment (nullable projectId) carries File.orgId directly. Same extractor for
+  // both — the scope predicate just widens to include the org column.
+  const orgScope = { OR: [{ project: { orgId } }, { orgId }] };
   const file = await db.file.findFirst({
-    where: { id: fileId, project: { orgId } },
+    where: { id: fileId, ...orgScope },
     select: {
       id: true,
       projectId: true,
@@ -55,7 +58,7 @@ export async function processFile(
     bytes = await getObjectBytes(file.blobKey);
   } catch (e) {
     await db.file.updateMany({
-      where: { id: file.id, project: { orgId } },
+      where: { id: file.id, ...orgScope },
       data: { text: "" },
     });
     return {
@@ -71,7 +74,7 @@ export async function processFile(
 
   // 1) File.text (Prisma, org-scoped where).
   await db.file.updateMany({
-    where: { id: file.id, project: { orgId } },
+    where: { id: file.id, ...orgScope },
     data: { text },
   });
 
@@ -92,7 +95,8 @@ export async function processFile(
     await prisma.$executeRaw`
       UPDATE "File" SET embedding = ${lit}::vector
       WHERE id = ${file.id}
-        AND "projectId" IN (SELECT id FROM "Project" WHERE "orgId" = ${orgId})`;
+        AND ("projectId" IN (SELECT id FROM "Project" WHERE "orgId" = ${orgId})
+             OR "orgId" = ${orgId})`;
   }
 
   // 4) upsert the FILE SearchDoc (body = a text snippet → FTS matches content).
@@ -104,7 +108,9 @@ export async function processFile(
     title: file.name,
     subtitle: file.linkedTo ?? file.type,
     body: snippet,
-    url: `/projects/${file.projectId}`,
+    // project files deep-link to the project; an ATTACH.1 entity attachment has no
+    // project screen — the file is still FTS/vector searchable (empty deep-link).
+    url: file.projectId ? `/projects/${file.projectId}` : "",
   });
 
   // 5) the SearchDoc's embedding (raw SQL) so files are FTS- AND vector-searchable.

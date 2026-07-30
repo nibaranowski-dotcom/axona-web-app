@@ -9,6 +9,8 @@ import { ConnectedObjects } from "@/components/ontology/ConnectedObjects";
 import type { ConnectedGroup } from "@/lib/connected-objects";
 import { RecordHistory } from "@/components/audit/RecordHistory";
 import type { AuditEntry } from "@/lib/audit-trail";
+import { Attachments } from "@/components/attachments/Attachments";
+import type { RecordAttachments } from "@/lib/attachments";
 import {
   lockConfigAction,
   unlockConfigAction,
@@ -46,11 +48,15 @@ export function ConfigurationDetailView({
   canLock,
   connected,
   history,
+  attachments,
+  canManage,
 }: {
   data: ConfigDetail;
   canLock: boolean;
   connected: ConnectedGroup[];
   history: AuditEntry[];
+  attachments: RecordAttachments;
+  canManage: boolean;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -562,6 +568,9 @@ export function ConfigurationDetailView({
 
           {/* HIST.1 — this configuration's audited change history (AUDIT.1). */}
           <RecordHistory entries={history} />
+
+          {/* ATTACH.1 — files attached to this configuration (FILE.1 extended). */}
+          <Attachments attachments={attachments} canManage={canManage} />
         </aside>
       </div>
     </div>

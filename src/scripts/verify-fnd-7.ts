@@ -69,12 +69,14 @@ for (const v of ["ACTIVE", "IN_REVIEW", "BLOCKED", "DONE"]) {
 // --- File --------------------------------------------------------------------
 const file = block("model", "File");
 if (!file) fail("model File missing");
-requireField(file, "File", "projectId", /projectId\s+String/);
+// ATTACH.1 — projectId + its relation are now NULLABLE (a file attaches to a
+// project OR an entity OR the org). Additive-widening; project files unchanged.
+requireField(file, "File", "projectId", /projectId\s+String\??/);
 requireField(
   file,
   "File",
   "project relation",
-  /project\s+Project\s+@relation\(fields:\s*\[projectId\],\s*references:\s*\[id\]\)/,
+  /project\s+Project\??\s+@relation\(fields:\s*\[projectId\],\s*references:\s*\[id\]\)/,
 );
 requireField(file, "File", "name", /name\s+String/);
 requireField(file, "File", "ext", /ext\s+String/);

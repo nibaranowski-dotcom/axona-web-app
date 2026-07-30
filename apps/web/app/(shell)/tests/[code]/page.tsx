@@ -1,7 +1,10 @@
 import { getCurrentUser } from "@/lib/session";
 import { getTestRun } from "@/lib/tests";
+import { hasRole } from "@/lib/rbac";
 import { getConnectedObjects } from "@/lib/connected-objects";
 import { recordHistoryFor } from "@/lib/audit-trail";
+import { attachmentsFor } from "@/lib/attachments";
+import { CAN_ATTACH } from "@/lib/attach-roles";
 import { TestRunView } from "@/components/tests/TestRunView";
 import { ScreenShell, ScreenMessage } from "@/components/shell/ScreenShell";
 
@@ -46,8 +49,15 @@ export default async function TestRunPage({
 
   const connected = await getConnectedObjects(user.orgId, "TEST_RUN", code);
   const history = await recordHistoryFor(user.orgId, "TEST_RUN", code);
+  const attachments = await attachmentsFor(user.orgId, "TEST_RUN", code);
   return (
-    <TestRunView run={run} connected={connected} history={history.entries} />
+    <TestRunView
+      run={run}
+      connected={connected}
+      history={history.entries}
+      attachments={attachments}
+      canManage={hasRole(user, CAN_ATTACH)}
+    />
   );
 }
 

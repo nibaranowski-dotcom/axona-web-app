@@ -11,14 +11,20 @@ async function run(): Promise<void> {
     console.log("S3_ENDPOINT not set — skipping embed backfill.");
     return;
   }
-  // Files join org via their project; process each under its owning org.
+  // A project file joins org via project.orgId; an ATTACH.1 entity attachment
+  // carries File.orgId directly (nullable projectId).
   const files = await prisma.file.findMany({
-    select: { id: true, project: { select: { orgId: true } } },
+    select: { id: true, orgId: true, project: { select: { orgId: true } } },
   });
   let ok = 0;
   let skipped = 0;
   for (const f of files) {
-    const res = await processFile({ fileId: f.id, orgId: f.project.orgId });
+    const orgId = f.project?.orgId ?? f.orgId;
+    if (!orgId) {
+      skipped++;
+      continue;
+    }
+    const res = await processFile({ fileId: f.id, orgId });
     if (res.embedded) ok++;
     else skipped++;
   }

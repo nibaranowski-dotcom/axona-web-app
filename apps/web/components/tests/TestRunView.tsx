@@ -5,6 +5,8 @@ import { ConnectedObjects } from "@/components/ontology/ConnectedObjects";
 import type { ConnectedGroup } from "@/lib/connected-objects";
 import { RecordHistory } from "@/components/audit/RecordHistory";
 import type { AuditEntry } from "@/lib/audit-trail";
+import { Attachments } from "@/components/attachments/Attachments";
+import type { RecordAttachments } from "@/lib/attachments";
 
 // PLM.7 — the Test Run (`Test Run.dc.html` 1:1 on DS.1 primitives). The FROZEN
 // configuration snapshot is the signature artifact: it is rendered verbatim from
@@ -31,10 +33,14 @@ export function TestRunView({
   run,
   connected,
   history,
+  attachments,
+  canManage,
 }: {
   run: TestRunDetail;
   connected: ConnectedGroup[];
   history: AuditEntry[];
+  attachments: RecordAttachments;
+  canManage: boolean;
 }) {
   const failed = run.outcome === "fail";
   const snap = run.snapshot;
@@ -286,6 +292,13 @@ export function TestRunView({
 
         {/* HIST.1 — this test run's audited change history (AUDIT.1). */}
         <RecordHistory entries={history} className="mt-[18px]" />
+
+        {/* ATTACH.1 — files attached to this test run (FILE.1 extended). */}
+        <Attachments
+          attachments={attachments}
+          canManage={canManage}
+          className="mt-[18px]"
+        />
       </div>
     </div>
   );

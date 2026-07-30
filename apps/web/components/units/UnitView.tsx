@@ -8,6 +8,8 @@ import { ConnectedObjects } from "@/components/ontology/ConnectedObjects";
 import type { ConnectedGroup } from "@/lib/connected-objects";
 import { RecordHistory } from "@/components/audit/RecordHistory";
 import type { AuditEntry } from "@/lib/audit-trail";
+import { Attachments } from "@/components/attachments/Attachments";
+import type { RecordAttachments } from "@/lib/attachments";
 
 // PLM.3 — the Unit page (`Unit.dc.html` 1:1 on the DS.1 primitives). THE hero
 // object: everything in PLM links here. Identity + the configuration resolved NOW,
@@ -21,10 +23,14 @@ export function UnitView({
   unit,
   connected,
   history,
+  attachments,
+  canManage,
 }: {
   unit: UnitDetail;
   connected: ConnectedGroup[];
   history: AuditEntry[];
+  attachments: RecordAttachments;
+  canManage: boolean;
 }) {
   const subCount = unit.diff.summary.substitutions;
 
@@ -197,6 +203,9 @@ export function UnitView({
 
           {/* HIST.1 — this record's audited change history (AUDIT.1). */}
           <RecordHistory entries={history} />
+
+          {/* ATTACH.1 — files attached to this record (FILE.1 extended). */}
+          <Attachments attachments={attachments} canManage={canManage} />
         </aside>
       </div>
     </div>

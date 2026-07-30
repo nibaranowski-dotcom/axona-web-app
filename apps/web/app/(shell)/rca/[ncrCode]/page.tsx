@@ -3,6 +3,8 @@ import { hasRole } from "@/lib/rbac";
 import { getRcaWorkspace } from "@/lib/rca";
 import { getConnectedObjects } from "@/lib/connected-objects";
 import { recordHistoryFor } from "@/lib/audit-trail";
+import { attachmentsFor } from "@/lib/attachments";
+import { CAN_ATTACH } from "@/lib/attach-roles";
 import { RcaView } from "@/components/rca/RcaView";
 import { ScreenShell, ScreenMessage } from "@/components/shell/ScreenShell";
 
@@ -44,12 +46,15 @@ export default async function RcaPage({
 
   const connected = await getConnectedObjects(user.orgId, "NCR", code);
   const history = await recordHistoryFor(user.orgId, "NCR", code);
+  const attachments = await attachmentsFor(user.orgId, "NCR", code);
   return (
     <RcaView
       rca={rca}
       canClassify={hasRole(user, ["ENGINEER", "OPS", "ADMIN"])}
       connected={connected}
       history={history.entries}
+      attachments={attachments}
+      canManage={hasRole(user, CAN_ATTACH)}
     />
   );
 }
