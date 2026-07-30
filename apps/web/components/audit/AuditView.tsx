@@ -10,8 +10,10 @@ import type {
   AuditRollup,
   CalibrationModelData,
 } from "@/lib/audit-trail";
-import { LOW_CONFIDENCE } from "@/lib/audit-trail";
 import { ReliabilityPanel } from "./ReliabilityPanel";
+// HIST.1 — the actor avatar + CONF.1 confidence badge are shared render parts so
+// the per-record <RecordHistory> timeline renders them identically (no fork).
+import { ActorAvatar, ConfidenceCell } from "./audit-parts";
 
 export interface AuditScreenData {
   entries: AuditEntry[];
@@ -55,16 +57,6 @@ function moduleOf(e: AuditEntry): string {
   if (MODULE_BY_TARGET[e.targetType]) return MODULE_BY_TARGET[e.targetType]!;
   const ns = e.action.split(".")[0] ?? "";
   return ns ? ns.charAt(0).toUpperCase() + ns.slice(1) : e.targetType;
-}
-
-function initials(label: string): string {
-  const parts = label
-    .trim()
-    .split(/[\s·|-]+/)
-    .filter(Boolean);
-  if (parts.length === 0) return "—";
-  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
-  return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
 }
 
 function fmtTime(at: Date | string): string {
@@ -383,23 +375,12 @@ const ROW =
 
 function AuditRow({ e }: { e: AuditEntry }) {
   const approved = /\.approve$/.test(e.action);
-  const av =
-    e.actorType === "AGENT"
-      ? "bg-accent text-accent-ink"
-      : e.actorType === "HUMAN"
-        ? "bg-ink-strong text-on-dark"
-        : "bg-panel text-ink-muted border border-line-strong";
 
   return (
     <div className={ROW}>
       {/* actor */}
       <div className="flex min-w-0 items-center gap-2.5">
-        <span
-          aria-hidden
-          className={`inline-flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full font-mono text-[9px] font-bold ${av}`}
-        >
-          {initials(e.actorLabel)}
-        </span>
+        <ActorAvatar actorType={e.actorType} actorLabel={e.actorLabel} />
         <span
           className="min-w-0 truncate text-[12.5px] font-semibold text-ink"
           title={`${e.actorType} · ${e.actorLabel}`}
@@ -442,32 +423,7 @@ function AuditRow({ e }: { e: AuditEntry }) {
         {e.confidence === null ? (
           <span className="text-ink-faint">—</span>
         ) : (
-          <span className="inline-flex items-center gap-1">
-            <span className="text-ink">
-              {(e.calibrated?.value ?? e.confidence).toFixed(2)}
-            </span>
-            {e.calibrated?.state === "uncalibrated" ? (
-              <span
-                title={`raw ${e.confidence.toFixed(2)} · not enough decided proposals to calibrate yet`}
-                className="rounded-[4px] border border-line px-1 py-px text-[8px] font-medium uppercase tracking-[0.03em] text-ink-muted"
-              >
-                uncal
-              </span>
-            ) : e.calibrated &&
-              Math.abs(e.calibrated.value - e.confidence) >= 0.05 ? (
-              <span
-                title={`agent said ${e.confidence.toFixed(2)}; calibrated to the org's observed rate`}
-                className="text-[9px] text-ink-faint"
-              >
-                ·raw {e.confidence.toFixed(2)}
-              </span>
-            ) : null}
-            {e.confidence < LOW_CONFIDENCE && (
-              <span className="rounded-pill bg-ink-strong px-1.5 py-px text-[8.5px] font-semibold uppercase tracking-[0.03em] text-on-dark">
-                Review
-              </span>
-            )}
-          </span>
+          <ConfidenceCell e={e} />
         )}
       </span>
 

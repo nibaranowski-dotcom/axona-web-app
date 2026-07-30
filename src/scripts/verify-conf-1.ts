@@ -128,10 +128,16 @@ async function run(): Promise<void> {
       const audit = read("apps/web/components/audit/AuditView.tsx");
       const panel = read("apps/web/components/audit/ReliabilityPanel.tsx");
       const lib = read("apps/web/lib/audit-trail.ts");
+      // HIST.1 extracted the confidence badge into audit-parts.tsx (shared by
+      // AuditView + the RecordHistory timeline); the calibrated-value/uncal markup
+      // now lives there. AuditView still renders it (via ConfidenceCell).
+      const row =
+        audit + "\n" + read("apps/web/components/audit/audit-parts.tsx");
       return (
         /calibratedConfidence/.test(lib) && // the read model applies calibration
-        /e\.calibrated/.test(audit) && // the row shows the calibrated value
-        /uncalibrated|uncal/.test(audit) && // cold-start marker
+        /e\.calibrated/.test(row) && // the row shows the calibrated value
+        /uncalibrated|uncal/.test(row) && // cold-start marker
+        /ConfidenceCell/.test(audit) && // AuditView delegates to the shared badge
         /calibration\.bins|calibration\?\.sampleSize|calibration\.ece/.test(
           panel,
         ) &&

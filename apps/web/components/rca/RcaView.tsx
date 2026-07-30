@@ -9,6 +9,8 @@ import { ROOT_CAUSES } from "@/lib/quality";
 import { setNcrRootCauseAction } from "@/app/(shell)/quality/actions";
 import { ConnectedObjects } from "@/components/ontology/ConnectedObjects";
 import type { ConnectedGroup } from "@/lib/connected-objects";
+import { RecordHistory } from "@/components/audit/RecordHistory";
+import type { AuditEntry } from "@/lib/audit-trail";
 
 // PLM.8 — the RCA workspace (`RCA.dc.html` 1:1 on DS.1 primitives). Evidence is
 // assembled by the system; the AGENT PROPOSES a candidate cause with calibrated
@@ -29,10 +31,12 @@ export function RcaView({
   rca,
   canClassify,
   connected,
+  history,
 }: {
   rca: RcaWorkspace;
   canClassify: boolean;
   connected: ConnectedGroup[];
+  history: AuditEntry[];
 }) {
   const router = useRouter();
   const [choice, setChoice] = useState(rca.rootCause ?? "");
@@ -307,6 +311,9 @@ export function RcaView({
 
         {/* LINK.1 — directly connected records (1-hop); blast radius owns N-hop. */}
         <ConnectedObjects groups={connected} className="mt-[18px]" />
+
+        {/* HIST.1 — this NCR's audited change history (AUDIT.1). */}
+        <RecordHistory entries={history} className="mt-[18px]" />
       </div>
     </div>
   );

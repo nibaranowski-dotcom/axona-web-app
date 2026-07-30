@@ -7,6 +7,8 @@ import { Lock, Copy, Frame, ChevronDown } from "lucide-react";
 import type { ConfigDetail, ConfigState } from "@/lib/configurations";
 import { ConnectedObjects } from "@/components/ontology/ConnectedObjects";
 import type { ConnectedGroup } from "@/lib/connected-objects";
+import { RecordHistory } from "@/components/audit/RecordHistory";
+import type { AuditEntry } from "@/lib/audit-trail";
 import {
   lockConfigAction,
   unlockConfigAction,
@@ -43,10 +45,12 @@ export function ConfigurationDetailView({
   data,
   canLock,
   connected,
+  history,
 }: {
   data: ConfigDetail;
   canLock: boolean;
   connected: ConnectedGroup[];
+  history: AuditEntry[];
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -555,6 +559,9 @@ export function ConfigurationDetailView({
 
           {/* LINK.1 — directly connected records across the graph (1-hop). */}
           <ConnectedObjects groups={connected} />
+
+          {/* HIST.1 — this configuration's audited change history (AUDIT.1). */}
+          <RecordHistory entries={history} />
         </aside>
       </div>
     </div>

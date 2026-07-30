@@ -218,14 +218,18 @@ async function run(): Promise<void> {
       const id = await resolveEntityId(db, "NCR", "NCR-118");
       if (!id) return false;
       const n = await getEntityLinks(db, { type: "NCR", id });
-      const unit = n.find((x) => x.type === "UNIT");
+      // SN-2208 is AMONG the unit neighbors (membership — edge/findMany order is
+      // not deterministic across an accumulated substrate, so don't assert the
+      // FIRST unit is SN-2208).
+      const sn2208 = n.some(
+        (x) => x.type === "UNIT" && x.route === "/units/SN-2208",
+      );
       return (
         n.length >= 5 &&
         n.some((x) => x.direction === "out") &&
         n.every((x) => x.relation && x.code && x.label && x.route) &&
         n.some((x) => x.note) && // the "why"
-        !!unit &&
-        unit.route === "/units/SN-2208" // resolves to the real detail route
+        sn2208 // the demo unit resolves to its real detail route
       );
     },
   );

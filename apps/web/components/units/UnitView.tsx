@@ -6,6 +6,8 @@ import type { UnitDetail, TimelineKind } from "@/lib/unit-detail";
 import { STATUS_LABEL } from "@/lib/units";
 import { ConnectedObjects } from "@/components/ontology/ConnectedObjects";
 import type { ConnectedGroup } from "@/lib/connected-objects";
+import { RecordHistory } from "@/components/audit/RecordHistory";
+import type { AuditEntry } from "@/lib/audit-trail";
 
 // PLM.3 — the Unit page (`Unit.dc.html` 1:1 on the DS.1 primitives). THE hero
 // object: everything in PLM links here. Identity + the configuration resolved NOW,
@@ -18,9 +20,11 @@ import type { ConnectedGroup } from "@/lib/connected-objects";
 export function UnitView({
   unit,
   connected,
+  history,
 }: {
   unit: UnitDetail;
   connected: ConnectedGroup[];
+  history: AuditEntry[];
 }) {
   const subCount = unit.diff.summary.substitutions;
 
@@ -190,6 +194,9 @@ export function UnitView({
 
           {/* LINK.1 — directly connected records across the graph (1-hop). */}
           <ConnectedObjects groups={connected} />
+
+          {/* HIST.1 — this record's audited change history (AUDIT.1). */}
+          <RecordHistory entries={history} />
         </aside>
       </div>
     </div>

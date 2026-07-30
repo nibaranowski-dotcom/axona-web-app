@@ -59,12 +59,18 @@ async function run(): Promise<void> {
     return /href="\/audit"/.test(read("apps/web/components/shell/Sidebar.tsx"));
   });
   await check("low-confidence flagged in INK (no invented reds)", () => {
-    const view = read("apps/web/components/audit/AuditView.tsx");
+    // HIST.1 extracted the CONF.1 confidence badge into audit-parts.tsx (shared by
+    // AuditView + the RecordHistory timeline — one renderer). The INK-flag markup
+    // now lives there; assert against the combined row source.
+    const row =
+      read("apps/web/components/audit/AuditView.tsx") +
+      "\n" +
+      read("apps/web/components/audit/audit-parts.tsx");
     return (
-      /LOW_CONFIDENCE/.test(view) &&
-      /Review/.test(view) &&
-      /bg-ink-strong/.test(view) &&
-      !/\bbg-red|text-red|border-red\b/.test(view)
+      /LOW_CONFIDENCE/.test(row) &&
+      /Review/.test(row) &&
+      /bg-ink-strong/.test(row) &&
+      !/\bbg-red|text-red|border-red\b/.test(row)
     );
   });
 

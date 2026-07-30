@@ -2,7 +2,10 @@ import {
   dbForOrg,
   getCalibrationModel,
   calibratedConfidence,
+  resolveEntityId,
   type CalibrationModelData,
+  type OrgScopedDb,
+  type EntityType,
 } from "@axona/db";
 
 // AUDIT.2 — the audit-trail READ model. Read-only over the append-only AuditLog
@@ -34,6 +37,11 @@ export interface AuditEntry {
   calibrated: { value: number; state: "calibrated" | "uncalibrated" } | null;
   approverLabel: string | null;
   href: string | null; // deep-link to the target's source screen, when derivable
+  // HIST.1 — what the actor saw / what resulted, for the per-record before→after.
+  // Additive: the audit-list view doesn't render these; the RecordHistory timeline
+  // does. JSON as stored by writeAudit (AUDIT.1).
+  inputs: unknown;
+  output: unknown;
 }
 
 export type { CalibrationModelData };
@@ -61,6 +69,9 @@ export interface AuditFilters {
   actor?: string; // actorType
   action?: string;
   targetType?: string;
+  // HIST.1 — scope to a single record's timeline (both columns already indexed
+  // @@index([targetType, targetId])). Additive to the shared reader's where-builder.
+  targetId?: string;
   cursor?: string;
   take?: number;
 }
@@ -73,6 +84,7 @@ function whereFrom(f: AuditFilters) {
     ...(f.actor ? { actorType: f.actor as "HUMAN" | "AGENT" | "SYSTEM" } : {}),
     ...(f.action ? { action: f.action } : {}),
     ...(f.targetType ? { targetType: f.targetType } : {}),
+    ...(f.targetId ? { targetId: f.targetId } : {}), // HIST.1 — one record's trail
   };
 }
 
@@ -140,6 +152,8 @@ export async function getAuditTrail(
       model: true,
       confidence: true,
       approverLabel: true,
+      inputs: true, // HIST.1 — before→after (additive; the list view ignores them)
+      output: true,
     },
   });
 
@@ -165,6 +179,62 @@ export async function getAuditTrail(
           : (hrefMap.get(r.targetId) ?? null),
   }));
   return { entries, nextCursor: hasMore ? page[page.length - 1]!.id : null };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HIST.1 — per-record change history. The SAME reader (getAuditTrail), scoped to
+// one record by (targetType, targetId). No new store, no second reader — the
+// AUDIT.1 log filtered to a target. Read-only; adds no write path.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const HISTORY_TAKE = 30;
+
+/**
+ * One record's audited timeline — newest-first, paginated, org-scoped via `db`.
+ * Delegates to getAuditTrail with a targetId filter, so it is provably the same
+ * query path the audit list + /api/audit use. `targetId` is the audit target id (a
+ * cuid); `targetType` the AuditLog target string ("ECO"/"NCR"/"Unit"/…).
+ */
+export async function getRecordHistory(
+  db: OrgScopedDb,
+  opts: { targetType: string; targetId: string; cursor?: string },
+): Promise<AuditTrailPage> {
+  return getAuditTrail(db.$org, {
+    targetType: opts.targetType,
+    targetId: opts.targetId,
+    cursor: opts.cursor,
+    take: HISTORY_TAKE,
+  });
+}
+
+// A detail-view entity → its AuditLog targetType string. (Audit target strings
+// capitalise differently from the LINK.1 EntityType enum.)
+const AUDIT_TARGET_BY_ENTITY: Partial<Record<EntityType, string>> = {
+  UNIT: "Unit",
+  NCR: "NCR",
+  ECO: "ECO",
+  CONFIG_VERSION: "ConfigurationVersion",
+  TEST_RUN: "TestRun",
+};
+
+/**
+ * Page-facing convenience mirroring getConnectedObjects (LINK.1): resolve a
+ * record's human code → the cuid the audit log is keyed on (REUSING LINK.1's
+ * resolveEntityId — one natural-key resolver), map the entity to its audit
+ * targetType, and read its history. Empty page when the record or its trail is
+ * absent (honest empty state). Org-scoped.
+ */
+export async function recordHistoryFor(
+  orgId: string,
+  entity: EntityType,
+  code: string,
+): Promise<AuditTrailPage> {
+  const db = dbForOrg(orgId);
+  const targetType = AUDIT_TARGET_BY_ENTITY[entity];
+  if (!targetType) return { entries: [], nextCursor: null };
+  const targetId = await resolveEntityId(db, entity, code);
+  if (!targetId) return { entries: [], nextCursor: null };
+  return getRecordHistory(db, { targetType, targetId });
 }
 
 /** CONF.1 — the org's fitted calibration model for the reliability view (per-org). */

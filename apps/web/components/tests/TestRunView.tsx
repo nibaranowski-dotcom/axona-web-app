@@ -3,6 +3,8 @@ import { Lock, TriangleAlert } from "lucide-react";
 import type { TestRunDetail } from "@/lib/tests-types";
 import { ConnectedObjects } from "@/components/ontology/ConnectedObjects";
 import type { ConnectedGroup } from "@/lib/connected-objects";
+import { RecordHistory } from "@/components/audit/RecordHistory";
+import type { AuditEntry } from "@/lib/audit-trail";
 
 // PLM.7 — the Test Run (`Test Run.dc.html` 1:1 on DS.1 primitives). The FROZEN
 // configuration snapshot is the signature artifact: it is rendered verbatim from
@@ -28,9 +30,11 @@ function limitLabel(lower: number | null, upper: number | null): string {
 export function TestRunView({
   run,
   connected,
+  history,
 }: {
   run: TestRunDetail;
   connected: ConnectedGroup[];
+  history: AuditEntry[];
 }) {
   const failed = run.outcome === "fail";
   const snap = run.snapshot;
@@ -279,6 +283,9 @@ export function TestRunView({
 
         {/* LINK.1 — directly connected records (1-hop); blast radius owns N-hop. */}
         <ConnectedObjects groups={connected} className="mt-[18px]" />
+
+        {/* HIST.1 — this test run's audited change history (AUDIT.1). */}
+        <RecordHistory entries={history} className="mt-[18px]" />
       </div>
     </div>
   );

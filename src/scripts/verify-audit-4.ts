@@ -44,6 +44,12 @@ async function run(): Promise<void> {
 
   const view = read("apps/web/components/audit/AuditView.tsx");
   const panel = read("apps/web/components/audit/ReliabilityPanel.tsx");
+  // HIST.1 extracted the shared actor-avatar + CONF.1 confidence-badge markup into
+  // audit-parts.tsx (used by BOTH AuditView and the RecordHistory timeline — one
+  // renderer, no fork). The row-rendering assertions below therefore look at the
+  // combined row source (the view + the extracted parts).
+  const parts = read("apps/web/components/audit/audit-parts.tsx");
+  const row = `${view}\n${parts}`;
 
   // ── 1: the mock's distinguishing regions ──
   await check(
@@ -75,13 +81,15 @@ async function run(): Promise<void> {
     },
   );
 
-  // ── 3: calibrated confidence per row ──
+  // ── 3: calibrated confidence per row (rendering shared via audit-parts) ──
   await check("rows show calibrated value + raw hint + uncal marker", () => {
     return (
-      /e\.calibrated/.test(view) &&
-      /uncal/.test(view) &&
-      /·raw/.test(view) &&
-      /LOW_CONFIDENCE/.test(view)
+      /e\.calibrated/.test(row) &&
+      /uncal/.test(row) &&
+      /·raw/.test(row) &&
+      /LOW_CONFIDENCE/.test(row) &&
+      // AuditView still references the shared badge (no fork; it delegates)
+      /ConfidenceCell/.test(view)
     );
   });
 
@@ -116,17 +124,17 @@ async function run(): Promise<void> {
   );
   await check("low confidence flags in INK; no invented reds", () => {
     return (
-      /Review/.test(view) &&
-      /bg-ink-strong/.test(view) &&
-      !/\bbg-red|text-red|border-red\b/.test(view)
+      /Review/.test(row) &&
+      /bg-ink-strong/.test(row) &&
+      !/\bbg-red|text-red|border-red\b/.test(row)
     );
   });
   await check(
     "v2 tokens only · no emoji · no hardcoded narrative (PROSPECT.2)",
     () => {
       return (
-        !/#[0-9a-fA-F]{3,6}\b/.test(view) &&
-        !/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(view) &&
+        !/#[0-9a-fA-F]{3,6}\b/.test(row) &&
+        !/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(row) &&
         !/Tier-1 Auto OEM|SN-2196|SN-2208|HX-2|SERVO-20|Nomagic/.test(view)
       );
     },

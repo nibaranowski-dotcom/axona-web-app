@@ -1,6 +1,7 @@
 import { getCurrentUser } from "@/lib/session";
 import { getTestRun } from "@/lib/tests";
 import { getConnectedObjects } from "@/lib/connected-objects";
+import { recordHistoryFor } from "@/lib/audit-trail";
 import { TestRunView } from "@/components/tests/TestRunView";
 import { ScreenShell, ScreenMessage } from "@/components/shell/ScreenShell";
 
@@ -44,7 +45,10 @@ export default async function TestRunPage({
   }
 
   const connected = await getConnectedObjects(user.orgId, "TEST_RUN", code);
-  return <TestRunView run={run} connected={connected} />;
+  const history = await recordHistoryFor(user.orgId, "TEST_RUN", code);
+  return (
+    <TestRunView run={run} connected={connected} history={history.entries} />
+  );
 }
 
 function Header({ code }: { code: string }) {

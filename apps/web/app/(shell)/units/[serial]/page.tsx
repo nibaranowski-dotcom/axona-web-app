@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { getUnitDetail } from "@/lib/unit-detail";
 import { getConnectedObjects } from "@/lib/connected-objects";
+import { recordHistoryFor } from "@/lib/audit-trail";
 import { UnitView } from "@/components/units/UnitView";
 import { ScreenShell, ScreenMessage } from "@/components/shell/ScreenShell";
 
@@ -33,7 +34,10 @@ export default async function UnitPage({
   if (!unit) notFound();
 
   const connected = await getConnectedObjects(user.orgId, "UNIT", serial);
-  return <UnitView unit={unit} connected={connected} />;
+  const history = await recordHistoryFor(user.orgId, "UNIT", serial);
+  return (
+    <UnitView unit={unit} connected={connected} history={history.entries} />
+  );
 }
 
 function Header({ serial }: { serial: string }) {
