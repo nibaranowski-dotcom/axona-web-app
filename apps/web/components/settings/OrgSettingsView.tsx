@@ -350,7 +350,7 @@ export function OrgSettingsView({
                       aria-hidden
                       className={`h-[7px] w-[7px] flex-none rounded-[2px] ${on ? "bg-success" : "bg-line-strong"}`}
                     />
-                    <span className="truncate text-[13.5px] font-semibold text-ink">
+                    <span className="min-w-0 truncate text-[13.5px] font-semibold text-ink">
                       {m.name}
                     </span>
                   </div>

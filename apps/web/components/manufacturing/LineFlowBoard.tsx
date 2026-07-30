@@ -109,11 +109,11 @@ export function LineFlowBoard({ lineFlow }: { lineFlow: LineStation[] }) {
           {stations
             .filter((s) => (s.data?.count ?? 0) > 0)
             .map((s) => (
-              <div key={s.name} className="flex items-baseline gap-2">
+              <div key={s.name} className="flex min-w-0 items-baseline gap-2">
                 <span className="font-mono text-[9px] uppercase tracking-[0.04em] text-ink-muted">
                   {stationLabel(s.name)}
                 </span>
-                <span className="truncate font-mono text-[11px] text-ink">
+                <span className="min-w-0 truncate font-mono text-[11px] text-ink">
                   {s.data!.workOrders.map((w) => w.serial).join(" · ")}
                 </span>
               </div>

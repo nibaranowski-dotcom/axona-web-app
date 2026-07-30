@@ -332,7 +332,7 @@ export function FieldModifications({
                 </div>
               </div>
               <span className="text-[12.5px] text-ink">{f.change}</span>
-              <span className="truncate font-mono text-[10.5px] text-ink-muted">
+              <span className="min-w-0 truncate font-mono text-[10.5px] text-ink-muted">
                 {f.effect}
               </span>
               <span className="font-mono text-[10.5px] text-ink-muted">

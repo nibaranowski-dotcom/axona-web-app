@@ -235,24 +235,24 @@ export function TestExplorerView({
                       </button>
                       <Link
                         href={`/tests/${encodeURIComponent(r.code)}`}
-                        className="truncate font-mono text-[12px] font-semibold text-ink underline decoration-transparent underline-offset-2 hover:decoration-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                        className="min-w-0 truncate font-mono text-[12px] font-semibold text-ink underline decoration-transparent underline-offset-2 hover:decoration-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                       >
                         {r.code}
                       </Link>
                       <span
-                        className="truncate font-mono text-[11.5px] text-ink-muted"
+                        className="min-w-0 truncate font-mono text-[11.5px] text-ink-muted"
                         title={r.serial}
                       >
                         {r.serial}
                       </span>
                       <span
-                        className="truncate font-mono text-[11px] text-ink-muted"
+                        className="min-w-0 truncate font-mono text-[11px] text-ink-muted"
                         title={r.configVersion ?? "—"}
                       >
                         {r.configVersion ?? "—"}
                       </span>
                       <span
-                        className={`truncate font-mono text-[11.5px] ${r.keyBad ? "text-ink-strong" : "text-ink"}`}
+                        className={`min-w-0 truncate font-mono text-[11.5px] ${r.keyBad ? "text-ink-strong" : "text-ink"}`}
                       >
                         {r.keyMeasurement}
                       </span>
@@ -403,7 +403,7 @@ function CompareTable({
             {row.values.map((v, j) => (
               <span
                 key={j}
-                className={`truncate font-mono text-[11.5px] ${row.differs ? "font-semibold text-ink" : "text-ink-muted"}`}
+                className={`min-w-0 truncate font-mono text-[11.5px] ${row.differs ? "font-semibold text-ink" : "text-ink-muted"}`}
                 title={v ?? "—"}
               >
                 {v ?? "—"}

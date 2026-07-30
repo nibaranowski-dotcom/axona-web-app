@@ -195,7 +195,7 @@ export function BlastRadiusView({
                         </span>
                         <span
                           title={r.path}
-                          className="truncate font-mono text-[10.5px] text-ink-muted"
+                          className="min-w-0 truncate font-mono text-[10.5px] text-ink-muted"
                         >
                           {r.path}
                         </span>

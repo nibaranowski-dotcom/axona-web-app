@@ -225,7 +225,7 @@ export function BillingView({
                   })}
                 </span>
                 <span
-                  className="truncate text-[12.5px] text-ink-muted"
+                  className="min-w-0 truncate text-[12.5px] text-ink-muted"
                   title={iv.description}
                 >
                   {iv.description}

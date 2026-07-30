@@ -17,8 +17,13 @@ const STAGE: Record<string, { dot: string; label: string }> = {
   RELEASED: { dot: "bg-ink-faint", label: "Released" },
 };
 
+// UX.15 companion fix: the last (action) column is a FIXED width, not `auto`. With
+// `auto` the track sized to each row's own content (Reject+Approve buttons ≈186px on
+// pre-release rows, nothing on released rows), so the `fr` tracks resolved to different
+// widths per row and the data columns drifted out of alignment. A fixed 190px track
+// (buttons right-aligned via justify-end) makes every row's grid identical → columns flush.
 const COLS =
-  "grid grid-cols-[0.8fr_2.4fr_0.6fr_1.6fr_1fr_auto] items-center gap-3 px-5";
+  "grid grid-cols-[0.8fr_2.4fr_0.6fr_1.6fr_1fr_190px] items-center gap-3 px-5";
 
 export function EcoTable({
   ecos,
@@ -66,7 +71,10 @@ export function EcoTable({
               className={`${COLS} border-t border-line py-[13px] hover:bg-panel-2`}
             >
               <span className="font-mono text-[12px] text-ink">{e.code}</span>
-              <span className="truncate text-[13px] text-ink" title={e.title}>
+              <span
+                className="min-w-0 truncate text-[13px] text-ink"
+                title={e.title}
+              >
                 {e.title}
               </span>
               <span>
@@ -75,7 +83,7 @@ export function EcoTable({
                 </span>
               </span>
               <span
-                className="truncate font-mono text-[10.5px] text-ink-muted"
+                className="min-w-0 truncate font-mono text-[10.5px] text-ink-muted"
                 title={e.affected}
               >
                 {e.affected}

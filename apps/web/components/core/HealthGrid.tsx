@@ -32,7 +32,7 @@ export function HealthGrid({ modules }: { modules: ModuleKpis[] }) {
             className="group min-w-0 rounded-[12px] border border-line bg-paper p-[15px] transition-all duration-200 hover:-translate-y-0.5 hover:border-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="truncate font-mono text-[9px] uppercase tracking-[0.05em] text-ink-muted">
+              <span className="min-w-0 truncate font-mono text-[9px] uppercase tracking-[0.05em] text-ink-muted">
                 {m.label}
               </span>
               <span

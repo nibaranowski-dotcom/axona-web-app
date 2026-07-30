@@ -74,4 +74,13 @@ type does the work (Archivo display + JetBrains Mono labels) · **no emoji**.
   never as fill paint. If a screen reads "all lime," pull back.
 - Primitive library: `apps/web/components/ui` (Button, Badge, Pill, MonoChip, Card,
   AgentGlyph) — FND.14/FND.15 extend these.
+- **Truncation in table/list rows (UX.15 — regression guard):** a `truncate`
+  (`white-space:nowrap; overflow:hidden; text-overflow:ellipsis`) on a **flex or CSS-grid
+  ITEM does nothing** unless that item — and *every* intermediate flex/grid-item wrapper
+  down to the truncating text — also has **`min-w-0`**. Grid/flex items default to
+  `min-width:auto`, so long content overflows its track and **pushes the row's columns
+  out of alignment** (the misalignment UX.15 fixed across the dense tables). Rule: any
+  `truncate` cell in a `grid grid-cols-[…]` / `flex` row needs `min-w-0` on the whole
+  chain. (Only where it's a genuine flex/grid item — adding `min-w-0` elsewhere is a
+  no-op.)
 ```

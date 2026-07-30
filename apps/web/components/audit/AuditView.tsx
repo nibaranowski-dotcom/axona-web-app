@@ -401,7 +401,7 @@ function AuditRow({ e }: { e: AuditEntry }) {
           {initials(e.actorLabel)}
         </span>
         <span
-          className="truncate text-[12.5px] font-semibold text-ink"
+          className="min-w-0 truncate text-[12.5px] font-semibold text-ink"
           title={`${e.actorType} · ${e.actorLabel}`}
         >
           {e.actorLabel}

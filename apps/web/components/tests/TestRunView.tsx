@@ -48,7 +48,7 @@ export function TestRunView({ run }: { run: TestRunDetail }) {
             <li aria-hidden className="text-line-strong">
               /
             </li>
-            <li className="truncate text-ink-muted">{run.code}</li>
+            <li className="min-w-0 truncate text-ink-muted">{run.code}</li>
           </ol>
         </nav>
       </header>

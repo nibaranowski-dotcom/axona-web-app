@@ -209,7 +209,7 @@ function MachineRowView({ m }: { m: MachineRow }) {
         </div>
       </div>
       <span
-        className="truncate font-mono text-[11px] text-ink-muted"
+        className="min-w-0 truncate font-mono text-[11px] text-ink-muted"
         title={m.location}
       >
         {m.location}
@@ -241,7 +241,10 @@ function MachineRowView({ m }: { m: MachineRow }) {
           aria-hidden
           className={`h-[7px] w-[7px] flex-none rounded-full ${HEALTH_DOT[m.healthLevel]}`}
         />
-        <span className="truncate text-[12px] text-ink" title={m.health}>
+        <span
+          className="min-w-0 truncate text-[12px] text-ink"
+          title={m.health}
+        >
           {m.health}
         </span>
       </span>

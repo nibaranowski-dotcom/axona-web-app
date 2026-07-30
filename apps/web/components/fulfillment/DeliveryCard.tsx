@@ -50,7 +50,9 @@ export function DeliveryCard({ d }: { d: Delivery }) {
             <span className="font-mono text-[13px] font-semibold text-ink">
               {d.code}
             </span>
-            <span className="truncate text-[13px] text-ink">{d.account}</span>
+            <span className="min-w-0 truncate text-[13px] text-ink">
+              {d.account}
+            </span>
           </div>
           <div className="mt-[3px] font-mono text-[10.5px] text-ink-muted">
             {d.units} · {d.destination}

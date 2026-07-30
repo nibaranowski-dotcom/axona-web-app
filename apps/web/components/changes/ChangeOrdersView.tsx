@@ -282,7 +282,7 @@ function ChangeQueueRow({ e }: { e: ChangeRow }) {
           ))}
         </div>
         <span
-          className={`ml-2 truncate text-[11.5px] ${e.awaitingMe ? "font-semibold text-ink" : "text-ink-muted"}`}
+          className={`ml-2 min-w-0 truncate text-[11.5px] ${e.awaitingMe ? "font-semibold text-ink" : "text-ink-muted"}`}
         >
           {e.approvalText}
         </span>

@@ -53,23 +53,23 @@ export function TestTraceability({ rows }: { rows: TestTraceRow[] }) {
               href={r.href}
               className={`${COLS} border-t border-line py-3 transition-colors hover:bg-panel-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent`}
             >
-              <span className="truncate font-mono text-[12px] font-semibold text-ink">
+              <span className="min-w-0 truncate font-mono text-[12px] font-semibold text-ink">
                 {r.code}
               </span>
               <span
-                className="truncate font-mono text-[11.5px] text-ink-muted"
+                className="min-w-0 truncate font-mono text-[11.5px] text-ink-muted"
                 title={r.serial}
               >
                 {r.serial}
               </span>
               <span
-                className="truncate text-[12.5px] text-ink"
+                className="min-w-0 truncate text-[12.5px] text-ink"
                 title={r.procedure}
               >
                 {r.procedure}
               </span>
               <span
-                className="truncate font-mono text-[11px] text-ink-muted"
+                className="min-w-0 truncate font-mono text-[11px] text-ink-muted"
                 title={r.configVersion ?? "—"}
               >
                 {r.configVersion ?? "—"}

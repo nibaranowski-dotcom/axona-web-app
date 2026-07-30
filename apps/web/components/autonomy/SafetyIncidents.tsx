@@ -49,11 +49,14 @@ export function SafetyIncidents({
             className={`${COLS} border-t border-line py-[13px] hover:bg-panel-2`}
           >
             <span className="font-mono text-[12px] text-ink">{n.code}</span>
-            <span className="truncate text-[13px] text-ink" title={n.type}>
+            <span
+              className="min-w-0 truncate text-[13px] text-ink"
+              title={n.type}
+            >
               {n.type}
             </span>
             <span
-              className="truncate font-mono text-[11px] text-ink-muted"
+              className="min-w-0 truncate font-mono text-[11px] text-ink-muted"
               title={`${n.robotSerial} · ${n.site}`}
             >
               {n.robotSerial} · {n.site}

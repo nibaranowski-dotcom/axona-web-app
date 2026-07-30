@@ -81,7 +81,10 @@ export function PoRow({
               : "—"}
         </div>
       </div>
-      <span className="truncate text-[13px] text-ink-muted" title={po.supplier}>
+      <span
+        className="min-w-0 truncate text-[13px] text-ink-muted"
+        title={po.supplier}
+      >
         {po.supplier}
       </span>
       <span className="font-mono text-[12.5px] text-ink">

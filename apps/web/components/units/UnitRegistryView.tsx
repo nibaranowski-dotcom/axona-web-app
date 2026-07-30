@@ -251,7 +251,7 @@ function UnitTable({ data }: { data: UnitRegistryData }) {
               <span className="font-mono text-[12.5px] font-semibold">
                 {u.serial}
               </span>
-              <span className="truncate text-[12.5px] text-ink-muted">
+              <span className="min-w-0 truncate text-[12.5px] text-ink-muted">
                 {u.modelCode}
               </span>
               <span className="font-mono text-[11.5px]">
@@ -260,7 +260,7 @@ function UnitTable({ data }: { data: UnitRegistryData }) {
               <span className="font-mono text-[11.5px]">
                 {u.swVersion ?? "—"}
               </span>
-              <span className="truncate text-[12.5px] text-ink-muted">
+              <span className="min-w-0 truncate text-[12.5px] text-ink-muted">
                 {[u.customer, u.site].filter(Boolean).join(" · ") || "—"}
               </span>
               <span>

@@ -58,7 +58,10 @@ export function NcrTable({
               className={`${COLS} border-t border-line py-[13px] hover:bg-panel-2`}
             >
               <span className="font-mono text-[12.5px] text-ink">{n.code}</span>
-              <span className="truncate text-[13px] text-ink" title={n.defect}>
+              <span
+                className="min-w-0 truncate text-[13px] text-ink"
+                title={n.defect}
+              >
                 {n.defect}
               </span>
               <span className="min-w-0">

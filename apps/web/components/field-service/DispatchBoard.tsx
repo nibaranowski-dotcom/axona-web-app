@@ -47,7 +47,7 @@ export function DispatchBoard({ board }: { board: DispatchColumn[] }) {
                 </span>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="truncate text-[12.5px] font-semibold text-ink">
+                    <span className="min-w-0 truncate text-[12.5px] font-semibold text-ink">
                       {tech.name}
                     </span>
                     {tech.certExpiring && (

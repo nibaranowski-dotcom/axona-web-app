@@ -19,7 +19,7 @@ export function DefectPareto({ bars }: { bars: DefectParetoBar[] }) {
         bars.map((b, i) => (
           <div key={b.defect} className="mb-3 last:mb-0">
             <div className="mb-[5px] flex items-center justify-between gap-3 text-[12.5px] text-ink">
-              <span className="truncate">{b.defect}</span>
+              <span className="min-w-0 truncate">{b.defect}</span>
               <span className="flex-none font-mono text-[11px] text-ink-muted">
                 {b.count}
               </span>

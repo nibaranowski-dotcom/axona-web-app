@@ -237,11 +237,11 @@ export function ChangeOrderView({
                   >
                     <Link
                       href={u.href}
-                      className="truncate font-mono text-[12px] font-semibold text-ink underline decoration-transparent underline-offset-2 hover:decoration-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      className="min-w-0 truncate font-mono text-[12px] font-semibold text-ink underline decoration-transparent underline-offset-2 hover:decoration-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                     >
                       {u.serial}
                     </Link>
-                    <span className="truncate text-[12px] text-ink-muted">
+                    <span className="min-w-0 truncate text-[12px] text-ink-muted">
                       {u.site ?? "—"}
                     </span>
                     <span className="text-[11.5px] text-ink-muted">

@@ -44,7 +44,7 @@ export function CampaignsTable({
             className={`${COLS} border-t border-line py-[13px] hover:bg-panel-2`}
           >
             <span
-              className="truncate text-[13.5px] font-medium text-ink"
+              className="min-w-0 truncate text-[13.5px] font-medium text-ink"
               title={c.name}
             >
               {c.name}

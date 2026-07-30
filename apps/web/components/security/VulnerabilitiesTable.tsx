@@ -65,7 +65,7 @@ export function VulnerabilitiesTable({
           >
             <span className="font-mono text-[12px] text-ink">{v.code}</span>
             <span
-              className="truncate text-[13px] text-ink"
+              className="min-w-0 truncate text-[13px] text-ink"
               title={
                 v.affectsDeployed ? "Deployed fleet · OT" : "Component library"
               }
@@ -83,7 +83,7 @@ export function VulnerabilitiesTable({
               </span>
             </span>
             <span
-              className="truncate font-mono text-[11.5px] text-ink-muted"
+              className="min-w-0 truncate font-mono text-[11.5px] text-ink-muted"
               title={remediation(v)}
             >
               {remediation(v)}

@@ -69,7 +69,7 @@ export function DealsTable({ deals }: { deals: SalesDeal[] }) {
               </div>
             </div>
             <span
-              className="truncate text-[12.5px] text-ink-muted"
+              className="min-w-0 truncate text-[12.5px] text-ink-muted"
               title={d.config}
             >
               {d.config}

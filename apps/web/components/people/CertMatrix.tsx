@@ -47,14 +47,14 @@ export function CertMatrix({ matrix }: { matrix: CertMatrixData }) {
 
           {matrix.technicians.map((t) => (
             <div key={t.id} className="contents">
-              <span className="flex items-center gap-2 px-1 py-2 text-[12px] font-semibold text-ink">
+              <span className="flex min-w-0 items-center gap-2 px-1 py-2 text-[12px] font-semibold text-ink">
                 <span
                   aria-hidden
                   className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full border border-line-strong bg-panel font-mono text-[8.5px] font-bold text-ink"
                 >
                   {t.initials}
                 </span>
-                <span className="truncate">{t.name}</span>
+                <span className="min-w-0 truncate">{t.name}</span>
               </span>
               {keys.map((k) => {
                 const cell = certCell(t, k);

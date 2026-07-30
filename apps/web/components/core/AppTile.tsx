@@ -30,7 +30,7 @@ export function AppTile({
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
-          <span className="truncate text-sm font-semibold tracking-[-0.01em] text-on-dark">
+          <span className="min-w-0 truncate text-sm font-semibold tracking-[-0.01em] text-on-dark">
             {name}
           </span>
           {alert > 0 && (

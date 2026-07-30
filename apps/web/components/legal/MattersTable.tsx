@@ -44,11 +44,14 @@ export function MattersTable({ matters }: { matters: LegalMatterRow[] }) {
                 {m.type}
               </span>
             </span>
-            <span className="truncate text-[13px] text-ink" title={m.title}>
+            <span
+              className="min-w-0 truncate text-[13px] text-ink"
+              title={m.title}
+            >
               {m.title}
             </span>
             <span
-              className="truncate font-mono text-[10.5px] text-ink-muted"
+              className="min-w-0 truncate font-mono text-[10.5px] text-ink-muted"
               title={`${m.module ? `${titleCase(m.module)} · ` : ""}${m.linkedTo}`}
             >
               {m.module ? `${titleCase(m.module)} · ` : ""}

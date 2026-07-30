@@ -413,7 +413,7 @@ function RunConsole({
                   aria-hidden
                   className={`h-[7px] w-[7px] flex-none rounded-full ${RUN_DOT[r.status]}`}
                 />
-                <span className="truncate text-[12px] text-ink">
+                <span className="min-w-0 truncate text-[12px] text-ink">
                   {runOutcome(r.status)}
                 </span>
               </span>

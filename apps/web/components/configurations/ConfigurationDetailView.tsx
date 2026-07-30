@@ -238,7 +238,9 @@ export function ConfigurationDetailView({
                 <span className="font-mono text-[11px] text-ink-faint">
                   {h.position}
                 </span>
-                <span className="truncate text-[13px] text-ink">{h.name}</span>
+                <span className="min-w-0 truncate text-[13px] text-ink">
+                  {h.name}
+                </span>
                 <span className="font-mono text-[12px] font-semibold text-ink">
                   {h.partNumber} {h.rev}
                 </span>
@@ -275,7 +277,9 @@ export function ConfigurationDetailView({
                 <span className="font-mono text-[11px] text-ink-faint">
                   {s.kind}
                 </span>
-                <span className="truncate text-[13px] text-ink">{s.name}</span>
+                <span className="min-w-0 truncate text-[13px] text-ink">
+                  {s.name}
+                </span>
                 <span className="font-mono text-[12px] font-semibold text-ink">
                   {s.version}
                 </span>
@@ -330,7 +334,7 @@ export function ConfigurationDetailView({
                       {i < data.diff!.hw.length ? "HW" : "SW"}
                     </span>
                     <span
-                      className={`truncate text-[13px] ${r.differs ? "font-semibold text-ink" : "text-ink-muted"}`}
+                      className={`min-w-0 truncate text-[13px] ${r.differs ? "font-semibold text-ink" : "text-ink-muted"}`}
                     >
                       {r.key}
                     </span>
@@ -389,7 +393,9 @@ export function ConfigurationDetailView({
                 <span className="font-mono text-[12px] font-semibold text-ink">
                   {c.code}
                 </span>
-                <span className="truncate text-[13px] text-ink">{c.title}</span>
+                <span className="min-w-0 truncate text-[13px] text-ink">
+                  {c.title}
+                </span>
                 <span className="font-mono text-[11px] text-ink-muted">
                   {c.effectivity}
                 </span>

@@ -218,7 +218,7 @@ export function ProfileSettingsView({ settings }: { settings: UserSettings }) {
                     </span>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="truncate text-[13.5px] font-semibold text-ink">
+                        <span className="min-w-0 truncate text-[13.5px] font-semibold text-ink">
                           {label}
                         </span>
                         {i === 0 && (

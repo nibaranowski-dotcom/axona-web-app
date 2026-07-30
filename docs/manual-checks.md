@@ -2091,3 +2091,23 @@ grounds in the NCR-114 precedent.
 
 **Prove it catches a regression:** drop the recall-precedent line from `axonaSystemPrompt()` →
 `pnpm eval` fails `OFF-8` (naming the missing contract) with exit 1; restore it → green.
+
+## UX.15 — truncate/min-w-0 sweep (table column alignment)
+
+Systematic fix: a `truncate` on a flex/grid ITEM needs `min-w-0` on the whole chain
+(item → truncating text), or long content overflows its track and pushes the row's
+columns out of alignment (the Engineering ECO-table misalignment). The rule + rationale
+are the regression guard in `design.md` → "App-specific notes".
+
+**Visual check** (dense tables, with long/overflowing content — resize narrow or seed a
+long value): the overflowing cell **ellipsizes** and **every column stays flush across all
+rows** (header + rows aligned), no horizontal push. Confirm on:
+- `/engineering` — ECO table (the original bug: ECO-320/ECO-311 no longer shift).
+- `/tests` — Test Explorer run grid · `/quality` NCR + Test Traceability.
+- `/units` — Unit Registry · `/changes` — Change orders list · `/configurations/:code`.
+- `/procurement` PO queue · `/sales` deals · `/fleet` · `/audit` · `/security` · `/legal`.
+- **Matrix** (`/projects/:id` extraction grid) is a `min-w-max` **horizontal-scroll** table
+  — cells scroll rather than truncate-push, so it's not exposed to this bug (left as-is).
+
+**Automated coverage:** the served a11y gate (`pnpm a11y:scan`) renders these routes and
+must stay 0 serious/critical; tsc + lint + build gate the class changes.

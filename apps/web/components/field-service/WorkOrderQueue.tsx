@@ -69,7 +69,10 @@ export function WorkOrderQueue({
                   {w.site}
                 </div>
               </div>
-              <span className="truncate text-[13px] text-ink" title={w.issue}>
+              <span
+                className="min-w-0 truncate text-[13px] text-ink"
+                title={w.issue}
+              >
                 {w.issue}
               </span>
               <span
@@ -78,7 +81,7 @@ export function WorkOrderQueue({
                 {sla.text}
               </span>
               <span
-                className="truncate text-[12.5px] text-ink-muted"
+                className="min-w-0 truncate text-[12.5px] text-ink-muted"
                 title={w.techId ? (nameOf.get(w.techId) ?? "—") : "Unassigned"}
               >
                 {w.techId ? (nameOf.get(w.techId) ?? "—") : "Unassigned"}

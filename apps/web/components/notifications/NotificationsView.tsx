@@ -200,7 +200,7 @@ function NotificationItem({
         className="min-w-0 rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         <div className="flex items-center gap-2">
-          <span className="truncate text-[13.5px] font-semibold text-ink">
+          <span className="min-w-0 truncate text-[13.5px] font-semibold text-ink">
             {n.title}
           </span>
           {n.unread && (

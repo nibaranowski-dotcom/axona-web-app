@@ -115,7 +115,7 @@ export function Results({
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2">
-                      <span className="truncate text-[14px] font-semibold text-on-dark">
+                      <span className="min-w-0 truncate text-[14px] font-semibold text-on-dark">
                         {hit.title}
                       </span>
                       {TAG[g.type] && (
