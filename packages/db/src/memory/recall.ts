@@ -38,6 +38,13 @@ export interface RecallInput {
   limit?: number;
   maxDepth?: number; // graph-neighborhood radius (default 3)
   embedder?: Embedder;
+  /**
+   * VERIFY.2 — a testability seam: the reference instant recency decays from.
+   * Defaults to Date.now() (prod behavior unchanged); a test pins it so recency
+   * is deterministic regardless of seed order / wall-clock, killing the local
+   * verify:all flake. Recall's product scoring is otherwise untouched.
+   */
+  now?: number;
 }
 
 export interface MemoryHit {
@@ -299,7 +306,7 @@ export async function recallMemory(
   for (const r of graphAnchored) byId.set(r.id, r);
   for (const r of vectorRows) if (!byId.has(r.id)) byId.set(r.id, r);
 
-  const now = Date.now();
+  const now = input.now ?? Date.now();
   const depthOf = (type: string | null, id: string | null): number | null => {
     if (!type || !id) return null;
     const n = neigh.get(`${type}:${id}`);

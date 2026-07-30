@@ -41,6 +41,9 @@ export interface AssembleContextInput {
   floor?: number;
   limit?: number;
   embedder?: Embedder;
+  /** VERIFY.2 — reference instant for recency (default Date.now()); threaded to
+   *  recallMemory so a test can pin recency deterministic. No prod change. */
+  now?: number;
 }
 
 export interface AssembledHit {
@@ -123,6 +126,7 @@ export async function assembleContext(
     subjectId: input.subject?.id,
     limit: input.limit ?? 8,
     embedder: input.embedder,
+    now: input.now,
   });
   if (raw.length === 0) return emptyResult("cold-start", budget);
 

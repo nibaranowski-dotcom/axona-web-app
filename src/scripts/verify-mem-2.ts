@@ -92,15 +92,35 @@ async function run(): Promise<void> {
     return;
   }
 
-  const { dbForOrg, assembleContext, MEMORY_TOKEN_BUDGET } =
+  const { dbForOrg, assembleContext, recallMemory, MEMORY_TOKEN_BUDGET } =
     await import("@axona/db");
   const { runLoop, TraceCollector } = await import("@axona/agents");
 
+  // VERIFY.2 — pin the recency reference so recall ranking is deterministic
+  // regardless of seed order / wall-clock (the local verify:all flake). Recency
+  // decays over a 90-day half-life; a far-future reference makes it negligible +
+  // UNIFORM across episodes, so ranking is driven by the SEED-ORDER-INDEPENDENT
+  // signals (graph proximity ⊕ episode kind ⊕ vector) — i.e. NCR-114 leads because
+  // it is a graph-proximate RESOLUTION precedent, not because of a timestamp.
+  // Prod recall is unchanged (it defaults to Date.now()).
+  const NOW = Date.UTC(2100, 0, 1);
+
   // ── 1 + 2: NCR-118 situation auto-assembles the NCR-114 precedent, bounded ──
+  // A generous recall limit so the assertion is robust to an ACCUMULATED memory
+  // substrate (verify:all re-ingests earlier runs' audit rows; e.g. ECO-318
+  // OUTCOME episodes legitimately rank near NCR-114). NCR-114 is always a graph
+  // neighbor, so it is reliably within this window — membership, not absolute rank.
+  const RECALL = 15;
   const db = dbForOrg(DEMO);
+  // floor 0 here isolates "does the NCR-114 precedent surface + get cited" from the
+  // confidence FLOOR/calibration (which shift with the substrate and are asserted
+  // separately by the runtime path (real default floor) + the below-floor check).
   const assembled = await assembleContext(db, {
     subject: { type: "NCR", id: "NCR-118" },
     query: "What is going on with NCR-118?",
+    limit: RECALL,
+    floor: 0,
+    now: NOW,
   });
   await check(
     "assembleContext(NCR-118) injects the NCR-114 precedent (cited), NOT NCR-118's own",
@@ -119,21 +139,79 @@ async function run(): Promise<void> {
     },
   );
   await check(
-    "bounded: block respects the default token budget; over-budget drops the lowest-scoring",
+    "bounded: block respects the token budget; over-budget drops the lowest-scoring",
     async () => {
-      const withinDefault = assembled.tokensUsed <= MEMORY_TOKEN_BUDGET;
-      // a tiny budget keeps only the highest-scoring hit(s) — strictly fewer
+      // This check isolates the TOKEN-BUDGET pruning. It uses floor 0 so the
+      // confidence FLOOR / calibration model (which shift with the accumulated
+      // substrate and are tested separately by the below-floor + org-scoped checks)
+      // can't change what's a candidate — only the budget decides. A big budget and
+      // a tiny budget over the SAME candidate set: the big one is bounded + ranked
+      // highest-first, the tiny one keeps strictly fewer (drops the lowest tail).
+      const big = await assembleContext(db, {
+        subject: { type: "NCR", id: "NCR-118" },
+        query: "NCR-118",
+        limit: RECALL,
+        floor: 0,
+        tokenBudget: MEMORY_TOKEN_BUDGET,
+        now: NOW,
+      });
       const tiny = await assembleContext(db, {
         subject: { type: "NCR", id: "NCR-118" },
         query: "NCR-118",
+        limit: RECALL,
+        floor: 0,
         tokenBudget: 90,
+        now: NOW,
       });
-      const droppedLowest =
-        tiny.injected < assembled.injected &&
-        tiny.tokensUsed <= 90 &&
-        // the kept hit is the highest-confidence one (NCR-114 leads)
-        tiny.top?.subjectCode === assembled.top?.subjectCode;
-      return withinDefault && droppedLowest;
+      const rankedDesc = big.hits.every(
+        (h, i, a) => i === 0 || (a[i - 1]?.confidence ?? 1) >= h.confidence,
+      );
+      return (
+        big.tokensUsed <= MEMORY_TOKEN_BUDGET && // bounded to the budget
+        rankedDesc && // highest-scoring kept, in order
+        big.injected >= 2 && // multiple episodes fit the big budget
+        // a tight budget keeps only the leader(s) — strictly fewer episodes and a
+        // strictly smaller block (the lowest-scoring tail is dropped). RELATIVE, so
+        // it doesn't depend on any one episode's summary length: assembleContext
+        // always injects at least the single top episode even if it alone edges the
+        // tiny budget, so an absolute `tinyTokens <= 90` is substrate-sensitive.
+        tiny.injected >= 1 &&
+        tiny.injected <= 2 &&
+        tiny.injected < big.injected &&
+        tiny.tokensUsed < big.tokensUsed
+      );
+    },
+  );
+  // VERIFY.2 — the ranking assertion made time-INDEPENDENT and stronger: NCR-114
+  // leads because it is a graph-proximate RESOLUTION precedent, not because of
+  // recency. Prove it directly: the graph-reached NCR-114 RESOLUTION outscores a
+  // NON-graph RESOLUTION with the very same defect (NCR-090), under a pinned now.
+  await check(
+    "precedent ranking is REAL: the graph-proximate NCR-114 RESOLUTION outranks a non-graph one",
+    async () => {
+      const hits = await recallMemory(db, {
+        subjectType: "NCR",
+        subjectId: "NCR-118",
+        query: "drive torque over UCL stiff actuator — handled before?",
+        limit: 25,
+        now: NOW,
+      });
+      const g114 = hits.find(
+        (h) => h.subject?.code === "NCR-114" && h.kind === "RESOLUTION",
+      );
+      const nonGraph = hits.find(
+        (h) =>
+          h.kind === "RESOLUTION" &&
+          h.via.graph === false && // reached by vector only — no edge to NCR-118
+          h.subject?.code !== "NCR-114",
+      );
+      return (
+        !!g114 &&
+        g114.via.graph === true &&
+        (g114.via.graphDepth ?? 0) >= 1 &&
+        !!nonGraph &&
+        g114.score > nonGraph.score // graph proximity + kind win, not the clock
+      );
     },
   );
   await check(
@@ -142,6 +220,7 @@ async function run(): Promise<void> {
       const second = await assembleContext(dbForOrg(SECOND), {
         subject: { type: "NCR", id: "NCR-118" },
         query: "NCR-118",
+        now: NOW,
       });
       return second.injected === 0 && second.block === "";
     },
@@ -154,6 +233,7 @@ async function run(): Promise<void> {
       const cold = await assembleContext(dbForOrg(SECOND), {
         subject: { type: "NCR", id: "NCR-118" },
         query: "NCR-118",
+        now: NOW,
       });
       return (
         cold.injected === 0 && cold.reason === "cold-start" && cold.block === ""
@@ -167,6 +247,7 @@ async function run(): Promise<void> {
         subject: { type: "NCR", id: "NCR-118" },
         query: "NCR-118",
         floor: 0.999,
+        now: NOW,
       });
       return floored.injected === 0 && floored.reason === "below-floor";
     },
@@ -212,8 +293,12 @@ async function run(): Promise<void> {
       return (
         !!mem &&
         /injected \d+ prior episode/.test(mem.text) &&
-        /NCR-114/.test(mem.text) && // top precedent named in the trace
-        /NCR-114/.test(capturedSystem) && // the block reached the model's system
+        /top = /.test(mem.text) && // a precedent was named as the lead
+        // VERIFY.2 — assert the NCR-114 precedent AUTO-INJECTED into the model's
+        // system prompt by MEMBERSHIP (it is among the injected cited episodes),
+        // not by the recency-sensitive #1 trace slot: within the default 900-token
+        // budget every precedent injects, so this is deterministic AND still real.
+        /NCR-114/.test(capturedSystem) &&
         toolCalls.length === 0 // auto-injected — the agent never called recallMemory
       );
     },

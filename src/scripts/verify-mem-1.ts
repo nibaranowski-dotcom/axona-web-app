@@ -140,6 +140,13 @@ async function run(): Promise<void> {
   const { dbForOrg, ingestMemory, recallMemory } = await import("@axona/db");
   const db = dbForOrg(DEMO_ORG_ID);
 
+  // VERIFY.2 — pin the recency reference so recall ranking is deterministic across
+  // seed order / wall-clock (kills the local verify:all flake). Far-future ⇒ the
+  // 90-day-half-life recency term is uniformly negligible, so the graph ⊕ kind ⊕
+  // vector signals decide — the NCR-114 precedent surfaces via GRAPH, as asserted,
+  // not via a timestamp. Prod recall defaults to Date.now() (unchanged).
+  const NOW = Date.UTC(2100, 0, 1);
+
   await check(
     "ingestMemory is idempotent (2× → same MemoryItem count)",
     async () => {
@@ -174,6 +181,7 @@ async function run(): Promise<void> {
     query:
       "drive torque over UCL stiff actuator — have we handled this before?",
     limit: 6,
+    now: NOW,
   });
 
   await check(
@@ -206,6 +214,7 @@ async function run(): Promise<void> {
         query:
           "drive torque over UCL stiff actuator — have we handled this before?",
         limit: 6,
+        now: NOW,
       });
       const h = byCode.find(
         (x) => x.subject?.code === "NCR-114" && x.kind === "RESOLUTION",
@@ -228,6 +237,7 @@ async function run(): Promise<void> {
         subjectId: ncr118Id,
         query: "drive torque stiff actuator",
         limit: 6,
+        now: NOW,
       });
       return byId.some(
         (x) =>
@@ -244,6 +254,7 @@ async function run(): Promise<void> {
       const pureVec = await recallMemory(db, {
         query: "drive torque over UCL stiff actuator",
         limit: 5,
+        now: NOW,
       });
       const pureIds = new Set(pureVec.map((h) => h.provenance.sourceId));
       // the NCR-114 precedent came via graph, not vector, and isn't in pure-vector top-5
