@@ -162,3 +162,10 @@ Against the live app URL:
   `app.`.
 - `turbo prune` keeps each image to just its app's deps. If build time/size matters later,
   a Next `output: "standalone"` runner is a follow-up optimization (not needed to ship).
+
+## Secrets (env vars) — gotchas
+- **Copy secrets from the source, never from a screenshot** — client IDs/secrets (e.g.
+  `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, `AUTH_SECRET`) are easy to mistype from an image;
+  paste the exact value from the provider console / password manager.
+- **A Railway variable edit needs a redeploy to take effect** — changing a var doesn't hot-reload
+  the running service; trigger a redeploy (or push) so the new value is picked up.
