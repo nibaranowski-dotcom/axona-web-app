@@ -35,6 +35,11 @@ export const A11Y_ROUTES: A11yRoute[] = [
   },
   { path: "/units", label: "Unit registry (dense table · PLM)", auth: true },
   {
+    path: "/import",
+    label: "Universal import (upload → preview → confirm · IO.1)",
+    auth: true,
+  },
+  {
     path: `/units/${A11Y_DETAIL_SERIAL}`,
     label: "Unit page (PLM detail)",
     auth: true,

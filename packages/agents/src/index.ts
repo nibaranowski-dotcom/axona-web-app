@@ -147,4 +147,13 @@ export {
   type MatrixExtractResult,
 } from "./matrix/job";
 
+// IO.1 — AI-verify import: propose a column→field mapping + flag suspect rows
+// (built on MTX.1 extractColumn; the write goes through the @axona/db import core).
+export {
+  proposeImportMapping,
+  type ImportMappingProposal,
+  type FieldMapping,
+  type FlaggedRow,
+} from "./io/propose-mapping";
+
 export const AGENTS_PACKAGE = "@axona/agents" as const;

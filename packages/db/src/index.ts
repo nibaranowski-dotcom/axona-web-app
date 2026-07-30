@@ -182,6 +182,20 @@ export {
   type RowError,
 } from "./plm";
 
+// IO.1 — the universal spreadsheet-import core (generalizes importUnits).
+export {
+  importEntity,
+  parseCsv,
+  unitDescriptor,
+  partMasterDescriptor,
+  IMPORT_ENTITIES,
+  importEntityInfo,
+  type EntityDescriptor,
+  type ImportSource,
+  type ImportEntityKey,
+  type ImportEntityInfo,
+} from "./io/import-core";
+
 // Re-export Prisma's generated types/enums so consumers import from one place.
 export * from "@prisma/client";
 
