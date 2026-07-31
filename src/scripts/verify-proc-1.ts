@@ -66,7 +66,7 @@ async function run(): Promise<void> {
         const qa = await getProcurementQueue(org.id, {
           status: "AWAITING_APPROVAL",
         });
-        const po = qa.pos.find((p) => p.code === "PO-9007");
+        const po = qa.pos.find((p) => p.code === "PO-9999-DOES-NOT-EXIST"); // CI.1 GATE PROOF — revert
         return (
           !!po &&
           po.status === "AWAITING_APPROVAL" &&
