@@ -76,9 +76,11 @@ async function run(): Promise<void> {
       const inPropose = (propose.match(defineRe) ?? []).length;
       return (
         inCore === 1 && // the ONE definition
-        inPlm === 0 && // plm/import imports it
+        inPlm === 0 && // plm/import defines no parser…
         inPropose === 0 && // the AI layer imports it
-        /import \{[\s\S]*parseCsv[\s\S]*\} from "\.\.\/io\/import-core"/.test(
+        // …it delegates to the shared core (MFX.1: importBom is now a thin caller
+        // over importEntity, like importUnits — so it imports the core, not parseCsv).
+        /import \{[\s\S]*importEntity[\s\S]*\} from "\.\.\/io\/import-core"/.test(
           plmImport,
         ) &&
         /parseCsv[\s\S]*from "@axona\/db"/.test(propose)

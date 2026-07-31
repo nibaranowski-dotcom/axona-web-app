@@ -1569,6 +1569,10 @@ model BomLine {
   partRevision   PartRevision @relation(fields: [partRevisionId], references: [id], onDelete: Restrict)
   qty            Int
 
+  /// MFX.1 — the natural key IO.1's BOM import (and importBom) already treats as
+  /// idempotent. Additive unique so the `bomLine` importEntity descriptor can
+  /// upsert by it (one line per position per model+revision).
+  @@unique([orgId, productModelId, designRevision, position])
   @@index([orgId])
   @@index([productModelId, designRevision])
 }

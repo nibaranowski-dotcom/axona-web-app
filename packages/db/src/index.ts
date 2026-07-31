@@ -206,8 +206,10 @@ export {
 export {
   importEntity,
   parseCsv,
+  parseWorkbook,
   unitDescriptor,
   partMasterDescriptor,
+  bomLineDescriptor,
   IMPORT_ENTITIES,
   importEntityInfo,
   type EntityDescriptor,

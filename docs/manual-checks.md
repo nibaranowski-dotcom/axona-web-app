@@ -2147,3 +2147,38 @@ late classification · org isolation · real GR through decide).
 aligned (design `partNumber` ↔ procurement `sku`). MFX.1 enriches the seed so the demo
 unit reads ~85% ready blocked on 2 parts. Until then a thin/partial card is expected and
 honest (untracked BOM lines show as "not tracked").
+
+## MFX.1 — MicrofluidX demo seed (procurement + build-readiness wedge)
+
+The tailored demo tenant that lights up BR.1 + Procurement for a fictional **MedTech
+device maker** (anonymized). Config is UNTRACKED (`prospects/mfx/prospect.config.ts`,
+gitignored); this story's COMMITTED surface is the IO.1 build-on-top + the verify.
+
+**IO.1 build-on-top (committed):** a `bomLine` importEntity descriptor + an **xlsx
+front-end** (`parseWorkbook`, single `xlsx` dep) — CSV *and* `.xlsx` feed the same
+`importEntity` core (no parallel importer). `importBom` is now a thin caller over the
+descriptor. Additive unique on `BomLine(orgId, productModelId, designRevision,
+position)` (the key it already treated as idempotent). Automated: `pnpm verify:mfx-1`
+(xlsx→IO.1 creates item lines · 85%/2-blocking fixture · single-source/long-lead ·
+isolation · real #007 when seeded).
+
+**Seed + demo (local):** `pnpm db:seed:prospect prospects/mfx` → org `org_mfx_demo`,
+login `demo@mfx-demo.test`. Then:
+- `/units/CE-2026-007` — Build-readiness card reads **85% in-house, blocked on 2**:
+  the piezo micro-dispenser (**late** — single-source Vendor Kappa, long-lead) and the
+  optical waveguide bench (**short** — single-source Vendor Sigma, not yet ordered).
+- `/procurement` — the PO queue shows the **late** piezo PO, **SINGLE-SOURCE** +
+  **LONG-LEAD** tags, and the agent-drafted **AWAITING_APPROVAL** expedite PR/RFQ.
+- **Live tick-up:** Receive one of the on-order SENT POs (e.g. the sterile cartridge,
+  whose packing-list the goods-receipt agent already verified) → #007's % rises.
+- Agent hooks (audit trail / trace): reorder agent drafted the expedite PR/RFQ;
+  goods-receipt agent verified the packing-list vs the PO; supply-risk agent drafted a
+  chase for the late single-source supplier — all **propose→approve→audit**.
+- Genealogy is a **one-line teaser** (as-built captured as parts are consumed).
+
+**Integrity:** suppliers/customers generic, people fictional, sample-data labeled;
+no faked NDA-gen / supplier-EDI / GMP-eQMS. `verify:seed-1` stays green (the MFX
+config is gitignored, never scanned). Isolation strict (2nd org → not found).
+
+**Prod:** `pnpm db:seed:prospect prospects/mfx` against the prod DATABASE_URL/R2 env
+makes the tenant demo-live (run with prod secrets; human-gated).

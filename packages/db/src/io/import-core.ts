@@ -1,3 +1,4 @@
+import * as XLSX from "xlsx";
 import type { OrgScopedDb } from "../client";
 import type { Prisma, UnitStatus } from "@prisma/client";
 
@@ -52,6 +53,33 @@ export function parseCsv(csv: string): { headers: string[]; rows: string[][] } {
 }
 
 /**
+ * MFX.1 — xlsx → rows, the SAME `{ headers, rows }` shape parseCsv returns, so an
+ * Excel workbook feeds the identical `importEntity` path (NOT a parallel importer;
+ * just a second front-end). The first sheet's first row is the header (lowercased,
+ * trimmed); every cell is coerced to a trimmed string. Parsed SERVER-SIDE from the
+ * raw bytes — the single `xlsx` dependency, no client parsing.
+ */
+export function parseWorkbook(bytes: Uint8Array): {
+  headers: string[];
+  rows: string[][];
+} {
+  const wb = XLSX.read(bytes, { type: "array" });
+  const first = wb.SheetNames[0];
+  if (!first) return { headers: [], rows: [] };
+  const sheet = wb.Sheets[first]!;
+  const grid = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+    header: 1,
+    blankrows: false,
+    defval: "",
+  });
+  if (grid.length === 0) return { headers: [], rows: [] };
+  const cell = (v: unknown) => (v == null ? "" : String(v).trim());
+  const headers = (grid[0] as unknown[]).map((h) => cell(h).toLowerCase());
+  const rows = grid.slice(1).map((r) => (r as unknown[]).map(cell));
+  return { headers, rows };
+}
+
+/**
  * A per-entity descriptor — the ONLY per-entity code. Everything below the
  * `entity`/`label`/`required`/`optional` metadata is the same shape `importUnits`
  * already had, factored so the core can drive any entity identically.
@@ -92,8 +120,14 @@ export interface EntityDescriptor<Ctx, Parsed> {
 }
 
 export interface ImportSource {
-  /** raw file text (CSV). */
-  text: string;
+  /** raw file text (CSV). Optional when `bytes` (xlsx) is supplied instead. */
+  text?: string;
+  /**
+   * MFX.1 — raw xlsx bytes. When present, parsed via `parseWorkbook` into the same
+   * rows `text` would; everything downstream (mapping · validation · upsert) is
+   * identical. Exactly one of `text`/`bytes` is used (bytes wins).
+   */
+  bytes?: Uint8Array;
   /**
    * Optional column mapping: canonicalField → source header (as it appears in
    * the file). Supplied by the AI-verify pass (MTX.1) after a human approves it.
@@ -115,7 +149,11 @@ export async function importEntity<Ctx, Parsed>(
   opts: { dryRun?: boolean } = {},
 ): Promise<ImportResult> {
   const dryRun = opts.dryRun ?? false;
-  const { headers, rows } = parseCsv(source.text);
+  // MFX.1 — CSV and xlsx converge to the same rows here; the descriptor never
+  // knows which front-end produced them.
+  const { headers, rows } = source.bytes
+    ? parseWorkbook(source.bytes)
+    : parseCsv(source.text ?? "");
   const errors: RowError[] = [];
 
   // mapping-aware header lookup: a canonical field resolves through the mapping
@@ -356,11 +394,113 @@ export const partMasterDescriptor: EntityDescriptor<null, ParsedPart> = {
   },
 };
 
+interface BomCtx {
+  modelByCode: Map<string, string>;
+  revByKey: Map<string, string>; // "partNumber|rev" → partRevisionId
+}
+interface ParsedBomLine {
+  productModelId: string;
+  designRevision: string;
+  position: string;
+  partRevisionId: string;
+  qty: number;
+}
+
+/**
+ * MFX.1 — as-designed BOM lines, the THIRD entity. Same validation `importBom` had
+ * (model · revision · position · partnumber · rev · qty), factored as a descriptor
+ * so an Excel/CSV BOM flows through the one IO.1 core (dry-run · row errors · atomic
+ * upsert). Idempotent by (model · design revision · position) — the additive unique.
+ */
+export const bomLineDescriptor: EntityDescriptor<BomCtx, ParsedBomLine> = {
+  entity: "bomLine",
+  label: "BOM lines",
+  required: ["model", "revision", "position", "partnumber", "rev", "qty"],
+  optional: [],
+  async loadContext(db) {
+    const models = await db.productModel.findMany();
+    const partMasters = await db.partMaster.findMany({
+      include: { revisions: true },
+    });
+    const revByKey = new Map<string, string>();
+    for (const pm of partMasters)
+      for (const rev of pm.revisions)
+        revByKey.set(`${pm.partNumber}|${rev.rev}`, rev.id);
+    return {
+      modelByCode: new Map(models.map((m) => [m.code, m.id])),
+      revByKey,
+    };
+  },
+  parseRow({ col, ctx, err }) {
+    const productModelId = ctx.modelByCode.get(col("model"));
+    if (!productModelId) {
+      err(`unknown product model "${col("model")}"`);
+      return null;
+    }
+    const position = col("position");
+    if (!position) {
+      err("empty position");
+      return null;
+    }
+    const partRevisionId = ctx.revByKey.get(
+      `${col("partnumber")}|${col("rev")}`,
+    );
+    if (!partRevisionId) {
+      err(`unknown part revision "${col("partnumber")} ${col("rev")}"`);
+      return null;
+    }
+    const qty = Number(col("qty"));
+    if (!Number.isInteger(qty) || qty <= 0) {
+      err(`invalid qty "${col("qty")}"`);
+      return null;
+    }
+    return {
+      productModelId,
+      designRevision: col("revision"),
+      position,
+      partRevisionId,
+      qty,
+    };
+  },
+  keyOf: (v) => `${v.productModelId}|${v.designRevision}|${v.position}`,
+  async existingKeys(db, valid) {
+    const found = await db.bomLine.findMany({
+      where: { productModelId: { in: valid.map((v) => v.productModelId) } },
+      select: { productModelId: true, designRevision: true, position: true },
+    });
+    return new Set(
+      found.map((l) => `${l.productModelId}|${l.designRevision}|${l.position}`),
+    );
+  },
+  writeOp(db, v) {
+    return db.bomLine.upsert({
+      where: {
+        orgId_productModelId_designRevision_position: {
+          orgId: db.$org,
+          productModelId: v.productModelId,
+          designRevision: v.designRevision,
+          position: v.position,
+        },
+      },
+      create: {
+        orgId: db.$org,
+        productModelId: v.productModelId,
+        designRevision: v.designRevision,
+        position: v.position,
+        partRevisionId: v.partRevisionId,
+        qty: v.qty,
+      },
+      update: { partRevisionId: v.partRevisionId, qty: v.qty },
+    });
+  },
+};
+
 /** The import registry — the shared UI + actions enumerate this. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const IMPORT_ENTITIES: Record<string, EntityDescriptor<any, any>> = {
   unit: unitDescriptor,
   partMaster: partMasterDescriptor,
+  bomLine: bomLineDescriptor,
 };
 
 export type ImportEntityKey = keyof typeof IMPORT_ENTITIES;
