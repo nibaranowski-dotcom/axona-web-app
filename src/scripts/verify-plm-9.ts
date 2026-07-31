@@ -133,7 +133,10 @@ async function run(): Promise<void> {
         select: { id: true, stage: true },
       });
       if (!eco) return false;
-      const guard = await captureSeededState(prisma as never, ["AuditLog"]);
+      const guard = await captureSeededState(prisma as never, [
+        "AuditLog",
+        "MemoryItem", // VERIFY.3 — decide() writes a LOOP.1 outcome episode
+      ]);
       try {
         const user = {
           id: "verify",

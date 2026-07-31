@@ -72,6 +72,7 @@ export async function resolveConfigAt(
   if (sw) {
     const candidates = await db.configurationVersion.findMany({
       where: { productModelId: unit.productModelId },
+      orderBy: { name: "asc" }, // VERIFY.3 — stable pick when two configs match
     });
     const match = candidates.find((c) => {
       const spec = (c.swSpec ?? {}) as Record<string, unknown>;

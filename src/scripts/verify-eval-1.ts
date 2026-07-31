@@ -125,12 +125,19 @@ async function run(): Promise<void> {
   });
 
   // ── 5: CI wiring + package.json script ──
-  await check("package.json exposes `eval` + `verify:eval-1`", () => {
+  await check("package.json exposes `eval` + `verify:eval-1` (gated)", () => {
+    // VERIFY.3 replaced package.json's `&&` chain with the verify:all runner, so
+    // "is it gated?" is now answered by the runner's VERIFY_SEQUENCE (which is
+    // itself parity-checked against package.json — see verify:verify-3 / B6).
+    const runner = readFileSync(
+      join(process.cwd(), "src/scripts/verify-all.ts"),
+      "utf8",
+    );
     return (
       /"eval":\s*"tsx src\/scripts\/eval\.ts"/.test(pkg) &&
       /"verify:eval-1":/.test(pkg) &&
-      /pnpm verify:eval-1/.test(pkg)
-    ); // in verify:all
+      /"eval-1"/.test(runner)
+    );
   });
   await check("CI runs `pnpm eval` against a seeded DB (its own job)", () => {
     return /pnpm eval/.test(ci) && /db:seed/.test(ci);

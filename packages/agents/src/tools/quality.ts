@@ -23,6 +23,7 @@ export const runSpcCheck: Tool<{ characteristic: string }> = {
     const distinct = await ctx.db.spcSample.findMany({
       select: { characteristic: true },
       distinct: ["characteristic"],
+      orderBy: { characteristic: "asc" }, // VERIFY.3 — stable loose-name resolution
     });
     const target = normChar(characteristic);
     const key =
@@ -54,6 +55,7 @@ export const runSpcCheck: Tool<{ characteristic: string }> = {
             },
           ],
         },
+        orderBy: { id: "asc" }, // VERIFY.3 — `links[0]` must not be heap order
       });
       const link = links[0];
       const ncrId = link

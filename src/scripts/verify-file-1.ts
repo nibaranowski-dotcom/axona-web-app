@@ -164,8 +164,12 @@ async function run(): Promise<void> {
       await check(
         "seeded blobs backfilled (a seeded File's object has bytes)",
         async () => {
+          // VERIFY.3 — no orderBy meant heap order chose WHICH seeded file was
+          // probed, so a single missing object surfaced only ~1 run in 3. Pinning
+          // the pick doesn't hide a gap — it makes one fail every time instead.
           const seeded = await dbForOrg(org.id).file.findFirst({
             where: { blobKey: { startsWith: "seed/" } },
+            orderBy: { blobKey: "asc" },
           });
           if (!seeded) return false;
           const bytes = await getObjectBytes(seeded.blobKey);

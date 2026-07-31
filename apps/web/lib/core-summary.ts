@@ -67,7 +67,8 @@ export async function getCoreSummary(orgId: string): Promise<CoreSummary> {
     customsHold,
     robotAgg,
     robotsWatch,
-    watchRobot,
+    flaggedRobots,
+    openFieldWos,
     openWoField,
     slaSoon,
     ecosInReview,
@@ -86,8 +87,12 @@ export async function getCoreSummary(orgId: string): Promise<CoreSummary> {
   ] = await Promise.all([
     db.purchaseOrder.count({ where: { NOT: { status: "RECEIVED" } } }),
     db.purchaseOrder.count({ where: { status: "AWAITING_APPROVAL" } }),
+    // VERIFY.3 — every `findFirst` whose row reaches the exception feed is ordered
+    // explicitly. Without an orderBy the row is whatever Postgres returns first,
+    // which changes on re-seed/VACUUM (see docs/manual-checks.md → VERIFY.3).
     db.purchaseOrder.findFirst({
       where: { status: "AWAITING_APPROVAL", NOT: { draftedByAgentId: null } },
+      orderBy: [{ value: "desc" }, { code: "asc" }], // largest exposure first
     }),
 
     db.workOrderMfg.count({ where: { status: "WIP" } }),
@@ -96,6 +101,7 @@ export async function getCoreSummary(orgId: string): Promise<CoreSummary> {
     db.nCR.count({ where: { NOT: { status: "CLOSED" } } }),
     db.nCR.findFirst({
       where: { severity: "CRITICAL", NOT: { status: "CLOSED" } },
+      orderBy: { code: "asc" }, // stable across re-seeds (NCR has no opened-at)
     }),
     // column compare needs raw SQL; pin orgId ourselves (the extension doesn't scope raw)
     db.$queryRaw<{ n: number }[]>`SELECT COUNT(*)::int AS n FROM "SpcSample"
@@ -105,11 +111,23 @@ export async function getCoreSummary(orgId: string): Promise<CoreSummary> {
     db.delivery.count({ where: { NOT: { riskState: "" } } }),
     db.delivery.findFirst({
       where: { stage: "CUSTOMS", NOT: { riskState: "" } },
+      orderBy: [{ etaDate: "asc" }, { code: "asc" }], // soonest promised date first
     }),
 
     db.robot.aggregate({ _avg: { uptimePct: true } }),
     db.robot.count({ where: { status: { in: ["WATCH", "FAULT"] } } }),
-    db.robot.findFirst({ where: { status: { in: ["WATCH", "FAULT"] } } }),
+    // VERIFY.3 — was `findFirst` with NO orderBy: five units qualify, so which one
+    // surfaced was arbitrary Postgres heap order and flipped on every re-seed. Take
+    // the whole flagged set in a deterministic order and pick from it below.
+    db.robot.findMany({
+      where: { status: { in: ["WATCH", "FAULT"] } },
+      orderBy: [{ status: "asc" }, { serial: "asc" }],
+    }),
+    db.workOrderField.findMany({
+      where: { NOT: { status: { in: ["CLOSED", "DONE"] } } },
+      orderBy: [{ slaDueAt: "asc" }, { robotSerial: "asc" }],
+      select: { robotSerial: true, status: true, issue: true, slaDueAt: true },
+    }),
 
     db.workOrderField.count({
       where: { NOT: { status: { in: ["CLOSED", "DONE"] } } },
@@ -128,14 +146,19 @@ export async function getCoreSummary(orgId: string): Promise<CoreSummary> {
       where: { NOT: { status: { in: ["CLOSED", "RESOLVED"] } } },
     }),
     db.policyVersion.count({ where: { state: "canary" } }),
-    db.policyVersion.findFirst({ where: { state: "canary" } }),
+    db.policyVersion.findFirst({
+      where: { state: "canary" },
+      orderBy: { version: "asc" },
+    }),
 
     db.invoice.count({ where: { status: "OVERDUE" } }),
     // PROSPECT.2 — the flagship product's margin (highest ASP), not a hardcoded
     // product name (which returned null — an empty KPI — for any other tenant).
     db.unitEconomic.findFirst({ orderBy: { asp: "desc" } }),
 
-    db.technician.findMany(),
+    // ordered so `expiringTechs[0]` (the People exception) is stable — the
+    // expiry filter itself runs in JS over the certs JSON, so it can't be an orderBy
+    db.technician.findMany({ orderBy: { name: "asc" } }),
 
     db.cVE.count({
       where: { NOT: { status: { in: ["MITIGATED", "CLOSED", "RESOLVED"] } } },
@@ -143,7 +166,10 @@ export async function getCoreSummary(orgId: string): Promise<CoreSummary> {
 
     db.obligation.count({ where: { state: "AT_RISK" } }),
     db.exportLicense.count({ where: { state: "HOLD" } }),
-    db.obligation.findFirst({ where: { state: "AT_RISK" } }),
+    db.obligation.findFirst({
+      where: { state: "AT_RISK" },
+      orderBy: [{ account: "asc" }, { id: "asc" }], // stable (no due date column)
+    }),
 
     db.ledgerEntry.aggregate({ _sum: { amount: true } }),
   ]);
@@ -152,6 +178,39 @@ export async function getCoreSummary(orgId: string): Promise<CoreSummary> {
   const uptimeAvg = robotAgg._avg.uptimePct ?? 0;
   const expiringTechs = technicians.filter((t) => hasExpiringCert(t.certs));
   const marginDown = !!hx2 && /-/.test(hx2.trend);
+
+  // ── the Fleet → Field Service exception (VERIFY.3) ──────────────────────
+  // Which flagged unit surfaces used to be arbitrary Postgres heap order. It is
+  // now derived: among WATCH/FAULT units, the Command Center leads with the one
+  // that still needs a human decision — a unit already EN_ROUTE or ON_SITE is
+  // being handled, so it ranks below one still awaiting dispatch. Ties break on
+  // the SLA clock (openFieldWos is ordered by it), then on the unit order above.
+  // Units with no open field work order rank last: their Field Service handoff
+  // hasn't happened, so they're the weakest form of this exception.
+  const FIELD_STAGE_RANK: Record<string, number> = {
+    OPEN: 0,
+    SCHEDULED: 1,
+    DISPATCH: 2,
+    EN_ROUTE: 3,
+    ON_SITE: 4,
+  };
+  const NO_WO_RANK = 99;
+  const woFor = (serial: string) =>
+    openFieldWos.find((w) => w.robotSerial === serial);
+  const flaggedRanked = flaggedRobots
+    .map((r, i) => {
+      const wo = woFor(r.serial);
+      return {
+        robot: r,
+        wo,
+        rank: wo ? (FIELD_STAGE_RANK[wo.status] ?? 5) : NO_WO_RANK,
+        sla: wo?.slaDueAt?.getTime() ?? Number.MAX_SAFE_INTEGER,
+        i,
+      };
+    })
+    .sort((a, b) => a.rank - b.rank || a.sla - b.sla || a.i - b.i);
+  const watchRobot = flaggedRanked[0]?.robot ?? null;
+  const watchRobotWo = flaggedRanked[0]?.wo ?? null;
 
   // ── per-module KPIs (derived, curated) ──────────────────────────────────
   const kpisByModule: ModuleKpis[] = [
@@ -371,11 +430,7 @@ export async function getCoreSummary(orgId: string): Promise<CoreSummary> {
     // PROSPECT.2 — derive the reason from the unit's real field work order (its
     // actual issue), not a hardcoded "thermal anomaly" (which assumed one tenant's
     // narrative). Falls back to the status when there's no linked work order.
-    const watchWo = await db.workOrderField.findFirst({
-      where: { robotSerial: watchRobot.serial },
-      orderBy: { slaDueAt: "asc" },
-      select: { issue: true },
-    });
+    const watchWo = watchRobotWo;
     exceptions.push({
       id: `robot-${watchRobot.id}`,
       title: watchWo

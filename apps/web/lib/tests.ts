@@ -179,7 +179,11 @@ export async function getTestRun(
   });
   if (!run) return null;
 
-  const ncrRow = await db.nCR.findFirst({ where: { testRunId: run.id } });
+  // VERIFY.3 — the linked NCR is rendered on the run page, so pin the pick.
+  const ncrRow = await db.nCR.findFirst({
+    where: { testRunId: run.id },
+    orderBy: { code: "asc" },
+  });
   const steps: TestStep[] = run.results.map((s) => ({
     step: s.step,
     measurement: s.measurement,

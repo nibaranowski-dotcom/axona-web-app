@@ -75,6 +75,12 @@ async function run(): Promise<void> {
 
   const { prisma, dbForOrg } = await import("@axona/db");
   const { decide } = await import("../../apps/web/lib/approvals");
+  const { captureSeededState } = await import("./lib/self-clean");
+  // VERIFY.3 — every decide() writes a LOOP.1 outcome MemoryItem. This script's
+  // manual restore (statuses + AuditLog) never covered them, so it leaked 3
+  // OUTCOME episodes per run; verify:loop-1 then picked a foreign OVERRIDDEN row
+  // and failed later in the sequence. MIGRATE.1: a verify run restores the seed.
+  const _memGuard = await captureSeededState(prisma, ["MemoryItem"]);
   const { getAuditTrail } = await import("../../apps/web/lib/audit-trail");
 
   const org = await prisma.org.findFirst({ where: { name: "Axona" } });
@@ -247,6 +253,7 @@ async function run(): Promise<void> {
   await prisma.$executeRawUnsafe(
     `ALTER TABLE "AuditLog" ENABLE RULE audit_no_delete`,
   );
+  await _memGuard.restore();
   await prisma.$disconnect();
   finish();
 }

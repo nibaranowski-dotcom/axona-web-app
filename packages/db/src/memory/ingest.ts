@@ -115,7 +115,9 @@ export async function ingestMemory(
   // ── NCR → EXCEPTION (+ RESOLUTION when terminal) ──────────────────────────
   // NCR has no timestamp column; derive occurredAt from its own AuditLog trail
   // (open = earliest, resolution = latest decision) and carry the approver.
-  const ncrs = await db.nCR.findMany({});
+  // VERIFY.3 — ordered so memory rows are ingested in a stable sequence; recall
+  // tie-breaks (equal scores) would otherwise depend on Postgres heap order.
+  const ncrs = await db.nCR.findMany({ orderBy: { code: "asc" } });
   for (const n of ncrs) {
     const trail = audits.filter(
       (a) => a.targetType === "NCR" && a.targetId === n.id,

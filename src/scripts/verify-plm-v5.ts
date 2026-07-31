@@ -162,6 +162,7 @@ async function run(): Promise<void> {
       "AsBuiltRecord",
       "UnitSoftwareState",
       "AuditLog",
+      "MemoryItem", // VERIFY.3 — decide() writes a LOOP.1 outcome episode
     ]);
     try {
       const before = await resolveConfigAt(db, unit.id, new Date());

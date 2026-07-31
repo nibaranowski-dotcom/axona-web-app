@@ -2396,3 +2396,117 @@ fail with exit 1; restore → 13/13 green.
 the flags clip. That is a responsive gap in the design, not a residual — the columns stay
 perfectly flush there. A scroll/stacking treatment for narrow widths is a design decision,
 not a unilateral fix.
+
+## VERIFY.3 — verify:all is deterministic + resilient
+
+Two flakes redded the gate on a clean-logic tree. Both were fixed at the source; no
+assertion was weakened.
+
+**A · Heap-order non-determinism (the rule).** `findFirst` with no `orderBy` returns
+whatever row Postgres hands back first — which changes after a re-seed, an UPDATE, or
+a VACUUM. `core-summary.ts` picked the Fleet exception that way; **five** units qualify
+(`SN-2003/2027/2120/2150/2196`), so the surfaced one flipped at random and
+`verify:cmd-1` failed intermittently.
+
+> **Rule: no asserted `findFirst` without an `orderBy`.** If a row reaches rendered or
+> asserted output — an exception feed, a screen field, an agent tool result — the query
+> that picks it must say which row it wants. Same for `findMany` followed by `[0]`/
+> `.find(...)`. Queries whose *set* is all that matters are left alone deliberately;
+> ordering them would be noise. `pnpm verify:verify-3` enforces this for
+> `core-summary.ts` (every call, no exceptions) and for the swept sites below.
+
+The Fleet pick is now **derived, not incidental**: among WATCH/FAULT units the Command
+Center leads with the one that still needs a human decision — field-work stage
+`OPEN → SCHEDULED → DISPATCH → EN_ROUTE → ON_SITE`, then the SLA clock, then the unit
+order (`status`, `serial`). A unit already en route or on site is being handled; one with
+no open field work order ranks last, because its Field Service handoff hasn't happened.
+That keeps `SN-2196` — the Fleet→Field Service narrative pinned by
+`specs/axona-build-spec.md` (Fleet, Field Service **and** People: "Osei… is on the
+SN-2196 job"), `specs/PRD-cmd-1.md`'s acceptance criteria, and
+`exports/screens-export-sales.md` — surfacing because it *earns* it (DISPATCH), not
+because of heap order. Note every naive "worst-first" ordering (severity, uptime, SLA)
+picks `SN-2120` instead and would have desynced all three of those documents.
+
+Swept and ordered elsewhere (each feeds asserted output): `core-summary.ts` (PO ·
+NCR · Delivery · PolicyVersion · Obligation · Technician), `memory/ingest.ts`
+(ingest order → recall tie-breaks), `plm/config.ts` (config match),
+`change-order.ts` (the rendered ECR), `tests.ts` (the linked NCR),
+`agents/tools/quality.ts` (loose-name resolution + `links[0]`).
+
+**Prove A is fixed** — shuffle the physical order and the answer must not move:
+```
+docker exec axona-postgres psql -U axona -d axona -c \
+  "UPDATE \"Robot\" SET \"uptimePct\"=\"uptimePct\" WHERE serial IN ('SN-2003','SN-2027');"
+docker exec axona-postgres psql -U axona -d axona -t -c \
+  "select serial from \"Robot\" where status in ('WATCH','FAULT') limit 1;"   # → SN-2027
+pnpm verify:cmd-1                                                             # → SN-2196, green
+```
+An unordered `limit 1` physically returns `SN-2027`; `verify:cmd-1` still passes.
+
+**B · Connection-pressure transients.** 155 short-lived processes each opened their own
+Prisma pool; a step would die mid-run on `P1001` ("Can't reach database server") while
+the DB was healthy and the step passed in isolation. `verify:all` is now a runner
+(`src/scripts/verify-all.ts`) instead of a 155-link `&&` chain:
+- **One shared Prisma client** (`@axona/db`'s dev singleton) pings `SELECT 1` before
+  every step, with a bounded backoff (`0·250·500·1000·2000·4000ms`).
+- **A transient is retried exactly once** and reported as `RETRY`. It never masks a
+  real failure: if the step fails again the gate goes red with
+  *"still failing after a retry"*.
+- **The real error is surfaced** — captured output is replayed, plus the exit code, a
+  `reproduce: pnpm verify:<id>` line and a `resume: pnpm verify:all --from=<id>` line.
+  A step that dies silently is called out as *"produced NO output"*.
+- **The sequence is parity-checked**: adding a `verify:*` script to package.json without
+  gating it in `VERIFY_SEQUENCE` fails the run immediately (the old chain drifted
+  silently). Duplicates and stale entries fail too.
+- New flags: `pnpm verify:all --from=<id>` · `--only=a,b,c`.
+
+**Note on CI:** the `verify` job runs `pnpm verify:all` with **no `DATABASE_URL`**, so
+every DB-gated check skips itself. CI being green has never been evidence about these
+flakes — they only appear on a seeded local run. Reproduce the gate properly with:
+```
+pnpm --filter @axona/db db:seed && pnpm db:seed:blobs && pnpm verify:all
+```
+(a fresh seed also needs the blob backfill, or FILE.2 fails on missing object bytes).
+
+**C · Self-clean residue (what actually redded the gate most often).** Chasing A and B
+surfaced the dominant cause: verify scripts that mutate seeded state and don't put it
+back (MIGRATE.1). These are **source** fixes — no assertion was relaxed:
+
+- **`decide()` writes a LOOP.1 outcome `MemoryItem` on every call.** Six scripts that
+  call it had a `captureSeededState` guard that didn't list `MemoryItem`
+  (`audit-1`, `audit-3`, `rbac-4`, `trust-1`, `plm-9`, `plm-v5`) and `rbac-5` had no
+  guard at all (it leaked 3 OUTCOME episodes per run). The leftover episode made
+  `verify:loop-1`'s `rows.find(r => r.verdict === "OVERRIDDEN")` pick a *foreign* row
+  with no `actorLabel`/`confidence` → the "typed label" check failed later in the
+  sequence while passing in isolation. All seven now capture `MemoryItem`.
+- **`captureSeededState` deletes rows a run CREATED — it cannot undo an UPDATE.**
+  `verify-trust-1`'s comment claimed "restore the PO"; it never did. Its `decide()`
+  advanced a seeded PO `AWAITING_APPROVAL → APPROVED` and left it, so the *next* run's
+  `verify:proc-1` ("agent-drafted PO-9007 is present + flagged") and `verify:cmd-1`
+  failed. It now restores the status explicitly. Its PO pick was also an unordered
+  `findFirst`, so *which* PO it corrupted varied — pinned to `code: "asc"`.
+- **`verify-file-1`** probed a seeded blob via `findFirst({ blobKey: { startsWith:
+  "seed/" } })` with no `orderBy`, so heap order chose which file was checked and a gap
+  surfaced roughly one run in three. Pinned — this doesn't hide a gap, it makes one fail
+  every time instead of intermittently.
+
+**Find a leak the same way** (per-script drift, the technique that located all of these):
+```
+pnpm --filter @axona/db db:seed
+Q="select count(*) from \"MemoryItem\" where kind='OUTCOME';"     # or a PO status digest
+for f in rbac-4 rbac-5 trust-1 …; do pnpm verify:$f >/dev/null 2>&1; \
+  docker exec axona-postgres psql -U axona -d axona -t -c "$Q"; done
+```
+Any step whose count/digest moves is not restoring the seed.
+
+**Automated:** `pnpm verify:verify-3` (in `verify:all`). **Prove it catches a
+regression:** delete any `orderBy:` line in `core-summary.ts` → check A1 fails with the
+offending line number, exit 1; restore → 11/11 green.
+
+**The DoD run** — three consecutive green gates, two on a fresh seed and one back-to-back
+without re-seeding (proving idempotence), at ~2 min each (the old `&&` chain took ~10):
+```
+pnpm --filter @axona/db db:seed && pnpm db:seed:blobs && pnpm verify:all   # 156 checks, PASSED
+pnpm --filter @axona/db db:seed && pnpm db:seed:blobs && pnpm verify:all   # 156 checks, PASSED
+pnpm verify:all                                                            # 156 checks, PASSED
+```

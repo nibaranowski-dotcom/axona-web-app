@@ -122,8 +122,14 @@ async function run(): Promise<void> {
       return (
         !/thermal anomaly/.test(cs) &&
         !/product: "HX-2"/.test(cs) &&
-        // derives the watch reason from the real field work order
-        /workOrderField\.findFirst/.test(cs)
+        // Derives the watch reason from the real field work order. VERIFY.3 moved
+        // this from a per-robot `findFirst` to one ordered `findMany` over the open
+        // work orders (the pick must be deterministic, not heap order) — so assert
+        // the PROPERTY, not the call shape: a real WorkOrderField query whose
+        // `issue` becomes the exception title.
+        /workOrderField\.findMany/.test(cs) &&
+        /issue: true/.test(cs) &&
+        /\$\{watchWo\.issue\}/.test(cs)
       );
     },
   );

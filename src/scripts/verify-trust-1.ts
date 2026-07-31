@@ -255,12 +255,21 @@ async function run(): Promise<void> {
   );
 
   // ── DB: decide() records the rung + writes AUDIT.1; hard ceiling holds at the gate ──
-  const guard = await captureSeededState(prisma, ["AuditLog", "PurchaseOrder"]);
+  // VERIFY.3 — "MemoryItem": decide() writes a LOOP.1 outcome episode per call;
+  // leaving them behind made verify:loop-1 pick a foreign OVERRIDDEN row.
+  const guard = await captureSeededState(prisma, [
+    "AuditLog",
+    "PurchaseOrder",
+    "MemoryItem",
+  ]);
   const org = await prisma.org.findFirst({ where: { id: DEMO } });
   const db = dbForOrg(DEMO);
+  // VERIFY.3 — pinned: unordered, this picked PO-9007 or PO-9014 at random, so the
+  // row this script mutated (and failed to restore, below) varied run to run.
   const po = await db.purchaseOrder.findFirst({
     where: { status: "AWAITING_APPROVAL" },
-    select: { id: true },
+    orderBy: { code: "asc" },
+    select: { id: true, status: true },
   });
   const opsUser = await prisma.user.findFirst({
     where: { orgId: DEMO, role: "OPS" },
@@ -299,6 +308,15 @@ async function run(): Promise<void> {
   );
 
   // self-clean: restore the PO + delete the po.approve.% audit rows (immutable-log rule).
+  // VERIFY.3 — the PO restore was only ever a comment: `guard.restore()` deletes rows
+  // this run CREATED, it cannot undo an UPDATE. decide() advanced the seeded PO to
+  // APPROVED and left it there, which failed verify:proc-1 / verify:cmd-1 on the next
+  // run (MIGRATE.1: a verify run restores the seeded state).
+  if (po)
+    await prisma.purchaseOrder.updateMany({
+      where: { id: po.id },
+      data: { status: po.status },
+    });
   await prisma.$executeRawUnsafe(
     `ALTER TABLE "AuditLog" DISABLE RULE audit_no_delete`,
   );

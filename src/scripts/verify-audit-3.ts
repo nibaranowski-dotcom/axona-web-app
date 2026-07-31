@@ -74,6 +74,7 @@ async function run(): Promise<void> {
     "PurchaseOrder",
     "WorkflowRun",
     "AgentRun",
+    "MemoryItem", // VERIFY.3 — decide() writes a LOOP.1 outcome episode
   ]);
   const { executeWorkflowRun, FakeModelClient } = await import("@axona/agents");
   const { decide } = await import("../../apps/web/lib/approvals");

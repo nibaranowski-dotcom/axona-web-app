@@ -55,7 +55,10 @@ export async function getChangeOrder(
 
   // the originating ECR (ChangeRequest) — scalar link both ways.
   const cr =
-    (await db.changeRequest.findFirst({ where: { ecoId: eco.id } })) ??
+    (await db.changeRequest.findFirst({
+      where: { ecoId: eco.id },
+      orderBy: { code: "asc" }, // VERIFY.3 — the rendered ECR must be stable
+    })) ??
     (eco.changeRequestId
       ? await db.changeRequest.findFirst({
           where: { code: eco.changeRequestId },
