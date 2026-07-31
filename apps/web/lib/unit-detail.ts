@@ -38,6 +38,8 @@ export interface UnitIssue {
   defect: string;
   severity: string;
   status: string;
+  /** DEMO.5 — this NCR has a root-cause workspace worth opening (gates "Open RCA →"). */
+  hasRca: boolean;
 }
 
 export interface UnitChangeOrder {
@@ -164,6 +166,8 @@ export async function getUnitDetail(
       defect: n.defect,
       severity: n.severity,
       status: n.status,
+      // DEMO.5 — raised from a failing test / carries a frozen config-at-failure.
+      hasRca: !!(n.testRunId || n.configSnapshot),
     }));
 
   const changeOrders: UnitChangeOrder[] = ecos.map((e) => ({

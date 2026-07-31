@@ -2285,3 +2285,27 @@ controls — (a) the grep is LIVE and the allowlist is exactly the marque-bearin
 (no un-allowlisted file names a marque), and (b) `scanForMarques` catches a marque
 reintroduced into a fresh file while ignoring the anonymized OEM label. Manually
 confirmed: injecting a marque into a tracked non-allowlisted file fails the wall (exit 1).
+
+## DEMO.5 — RCA workspace reachable by click
+
+The `/rca/[ncrCode]` root-cause workspace was URL-only — nothing linked to it, so a
+self-serve buyer couldn't reach it. DEMO.5 adds the missing entry point on the golden
+thread: a visible, labelled **"Open RCA →"** link, shown ONLY for NCRs that actually
+have an RCA workspace (`hasRca = !!(testRunId || configSnapshot)` — raised from a failing
+test / carries a frozen config-at-failure). No new route, no parallel nav, no widened
+write RBAC. Automated: `pnpm verify:demo-5`.
+
+**Read-visibility:** the RCA workspace VIEW is open to every signed-in role
+(ENGINEER/OPS/VIEWER can open it read-only); the root-cause CLASSIFICATION write stays
+RBAC-gated in `RootCauseCell` (unchanged).
+
+**Click path — Quality:** `/quality` → the NCR tracker → the golden-thread NCR (NCR-118)
+shows **"Open RCA →"** under its Root cause cell → one click lands on `/rca/NCR-118`. An
+NCR without an RCA workspace shows no such link (bare classification only).
+
+**Click path — Unit page:** `/units/<serial>` (the golden-thread unit, e.g. `SN-H-4471`
+on the defense tenant or the base demo's NCR-118 unit) → the **Open issues** rail → the
+NCR card gains an **"Open RCA →"** footer link → one click lands on the same `/rca/<code>`.
+
+**Visual:** v2 tokens only, matches the existing NCR/RCA language — a mono underlined
+link (Quality table) / a hairline-bordered footer link (unit rail); no new chrome.

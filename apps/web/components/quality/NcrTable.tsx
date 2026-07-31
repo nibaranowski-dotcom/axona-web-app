@@ -64,12 +64,23 @@ export function NcrTable({
               >
                 {n.defect}
               </span>
-              <span className="min-w-0">
+              <span className="flex min-w-0 flex-col items-start gap-1">
                 <RootCauseCell
                   code={n.code}
                   rootCause={n.rootCause}
                   canClassify={canClassify}
                 />
+                {/* DEMO.5 — the missing entry point to the RCA workspace. Read-visible
+                    to every role (the classification WRITE stays RBAC-gated in the cell
+                    above). Only shown for NCRs that actually have an RCA workspace. */}
+                {n.hasRca && (
+                  <Link
+                    href={`/rca/${encodeURIComponent(n.code)}`}
+                    className="font-mono text-[10.5px] font-semibold text-ink underline decoration-line-strong underline-offset-2 transition-colors hover:decoration-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  >
+                    Open RCA →
+                  </Link>
+                )}
               </span>
               <span className="min-w-0 truncate">
                 {n.triggeredByRun && n.triggeredByHref ? (

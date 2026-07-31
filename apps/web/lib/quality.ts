@@ -37,6 +37,9 @@ export interface QualityNcr {
   rootCause: string | null;
   triggeredByRun: string | null;
   triggeredByHref: string | null;
+  // DEMO.5 — this NCR has a root-cause workspace worth opening (it was raised from a
+  // failing test / carries a frozen config-at-failure). Gates the "Open RCA →" link.
+  hasRca: boolean;
 }
 /** PLM.V2 — a test-traceability row (per-unit verification, distinct from SPC). */
 export interface TestTraceRow {
@@ -123,6 +126,7 @@ export async function getQualityData(orgId: string): Promise<QualityData> {
           status: true,
           rootCause: true, // PLM.V2
           testRunId: true, // PLM.V2 — the run that triggered it
+          configSnapshot: true, // DEMO.5 — frozen config-at-failure ⇒ has an RCA workspace
         },
       }),
       db.cert.findMany({
@@ -231,6 +235,7 @@ export async function getQualityData(orgId: string): Promise<QualityData> {
       rootCause: n.rootCause,
       triggeredByRun: runCode,
       triggeredByHref: runCode ? `/tests/${encodeURIComponent(runCode)}` : null,
+      hasRca: !!(n.testRunId || n.configSnapshot),
     };
   });
 

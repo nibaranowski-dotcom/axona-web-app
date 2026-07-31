@@ -119,23 +119,38 @@ export function UnitView({
               <RailEmpty>No open non-conformances on this unit.</RailEmpty>
             ) : (
               unit.issues.map((n) => (
-                <Link
+                <div
                   key={n.code}
-                  href="/quality"
-                  className="block rounded-[10px] border border-line p-3 transition-colors hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="overflow-hidden rounded-[10px] border border-line"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-[12px] font-semibold text-ink">
-                      {n.code}
-                    </span>
-                    <span className="rounded-pill bg-ink-strong px-2 py-0.5 text-[10px] font-semibold capitalize text-on-dark">
-                      {n.severity.toLowerCase()}
-                    </span>
-                  </div>
-                  <div className="mt-1.5 text-[12px] leading-[1.4] text-ink-muted">
-                    {n.defect}
-                  </div>
-                </Link>
+                  <Link
+                    href="/quality"
+                    className="block p-3 transition-colors hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-[12px] font-semibold text-ink">
+                        {n.code}
+                      </span>
+                      <span className="rounded-pill bg-ink-strong px-2 py-0.5 text-[10px] font-semibold capitalize text-on-dark">
+                        {n.severity.toLowerCase()}
+                      </span>
+                    </div>
+                    <div className="mt-1.5 text-[12px] leading-[1.4] text-ink-muted">
+                      {n.defect}
+                    </div>
+                  </Link>
+                  {/* DEMO.5 — one-click reach to the root-cause workspace from the unit's
+                      failure panel. Read-only view (no write RBAC widened). Only when the
+                      NCR has an RCA workspace. */}
+                  {n.hasRca && (
+                    <Link
+                      href={`/rca/${encodeURIComponent(n.code)}`}
+                      className="block border-t border-line px-3 py-2 font-mono text-[10.5px] font-semibold text-ink transition-colors hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    >
+                      Open RCA →
+                    </Link>
+                  )}
+                </div>
               ))
             )}
           </RailSection>
