@@ -283,7 +283,9 @@ async function run(): Promise<void> {
   const { decide } = await import("../../apps/web/lib/approvals");
   const { captureSeededState } = await import("./lib/self-clean");
   // outcome episodes (MemoryItem) created by decide()'s LOOP.1 writeback self-clean.
-  const guard = await captureSeededState(prisma, ["MemoryItem"]);
+  // "AuditLog" (VERIFY.4): the po.receive audit rows are restored BY ID here,
+  // replacing an `action LIKE 'po.receive.%'` wildcard delete.
+  const guard = await captureSeededState(prisma, ["MemoryItem", "AuditLog"]);
 
   const org = await prisma.org.findFirst({ where: { name: "Axona" } });
   const org2 = await prisma.org.findFirst({
@@ -361,16 +363,6 @@ async function run(): Promise<void> {
       where: { id: po.partId },
       data: { onHand: onHandBefore },
     });
-    await prisma.$executeRawUnsafe(
-      `ALTER TABLE "AuditLog" DISABLE RULE audit_no_delete`,
-    );
-    await prisma.$executeRawUnsafe(
-      `DELETE FROM "AuditLog" WHERE "orgId"=$1 AND action LIKE 'po.receive.%'`,
-      org.id,
-    );
-    await prisma.$executeRawUnsafe(
-      `ALTER TABLE "AuditLog" ENABLE RULE audit_no_delete`,
-    );
   }
 
   // ── 8 · org isolation — another tenant's unit is unreachable ───────────────

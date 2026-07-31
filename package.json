@@ -158,6 +158,7 @@
     "verify:ux-16": "tsx src/scripts/verify-ux-16.ts",
     "verify:verify-3": "tsx src/scripts/verify-verify-3.ts",
     "verify:ci-1": "tsx src/scripts/verify-ci-1.ts",
+    "verify:verify-4": "tsx src/scripts/verify-verify-4.ts",
     "ux-16:columns": "tsx src/scripts/ux-16-column-check.ts",
     "verify:seams-1": "tsx src/scripts/verify-seams-1.ts",
     "verify:mem-2": "tsx src/scripts/verify-mem-2.ts",

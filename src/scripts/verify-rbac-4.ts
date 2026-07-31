@@ -245,26 +245,10 @@ async function run(): Promise<void> {
   // --- self-clean: restore the PO + delete created runs + audit rows ---
   await resetPO();
   await prisma.workflowRun.deleteMany({ where: { id: { in: createdRunIds } } });
-  await prisma.$executeRawUnsafe(
-    `ALTER TABLE "AuditLog" DISABLE RULE audit_no_delete`,
-  );
-  await prisma.$executeRawUnsafe(
-    `DELETE FROM "AuditLog" WHERE "orgId"=$1 AND action LIKE 'po.approve.%'`,
-    org.id,
-  );
-  await prisma.$executeRawUnsafe(
-    `DELETE FROM "AuditLog" WHERE "orgId"=$1 AND action LIKE 'workflow.gate.%'`,
-    org.id,
-  );
-  if (createdRunIds.length) {
-    await prisma.$executeRawUnsafe(
-      `DELETE FROM "AuditLog" WHERE action='workflow.run' AND "targetId" = ANY($1::text[])`,
-      createdRunIds,
-    );
-  }
-  await prisma.$executeRawUnsafe(
-    `ALTER TABLE "AuditLog" ENABLE RULE audit_no_delete`,
-  );
+  // VERIFY.4 — the audit rows this run wrote are restored BY ID by the guard
+  // below (it captured "AuditLog" before the run). The old `action LIKE
+  // 'po.approve.%'` / `'workflow.gate.%'` deletes were redundant AND unsafe: a
+  // wildcard cannot tell this run's rows from seeded or foreign ones.
   await _guard.restore();
   await prisma.$disconnect();
   finish();

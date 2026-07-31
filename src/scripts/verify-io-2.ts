@@ -133,7 +133,8 @@ async function run(): Promise<void> {
     unitDescriptor,
     partMasterDescriptor,
   } = await import("@axona/db");
-  const { captureSeededState } = await import("./lib/self-clean");
+  const { captureSeededState, execScopedAuditDelete } =
+    await import("./lib/self-clean");
   const guard = await captureSeededState(prisma as never, [
     "PartMaster",
     "Unit",
@@ -266,16 +267,14 @@ async function run(): Promise<void> {
         });
         const out = (audit?.output ?? {}) as { skipped?: number };
         const ok = !!audit && audit.actorType === "HUMAN" && out.skipped === 0;
-        // clean the audit row (immutable log — disable the rule for the test row).
-        await prisma.$executeRawUnsafe(
-          `ALTER TABLE "AuditLog" DISABLE RULE audit_no_delete`,
-        );
-        await prisma.$executeRawUnsafe(
+        // Clean the audit row this check wrote. VERIFY.4: routed through
+        // execScopedAuditDelete, which refuses a LIKE/% predicate and toggles the
+        // append-only rule itself. The predicate is an EXACT actorId used only by
+        // this script — it can never match a seeded or foreign row.
+        await execScopedAuditDelete(
+          prisma as never,
           `DELETE FROM "AuditLog" WHERE "orgId"=$1 AND "actorId"='io2-verify'`,
           DEMO,
-        );
-        await prisma.$executeRawUnsafe(
-          `ALTER TABLE "AuditLog" ENABLE RULE audit_no_delete`,
         );
         return ok;
       },

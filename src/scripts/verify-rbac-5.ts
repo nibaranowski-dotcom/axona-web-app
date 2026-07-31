@@ -80,7 +80,12 @@ async function run(): Promise<void> {
   // manual restore (statuses + AuditLog) never covered them, so it leaked 3
   // OUTCOME episodes per run; verify:loop-1 then picked a foreign OVERRIDDEN row
   // and failed later in the sequence. MIGRATE.1: a verify run restores the seed.
-  const _memGuard = await captureSeededState(prisma, ["MemoryItem"]);
+  // "AuditLog" (VERIFY.4): the decide() audit rows are restored BY ID here,
+  // replacing a three-way `action LIKE …` wildcard delete.
+  const _memGuard = await captureSeededState(prisma, [
+    "MemoryItem",
+    "AuditLog",
+  ]);
   const { getAuditTrail } = await import("../../apps/web/lib/audit-trail");
 
   const org = await prisma.org.findFirst({ where: { name: "Axona" } });
@@ -243,16 +248,6 @@ async function run(): Promise<void> {
       where: { id: inv.id },
       data: { status: inv.status },
     });
-  await prisma.$executeRawUnsafe(
-    `ALTER TABLE "AuditLog" DISABLE RULE audit_no_delete`,
-  );
-  await prisma.$executeRawUnsafe(
-    `DELETE FROM "AuditLog" WHERE "orgId"=$1 AND (action LIKE 'eco.release.%' OR action LIKE 'policy.rollback.%' OR action LIKE 'creditnote.issue.%')`,
-    org.id,
-  );
-  await prisma.$executeRawUnsafe(
-    `ALTER TABLE "AuditLog" ENABLE RULE audit_no_delete`,
-  );
   await _memGuard.restore();
   await prisma.$disconnect();
   finish();

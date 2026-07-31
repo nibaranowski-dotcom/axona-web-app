@@ -101,6 +101,7 @@ async function run(): Promise<void> {
   }
 
   const { prisma, dbForOrg } = await import("@axona/db");
+  const { captureSeededState } = await import("./lib/self-clean");
   const { getMembers } = await import("../../apps/web/lib/members");
   const { verifyCredentials } = await import("../../apps/web/lib/credentials");
 
@@ -123,16 +124,15 @@ async function run(): Promise<void> {
   const DEV_PW = "axona-dev-2026!";
 
   // clean audit rows this script creates (append-only rule → disable/enable)
+  // VERIFY.4 — id-scoped restore. This used to be a PATTERN delete
+  // (`action: { startsWith: "member." }`), which cannot tell the rows this run
+  // wrote from seeded or foreign rows sharing the prefix — the shape that once
+  // destroyed CONF.1's calibration history. The guard snapshots AuditLog ids up
+  // front; `restore()` deletes ONLY ids that appeared since, and is repeatable,
+  // so both existing call sites keep working unchanged.
+  const _auditGuard = await captureSeededState(prisma, ["AuditLog"]);
   const cleanAudit = async () => {
-    await prisma.$executeRawUnsafe(
-      `ALTER TABLE "AuditLog" DISABLE RULE audit_no_delete`,
-    );
-    await prisma.auditLog.deleteMany({
-      where: { orgId: demo.id, action: { startsWith: "member." } },
-    });
-    await prisma.$executeRawUnsafe(
-      `ALTER TABLE "AuditLog" ENABLE RULE audit_no_delete`,
-    );
+    await _auditGuard.restore();
   };
   await cleanAudit();
 

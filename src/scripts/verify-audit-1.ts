@@ -234,22 +234,8 @@ async function run(): Promise<void> {
       );
 
       // --- self-clean: remove the rows/runs this script created (admin path) ---
-      await prisma.$executeRawUnsafe(
-        `ALTER TABLE "AuditLog" DISABLE RULE audit_no_delete`,
-      );
-      await prisma.$executeRawUnsafe(
-        `DELETE FROM "AuditLog" WHERE "orgId"=$1 AND action LIKE 'verify.%'`,
-        org.id,
-      );
-      if (createdRunIds.length) {
-        await prisma.$executeRawUnsafe(
-          `DELETE FROM "AuditLog" WHERE action='workflow.run' AND "targetId" = ANY($1::text[])`,
-          createdRunIds,
-        );
-      }
-      await prisma.$executeRawUnsafe(
-        `ALTER TABLE "AuditLog" ENABLE RULE audit_no_delete`,
-      );
+      // VERIFY.4 — audit rows restored BY ID by `_guard` (it captured "AuditLog"
+      // before the run), replacing an `action LIKE 'verify.%'` wildcard delete.
       await prisma.workflowRun.deleteMany({
         where: { id: { in: createdRunIds } },
       });

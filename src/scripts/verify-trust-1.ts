@@ -262,7 +262,6 @@ async function run(): Promise<void> {
     "PurchaseOrder",
     "MemoryItem",
   ]);
-  const org = await prisma.org.findFirst({ where: { id: DEMO } });
   const db = dbForOrg(DEMO);
   // VERIFY.3 — pinned: unordered, this picked PO-9007 or PO-9014 at random, so the
   // row this script mutated (and failed to restore, below) varied run to run.
@@ -317,16 +316,8 @@ async function run(): Promise<void> {
       where: { id: po.id },
       data: { status: po.status },
     });
-  await prisma.$executeRawUnsafe(
-    `ALTER TABLE "AuditLog" DISABLE RULE audit_no_delete`,
-  );
-  await prisma.$executeRawUnsafe(
-    `DELETE FROM "AuditLog" WHERE "orgId"=$1 AND action LIKE 'po.approve.%'`,
-    org?.id ?? DEMO,
-  );
-  await prisma.$executeRawUnsafe(
-    `ALTER TABLE "AuditLog" ENABLE RULE audit_no_delete`,
-  );
+  // VERIFY.4 — audit rows restored BY ID by the guard (it captured "AuditLog"),
+  // replacing an `action LIKE 'po.approve.%'` wildcard that could match seeded rows.
   await guard.restore();
   await prisma.$disconnect();
   finish();

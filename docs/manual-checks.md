@@ -2582,3 +2582,69 @@ still gated, `pnpm eval` still gated in its own job, and no committed secrets. I
 the workflow's *executed* lines, not its comments. **Prove it catches a regression:** swap
 `pgvector/pgvector:pg16` → `postgres:16` (check 1b fails) or delete the `DATABASE_URL`
 line (check 1 fails); restore → 12/12 green.
+
+## VERIFY.4 — audit self-clean restores by exact id (no pattern deletes)
+
+**The rule.** *A verify script restores audit rows by **exact id** — never by a
+pattern.* `captureSeededState(prisma, ["AuditLog", …])` snapshots the id set before
+the run and deletes only ids that appeared since. Where a raw statement is genuinely
+needed, `execScopedAuditDelete()` is the only sanctioned path and it **throws** on a
+wildcard predicate.
+
+**Why.** Cleanup used to say `DELETE FROM "AuditLog" WHERE orgId=$1 AND action LIKE
+'po.approve.%'` — or the Prisma form `auditLog.deleteMany({ where: { action:
+{ startsWith: "billing." } } })`. A pattern cannot distinguish the rows *this run*
+wrote from seeded or foreign rows sharing the prefix; `self-clean.ts`'s own comment
+records that this shape once destroyed CONF.1's calibration history.
+
+It was live in **ten** scripts, in two forms:
+
+| form | scripts |
+|---|---|
+| raw SQL `action LIKE '…%'` | `rbac-4` · `rbac-5` · `trust-1` · `br-1` · `audit-1` |
+| Prisma `startsWith` / action-list | `set-1` · `set-2` · `set-5` · `bill-3` |
+| redundant raw `targetId = ANY(...)` | `audit-3` (guard already covered it) |
+
+**It only ever missed the seeded rows by luck.** The seed writes `eco.release` (30
+rows) and `po.approve` (1) — the patterns required a trailing dot (`eco.release.%`),
+so those exact actions fell just outside. One seeded action named `po.approve.x` and
+real history would have gone silently.
+
+**What changed** (cleanup only — no assertion was touched):
+- The five raw `LIKE` blocks are gone; those scripts already captured `AuditLog`, or
+  now do (`rbac-5`, `br-1` gained it), so the guard restores by id.
+- `set-1` / `set-2` / `set-5` / `bill-3` keep their `cleanAudit()` call sites verbatim;
+  the body is now `await _auditGuard.restore()`. `restore()` re-reads current ids each
+  call, so it is repeatable and both the pre- and post-check call sites still work.
+- `io-2`'s cleanup (an **exact** `actorId='io2-verify'`, never a wildcard) now runs
+  through `execScopedAuditDelete`, which puts the runtime guard on the path.
+- **Exempt, deliberately:** `clearOrgData()` in `lib/prospect-seed.ts` does
+  `auditLog.deleteMany({ where: { orgId } })`. That is a whole-tenant reset wiping one
+  throwaway prospect org across ~15 models before reseeding it — bounded to that tenant
+  and intentionally complete, the opposite of guessing a prefix. A tenant filter
+  *combined* with an action filter is the dangerous hybrid and is **not** exempt.
+- **Not touched:** the `DELETE FROM "AuditLog" WHERE id=$1` statements in `audit-1`
+  and `audit-3` are AUDIT.1 immutability **assertions** — they prove the append-only
+  rule blocks the delete and the row survives. AUDIT.1 is unaffected by VERIFY.4.
+
+**Prove the history survives** — the check this story exists for:
+```
+pnpm --filter @axona/db db:seed
+psql -c "select count(*) from \"AuditLog\";
+         select count(*) from \"AuditLog\" where action in ('proposal.approve','proposal.reject');"
+for f in rbac-4 rbac-5 trust-1 br-1 audit-1 audit-3 set-1 set-2 set-5 bill-3 conf-1 io-2; do pnpm verify:$f; done
+# re-run the counts → identical. Measured: audit 3067 → 3067 · calibration 1477 → 1477
+```
+
+**Grep it:**
+```
+grep -rn 'DELETE FROM "AuditLog"' src/scripts/ | grep -i like     # → nothing
+grep -rn 'auditLog.deleteMany' src/scripts/ | grep -i startsWith  # → nothing
+```
+
+**Automated:** `pnpm verify:verify-4` (in `verify:all`) — 9 checks over both forms,
+comment-stripped so it asserts code rather than prose. **Prove it catches a
+regression, both ways:** add back a raw `action LIKE '…%'` delete → checks 2 and 4
+fail; add back a Prisma `startsWith` delete → check 3 fails; restore → 9/9 green. The
+runtime guard is provable on its own: `assertScopedAuditDelete()` throws on `LIKE`,
+`ILIKE`, `SIMILAR TO` and `~~`, and allows `WHERE id = ANY($1::text[])`.

@@ -185,19 +185,8 @@ async function run(): Promise<void> {
 
   // self-clean
   await prisma.workflowRun.deleteMany({ where: { id: { in: createdRunIds } } });
-  await prisma.$executeRawUnsafe(
-    `ALTER TABLE "AuditLog" DISABLE RULE audit_no_delete`,
-  );
-  if (createdRunIds.length) {
-    await prisma.$executeRawUnsafe(
-      `DELETE FROM "AuditLog" WHERE "orgId"=$1 AND "targetId" = ANY($2::text[])`,
-      org.id,
-      createdRunIds,
-    );
-  }
-  await prisma.$executeRawUnsafe(
-    `ALTER TABLE "AuditLog" ENABLE RULE audit_no_delete`,
-  );
+  // VERIFY.4 — `_guard` captured "AuditLog", so the rows this run wrote are
+  // restored BY ID; the raw targetId delete here was redundant.
   await _guard.restore();
   await prisma.$disconnect();
   finish();

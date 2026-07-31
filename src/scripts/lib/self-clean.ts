@@ -33,6 +33,57 @@ export interface SeededGuard {
   restore(): Promise<void>;
 }
 
+// VERIFY.4 — the pattern-delete guard.
+//
+// Cleanup used to say `DELETE FROM "AuditLog" WHERE orgId=$1 AND action LIKE
+// 'po.approve.%'`. A wildcard predicate does not distinguish the rows THIS run
+// wrote from seeded or foreign rows that happen to share the prefix — that shape
+// once nuked CONF.1's calibration history. Restores are id-scoped; the only
+// sanctioned raw path is `execScopedAuditDelete`, and it refuses a pattern.
+const AUDIT_PATTERN_DELETE =
+  /\bDELETE\b[\s\S]*?\bFROM\b\s*"?AuditLog"?[\s\S]*?(\bLIKE\b|\bILIKE\b|\bSIMILAR\s+TO\b|~~|%)/i;
+
+/**
+ * Throws if `sql` deletes audit rows by a wildcard/pattern predicate. Exported so
+ * any future raw cleanup can assert itself; `execScopedAuditDelete` applies it.
+ */
+export function assertScopedAuditDelete(sql: string): void {
+  if (AUDIT_PATTERN_DELETE.test(sql)) {
+    throw new Error(
+      "VERIFY.4: refusing a pattern DELETE against AuditLog.\n" +
+        "  A LIKE/% predicate cannot tell this run's rows from seeded or foreign ones\n" +
+        "  (this shape once destroyed CONF.1's calibration history).\n" +
+        '  Restore by EXACT id instead — captureSeededState(prisma, ["AuditLog", …])\n' +
+        "  snapshots ids before the run and deletes only what appeared.\n" +
+        `  offending sql: ${sql.trim().slice(0, 160)}`,
+    );
+  }
+}
+
+/**
+ * The ONLY sanctioned raw audit-row cleanup. Asserts the predicate is not a
+ * pattern, then runs it with the append-only rule disabled for exactly that
+ * statement. AUDIT.1 immutability is untouched — the rule is re-enabled in a
+ * `finally`, and the app never takes this path (verify/dev cleanup only).
+ */
+export async function execScopedAuditDelete(
+  prisma: PrismaClient,
+  sql: string,
+  ...params: unknown[]
+): Promise<void> {
+  assertScopedAuditDelete(sql);
+  await prisma.$executeRawUnsafe(
+    `ALTER TABLE "AuditLog" DISABLE RULE audit_no_delete`,
+  );
+  try {
+    await prisma.$executeRawUnsafe(sql, ...params);
+  } finally {
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "AuditLog" ENABLE RULE audit_no_delete`,
+    );
+  }
+}
+
 export async function captureSeededState(
   prisma: PrismaClient,
   models: string[],
