@@ -78,7 +78,7 @@ export function ProcurementView({
       header={
         <>
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">
+            <div className="font-mono text-[10px] uppercase tracking-[0.06em] tabular-nums text-ink-muted">
               Value chain · {data.pos.length} POs
             </div>
             <h1 className="mt-0.5 text-[19px] font-semibold tracking-[-0.02em] text-ink">
@@ -138,14 +138,14 @@ export function ProcurementView({
                   }}
                 >
                   {f.label}
-                  <span className="ml-2 font-mono text-[10.5px] opacity-70">
+                  <span className="ml-2 font-mono text-[10.5px] tabular-nums opacity-70">
                     {countFor(f.key)}
                   </span>
                 </Pill>
               ))}
               <Pill active={agentOnly} onClick={() => setAgentOnly((v) => !v)}>
                 Agent-drafted
-                <span className="ml-2 font-mono text-[10.5px] opacity-70">
+                <span className="ml-2 font-mono text-[10.5px] tabular-nums opacity-70">
                   {agentCount}
                 </span>
               </Pill>

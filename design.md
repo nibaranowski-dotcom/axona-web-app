@@ -83,4 +83,17 @@ type does the work (Archivo display + JetBrains Mono labels) · **no emoji**.
   `truncate` cell in a `grid grid-cols-[…]` / `flex` row needs `min-w-0` on the whole
   chain. (Only where it's a genuine flex/grid item — adding `min-w-0` elsewhere is a
   no-op.)
+- **Shared grid templates in dense tables (UX.16 — regression guard):** a bare `Nfr`
+  track is **`minmax(auto, Nfr)`** — its floor is its own **min-content**. So a header and
+  its rows can share one `grid-cols-[…]` and still resolve **different** tracks: a row whose
+  money figure or status chip exceeds its ratio share inflates that track and steals width
+  from its neighbours, while the header's short mono labels never do (measured on the
+  Procurement PO queue: **22px** of column drift at 1280px). Rule: in a table whose header
+  and rows share a template, **every track must be content-independent** — `minmax(0, Nfr)`
+  for text that truncates, a **measured** px floor (`minmax(76px, 0.9fr)`) for an
+  identifier or a money figure that must never truncate, and a **fixed px** track for a
+  closed set of chips, sized to the widest one. Never a bare `Nfr`, never a magic-number
+  pad. Numeric/date cells get **`tabular-nums`**; chips inside a now-unyielding track get
+  `shrink-0` in an `overflow-hidden` cell so they clip at the track edge rather than
+  painting over the next column.
 ```

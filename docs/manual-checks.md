@@ -2340,3 +2340,59 @@ client-side binary parsing. RBAC-gated + audited. The `/import` file picker now 
 rows → re-upload that file with **Bulk-update** on → the result reads *0 created · 0
 updated · N skipped* (round-trip no-op). Edit one row in the file → re-upload → *1 updated*,
 the rest skipped. No migration (the natural-key uniques already exist from PLM.2/MFX.1).
+
+## UX.16 — the Procurement PO-queue column residual (task #43)
+
+**The bug.** The PO queue's header and rows share one `grid-cols-[…]` template, yet the
+columns didn't line up — measured **22.07px** of drift at a 1280px viewport. Cause: a bare
+`Nfr` track is `minmax(auto, Nfr)`, so **each track's floor is its own min-content**. A row
+whose value (`$91,200`) or status chip (`Awaiting approval`, 109.6px) is wider than its
+ratio share inflates that track and steals width from its truncating neighbours — while the
+header's short mono labels (`VALUE`, `STATUS`) never do. Header and rows therefore resolve
+*different* tracks off the *same* template. Same family as UX.15 (`min-w-0`), one level
+down: UX.15 fixed the cells that truncate, UX.16 fixes the tracks that size them.
+
+**The fix** (`PoRow.tsx` `COLS`, shared with the header via `PO_HEADER_COLS`): every track
+is now **content-independent**, so header and rows resolve identically at every width.
+```
+minmax(56px,0.8fr)  PO      floor = `PO-9001` in mono 12.5px (52.5px measured)
+minmax(0,2.2fr)     Item    purely proportional, truncates
+minmax(0,1fr)       Vendor  purely proportional, truncates
+minmax(76px,0.9fr)  Value   floor = `$1,234,567` in mono 12.5px (75px measured)
+112px               Status  fixed = the widest chip, `Awaiting approval` (109.6px measured)
+160px               Action  unchanged (UX.5)
+```
+No magic-number pad: the two floors and the fixed width are *measured intrinsics*, recorded
+in the comment above `COLS`. Numeric/date cells (PO code · qty · promised/received ·
+value · the queue footer count · the filter-pill counts) are `tabular-nums`. The BR.1 flag
+chips are `shrink-0` inside an `overflow-hidden` item row: the Item track can no longer
+inflate to fit them, so at cramped widths they **clip at the track edge** instead of
+painting over the Vendor column.
+
+**Measured check** (needs the served app + a seeded DB, like `a11y:scan` — so it is NOT in
+`verify:all`):
+```
+pnpm ux-16:columns                              sweep 1180→1728, exit 1 on >0.5px drift
+UX16_SHOT=/tmp/proc.png pnpm ux-16:columns      also write a screenshot
+UX16_WIDTHS=1280 UX16_VERBOSE=1 pnpm ux-16:columns
+```
+It reads the **resolved** `grid-template-columns` of the header and of every row and reports
+each track's left-edge drift. Before: `22.07px` @1280 (`56.07px` @1180). After: **0px at
+every width.**
+
+**Visual check** on `/procurement`: header ↔ every row ↔ footer flush; `Awaiting approval`
+sits on **one** line (it used to wrap and make that row taller); PO codes stay on one line at
+1280 (they used to wrap to `PO-` / `9001`); values are digit-aligned; the BR.1
+promised/received line, `LATE`, `SINGLE-SOURCE` and `LONG-LEAD` chips all still render.
+
+**Automated:** `pnpm verify:ux-16` (in `verify:all`) is the static guard — one shared
+template, no `auto`-floored track, fixed status track, measured px floors, 160px action
+track, `tabular-nums`, the UX.15 `min-w-0` chain, BR.1 intact, no raw hex. **Prove it catches
+a regression:** put `grid-cols-[0.8fr_2.2fr_1fr_0.9fr_1.15fr_160px]` back → checks 2/3/4
+fail with exit 1; restore → 13/13 green.
+
+**Known, unchanged by this story:** below ~1366px the queue is genuinely over-constrained
+(6 columns incl. a 160px action track in ≤674px of card), so Item/Vendor squeeze hard and
+the flags clip. That is a responsive gap in the design, not a residual — the columns stay
+perfectly flush there. A scroll/stacking treatment for narrow widths is a design decision,
+not a unilateral fix.
