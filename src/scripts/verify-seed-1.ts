@@ -16,9 +16,59 @@
  *      (DB check — gated behind DATABASE_URL so the pre-push hook runs statics.)
  */
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import {
+  existsSync,
+  readFileSync,
+  mkdtempSync,
+  writeFileSync,
+  rmSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { BANNED_MARQUES, BANNED_RE, scanForMarques } from "./lib/anonymization";
+
+// SEED.3 — the prospect/advisor marques the wall enforces across the WHOLE committed
+// tree (distinctive, non-collision-prone tokens). BMW/Kawasaki etc. stay in the full
+// BANNED_MARQUES list (scanned over apps/packages/exports/docs) but are NOT part of
+// this tree-wide grep — they have pre-existing design-mock usage out of this scope.
+// "MFX" is deliberately excluded (collision-prone story-ID/migration prefix).
+const PROSPECT_MARQUES = [
+  "helsing",
+  "nomagic",
+  "microfluidx",
+  "marcel",
+  "gordon",
+];
+const MARQUE_GREP = PROSPECT_MARQUES.map((m) => `-e ${m}`).join(" ");
+
+// The ONLY committed files permitted to contain a marque token — each names one to
+// ENFORCE the wall (the list / this verify) or to GUARD against a leak (assert it is
+// ABSENT). Anything else that matches is a real leak and fails the wall.
+const MARQUE_ALLOWLIST: { path: string; reason: string }[] = [
+  {
+    path: "src/scripts/lib/anonymization.ts",
+    reason:
+      "the banned-list source of truth — names every marque by definition",
+  },
+  {
+    path: "src/scripts/verify-seed-1.ts",
+    reason:
+      "this wall itself — names marques in the grep pattern, allowlist reasons + self-test",
+  },
+  {
+    path: "src/scripts/verify-audit-4.ts",
+    reason:
+      "anti-leak GUARD — asserts the base demo audit view does NOT contain 'Nomagic'",
+  },
+  {
+    path: "src/scripts/verify-conf-1.ts",
+    reason:
+      "anti-leak GUARD — asserts the base demo calibration panel does NOT contain 'Nomagic'",
+  },
+];
+const ALLOWLIST_EXCLUDES = MARQUE_ALLOWLIST.map(
+  (a) => `':(exclude)${a.path}'`,
+).join(" ");
 
 let passed = 0;
 let failed = 0;
@@ -80,19 +130,24 @@ async function run(): Promise<void> {
   });
 
   // 2b. PROSPECT.3 — the prospect/advisor names are banned + the scan reaches specs/
-  await check("banned list includes the prospect + advisor names", () => {
+  await check("banned list includes every prospect + advisor marque", () => {
     const has = (m: string) =>
       (BANNED_MARQUES as readonly string[]).includes(m);
-    return has("Helsing") && has("Marcel Gordon") && has("Marcel");
+    return (
+      has("Helsing") &&
+      has("Nomagic") &&
+      has("MicrofluidX") &&
+      has("Marcel Gordon") &&
+      has("Marcel")
+    );
   });
-  await check("specs/ is free of the prospect + advisor names", () => {
-    // Enforce the PROSPECT.3 names over specs/ explicitly (the general marque scan
+  await check("specs/ is free of every prospect + advisor marque", () => {
+    // Enforce the prospect marques over specs/ explicitly (the general marque scan
     // stays on apps/packages/exports/docs; specs/ carries a separate pre-existing
-    // BMW/Kawasaki cleanup that is out of PROSPECT.3's scope — flagged, not swept).
-    const out = execSync(
-      "git grep -iI -c -e helsing -e marcel -e gordon -- specs/ || true",
-      { cwd: root },
-    )
+    // BMW/Kawasaki cleanup that is out of this scope — flagged, not swept).
+    const out = execSync(`git grep -iI -c ${MARQUE_GREP} -- specs/ || true`, {
+      cwd: root,
+    })
       .toString()
       .trim();
     if (out)
@@ -100,21 +155,65 @@ async function run(): Promise<void> {
     return out.length === 0;
   });
   await check(
-    "tracked tree has ZERO helsing/marcel/gordon (git grep, excl. enforcement files)",
+    `tracked tree has ZERO prospect marques (${PROSPECT_MARQUES.join("/")}) outside the allowlist`,
     () => {
-      // Exclude the gitignored tenant dir + the two enforcement files that MUST
-      // name them (the banned list + this verify) — everything else must be clean.
+      // The WHOLE committed tree (incl. specs/) minus the gitignored tenant dir and
+      // the explicit MARQUE_ALLOWLIST (enforcement + anti-leak guards). Anything else
+      // that names a marque is a real leak.
       const out = execSync(
-        "git grep -iI -c -e helsing -e marcel -e gordon -- . " +
-          '":(exclude)prospects/" ' +
-          '":(exclude)src/scripts/lib/anonymization.ts" ' +
-          '":(exclude)src/scripts/verify-seed-1.ts" || true',
+        `git grep -iI -c ${MARQUE_GREP} -- . ':(exclude)prospects/' ${ALLOWLIST_EXCLUDES} || true`,
         { cwd: root },
       )
         .toString()
         .trim();
       if (out) console.log(`      hits:\n${out.replace(/^/gm, "        ")}`);
       return out.length === 0;
+    },
+  );
+
+  // ── SEED.3 self-test — the wall must BITE (so it can't silently rot) ──────────
+  await check(
+    "wall self-test: the marque grep is LIVE and the allowlist is exactly the marque-bearing files",
+    () => {
+      // WITHOUT the allowlist the grep must still find files (proving it isn't a
+      // no-op), and EVERY file it finds must be an allowlisted path (proving the tree
+      // is clean + the allowlist is precise — nothing un-allowlisted names a marque).
+      const out = execSync(
+        `git grep -iI -l ${MARQUE_GREP} -- . ':(exclude)prospects/' || true`,
+        { cwd: root },
+      )
+        .toString()
+        .trim();
+      const files = out ? out.split("\n") : [];
+      const allow = new Set(MARQUE_ALLOWLIST.map((a) => a.path));
+      const stray = files.filter((f) => !allow.has(f));
+      if (stray.length)
+        console.log(
+          `      un-allowlisted marque files:\n        ${stray.join("\n        ")}`,
+        );
+      return files.length >= 3 && stray.length === 0;
+    },
+  );
+  await check(
+    "wall self-test: a reintroduced marque in a fresh file IS caught (scanner positive control)",
+    () => {
+      // Prove the detection mechanism bites: a new file with a banned marque is a hit;
+      // the anonymized label is not. Self-cleaning (temp dir outside the repo).
+      const tmp = mkdtempSync(join(tmpdir(), "seed3-"));
+      try {
+        writeFileSync(
+          join(tmp, "leak.ts"),
+          'export const x = "a Nomagic cell";\n',
+        );
+        writeFileSync(
+          join(tmp, "ok.ts"),
+          'export const y = "Tier-1 Auto OEM";\n',
+        );
+        const hits = scanForMarques(tmp, ["."]);
+        return hits.length === 1 && hits[0]?.marque.toLowerCase() === "nomagic";
+      } finally {
+        rmSync(tmp, { recursive: true, force: true });
+      }
     },
   );
 

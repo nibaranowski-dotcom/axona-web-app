@@ -1,5 +1,7 @@
 /**
- * Verify MFX.1 — the MicrofluidX demo seed (procurement + build-readiness wedge).
+ * Verify MFX.1 — the MedTech-device-maker demo seed (procurement + build-readiness
+ * wedge). Marque-free (SEED.3): the tenant's real name is never committed — the
+ * real-seed block resolves the org by a non-marque serial (CE-2026-007), never by name.
  * Static checks always run. DB checks gate on DATABASE_URL:
  *  · a CI-safe THROWAWAY org proves the mechanism (xlsx BOM → IO.1 → item IDs;
  *    a 60-shaped readiness fixture reads 85% / 2 blocking; org isolation), and is
@@ -67,7 +69,7 @@ function bomXlsx(pns: string[]): Uint8Array {
 }
 
 async function run(): Promise<void> {
-  console.log("\nVerifying MFX.1 — MicrofluidX demo seed\n");
+  console.log("\nVerifying MFX.1 — MedTech demo seed\n");
 
   // ── 1-3 · static: the committed IO.1 build-on-top ──────────────────────────
   await check(
@@ -329,18 +331,19 @@ async function run(): Promise<void> {
     await prisma.org.deleteMany({ where: { id: VERIFY_ORG } });
   }
 
-  // ── 8 · the REAL MFX seed, when present (gitignored config → local only) ────
-  const mfx = await prisma.org.findFirst({ where: { id: "org_mfx_demo" } });
-  if (!mfx) {
+  // ── 8 · the REAL seed, when present (gitignored config → local only). Resolve the
+  //    org by a NON-marque anchor (the hero serial), never by name (SEED.3). ────────
+  const heroUnit = await prisma.unit.findFirst({
+    where: { serial: "CE-2026-007" },
+    select: { id: true, orgId: true },
+  });
+  if (!heroUnit?.orgId) {
     console.log(
-      "\n  SKIP org_mfx_demo checks — not seeded (run: pnpm db:seed:prospect prospects/mfx)",
+      "\n  SKIP real-seed checks — the demo tenant is not seeded (run its gitignored config)",
     );
   } else {
-    const mdb = dbForOrg("org_mfx_demo");
-    const hero = await mdb.unit.findFirst({
-      where: { serial: "CE-2026-007" },
-      select: { id: true },
-    });
+    const mdb = dbForOrg(heroUnit.orgId);
+    const hero = { id: heroUnit.id };
 
     await check(
       "real #007 reads ~85% in-house, blocked on exactly 2",

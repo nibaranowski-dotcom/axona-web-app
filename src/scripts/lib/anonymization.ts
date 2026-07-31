@@ -41,12 +41,19 @@ export const BANNED_MARQUES = [
   "Stellantis",
   "Rivian",
   "General Motors",
-  // PROSPECT.3 — a real prospect + advisor named only in gitignored tenant configs,
-  // never in committed code. Banned so the name can never re-enter a tracked doc.
-  // "Helsing" (the prospect) + "Marcel Gordon" / "Marcel" (the advisor); standalone
-  // "Gordon" is deliberately omitted — it collides with the finance "Gordon growth
-  // model". Real usage lives ONLY under the gitignored `prospects/` dir (IGNORE_DIRS).
+  // PROSPECT.3 / SEED.3 — real prospects + an advisor named only in gitignored tenant
+  // configs, never in committed code. Banned so a name can never re-enter a tracked
+  // doc. "Helsing" · "Nomagic" · "MicrofluidX" (the prospects) + "Marcel Gordon" /
+  // "Marcel" (the advisor). Standalone "Gordon" is omitted — it collides with the
+  // finance "Gordon growth model". Real usage lives ONLY under the gitignored
+  // `prospects/` dir (IGNORE_DIRS).
+  // SEED.3 — we ban the FULL, unambiguous marque strings only. "MFX" is deliberately
+  // NOT banned: it is too collision-prone (it is the story-ID prefix "MFX.1", the
+  // migration/schema prefix, and reads as a generic acronym) — banning it would
+  // false-positive across committed code. The distinctive "MicrofluidX" is enough.
   "Helsing",
+  "Nomagic",
+  "MicrofluidX",
   "Marcel Gordon",
   "Marcel",
 ] as const;

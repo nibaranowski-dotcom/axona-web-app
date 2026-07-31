@@ -2148,7 +2148,7 @@ aligned (design `partNumber` ↔ procurement `sku`). MFX.1 enriches the seed so 
 unit reads ~85% ready blocked on 2 parts. Until then a thin/partial card is expected and
 honest (untracked BOM lines show as "not tracked").
 
-## MFX.1 — MicrofluidX demo seed (procurement + build-readiness wedge)
+## MFX.1 — MedTech-device-maker demo seed (procurement + build-readiness wedge)
 
 The tailored demo tenant that lights up BR.1 + Procurement for a fictional **MedTech
 device maker** (anonymized). Config is UNTRACKED (`prospects/mfx/prospect.config.ts`,
@@ -2250,3 +2250,38 @@ without the logo). Then:
   spare + a technician; a scheduled preventive-maintenance WO.
 - Persona is a fictional Ops-Lead; downstream customers are Customer-A/B (never real).
   Only real capabilities seeded — no faked CAD connectors / financials / pick-path opt.
+
+## SEED.3 — the marque wall (banned list + allowlist policy)
+
+`verify:seed-1` is the complete enforcement wall for every real company/person/prospect
+marque. Two mechanisms, one banned list (`src/scripts/lib/anonymization.ts`):
+
+1. **Scanned ship surface** — `scanForMarques` reads `apps/ · packages/ · exports/ ·
+   docs/` for the FULL `BANNED_MARQUES` list (OEMs + prospects + advisor). Any hit fails.
+2. **Tree-wide prospect grep** — a `git grep` over the WHOLE committed tree (incl.
+   `specs/`), minus the gitignored `prospects/` dir and an explicit **allowlist**,
+   enforces the distinctive prospect/advisor marques. This catches a marque anywhere —
+   `src/scripts/`, `design/`, `README`, `backlog`, `specs/` — not just the ship surface.
+
+**Banned list policy:** we ban the FULL, unambiguous marque strings only. We do NOT ban
+collision-prone short tokens — notably **MFX** (the story-ID prefix `MFX.1`, the
+migration/schema prefix, a generic-looking acronym); the distinctive full name is banned
+instead. The advisor's standalone surname is likewise omitted (it collides with a
+common finance growth-model term); only the full two-word name is banned.
+
+**Allowlist** (`MARQUE_ALLOWLIST` in `verify-seed-1.ts`) — the ONLY committed files
+permitted to contain a marque token, each with a documented reason. Two kinds:
+- **Enforcement files** — the banned-list source of truth + the wall verify itself (they
+  name marques by definition).
+- **Anti-leak GUARDS** — verifies that assert a marque is ABSENT from the base demo
+  (`!/…|<marque>/.test(view)`). These prove non-leakage; they are not leaks.
+Anything matching a marque OUTSIDE the allowlist is a real leak and fails the wall.
+The prospect tenant configs themselves stay gitignored (`prospects/`) and are never
+scanned; every committed verify resolves a prospect org by a NON-marque serial
+(`SN-H-4471` / `NM-PICK-0142` / `CE-2026-007`), never by name.
+
+**Self-test (so the wall can't silently rot):** `verify:seed-1` includes two positive
+controls — (a) the grep is LIVE and the allowlist is exactly the marque-bearing files
+(no un-allowlisted file names a marque), and (b) `scanForMarques` catches a marque
+reintroduced into a fresh file while ignoring the anonymized OEM label. Manually
+confirmed: injecting a marque into a tracked non-allowlisted file fails the wall (exit 1).
