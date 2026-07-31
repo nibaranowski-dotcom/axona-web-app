@@ -2218,3 +2218,35 @@ S3/R2 for the branding upload; skip S3 to seed without the logo). Then:
 - Persona is the fictional "Lena Brandt · Production Quality Lead"; approvers (Jonas Weiss)
   and technicians fictional. Every other module re-skins the PROSPECT.3 base to the defense
   world (mechanics only) — zero empty/generic screens.
+
+## PROSPECT-PLM (extended) — agentic-procurement + per-cell genealogy overlay
+
+The `verify:prospect-plm` integration verify now covers a SECOND gitignored prospect
+overlay: a robotic-cell manufacturer whose wedge is **agentic procurement + per-cell
+build genealogy** (procure → build → deploy → maintain). Same SEED.1 discipline — the
+tenant's real marque is never committed; the verify resolves the org by a non-marque
+serial (`NM-PICK-0142`), and the docs/commit name no marque. No app code changed — it
+reuses `computeBuildReadiness`, `asBuiltDiff`, `affectedUnits`, and the existing
+procurement/inventory/field read models.
+
+**Seed + demo (local):** `pnpm db:seed:prospect prospects/<tenant>` (skip S3 to seed
+without the logo). Then:
+- **Agentic-procurement hero** (`/procurement`, `/inventory`): a cell BOM's gripper-servo
+  is below min → the procurement agent drafted a **PR + RFQ** (AWAITING_APPROVAL,
+  calibrated confidence) → a human-approved PO is **SENT but 15 days late** (being chased)
+  → a separate received order is **3-way matched** (PO · packing-list `File.extracted` ·
+  invoice) with its **SN captured** into cell NM-PICK-0142's genealogy.
+- **Cell NM-PICK-0142** (`/units/NM-PICK-0142`): as-built diff shows the **VIS-CAM rev 4 →
+  rev 3 substitution**; the **Build readiness** card reads **85% blocked on 2** single-
+  source long-lead specialty parts (gripper servo · precision optic).
+- **Gripper-EOAT ECO** (`/blast-radius?type=eco&value=ECO-NM-318`): supersede across built
+  + deployed cells (Customer-A/B).
+- **Multi-location inventory** (`/inventory`): stock + reserved across Warsaw plant ·
+  assembly line-side · Switzerland (non-EU) · consignment · Customer-A on-site spares;
+  min/max; one obsolete/discarded part revision.
+- **Deployment projects** (`/projects`): Customer-A rollout (BLOCKED on the shortage) ·
+  Customer-B expansion · R&D cell — cost centers + linked orders.
+- **Field maintenance** (`/field-service`): an actuator-wear WO reserving the on-site
+  spare + a technician; a scheduled preventive-maintenance WO.
+- Persona is a fictional Ops-Lead; downstream customers are Customer-A/B (never real).
+  Only real capabilities seeded — no faked CAD connectors / financials / pick-path opt.
