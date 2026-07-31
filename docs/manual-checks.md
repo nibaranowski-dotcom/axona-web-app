@@ -2182,3 +2182,39 @@ config is gitignored, never scanned). Isolation strict (2nd org → not found).
 
 **Prod:** `pnpm db:seed:prospect prospects/mfx` against the prod DATABASE_URL/R2 env
 makes the tenant demo-live (run with prod secrets; human-gated).
+
+## PROSPECT-PLM — deep PLM golden-thread overlay (defense-manufacturer prospect)
+
+A gitignored prospect overlay that deepens a multi-factory defense-manufacturer tenant
+so every module renders full and the config golden thread lands end-to-end. Per SEED.1
+the tenant's real marque is NEVER committed — the config lives under gitignored
+`prospects/<tenant>/`, and the committed verify is marque-free (it resolves the org by a
+non-marque anchor, the `SN-H-4471` serial). This story added NO app code — it reuses the
+existing PLM read models (RCA · Configurations · blast radius · BR.1). Automated:
+`pnpm verify:prospect-plm` (a CI-safe throwaway fixture proving the integration + a
+real-thread block gated on the gitignored seed being present).
+
+**Sensitivity governance (hard rule):** configuration-management / traceability MECHANICS
+ONLY — NO payload / warhead / targeting / guidance / EW / range / operational content
+anywhere. Programs = Program-A/B; customers = Customer-1; factories = Factory-1/2/3; never a
+real nation / force / base / named program. `verify:prospect-plm` scans every seeded text
+field for operational terms and fails on any hit.
+
+**Seed + demo (local):** `pnpm db:seed:prospect prospects/<tenant>` (needs the local logo +
+S3/R2 for the branding upload; skip S3 to seed without the logo). Then:
+- `/units/SN-H-4471` — as-built diff shows the COMPUTE-720 **rev B / lot 88471** substitution
+  (flagged lot, `ncr_hold`); the **Build readiness** card reads ~85% blocked on 2 single-
+  source long-lead specialty parts (ACTUATOR-560 late · OPTICS-620 short).
+- Test → NCR → **RCA** (`/rca/NCR-H118`): assembled evidence (config diff vs a passing run ·
+  shared lot 88471 · a prior failure via memory) → agent-proposed cause (component) → human
+  classification, audited.
+- **ECO-H318** supersede → **blast radius** (`/blast-radius?type=eco&value=ECO-H318`): 8
+  affected units across **Factory-1/2/3** (units grouped by `siteLabel`); dual-approver release.
+- **Configurations** (`/configurations`): CFG-HX2-r4.1 (superseded) → r4.2 (**baseline · locked
+  · dual-approver**, frozen manifest) → r4.3 (draft). "Which units run CFG-HX2-r4.2 / firmware
+  v4.2.1" resolves to the real fleet set.
+- **Legal / Fulfillment:** one shipment (DLV-H3320) carries a dual-use **export-control HOLD**
+  (ECCN 9A991) — mechanics only, no trade-compliance engine.
+- Persona is the fictional "Lena Brandt · Production Quality Lead"; approvers (Jonas Weiss)
+  and technicians fictional. Every other module re-skins the PROSPECT.3 base to the defense
+  world (mechanics only) — zero empty/generic screens.
