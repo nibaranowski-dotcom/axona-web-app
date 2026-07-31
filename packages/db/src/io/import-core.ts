@@ -29,8 +29,18 @@ export interface ImportResult {
   dryRun: boolean;
   created: number;
   updated: number;
+  /** IO.2 — rows matched by natural key whose columns were unchanged (upsert mode
+   *  only; 0 in the default create/blind-update mode). Never silently overwritten. */
+  skipped: number;
   errors: RowError[];
   totalRows: number;
+}
+
+/** IO.2 — one exported row: its natural key (matching `keyOf`) + the column cells in
+ *  the descriptor's `columns` order. Round-trips back through `importEntity`. */
+export interface ExportRow {
+  key: string;
+  cells: (string | number)[];
 }
 
 /**
@@ -117,6 +127,13 @@ export interface EntityDescriptor<Ctx, Parsed> {
     v: Parsed,
     exists: boolean,
   ): Prisma.PrismaPromise<unknown>;
+  // IO.2 — export / round-trip / upsert-skip support (optional; the core entities
+  // implement it, so importEntity's default path is untouched for callers that don't).
+  // `columns` is the export header order (⊆ required ∪ optional); `readRows` reads ALL
+  // org rows serialized to those columns, keyed by the SAME natural key `keyOf`
+  // produces — so an export round-trips and upsert-mode can compare cells for a skip.
+  columns?: string[];
+  readRows?(db: OrgScopedDb): Promise<ExportRow[]>;
 }
 
 export interface ImportSource {
@@ -146,7 +163,10 @@ export async function importEntity<Ctx, Parsed>(
   db: OrgScopedDb,
   descriptor: EntityDescriptor<Ctx, Parsed>,
   source: ImportSource,
-  opts: { dryRun?: boolean } = {},
+  // IO.2 — `mode: "upsert"` is OPT-IN bulk-update: match by natural key, UPDATE only
+  // CHANGED rows, CREATE new, SKIP unchanged (never a silent overwrite). Absent =>
+  // the default create/blind-update path is byte-identical for existing callers.
+  opts: { dryRun?: boolean; mode?: "upsert" } = {},
 ): Promise<ImportResult> {
   const dryRun = opts.dryRun ?? false;
   // MFX.1 — CSV and xlsx converge to the same rows here; the descriptor never
@@ -171,15 +191,20 @@ export async function importEntity<Ctx, Parsed>(
         dryRun,
         created: 0,
         updated: 0,
+        skipped: 0,
         totalRows: rows.length,
         errors: [{ row: 0, message: `missing required column "${req}"` }],
       };
   }
 
   const ctx = await descriptor.loadContext(db);
+  const upsert = opts.mode === "upsert" && !!descriptor.columns;
 
   // validate EVERY row first (no partial corruption); errors collected in order.
   const valid: Parsed[] = [];
+  // IO.2 upsert — the incoming canonical cells per valid row, to compare vs the
+  // existing serialized row (unchanged ⇒ skip). Only captured in upsert mode.
+  const validCells: string[][] = [];
   rows.forEach((r, idx) => {
     const row = idx + 1;
     const col = (name: string) => {
@@ -192,9 +217,50 @@ export async function importEntity<Ctx, Parsed>(
       errors.push(column ? { row, column, message } : { row, message });
     };
     const parsed = descriptor.parseRow({ col, ctx, row, err });
-    if (parsed !== null && !rejected) valid.push(parsed);
+    if (parsed !== null && !rejected) {
+      valid.push(parsed);
+      if (upsert)
+        validCells.push(descriptor.columns!.map((c) => String(col(c)).trim()));
+    }
   });
 
+  // ── IO.2 bulk-update (upsert) — CREATE new · UPDATE changed · SKIP unchanged ──
+  if (upsert && descriptor.readRows) {
+    const existingRows = await descriptor.readRows(db);
+    const cellsByKey = new Map(
+      existingRows.map((e) => [e.key, e.cells.map((c) => String(c).trim())]),
+    );
+    let created = 0;
+    let updated = 0;
+    let skipped = 0;
+    const ops: Prisma.PrismaPromise<unknown>[] = [];
+    valid.forEach((v, i) => {
+      const ex = cellsByKey.get(descriptor.keyOf(v));
+      if (!ex) {
+        created++;
+        ops.push(descriptor.writeOp(db, v, false));
+        return;
+      }
+      const inc = validCells[i] ?? [];
+      const same = inc.length === ex.length && inc.every((c, j) => c === ex[j]);
+      if (same) skipped++;
+      else {
+        updated++;
+        ops.push(descriptor.writeOp(db, v, true));
+      }
+    });
+    if (!dryRun && ops.length > 0) await db.$transaction(ops);
+    return {
+      dryRun,
+      created,
+      updated,
+      skipped,
+      errors,
+      totalRows: rows.length,
+    };
+  }
+
+  // ── default path (create + idempotent blind-update; unchanged for all callers) ──
   // determine created vs updated WITHOUT writing (dry-run reports the same split).
   const existing =
     valid.length > 0
@@ -214,7 +280,56 @@ export async function importEntity<Ctx, Parsed>(
     );
   }
 
-  return { dryRun, created, updated, errors, totalRows: rows.length };
+  return {
+    dryRun,
+    created,
+    updated,
+    skipped: 0,
+    errors,
+    totalRows: rows.length,
+  };
+}
+
+/**
+ * IO.2 — the export counterpart to `importEntity`, reusing the SAME descriptor. Reads
+ * all org rows via `descriptor.readRows` and returns them in `descriptor.columns`
+ * order, so exporting an entity → re-importing the file is a round-trip no-op (the
+ * cells match, upsert mode reports every row skipped). Org-scoped via `db`.
+ */
+export async function exportEntity<Ctx, Parsed>(
+  db: OrgScopedDb,
+  descriptor: EntityDescriptor<Ctx, Parsed>,
+): Promise<{ headers: string[]; rows: (string | number)[][] }> {
+  if (!descriptor.columns || !descriptor.readRows)
+    throw new Error(`entity "${descriptor.entity}" is not exportable`);
+  const rows = await descriptor.readRows(db);
+  return { headers: descriptor.columns, rows: rows.map((r) => r.cells) };
+}
+
+/**
+ * IO.2 — the `parseWorkbook` counterpart: write a header + rows to xlsx bytes using
+ * the SAME single `xlsx` dependency (no second writer). Round-trips with parseWorkbook.
+ */
+export function writeWorkbook(
+  headers: string[],
+  rows: (string | number)[][],
+): Uint8Array {
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Export");
+  return XLSX.write(wb, { type: "array", bookType: "xlsx" }) as Uint8Array;
+}
+
+/** IO.2 — the `parseCsv` counterpart. RFC-4180 quoting for cells with `,`/`"`/newline. */
+export function writeCsv(
+  headers: string[],
+  rows: (string | number)[][],
+): string {
+  const esc = (v: string | number) => {
+    const s = String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return [headers, ...rows].map((r) => r.map(esc).join(",")).join("\n");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -313,6 +428,32 @@ export const unitDescriptor: EntityDescriptor<UnitCtx, ParsedUnit> = {
       },
     });
   },
+  // IO.2 — export in the SAME canonical columns import reads. buildDate is full ISO
+  // so an export round-trips with no precision drift (re-import → identical instant).
+  columns: [
+    "serial",
+    "model",
+    "status",
+    "builddate",
+    "sitelabel",
+    "customerlabel",
+  ],
+  async readRows(db) {
+    const units = await db.unit.findMany({
+      include: { productModel: { select: { code: true } } },
+    });
+    return units.map((u) => ({
+      key: u.serial,
+      cells: [
+        u.serial,
+        u.productModel.code,
+        u.status,
+        u.buildDate ? u.buildDate.toISOString() : "",
+        u.siteLabel ?? "",
+        u.customerLabel ?? "",
+      ],
+    }));
+  },
 };
 
 const LIFECYCLE_STATUSES = new Set<string>([
@@ -391,6 +532,16 @@ export const partMasterDescriptor: EntityDescriptor<null, ParsedPart> = {
         lifecycleStatus: v.lifecycleStatus,
       },
     });
+  },
+  // IO.2 — export/round-trip columns (import updates these 3 fields; approvedVendorIds
+  // is preserved on update, so a round-trip never drifts it).
+  columns: ["partnumber", "description", "lifecyclestatus", "category"],
+  async readRows(db) {
+    const pms = await db.partMaster.findMany();
+    return pms.map((p) => ({
+      key: p.partNumber,
+      cells: [p.partNumber, p.description, p.lifecycleStatus, p.category ?? ""],
+    }));
   },
 };
 
@@ -492,6 +643,30 @@ export const bomLineDescriptor: EntityDescriptor<BomCtx, ParsedBomLine> = {
       },
       update: { partRevisionId: v.partRevisionId, qty: v.qty },
     });
+  },
+  // IO.2 — export in the same canonical BOM columns. key uses the internal
+  // productModelId (== keyOf) while the "model" cell is the human code.
+  columns: ["model", "revision", "position", "partnumber", "rev", "qty"],
+  async readRows(db) {
+    const lines = await db.bomLine.findMany({
+      include: {
+        productModel: { select: { code: true } },
+        partRevision: {
+          include: { partMaster: { select: { partNumber: true } } },
+        },
+      },
+    });
+    return lines.map((b) => ({
+      key: `${b.productModelId}|${b.designRevision}|${b.position}`,
+      cells: [
+        b.productModel.code,
+        b.designRevision,
+        b.position,
+        b.partRevision.partMaster.partNumber,
+        b.partRevision.rev,
+        b.qty,
+      ],
+    }));
   },
 };
 

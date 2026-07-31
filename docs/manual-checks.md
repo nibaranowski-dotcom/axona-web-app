@@ -2309,3 +2309,34 @@ NCR card gains an **"Open RCA →"** footer link → one click lands on the same
 
 **Visual:** v2 tokens only, matches the existing NCR/RCA language — a mono underlined
 link (Quality table) / a hairline-bordered footer link (unit rail); no new chrome.
+
+## IO.2 — import/export Phase 2 (export round-trip · bulk-update · blob upload)
+
+Three capabilities, each a clean extension of IO.1 + FILE.1 — no second importer,
+exporter, or parser. Automated: `pnpm verify:io-2`.
+
+**1. Export round-trip.** `exportEntity(db, descriptor)` reuses the SAME `EntityDescriptor`
+columns as import (each descriptor gained `columns` + `readRows`), and `writeWorkbook` /
+`writeCsv` are the `parseWorkbook` / `parseCsv` counterparts (same single `xlsx` dep).
+Guarantee: export an entity → re-import it (upsert mode) → **zero diffs** (0 created,
+0 updated, every row skipped). Surfaced on `/import` (the existing IO.1 UI — no new nav):
+per-entity **Export .xlsx / .csv** download links (`/api/export?entity=…&format=…`).
+
+**2. Bulk-update (upsert).** `importEntity(..., { mode: "upsert" })` — opt-in — matches
+existing rows by the descriptor's natural key, **UPDATEs changed rows, CREATEs new,
+SKIPs unchanged** (never a silent overwrite), and returns a `{ created, updated, skipped }`
+count report. RBAC-gated (ENGINEER/ADMIN) via the import action; each bulk mutation writes
+an AUDIT.1 entry with the counts + actor. `importUnits`/`importBom` and every existing
+caller stay byte-identical on the create path (upsert is opt-in; default `skipped` is 0).
+UI: a **"Bulk-update (upsert)"** toggle on `/import`; the result block shows the skipped count.
+
+**3. Blob-backed upload.** `POST /api/import/upload` accepts a real xlsx/csv upload,
+stores it in the FILE.1 blob store (`putObject`, org-prefixed key), then parses it
+**SERVER-SIDE** via the IO.1 core (`parseWorkbook` for xlsx) → `importEntity`. No
+client-side binary parsing. RBAC-gated + audited. The `/import` file picker now accepts
+`.xlsx` and routes it through this blob path (a dry-run preview first, then confirm).
+
+**Manual check:** `/import` → pick an entity → **Export .xlsx** downloads the current
+rows → re-upload that file with **Bulk-update** on → the result reads *0 created · 0
+updated · N skipped* (round-trip no-op). Edit one row in the file → re-upload → *1 updated*,
+the rest skipped. No migration (the natural-key uniques already exist from PLM.2/MFX.1).

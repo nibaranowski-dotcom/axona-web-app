@@ -42,6 +42,10 @@ export function ImportPanel({
   const [failure, setFailure] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
+  // IO.2 — bulk-update (upsert) toggle + the raw xlsx file (parsed server-side via
+  // the blob-upload route; xlsx is never read in the browser).
+  const [upsert, setUpsert] = useState(false);
+  const [xlsxFile, setXlsxFile] = useState<File | null>(null);
 
   const entity = useMemo(
     () => entities.find((e) => e.key === entityKey) ?? entities[0],
@@ -54,6 +58,27 @@ export function ImportPanel({
     setPreview(null);
     setApplied(null);
     setFailure(null);
+    setXlsxFile(null);
+  };
+
+  // IO.2 — the blob-backed path: POST the raw file to /api/import/upload, which
+  // stores it in the FILE.1 blob store and parses it SERVER-SIDE (parseWorkbook).
+  const uploadXlsx = async (
+    f: File,
+    opts: { dryRun: boolean },
+  ): Promise<ImportResult> => {
+    const body = new FormData();
+    body.append("file", f);
+    const q = new URLSearchParams({ entity: entityKey });
+    if (upsert) q.set("mode", "upsert");
+    if (opts.dryRun) q.set("dryrun", "1");
+    const res = await fetch(`/api/import/upload?${q.toString()}`, {
+      method: "POST",
+      body,
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json?.error ?? "Upload failed.");
+    return json as ImportResult;
   };
 
   const switchEntity = (key: string) => {
@@ -65,6 +90,21 @@ export function ImportPanel({
     if (!f) return;
     setFileName(f.name);
     resetResults();
+    // IO.2 — an .xlsx is uploaded + parsed server-side (blob-backed); a .csv reads
+    // inline as before. A server-side preview (dry run) shows the split first.
+    if (/\.xlsx$/i.test(f.name)) {
+      setCsv("");
+      setXlsxFile(f);
+      setFailure(null);
+      startTransition(async () => {
+        try {
+          setPreview(await uploadXlsx(f, { dryRun: true }));
+        } catch (e) {
+          setFailure(msg(e));
+        }
+      });
+      return;
+    }
     setCsv(await f.text());
   };
 
@@ -91,7 +131,12 @@ export function ImportPanel({
     setFailure(null);
     startTransition(async () => {
       try {
-        const res = await previewImportAction(entityKey, csv, activeMapping());
+        const res = await previewImportAction(
+          entityKey,
+          csv,
+          activeMapping(),
+          upsert ? "upsert" : undefined,
+        );
         setPreview(res);
         setApplied(null);
       } catch (e) {
@@ -104,11 +149,14 @@ export function ImportPanel({
     setFailure(null);
     startTransition(async () => {
       try {
-        const res = await confirmImportAction(entityKey, csv, {
-          mapping: activeMapping(),
-          model: proposal?.model,
-          confidence: proposal?.confidence,
-        });
+        const res = xlsxFile
+          ? await uploadXlsx(xlsxFile, { dryRun: false })
+          : await confirmImportAction(entityKey, csv, {
+              mapping: activeMapping(),
+              model: proposal?.model,
+              confidence: proposal?.confidence,
+              mode: upsert ? "upsert" : undefined,
+            });
         setApplied(res);
         router.refresh();
       } catch (e) {
@@ -183,12 +231,32 @@ export function ImportPanel({
         .
       </p>
 
+      {/* IO.2 — export the current data in the SAME columns import reads, so an
+          export round-trips straight back through this importer (zero diffs). */}
+      <div className="mt-3 flex flex-wrap items-center gap-2.5">
+        <span className="font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted">
+          Export current {entity.label.toLowerCase()}
+        </span>
+        <a
+          href={`/api/export?entity=${encodeURIComponent(entityKey)}&format=xlsx`}
+          className="rounded-btn border border-line-strong px-3 py-1.5 text-[12px] font-semibold text-ink transition-colors hover:border-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          Export .xlsx
+        </a>
+        <a
+          href={`/api/export?entity=${encodeURIComponent(entityKey)}&format=csv`}
+          className="rounded-btn border border-line-strong px-3 py-1.5 text-[12px] font-semibold text-ink transition-colors hover:border-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          Export .csv
+        </a>
+      </div>
+
       {/* file + paste */}
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <input
           ref={fileRef}
           type="file"
-          accept=".csv,text/csv"
+          accept=".csv,.xlsx,text/csv"
           onChange={(e) => onFile(e.target.files?.[0])}
           className="sr-only"
           id="import-file"
@@ -232,6 +300,24 @@ export function ImportPanel({
           {failure}
         </p>
       )}
+
+      {/* IO.2 — bulk-update toggle. When on, Confirm matches existing rows by their
+          natural key and UPDATES only changed rows, CREATES new, and SKIPS unchanged
+          (reported, never a silent overwrite). Off = the default create path. */}
+      <label className="mt-4 flex w-fit cursor-pointer items-center gap-2 text-[12.5px] text-ink">
+        <input
+          type="checkbox"
+          checked={upsert}
+          disabled={!canImport || pending}
+          onChange={(e) => {
+            setUpsert(e.target.checked);
+            setPreview(null);
+            setApplied(null);
+          }}
+          className="h-3.5 w-3.5 accent-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        />
+        Bulk-update (upsert) — update changed rows, skip unchanged
+      </label>
 
       {/* actions */}
       <div className="mt-5 flex flex-wrap items-center gap-2.5">
@@ -425,6 +511,12 @@ function ResultBlock({
       <div className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1.5">
         <Stat v={result.created} l={kind === "dry" ? "to create" : "created"} />
         <Stat v={result.updated} l={kind === "dry" ? "to update" : "updated"} />
+        {result.skipped > 0 && (
+          <Stat
+            v={result.skipped}
+            l={kind === "dry" ? "unchanged" : "skipped"}
+          />
+        )}
         <Stat v={result.errors.length} l="rows rejected" />
         <span className="font-mono text-[10.5px] text-ink-muted">
           {result.totalRows} rows read

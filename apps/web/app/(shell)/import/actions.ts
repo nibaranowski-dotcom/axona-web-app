@@ -48,6 +48,7 @@ export async function previewImportAction(
   entity: string,
   csv: string,
   mapping?: Record<string, string>,
+  mode?: "upsert", // IO.2 — preview the bulk-update split (created/updated/skipped)
 ): Promise<ImportResult> {
   const user = await getCurrentUser();
   requireRole(user, ["ENGINEER", "ADMIN"]); // line 1 — before any DB call
@@ -57,7 +58,7 @@ export async function previewImportAction(
     db,
     descriptorFor(entity),
     { text: csv, mapping },
-    { dryRun: true },
+    { dryRun: true, mode },
   );
 }
 
@@ -94,6 +95,9 @@ export async function confirmImportAction(
     mapping?: Record<string, string>;
     model?: string;
     confidence?: number;
+    // IO.2 — opt-in bulk-update: match by natural key, UPDATE changed rows, SKIP
+    // unchanged (never a silent overwrite). Absent => the default create path.
+    mode?: "upsert";
   },
 ): Promise<ImportResult> {
   const user = await getCurrentUser();
@@ -105,22 +109,26 @@ export async function confirmImportAction(
     db,
     d,
     { text: csv, mapping: approval?.mapping },
-    { dryRun: false },
+    { dryRun: false, mode: approval?.mode },
   );
 
   const aiVerified = !!approval?.mapping;
+  const isUpsert = approval?.mode === "upsert";
   await writeAudit(db, {
     orgId: user.orgId,
     actor: { type: "HUMAN", id: user.id, label: user.name || user.email },
     action: `${d.entity}.import`,
     target: { type: cap(d.entity), id: `csv:${result.totalRows}-rows` },
-    summary: `Imported ${d.label} from spreadsheet — ${result.created} created · ${result.updated} updated · ${result.errors.length} rejected${
+    summary: `Imported ${d.label} from spreadsheet — ${result.created} created · ${result.updated} updated · ${
+      isUpsert ? `${result.skipped} skipped · ` : ""
+    }${result.errors.length} rejected${
       aiVerified ? " (AI-verified mapping)" : ""
     }`,
     inputs: aiVerified ? { mapping: approval?.mapping } : undefined,
     output: {
       created: result.created,
       updated: result.updated,
+      skipped: result.skipped,
       rejected: result.errors.length,
     },
     // AUDIT.3 + CONF.1 — an AI-verified import records the extraction model + the

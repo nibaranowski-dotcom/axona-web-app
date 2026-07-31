@@ -205,8 +205,11 @@ export {
 // IO.1 — the universal spreadsheet-import core (generalizes importUnits).
 export {
   importEntity,
+  exportEntity,
   parseCsv,
   parseWorkbook,
+  writeWorkbook,
+  writeCsv,
   unitDescriptor,
   partMasterDescriptor,
   bomLineDescriptor,
@@ -214,6 +217,7 @@ export {
   importEntityInfo,
   type EntityDescriptor,
   type ImportSource,
+  type ExportRow,
   type ImportEntityKey,
   type ImportEntityInfo,
 } from "./io/import-core";
