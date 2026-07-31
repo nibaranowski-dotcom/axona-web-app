@@ -185,6 +185,7 @@ const VERIFY_SEQUENCE: string[] = [
   "io-2",
   "ux-16",
   "verify-3",
+  "ci-1",
 ];
 
 /** Prisma/pg errors that mean "the transport blipped", never "the check failed". */

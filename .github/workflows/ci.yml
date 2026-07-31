@@ -12,12 +12,41 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    # AUTH.1 — a dummy AUTH_SECRET for the Auth.js config. DATABASE_URL is
-    # deliberately NOT set: the DB-gated verify checks skip cleanly without it (CI
-    # has no live DB), and the build compiles without it (pages are force-dynamic,
-    # Prisma connects lazily at runtime, never at build).
+    # CI.1 — this job now runs against a REAL database. Before CI.1 the job had no
+    # DATABASE_URL, so every DB-gated check skipped itself: CI executed 868
+    # assertions and skipped 122 blocks, and "CI green" was never evidence for any
+    # database-backed behaviour. With Postgres + MinIO wired in, the same
+    # `pnpm verify:all` executes ~1430 assertions (VERIFY.3 made it deterministic
+    # and ~2 min, which is what made this affordable).
+    #
+    # Postgres MUST be pgvector-capable: the committed migrations carry hand-authored
+    # raw-SQL DDL that plain `postgres:16` cannot run — SearchDoc FTS (`tsv` + GIN)
+    # and File/SearchDoc `vector(1536)` + HNSW. Schema is applied with
+    # `prisma migrate deploy` and never the push-based schema sync (MIGRATE.1: that
+    # path silently drops exactly this raw-SQL DDL). The literal command name is kept
+    # out of this file on purpose — verify:migrate-1 bans that string outright.
+    #
+    # Credentials are ephemeral service-container values, not secrets — the DB and
+    # blob store live and die with the job.
     env:
       AUTH_SECRET: ci-dummy-secret-not-used-for-real-sessions-0123456789
+      DATABASE_URL: postgresql://axona:axona@localhost:5432/axona
+      S3_ENDPOINT: http://localhost:9000
+      S3_BUCKET: axona-files
+      S3_ACCESS_KEY: axona
+      S3_SECRET_KEY: axona-secret
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: axona
+          POSTGRES_PASSWORD: axona
+          POSTGRES_DB: axona
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U axona -d axona"
+          --health-interval 10s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -46,7 +75,48 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Verify scripts
+      # MinIO is a step, not a `services:` entry: service containers cannot override
+      # the image's command, and minio/minio needs `server /data`. Same image as
+      # docker-compose.yml so CI and local dev exercise the same blob store. Without
+      # it FILE.1/FILE.2/ATTACH.1/IO.2 skip their live checks instead of running them.
+      - name: Start MinIO (blob store)
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=axona \
+            -e MINIO_ROOT_PASSWORD=axona-secret \
+            minio/minio:latest server /data
+          echo "waiting for MinIO on :9000…"
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:9000/minio/health/live >/dev/null; then
+              echo "MinIO ready"; break
+            fi
+            if [ "$i" = "30" ]; then echo "MinIO did not start"; docker logs minio; exit 1; fi
+            sleep 2
+          done
+
+      # MIGRATE.1 — `migrate deploy` ONLY. The raw-SQL DDL (FTS tsv+GIN, pgvector
+      # HNSW) lives in the committed migrations; the push-based sync would drop it.
+      - name: Apply migrations
+        run: pnpm --filter @axona/db exec prisma migrate deploy
+
+      # Fails the job on a pending migration or drift — the schema CI tests against
+      # must be exactly the one the migrations describe.
+      - name: Migration status must be clean
+        run: pnpm --filter @axona/db exec prisma migrate status
+
+      - name: Seed the demo narrative
+        run: pnpm --filter @axona/db db:seed
+
+      # Seeded File rows are metadata-only until backfilled; without this FILE.1's
+      # "seeded blobs backfilled" check has no object bytes to read.
+      - name: Backfill seeded blobs
+        run: pnpm db:seed:blobs
+
+      # The gate. With DATABASE_URL + S3_* set, the DB-gated checks EXECUTE rather
+      # than skip. What still skips is only what genuinely isn't present: LOGIN.1's
+      # runtime probe (no dev server in this job — the a11y job covers the served
+      # app) and the prospect tenants whose seed configs are gitignored.
+      - name: Verify scripts (against the real database)
         run: pnpm verify:all
 
       # AUTH.1 — build must compile: the middleware + auth routes are build-sensitive

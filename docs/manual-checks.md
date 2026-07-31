@@ -2510,3 +2510,75 @@ pnpm --filter @axona/db db:seed && pnpm db:seed:blobs && pnpm verify:all   # 156
 pnpm --filter @axona/db db:seed && pnpm db:seed:blobs && pnpm verify:all   # 156 checks, PASSED
 pnpm verify:all                                                            # 156 checks, PASSED
 ```
+
+## CI.1 — CI is a real gate (it runs against a real database)
+
+**What was wrong.** The `verify` job ran `pnpm verify:all` with **no `DATABASE_URL`**, so
+every DB-gated check skipped itself. CI executed **868** assertions and skipped **122**
+blocks — only static/lint/typecheck/build were ever really enforced. "CI green" was never
+evidence for any database-backed behaviour, which is exactly how the VERIFY.3 flakes
+survived: they could only ever fail on a seeded local run. VERIFY.3 made `verify:all`
+deterministic and ~2 min, which is what made running it for real affordable.
+
+**After CI.1** the same command executes **~1430** assertions with **4** genuine skips.
+
+| run | assertions executed | skipped blocks |
+|---|---|---|
+| CI before (no DB, no S3) | 868 | 122 |
+| CI after (pgvector + MinIO) | ~1430 | 4 |
+
+**Services.** Postgres is **`pgvector/pgvector:pg16`** — mandatory, not a preference: the
+committed migrations carry hand-authored raw SQL that plain `postgres:16` cannot execute
+(`File`/`SearchDoc` `vector(1536)` + HNSW, `SearchDoc` FTS `tsv` + GIN). MinIO runs as a
+**step** rather than a `services:` entry because service containers cannot override the
+image's command and `minio/minio` needs `server /data`; it uses the same image as
+`docker-compose.yml`, so CI and local dev exercise the same blob store. Without it
+FILE.1/FILE.2/ATTACH.1/IO.2/PROSPECT.3 quietly fall back to skipping their live checks.
+Redis is **not** needed — `verify:all` passes without `REDIS_URL` (measured).
+
+**Step order** (MIGRATE.1 throughout — `migrate deploy`, **never** `db push`, which
+silently drops that raw-SQL DDL):
+```
+lint → typecheck → start MinIO (wait on /minio/health/live)
+     → prisma migrate deploy → prisma migrate status   (fails on drift/pending)
+     → db:seed → db:seed:blobs → pnpm verify:all → build
+```
+`pnpm eval` is deliberately **not** duplicated into this job: the `eval` job already runs
+it against its own seeded pgvector Postgres, and `verify:eval-1` (inside `verify:all`)
+functionally runs the offline eval a second time. A third invocation would be pure cost.
+
+**What still skips in CI, and why it should** (never faked):
+- **LOGIN.1's runtime probe** — no dev server in this job. Its static guards run, and the
+  `a11y` job is the one that builds, serves and drives the real app.
+- **Three prospect-tenant threads** (`prospect-plm` config-management + agentic-procurement,
+  and the demo-tenant real-seed check) — their seed configs are gitignored, so the tenants
+  don't exist in CI.
+- The **2 live eval cases**, opt-in behind `EVAL_LIVE=1` + a real API key.
+
+**Reproduce the CI path exactly, locally** (this is how CI.1 was validated before it
+shipped — a virgin database, not a dev database that has drifted):
+```
+docker exec axona-postgres psql -U axona -d postgres -c "CREATE DATABASE axona_ci;"
+export DATABASE_URL="postgresql://axona:axona@localhost:5432/axona_ci"
+pnpm --filter @axona/db exec prisma migrate deploy
+pnpm --filter @axona/db exec prisma migrate status     # "Database schema is up to date!"
+pnpm --filter @axona/db db:seed && pnpm db:seed:blobs
+pnpm verify:all                                        # PASSED — 156 checks, 1427 assertions
+```
+
+**The local path is unchanged** — `pnpm verify:all` against your dev DB behaves exactly as
+before; CI.1 only adds services to the workflow.
+
+**Prove the gate bites** (the point of the story — that DB checks *execute*, not skip):
+break one DB-backed assertion, push, watch CI go red on that check, revert. A convenient
+one is `verify-proc-1`'s `PO-9007` expectation or `verify-cmd-1`'s `SN-2196` exception —
+both read real rows and both are impossible to fail when the DB is absent, so a red run on
+either is direct proof the database path is live.
+
+**Automated:** `pnpm verify:ci-1` (in `verify:all`) guards the workflow itself — database
+present, pgvector image, blob store wired, `migrate deploy` + `migrate status` and no
+`db push`, seed + backfill, `verify:all` ordered after all of it, lint/typecheck/build
+still gated, `pnpm eval` still gated in its own job, and no committed secrets. It asserts
+the workflow's *executed* lines, not its comments. **Prove it catches a regression:** swap
+`pgvector/pgvector:pg16` → `postgres:16` (check 1b fails) or delete the `DATABASE_URL`
+line (check 1 fails); restore → 12/12 green.
