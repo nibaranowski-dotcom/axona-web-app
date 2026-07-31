@@ -100,6 +100,7 @@ export function UnitView({
         {/* main column */}
         <div className="flex min-w-0 flex-1 flex-col gap-[18px] px-6 pb-16 pt-[22px]">
           <CurrentConfig unit={unit} />
+          <BuildReadinessCard unit={unit} />
           <DiffSummary unit={unit} subCount={subCount} />
           <Lifecycle unit={unit} />
         </div>
@@ -269,6 +270,156 @@ function CurrentConfig({ unit }: { unit: UnitDetail }) {
 /** The as-designed revision this unit's model is at (the diff's baseline). */
 function currentHwRev(unit: UnitDetail): string {
   return unit.diff.lines[0]?.expected?.rev ?? "—";
+}
+
+// ── build readiness (BR.1) ──────────────────────────────────────────────────
+// BOM × on-hand × open-PO coverage, rolled up per line. The bar reads left→right:
+// in-house (have) · on order (coming) · late (past promised) · short (no cover).
+// No invented reds — late is ink, short is a hairline stripe. Recomputes live: a
+// goods-receipt on the Procurement queue bumps stock and this card ticks up.
+const READINESS_SEGMENTS: {
+  key: "in_house" | "on_order" | "late" | "missing";
+  label: string;
+  swatch: string;
+  style?: React.CSSProperties;
+}[] = [
+  { key: "in_house", label: "In-house", swatch: "bg-success" },
+  { key: "on_order", label: "On order", swatch: "bg-line-strong" },
+  { key: "late", label: "Late", swatch: "bg-ink-strong" },
+  {
+    key: "missing",
+    label: "Short",
+    swatch: "",
+    style: {
+      backgroundImage:
+        "repeating-linear-gradient(45deg, var(--line-strong) 0, var(--line-strong) 1.5px, transparent 1.5px, transparent 5px)",
+      backgroundColor: "var(--panel)",
+    },
+  },
+];
+
+function BuildReadinessCard({ unit }: { unit: UnitDetail }) {
+  const r = unit.buildReadiness;
+  const blocking = r.blockingParts;
+  const pctByKey: Record<(typeof READINESS_SEGMENTS)[number]["key"], number> = {
+    in_house: r.pctInHouse,
+    on_order: r.pctOnOrder,
+    late: r.pctLate,
+    missing: r.pctMissing,
+  };
+
+  return (
+    <section className="overflow-hidden rounded-card border border-line bg-paper">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-line px-5 pb-[13px] pt-[15px]">
+        <h2 className="text-[15px] font-semibold text-ink">Build readiness</h2>
+        <span className="font-mono text-[10px] tracking-[0.04em] text-ink-muted">
+          BOM × ON-HAND × ON ORDER
+        </span>
+      </div>
+
+      <div className="px-5 py-4">
+        {r.lineCount === 0 ? (
+          <p className="text-[12.5px] text-ink-muted">
+            No BOM is on file for this unit’s model yet.
+          </p>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <span className="font-mono text-[26px] font-bold leading-none text-ink">
+                {r.pctInHouse}%
+              </span>
+              <span className="text-[12.5px] text-ink-muted">
+                in-house · {r.pctOnOrder}% on order · {r.pctLate}% late ·{" "}
+                {r.pctMissing}% short
+                <span className="ml-1.5 font-mono text-[11px] text-ink-muted">
+                  ({r.lineCount} BOM line{r.lineCount === 1 ? "" : "s"})
+                </span>
+              </span>
+            </div>
+
+            {/* segmented readiness bar */}
+            <div className="mt-3 flex h-2.5 overflow-hidden rounded-pill bg-panel">
+              {READINESS_SEGMENTS.map((s) =>
+                pctByKey[s.key] > 0 ? (
+                  <div
+                    key={s.key}
+                    className={s.swatch}
+                    style={{ width: `${pctByKey[s.key]}%`, ...s.style }}
+                    title={`${s.label} · ${pctByKey[s.key]}%`}
+                  />
+                ) : null,
+              )}
+            </div>
+
+            {/* legend */}
+            <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5">
+              {READINESS_SEGMENTS.map((s) => (
+                <span
+                  key={s.key}
+                  className="inline-flex items-center gap-1.5 text-[11px] text-ink-muted"
+                >
+                  <span
+                    aria-hidden
+                    className={`h-2.5 w-2.5 rounded-[3px] ${s.swatch}`}
+                    style={s.style}
+                  />
+                  {s.label}
+                  <span className="font-mono text-[10.5px] text-ink">
+                    {r.counts[s.key]}
+                  </span>
+                </span>
+              ))}
+            </div>
+
+            {/* blocking parts (late ∪ short) */}
+            <div className="mt-4 border-t border-line pt-3.5">
+              <div className="mb-2 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted">
+                {blocking.length === 0
+                  ? "Nothing blocking — every line is covered"
+                  : `Blocked on ${blocking.length} part${blocking.length === 1 ? "" : "s"}`}
+              </div>
+              {blocking.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  {blocking.map((b) => (
+                    <Link
+                      key={b.position}
+                      href={b.coveringPo ? "/procurement" : "/inventory"}
+                      className="flex items-center gap-2.5 rounded-[9px] border border-line px-3 py-2 transition-colors hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    >
+                      <span
+                        className={`flex-none rounded-pill px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.04em] ${
+                          b.state === "late"
+                            ? "bg-ink-strong text-on-dark"
+                            : "border border-line-strong bg-panel text-ink-muted"
+                        }`}
+                      >
+                        {b.state === "late" ? "Late" : "Short"}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="font-mono text-[12px] font-semibold text-ink">
+                          {b.partNumber}
+                        </span>
+                        <span className="ml-2 text-[11.5px] text-ink-muted">
+                          {b.name}
+                        </span>
+                      </span>
+                      <span className="flex-none font-mono text-[10px] text-ink-muted">
+                        {b.coveringPo
+                          ? b.coveringPo
+                          : b.tracked
+                            ? `short ${b.shortBy}`
+                            : "not tracked"}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </section>
+  );
 }
 
 function ConfigCell({

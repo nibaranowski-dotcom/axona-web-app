@@ -2111,3 +2111,39 @@ rows** (header + rows aligned), no horizontal push. Confirm on:
 
 **Automated coverage:** the served a11y gate (`pnpm a11y:scan`) renders these routes and
 must stay 0 serious/critical; tsc + lint + build gate the class changes.
+
+## BR.1 — build-readiness + supplier lead-time visibility (horizontal)
+
+The "one live view" from the demo, built on the data we already capture — reusable for
+every tenant (no customer special-casing). Three surfaces over one shared rollup.
+
+**Shared compute** (`packages/db/src/plm/build-readiness.ts`): `computeBuildReadiness(db,
+unitId, {now?})` is a pure read over BOM × on-hand × open-PO coverage — NO parallel
+readiness store; it reconciles exactly with the same PO/stock reads the Procurement screen
+shows. Deterministic (inject `now`), org-scoped via the org-scoped `db` (uses `findFirst`,
+not `findUnique`, so a cross-tenant unit is "not found"). Each BOM line classifies as
+`in_house` (on-hand ≥ required) · `on_order` (open PO covers the gap, not past promised) ·
+`late` (covering PO past its promised date) · `missing` (gap, no cover — incl. untracked
+lines). Bridge = design `PartMaster.partNumber` === procurement `Part.sku` (string
+convention, no FK). Automated: `pnpm verify:br-1` (math fixtures · determinism · GR bump ·
+late classification · org isolation · real GR through decide).
+
+**Visual check:**
+- `/procurement` — PO queue rows now show **Promised {date}** (or **Received {date}** once
+  received), a **LATE** chip (ink, no red) on POs past their promised date, and mono
+  **SINGLE-SOURCE** / **LONG-LEAD** tags on the item. A **SENT** PO shows a **Receive**
+  button (OPS/ADMIN). Clicking **Receive** marks it received (SENT → RECEIVED), stamps the
+  actual date, and bumps stock.
+- `/units/:serial` — a **Build readiness** card sits below Current configuration: a big
+  `% in-house` headline, a segmented bar (in-house · on order · late · short), a legend
+  with counts, and a **Blocked on N parts** list (late ∪ short) linking each part to its
+  PO (`/procurement`) or the part (`/inventory`).
+- **Live tick-up (demo-critical):** open a unit that is blocked on an on-order part, go to
+  `/procurement`, **Receive** the covering PO, return to the unit — the card's `% in-house`
+  has risen and that part has dropped off the blocking list (the received stock now covers
+  the BOM line).
+
+**Seed note:** BR.1 is the horizontal code; the demo unit renders as fully as the seed is
+aligned (design `partNumber` ↔ procurement `sku`). MFX.1 enriches the seed so the demo
+unit reads ~85% ready blocked on 2 parts. Until then a thin/partial card is expected and
+honest (untracked BOM lines show as "not tracked").

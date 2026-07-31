@@ -1,5 +1,14 @@
-import { dbForOrg, resolveConfigAt, asBuiltDiff } from "@axona/db";
-import type { AsBuiltDiffResult, ResolvedConfig } from "@axona/db";
+import {
+  dbForOrg,
+  resolveConfigAt,
+  asBuiltDiff,
+  computeBuildReadiness,
+} from "@axona/db";
+import type {
+  AsBuiltDiffResult,
+  ResolvedConfig,
+  BuildReadiness,
+} from "@axona/db";
 
 // PLM.3 — the Unit page read model. The unit is the HERO OBJECT: identity, the
 // configuration it is running NOW, how its as-built diverges from as-designed,
@@ -54,6 +63,8 @@ export interface UnitDetail {
   current: ResolvedConfig;
   configBaselinedAt: Date | null;
   diff: AsBuiltDiffResult;
+  /** BR.1 — build-readiness rollup (BOM × on-hand × open-PO coverage). */
+  buildReadiness: BuildReadiness;
   lotsInvolved: string[];
   /** The substituted positions, with the captured "why · who · when". */
   substitutions: {
@@ -93,10 +104,12 @@ export async function getUnitDetail(
   if (!unit) return null;
 
   const now = new Date();
-  const [current, diff, asBuiltRows, swStates, configs, links] =
+  const [current, diff, buildReadiness, asBuiltRows, swStates, configs, links] =
     await Promise.all([
       resolveConfigAt(db, unit.id, now),
       asBuiltDiff(db, unit.id),
+      // BR.1 — same `now` as the config resolution keeps the page internally consistent.
+      computeBuildReadiness(db, unit.id, { now: now.getTime() }),
       db.asBuiltRecord.findMany({
         where: { unitId: unit.id },
         include: { partRevision: { include: { partMaster: true } } },
@@ -305,6 +318,7 @@ export async function getUnitDetail(
     current,
     configBaselinedAt: baselineConfig?.lockedAt ?? null,
     diff,
+    buildReadiness,
     lotsInvolved,
     substitutions,
 

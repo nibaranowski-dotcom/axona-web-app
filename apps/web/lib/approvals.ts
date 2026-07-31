@@ -27,6 +27,7 @@ import { requireRole } from "./rbac";
 
 export type ApprovalKind =
   | "po.approve"
+  | "po.receive" // BR.1 — goods-receipt: SENT → RECEIVED, bumps stock (build-readiness)
   | "eco.release"
   | "policy.rollback"
   | "creditnote.issue"
@@ -144,6 +145,48 @@ const REGISTRY: { [K in ApprovalKind]: ApprovalDef<unknown> } = {
       return {
         output: { from: po.status, status: "REJECTED" },
         summary: `PO ${po.code} rejected (was ${po.status})`,
+      };
+    },
+  } as ApprovalDef<unknown>,
+
+  // BR.1 — goods receipt. A SENT PO is received at the dock: SENT → RECEIVED, stamp
+  // receivedAt (promised=eta vs actual=receivedAt), and bump Part.onHand by the PO
+  // qty so build-readiness ticks up (on_order → in_house). Same propose→approve→audit
+  // spine; OPS/ADMIN (the dock runs receiving). The agent never marks goods received.
+  "po.receive": {
+    kind: "po.receive",
+    roles: ["OPS", "ADMIN"],
+    targetType: "PurchaseOrder",
+    load: (db, _org, id) => db.purchaseOrder.findFirst({ where: { id } }),
+    isPending: (po) => (po as { status: POStatus }).status === "SENT",
+    onApprove: async (db, _org, t) => {
+      const po = t as {
+        id: string;
+        code: string;
+        status: POStatus;
+        partId: string;
+        qty: number;
+      };
+      await db.purchaseOrder.updateMany({
+        where: { id: po.id },
+        data: { status: "RECEIVED", receivedAt: new Date() },
+      });
+      // Received stock lands on hand — this is what moves a BOM line to in_house.
+      await db.part.updateMany({
+        where: { id: po.partId },
+        data: { onHand: { increment: po.qty } },
+      });
+      return {
+        output: { from: po.status, status: "RECEIVED", received: po.qty },
+        summary: `PO ${po.code} received — ${po.qty} to stock`,
+      };
+    },
+    onReject: async (_db, _org, t) => {
+      // Declining a receipt leaves the PO SENT (goods not confirmed) — no stock move.
+      const po = t as { code: string; status: POStatus };
+      return {
+        output: { status: po.status },
+        summary: `PO ${po.code} receipt not confirmed (left ${po.status})`,
       };
     },
   } as ApprovalDef<unknown>,

@@ -22,17 +22,25 @@ export function parsePoStatus(
     : undefined;
 }
 
+/** BR.1 — a part is "long-lead" at or above this many days (surfaced as a tag). */
+export const LONG_LEAD_DAYS = 30;
+
 export interface QueuePO {
   id: string;
   code: string;
   status: POStatus;
   qty: number;
   value: number;
-  eta: Date | null;
+  eta: Date | null; // promised delivery date
+  receivedAt: Date | null; // BR.1 — actual goods-receipt date (null until received)
   supplier: string; // resolved from supplierId
   partSku: string; // resolved from partId
   draftedByAgentId: string | null;
   agentDrafted: boolean;
+  // BR.1 supplier-risk flags (derived — no new columns):
+  late: boolean; // past its promised date and not yet received
+  longLead: boolean; // Part.leadDays ≥ LONG_LEAD_DAYS
+  singleSource: boolean; // exactly one qualified vendor (PartMaster.approvedVendorIds)
 }
 
 export interface ReorderCandidate {
@@ -76,9 +84,10 @@ export async function getProcurementQueue(
         qty: true,
         value: true,
         eta: true,
+        receivedAt: true,
         draftedByAgentId: true,
         supplier: { select: { name: true } },
-        part: { select: { sku: true } },
+        part: { select: { sku: true, leadDays: true } },
       },
     }),
     // Reorder recommendation — column compare needs raw SQL; pin orgId ourselves.
@@ -92,6 +101,22 @@ export async function getProcurementQueue(
   ]);
 
   const { items, nextCursor } = pageResult(rows, take);
+
+  // Single-source = exactly one qualified vendor. The design-side signal lives on
+  // PartMaster.approvedVendorIds (populated), bridged to the buy-side by the shared
+  // code (partNumber === sku). One batched lookup for the page's parts.
+  const skus = [...new Set(items.map((r) => r.part.sku))];
+  const masters = skus.length
+    ? await db.partMaster.findMany({
+        where: { partNumber: { in: skus } },
+        select: { partNumber: true, approvedVendorIds: true },
+      })
+    : [];
+  const singleSourceBySku = new Map(
+    masters.map((m) => [m.partNumber, m.approvedVendorIds.length === 1]),
+  );
+
+  const now = Date.now();
   const pos: QueuePO[] = items.map((r) => ({
     id: r.id,
     code: r.code,
@@ -99,10 +124,18 @@ export async function getProcurementQueue(
     qty: r.qty,
     value: r.value,
     eta: r.eta,
+    receivedAt: r.receivedAt,
     supplier: r.supplier.name,
     partSku: r.part.sku,
     draftedByAgentId: r.draftedByAgentId,
     agentDrafted: r.draftedByAgentId !== null,
+    late:
+      r.status !== "RECEIVED" &&
+      r.status !== "REJECTED" &&
+      r.eta !== null &&
+      r.eta.getTime() < now,
+    longLead: r.part.leadDays >= LONG_LEAD_DAYS,
+    singleSource: singleSourceBySku.get(r.part.sku) ?? false,
   }));
 
   return { pos, nextCursor, reorderCandidates };

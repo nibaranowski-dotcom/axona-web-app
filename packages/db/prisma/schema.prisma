@@ -748,7 +748,13 @@ model PurchaseOrder {
   status           POStatus
   draftedByAgentId String?
   draftedByAgent   Agent?    @relation(fields: [draftedByAgentId], references: [id], onDelete: SetNull)
+  /// Promised delivery date (as-quoted). BR.1 flags a PO late when it is past this
+  /// and not yet received.
   eta              DateTime?
+  /// BR.1 — ACTUAL goods-receipt timestamp (promised = eta · actual = receivedAt).
+  /// Additive-nullable, null until received. Set by the `po.receive` GR action
+  /// (SENT → RECEIVED), which also bumps Part.onHand so build-readiness ticks up.
+  receivedAt       DateTime?
 
   @@index([orgId])
   @@index([supplierId])

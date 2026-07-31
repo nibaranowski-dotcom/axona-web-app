@@ -1,6 +1,7 @@
 import {
   advancePurchaseOrder,
   rejectPurchaseOrder,
+  receivePurchaseOrder,
 } from "@/app/(shell)/procurement/actions";
 import type { QueuePO } from "@/lib/procurement";
 
@@ -54,6 +55,20 @@ const ADVANCE: Partial<Record<QueuePO["status"], string>> = {
 const COLS =
   "grid grid-cols-[0.8fr_2.2fr_1fr_0.9fr_1.15fr_160px] items-center gap-3 px-5";
 
+function fmtDate(d: Date | null): string {
+  return d ? new Date(d).toLocaleDateString() : "—";
+}
+
+// BR.1 — a small mono flag (single-source / long-lead). Ink-on-panel hairline, no
+// accent and no alarm colour — a machine-reported label, not a warning.
+function Tag({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center rounded-[4px] border border-line-panel bg-panel px-1.5 py-px font-mono text-[8.5px] font-semibold uppercase tracking-[0.05em] text-ink-muted">
+      {children}
+    </span>
+  );
+}
+
 export function PoRow({
   po,
   canApprove,
@@ -67,18 +82,34 @@ export function PoRow({
     <div className={`${COLS} border-t border-line py-[14px] hover:bg-panel-2`}>
       <span className="font-mono text-[12.5px] text-ink">{po.code}</span>
       <div className="min-w-0">
-        <div
-          className="truncate text-[13.5px] text-ink"
-          title={`${po.partSku} · qty ${po.qty}`}
-        >
-          {po.partSku} · qty {po.qty}
+        <div className="flex min-w-0 items-center gap-2">
+          <span
+            className="truncate text-[13.5px] text-ink"
+            title={`${po.partSku} · qty ${po.qty}`}
+          >
+            {po.partSku} · qty {po.qty}
+          </span>
+          {po.singleSource && <Tag>Single-source</Tag>}
+          {po.longLead && <Tag>Long-lead</Tag>}
         </div>
-        <div className="mt-0.5 font-mono text-[10px] text-ink-muted">
-          {po.agentDrafted
-            ? "Drafted by agent"
-            : po.eta
-              ? `ETA ${new Date(po.eta).toLocaleDateString()}`
-              : "—"}
+        {/* BR.1 promised-vs-actual: received date wins; else promised + a late chip. */}
+        <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[10px] text-ink-muted">
+          {po.receivedAt ? (
+            <span>Received {fmtDate(po.receivedAt)}</span>
+          ) : po.eta ? (
+            <>
+              <span>Promised {fmtDate(po.eta)}</span>
+              {po.late && (
+                <span className="rounded-[4px] bg-ink-strong px-1.5 py-px text-[8.5px] font-semibold uppercase tracking-[0.05em] text-on-dark">
+                  Late
+                </span>
+              )}
+            </>
+          ) : po.agentDrafted ? (
+            <span>Drafted by agent</span>
+          ) : (
+            <span>—</span>
+          )}
         </div>
       </div>
       <span
@@ -121,6 +152,17 @@ export function PoRow({
               className="rounded-btn border border-line-strong bg-paper px-3 py-1.5 text-[12.5px] font-semibold text-ink transition-colors hover:border-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               {advanceLabel}
+            </button>
+          </form>
+        ) : null}
+        {/* BR.1 — goods receipt (SENT → RECEIVED); bumps stock so readiness ticks up. */}
+        {canApprove && po.status === "SENT" ? (
+          <form action={receivePurchaseOrder.bind(null, po.id)}>
+            <button
+              type="submit"
+              className="rounded-btn border border-line-strong bg-paper px-3 py-1.5 text-[12.5px] font-semibold text-ink transition-colors hover:border-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              Receive
             </button>
           </form>
         ) : null}

@@ -191,6 +191,15 @@ export {
   type StationInput,
   type ImportResult,
   type RowError,
+  // BR.1 — build-readiness rollup (pure classify + org-scoped compute).
+  computeBuildReadiness,
+  rollupBuildReadiness,
+  type BuildReadiness,
+  type BomReadinessState,
+  type ReadinessLine,
+  type ReadinessLineInput,
+  type BlockingPart,
+  type CoveringPo,
 } from "./plm";
 
 // IO.1 — the universal spreadsheet-import core (generalizes importUnits).

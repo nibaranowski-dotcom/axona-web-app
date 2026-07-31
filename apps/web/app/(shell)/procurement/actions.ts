@@ -20,3 +20,14 @@ export async function rejectPurchaseOrder(poId: string): Promise<void> {
   await decide("po.approve", poId, "REJECT", user);
   revalidatePath("/procurement");
 }
+
+// BR.1 — goods receipt (the dock scan). A SENT PO is received: SENT → RECEIVED +
+// stock bump, through the same gated decide() (OPS/ADMIN, audited). Revalidate the
+// queue AND every unit page so the Build-readiness card ticks up live when the
+// received part covers a BOM line.
+export async function receivePurchaseOrder(poId: string): Promise<void> {
+  const user = await getCurrentUser();
+  await decide("po.receive", poId, "APPROVE", user);
+  revalidatePath("/procurement");
+  revalidatePath("/units/[serial]", "page");
+}

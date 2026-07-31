@@ -19,6 +19,18 @@ export {
   type ConfigHwPosition,
   type ConfigSwItem,
 } from "./config";
+// BR.1 — build-readiness rollup (pure classify + org-scoped compute over the same
+// PO/stock reads the Procurement screen shows; no parallel readiness store).
+export {
+  computeBuildReadiness,
+  rollupBuildReadiness,
+  type BuildReadiness,
+  type BomReadinessState,
+  type ReadinessLine,
+  type ReadinessLineInput,
+  type BlockingPart,
+  type CoveringPo,
+} from "./build-readiness";
 export {
   importUnits,
   importBom,
