@@ -19,8 +19,44 @@ const STATUS_PILL: Record<ChangeStatus, string> = {
   draft: "border border-line-panel bg-panel text-ink-muted",
 };
 
+// CHG.1 — tracks verbatim from `Change Orders.dc.html`:
+//   minmax(84px,0.9fr) minmax(180px,2.1fr) 100px 112px 84px 108px 118px
+// The Approval track is now a fixed 118px (it was `1fr`, resolving to ~63px against
+// 126px of dual-approver content — i.e. it clipped). The design also gives the table
+// a 878px minimum and makes the card scroll horizontally rather than compress.
 const COLS =
-  "grid grid-cols-[96px_2.1fr_104px_116px_92px_116px_1.1fr] items-center gap-3 px-5";
+  "grid grid-cols-[minmax(84px,0.9fr)_minmax(180px,2.1fr)_100px_112px_84px_108px_118px] items-center gap-3 px-5";
+const CHANGES_MIN_W = "min-w-[878px]";
+
+/**
+ * CHG.1 — the approval chip, replacing the avatar stack + prose that clipped.
+ * Count and state come from the REAL approval records on the row: `reviewers`
+ * carries one entry per required approver with its own `approved` flag, so
+ * granted/required is a straight read, never a fabricated number.
+ */
+function approvalChip(row: ChangeRow): {
+  count: string;
+  state: string;
+  cls: string;
+} {
+  const required = row.reviewers.length;
+  const granted = row.reviewers.filter((r) => r.approved).length;
+  const state =
+    row.status === "approved" || row.status === "released"
+      ? "APPROVED"
+      : row.status === "draft"
+        ? "DRAFT"
+        : "PENDING";
+  // apChip() in the .dc.html: approved/released -> success on success-tint;
+  // review -> ink on panel; draft -> ink-muted on panel.
+  const cls =
+    state === "APPROVED"
+      ? "bg-success-tint text-success"
+      : state === "DRAFT"
+        ? "bg-panel text-ink-muted"
+        : "bg-panel text-ink";
+  return { count: `${granted}/${required}`, state, cls };
+}
 
 /** Build a /changes URL with the given filter params (server-side compose). */
 function href(params: {
@@ -193,9 +229,9 @@ export function ChangeOrdersView({
         </div>
 
         {/* change queue */}
-        <div className="flex-none overflow-hidden rounded-card border border-line bg-paper">
+        <div className="flex-none overflow-y-hidden overflow-x-auto rounded-card border border-line bg-paper">
           <div
-            className={`${COLS} border-b border-line py-2.5 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-faint`}
+            className={`${COLS} ${CHANGES_MIN_W} border-b border-line py-2.5 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-faint`}
           >
             <span>Code</span>
             <span>Change</span>
@@ -219,10 +255,11 @@ export function ChangeOrdersView({
 }
 
 function ChangeQueueRow({ e }: { e: ChangeRow }) {
+  const ap = approvalChip(e);
   return (
     <Link
       href={e.href}
-      className={`${COLS} border-b border-line py-3 hover:bg-panel`}
+      className={`${COLS} ${CHANGES_MIN_W} border-b border-line py-3 hover:bg-panel`}
     >
       <span className="font-mono text-[12.5px] font-semibold text-ink">
         {e.code}
@@ -271,20 +308,11 @@ function ChangeQueueRow({ e }: { e: ChangeRow }) {
         {e.effectivity}
       </span>
       <div className="flex min-w-0 items-center gap-2">
-        <div className="flex flex-none">
-          {e.reviewers.map((r, i) => (
-            <span
-              key={r.initials + i}
-              className="-mr-1.5 inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border-[1.5px] border-paper bg-panel-2 font-mono text-[8.5px] font-bold text-ink-muted"
-            >
-              {r.initials}
-            </span>
-          ))}
-        </div>
         <span
-          className={`ml-2 min-w-0 truncate text-[11.5px] ${e.awaitingMe ? "font-semibold text-ink" : "text-ink-muted"}`}
+          className={`inline-flex items-center gap-[6px] whitespace-nowrap rounded-pill px-[9px] py-[3px] font-mono text-[10px] font-semibold tracking-[0.03em] ${ap.cls}`}
         >
-          {e.approvalText}
+          <span className="font-bold">{ap.count}</span>
+          {ap.state}
         </span>
       </div>
     </Link>

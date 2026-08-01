@@ -125,12 +125,12 @@
       </div>
 
       <!-- change queue -->
-      <div style="flex:none;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden">
-        <div style="display:grid;grid-template-columns:96px 2.1fr 104px 116px 92px 116px 1fr;gap:12px;padding:11px 20px;border-bottom:1px solid var(--line);font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">
+      <div style="flex:none;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow-x:auto;overflow-y:hidden">
+        <div style="min-width:878px;display:grid;grid-template-columns:minmax(84px,0.9fr) minmax(180px,2.1fr) 100px 112px 84px 108px 118px;gap:12px;padding:11px 20px;border-bottom:1px solid var(--line);font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">
           <span>Code</span><span>Change</span><span>Type</span><span>Status</span><span>Units</span><span>Effectivity</span><span>Approval</span>
         </div>
         <sc-for list="{{ ecos }}" as="e" hint-placeholder-count="8">
-          <a class="ecorow" href="Change Order.dc.html" style="display:grid;grid-template-columns:96px 2.1fr 104px 116px 92px 116px 1fr;gap:12px;align-items:center;padding:13px 20px;border-bottom:1px solid var(--line);text-decoration:none;color:inherit">
+          <a class="ecorow" href="Change Order.dc.html" style="min-width:878px;display:grid;grid-template-columns:minmax(84px,0.9fr) minmax(180px,2.1fr) 100px 112px 84px 108px 118px;gap:12px;align-items:center;padding:13px 20px;border-bottom:1px solid var(--line);text-decoration:none;color:inherit">
             <span style="font-family:var(--font-mono);font-size:12.5px;font-weight:600">{{ e.id }}</span>
             <div style="min-width:0">
               <div style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:{{ e.titleWeight }}">{{ e.title }}</div>
@@ -149,16 +149,11 @@
             <span style="font-family:var(--font-mono);font-size:12.5px;font-weight:600;color:{{ e.unitsColor }}">{{ e.units }}</span>
             <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-muted)">{{ e.effectivity }}</span>
             <div style="min-width:0;display:flex;align-items:center;gap:8px">
-              <div style="display:flex;flex:none">
-                <sc-for list="{{ e.reviewers }}" as="r" hint-placeholder-count="2">
-                  <span style="width:22px;height:22px;border-radius:50%;background:{{ r.bg }};border:1.5px solid var(--paper);display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:8.5px;font-weight:700;color:{{ r.fg }};margin-right:-6px">{{ r.initials }}</span>
-                </sc-for>
-              </div>
-              <span style="font-size:11.5px;color:{{ e.apColor }};font-weight:{{ e.apWeight }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:8px">{{ e.approval }}</span>
+              <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:.03em;padding:3px 9px;border-radius:999px;background:{{ e.apBg }};color:{{ e.apFg }};white-space:nowrap"><span style="font-weight:700">{{ e.apCount }}</span>{{ e.apState }}</span>
             </div>
           </a>
         </sc-for>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px">
+        <div style="min-width:878px;display:flex;align-items:center;justify-content:space-between;padding:12px 20px">
           <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)">1–8 of 12</span>
           <div style="display:flex;gap:6px;align-items:center">
             <span style="width:27px;height:27px;border:1px solid var(--line-strong);border-radius:7px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-faint);font-size:13px">‹</span>
@@ -204,27 +199,30 @@ class Component extends DCLogic {
     const H = { bg:'var(--accent)', fg:'var(--accent-ink)' };
     const rev = (specs) => specs.map(s => ({ initials:s[0], ...(s[1]==='h'?H:A) }));
 
-    const eco = (id, title, type, t, units, effectivity, approval, reviewers, opts) => {
+    const apChip = (t) => t==='approved' ? { apBg:'var(--success-tint)', apFg:'var(--success)' }
+      : t==='released' ? { apBg:'var(--success-tint)', apFg:'var(--success)' }
+      : t==='review' ? { apBg:'var(--panel)', apFg:'var(--ink)' }
+      : { apBg:'var(--panel)', apFg:'var(--ink-muted)' };
+    const eco = (id, title, type, t, units, effectivity, ap, reviewers, opts) => {
       const o = opts || {};
       const waiting = !!o.waiting;
-      return { id, title, type, ...st(t), units, effectivity, approval,
+      return { id, title, type, ...st(t), units, effectivity,
+        apCount: ap[0], apState: ap[1], ...apChip(t),
         reviewers: rev(reviewers),
         agent: o.agent || null, conf: o.conf || null, source: o.source || null,
         titleWeight: waiting ? 600 : 400,
-        unitsColor: (parseInt(units,10) > 20) ? 'var(--ink-strong)' : 'var(--ink)',
-        apColor: waiting ? 'var(--ink)' : 'var(--ink-muted)',
-        apWeight: waiting ? 600 : 400 };
+        unitsColor: (parseInt(units,10) > 20) ? 'var(--ink-strong)' : 'var(--ink)' };
     };
 
     const ecos = [
-      eco('ECO-318','Supersede SERVO-204 → -205 (tighter tolerance)','SUPERSEDE','review','24','From SN-2260','Waiting on you',[['OH','a'],['LC','h']],{ agent:true, conf:'86%', source:'From NCR-118', waiting:true }),
-      eco('ECO-321','Deviation · accept lot 88422 at ±3.1%','DEVIATION','review','6','Lot-scoped','Waiting on you',[['QA','a'],['LC','h']],{ agent:true, conf:'74%', source:'From lot review', waiting:true }),
-      eco('ECO-316','Firmware v4.2.2 — actuator torque compensation','REVISE','review','148','From 2026-08-01','Waiting on you',[['OH','a'],['LC','h']],{ source:'Fleet-wide', waiting:true }),
-      eco('ECO-319','Revise calibration profile cal-2026.06','REVISE','review','44','From SN-2242','2 of 3 approved',[['OH','a'],['DR','a']],{}),
-      eco('ECO-314','Harness connector keying (mis-mate fix)','REVISE','approved','32','From SN-2190','Approved · O. Haddad',[['OH','a']],{}),
-      eco('ECO-322','Chassis weight reduction −1.2 kg','REVISE','draft','0','Next build','Not submitted',[['OH','a']],{ source:'Design study' }),
-      eco('ECO-320','Deviation · single-source LIDAR-88 rev C','DEVIATION','draft','3','Lot-scoped','Not submitted',[['DR','a']],{}),
-      eco('ECO-311','Lidar module revision bump rev C → D','REVISE','released','96','From SN-2172','Released 2026-05-04',[['OH','a'],['LC','h']],{}),
+      eco('ECO-318','Supersede SERVO-204 → -205 (tighter tolerance)','SUPERSEDE','review','24','From SN-2260',['1/2','PENDING'],[['OH','a'],['LC','h']],{ agent:true, conf:'86%', source:'From NCR-118', waiting:true }),
+      eco('ECO-321','Deviation · accept lot 88422 at ±3.1%','DEVIATION','review','6','Lot-scoped',['1/2','PENDING'],[['QA','a'],['LC','h']],{ agent:true, conf:'74%', source:'From lot review', waiting:true }),
+      eco('ECO-316','Firmware v4.2.2 — actuator torque compensation','REVISE','review','148','From 2026-08-01',['1/2','PENDING'],[['OH','a'],['LC','h']],{ source:'Fleet-wide', waiting:true }),
+      eco('ECO-319','Revise calibration profile cal-2026.06','REVISE','review','44','From SN-2242',['2/3','PENDING'],[['OH','a'],['DR','a']],{}),
+      eco('ECO-314','Harness connector keying (mis-mate fix)','REVISE','approved','32','From SN-2190',['1/1','APPROVED'],[['OH','a']],{}),
+      eco('ECO-322','Chassis weight reduction −1.2 kg','REVISE','draft','0','Next build',['0/2','DRAFT'],[['OH','a']],{ source:'Design study' }),
+      eco('ECO-320','Deviation · single-source LIDAR-88 rev C','DEVIATION','draft','3','Lot-scoped',['0/2','DRAFT'],[['DR','a']],{}),
+      eco('ECO-311','Lidar module revision bump rev C → D','REVISE','released','96','From SN-2172',['2/2','APPROVED'],[['OH','a'],['LC','h']],{}),
     ];
 
     return { navGroups: this._nav(), stats, filters, ecos };

@@ -2855,3 +2855,51 @@ wrapper was tested and produced *exactly* 2,993 again, so that is not the cause.
 
 **Grep proof:** `DenseTable.tsx` contains no `rounded-card` / `bg-paper` / `hover:` /
 row-padding / row-border classes (only comment lines illustrating both nestings).
+
+## CHG.1 — Change Orders approval status chips
+
+**The problem.** `/changes` rendered approval as an avatar stack plus prose ("Waiting
+on you", "2 of 3 approved") in a `1fr` track that resolved to ~63px against ~126px of
+content — it clipped. TABLE.1 recorded it and deliberately left it alone: fixing it by
+widening the track would have shifted every other column on a screen that was 1:1 with
+its design. Design-first was the right order, and Claude Design shipped the fix.
+
+**The design change** (`design/prototypes/axona-v2/Change Orders.dc.html`, replacing
+the older export — this file is the source of truth for /changes):
+- Tracks become `minmax(84px,0.9fr) minmax(180px,2.1fr) 100px 112px 84px 108px 118px`
+  — Approval is now a fixed **118px**, and the flexible tracks gained real floors
+  (the same content-independent shape UX.16 arrived at independently).
+- The avatar stack + prose are replaced by ONE mono pill: a bold count then a state.
+- The card gains `min-width:878px` + `overflow-x:auto`.
+
+**The data is real, never fabricated.** `ChangeRow.reviewers` already carries one entry
+per required approver with its own `approved` flag, so the chip is a straight read:
+`granted/required`, with the state derived from the row's status (approved/released →
+`APPROVED`, draft → `DRAFT`, else `PENDING`). Chip colours map to tokens exactly as the
+design's `apChip()` does: `bg-success-tint text-success` for approved/released,
+`bg-panel text-ink` pending, `bg-panel text-ink-muted` draft. No raw hex.
+
+**Horizontal scroll below ~1590px viewport is INTENDED, not a defect.** The design
+declares the 878px minimum and the auto overflow. Our shell gives the content column
+~746px at 1440 and ~1034px at 1728, and the track set needs 898px
+(`786 tracks + 72 gaps + 40 padding`), so:
+
+| viewport | content column | behaviour |
+|---|---|---|
+| 1728 | ~1034px | fits — every column visible |
+| 1440 | ~746px | scrolls (`scrollWidth 878 / client 746`); Approval reachable + legible |
+
+The CHG.1 goal is *legible, not clipped* — met in both regimes. The earlier
+"no scroll at standard widths" wording was dropped once the design made scrolling
+explicit.
+
+**Visual check** on `/changes`: every row shows a chip — `0/0 DRAFT`, `1/2 PENDING`,
+`1/1 APPROVED`, `2/2 APPROVED`. Approved/released read green on the success tint;
+pending/draft read ink/ink-muted on panel. The other six columns stay flush on the
+committed tracks.
+
+**Known enhancement, NOT part of CHG.1:** draft ECOs render `0/0 DRAFT` because they
+genuinely have no reviewers assigned yet, whereas the design's sample shows `0/2`. If a
+draft should display its *policy-required* approver count, that denominator has to come
+from an approval-policy model we do not have — a data-model follow-up, not a chip bug.
+The denominator is never invented to match the mock.
