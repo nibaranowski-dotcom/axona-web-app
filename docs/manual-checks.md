@@ -2729,3 +2729,89 @@ check 1 fails; restore → 10/10 green.
 good candidate for a shared table primitive (`/units`, `/changes`, `/tests` and the
 Engineering ECO table have the same shape), but that is a cross-module refactor and
 is FLAGGED here rather than done — see the UX.15/UX.16 notes in `design.md`.
+
+## TABLE.1 — the dense-table primitive (and why only one table adopted it)
+
+**What shipped.** `ui/DenseTable.tsx` + `ui/dense-table-tokens.ts` — the mechanics
+UX.15 → UX.16 → UX.17 worked out on the Procurement PO queue, written once: the
+horizontal scroll frame, the min-width wrapper, the frozen identifier column with
+its conditional hairline, the scrolled state, and the a11y contract (focusable
+named region, no forced smooth scroll). Procurement consumes it and holds **no**
+copy of that logic.
+
+**Procurement is pixel-identical after the extraction: 0 of 1,584,000 differing
+pixels at 1440** (plus `ux-16:columns` 0px drift and `ux-17:scroll` pinning). That
+is the bar a pure extraction has to clear.
+
+**Two constraints found the hard way:**
+- **Tokens cannot live in the client module.** `DenseTable.tsx` is `"use client"`,
+  and Next.js forbids a server component from indexing a client module's exports —
+  `FROZEN_CELL["px-5"]` from `ChangeOrdersView` (a server component) failed with
+  *"Cannot access px-5.toString on the server"* and `/changes` returned 307. The
+  class strings therefore live in a plain module both sides can reach.
+- **The frozen cell needs exactly three non-obvious properties**, all proven in
+  UX.17: `self-stretch` (the row is `items-center`, so otherwise the pinned cell is
+  one line tall and content slides through the band above/below it), `bg-inherit`
+  (not a token — it must follow `hover:bg-panel-2` rather than punch a hole in it),
+  and `-ml/pl` (`left-0` pins to the scroller, not the row's content box, so the
+  identifier otherwise jumps into the card border on scroll).
+
+**Why the other four tables did NOT adopt it.** They were migrated, measured, and
+then **reverted** — the numbers said the adoption was a redesign, not an extraction.
+Pixel-diff at 1440 against the pre-TABLE.1 build:
+
+| table | differing px | maxDelta |
+|---|---|---|
+| Procurement | **0** | 0 |
+| Unit Registry | 22,694 | 245 |
+| Engineering ECO | 10,557 | 238 |
+| Change Orders | 1,259 | 153 |
+
+Root-caused on Unit Registry by measuring geometry before/after, not by guessing:
+
+| property | before | after |
+|---|---|---|
+| **card width** | **1000** | **748** |
+| frozen cell x / width | 283 / 111.1 | 265 / 129.4 |
+| frozen cell height | 18.8 | 24 |
+| row background | transparent | white |
+| every other column | — | shifted 0.3–1.7px |
+
+The dominant cause is **structural, not cosmetic**: Unit Registry's design nests the
+scroller OUTSIDE the card (`overflow-x-auto` → `min-w-[1000px]` → `rounded-card`),
+so its *card* is 1000px and scrolls. `DenseTable` inverts that — card outside,
+scroller inside — so the card became 748px. The `-ml/pl` restore then moves the
+frozen cell's box 18px left and widens it, which perturbs `fr` redistribution by a
+fraction of a pixel across every column; over 26 rows of text that is the 22,694
+anti-aliased pixels.
+
+The primitive was extracted from Procurement, so it also imposes Procurement's ROW
+treatment (opaque background, stretched cell height) on tables whose designs render
+rows differently. Supporting both nestings and per-table row treatment, then
+re-proving 0px on three screens, is its own piece of work — so each table migrates
+in its own story **with pixel parity at 1440 as a gate**, rather than shipping four
+half-verified 1:1 screens.
+
+**Split out deliberately:**
+- **Unit Registry · Change Orders · Engineering ECO** — one story each, 0px at 1440 required.
+- **Test Explorer → TABLE.2.** Structurally different twice over: its identifier is
+  column 2 behind a 15px selection checkbox (so the primitive needs frozen-column
+  *count*, not "first column"), and it renders a header row per procedure group
+  inside what would be a single scroller.
+
+**Two findings logged, not fixed here** (design-first, per the flag-don't-diverge rule):
+- **CHG.1** — Change Orders' "Approval" column resolves to 63px against 126px of
+  content, i.e. it clips today. Giving it a floor fixes the clipping but shifts every
+  other column, so the `.dc.html` gets updated first.
+- Engineering's ECO code clips ~3px at exactly 1366 for the same reason.
+
+**Checks:**
+```
+pnpm verify:table-1     static — the primitive is the single source (in verify:all)
+pnpm table-1:check      served — Procurement scrolls+pins narrow, unchanged wide
+pnpm ux-16:columns      served — 0px column drift
+pnpm ux-17:scroll       served — both regimes
+```
+**Prove verify:table-1 catches a regression:** re-add `overflow-x-auto` or `useState`
+to `PoQueue.tsx` → check 7 fails; move `FROZEN_CELL` back into `DenseTable.tsx` →
+check 2 fails.

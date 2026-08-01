@@ -52,6 +52,11 @@ function run(): void {
 
   const row = codeOnly(read("apps/web/components/procurement/PoRow.tsx"));
   const queue = codeOnly(read("apps/web/components/procurement/PoQueue.tsx"));
+  // TABLE.1 moved the MECHANICS into the shared primitive. UX.17's guarantees are
+  // unchanged; they are just asserted where the behaviour now lives. Procurement's
+  // own contract (its template, its minimum, which cell is frozen) stays below.
+  const prim = codeOnly(read("apps/web/components/ui/DenseTable.tsx"));
+  const tokens = codeOnly(read("apps/web/components/ui/dense-table-tokens.ts"));
 
   check(
     "PoRow.tsx / PoQueue.tsx exist",
@@ -72,20 +77,24 @@ function run(): void {
 
   check("3. header + rows share one horizontal scroller", () => {
     // the min-width wrapper holds BOTH, so they scroll locked together
-    const scroller = /className="group overflow-x-auto[^"]*"/.test(queue);
-    const wrapper = /<div className=\{PO_MIN_W\}>/.test(queue);
+    const scroller = /className="group overflow-x-auto[^"]*"/.test(prim);
+    const wrapper = /<div className=\{minWidth\}>\{children\}<\/div>/.test(
+      prim,
+    );
     // anchor on the JSX usage `${PO_HEADER_COLS}` — plain "PO_HEADER_COLS" also
     // matches the import line at the top of the file, which is always first
+    // header + rows are both inside the one <DenseTable minWidth={PO_MIN_W}>
     const headerUse = queue.indexOf("${PO_HEADER_COLS}");
     const headerInside =
-      headerUse > queue.indexOf("PO_MIN_W}>") &&
+      headerUse > queue.indexOf("<DenseTable") &&
       headerUse < queue.indexOf("<PoRow");
     return scroller && wrapper && headerInside;
   });
 
   check("4. the PO column is frozen (sticky, layered, opaque)", () => {
-    const s = /const STICKY_PO =\s*\n?\s*"([^"]+)"/.exec(row)?.[1] ?? "";
+    const s = /"px-5":\s*\n?\s*"([^"]+)"/.exec(tokens)?.[1] ?? "";
     return (
+      /FROZEN_CELL\["px-5"\]/.test(row) &&
       s.includes("sticky") &&
       s.includes("left-0") &&
       /z-\d+/.test(s) &&
@@ -118,15 +127,15 @@ function run(): void {
   check("6. the hairline appears ONLY when actually scrolled", () => {
     // A permanent border-r would draw a vertical rule through the table at every
     // width; the design has none and ≥1366px must stay identical to UX.16.
-    const s = /const STICKY_PO =\s*\n?\s*"([^"]+)"/.exec(row)?.[1] ?? "";
+    const s = /"px-5":\s*\n?\s*"([^"]+)"/.exec(tokens)?.[1] ?? "";
     const conditional = s.includes("group-data-[scrolled=true]:border-r");
     const unconditional = /(^|\s)border-r(\s|$)/.test(s);
     return (
       conditional &&
       !unconditional &&
-      /data-scrolled=\{scrolled \? "true" : "false"\}/.test(queue) &&
+      /data-scrolled=\{scrolled \? "true" : "false"\}/.test(prim) &&
       /onScroll=\{\(e\) => setScrolled\(e\.currentTarget\.scrollLeft > 0\)\}/.test(
-        queue,
+        prim,
       )
     );
   });
@@ -135,14 +144,15 @@ function run(): void {
     "7. a11y: the scroller is focusable, named, and not force-smoothed",
     () => {
       return (
-        /tabIndex=\{0\}/.test(queue) &&
-        /aria-label="Purchase order queue"/.test(queue) &&
-        /role="region"/.test(queue) &&
+        /tabIndex=\{0\}/.test(prim) &&
+        /label="Purchase order queue"/.test(queue) &&
+        /aria-label=\{label\}/.test(prim) &&
+        /role="region"/.test(prim) &&
         // leaving scroll-behaviour at the browser default is what honours
         // prefers-reduced-motion — forcing smooth scrolling is the violation
-        !/scroll-smooth/.test(queue) &&
+        !/scroll-smooth/.test(prim) &&
         // the focus ring must sit inside the card's rounded clip
-        /focus-visible:ring-inset/.test(queue)
+        /focus-visible:ring-inset/.test(prim)
       );
     },
   );

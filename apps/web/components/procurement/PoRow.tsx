@@ -4,6 +4,7 @@ import {
   receivePurchaseOrder,
 } from "@/app/(shell)/procurement/actions";
 import type { QueuePO } from "@/lib/procurement";
+import { FROZEN_CELL } from "@/components/ui";
 
 // One PO-queue row (matches Procurement.dc.html columns). Status pill: functional
 // green (dot + tint) for approved/sent/received, lime for awaiting attention,
@@ -101,14 +102,9 @@ export const PO_MIN_W = "min-w-[672px]";
 // `self-stretch` matters: the row is `items-center`, so without it the pinned cell
 // is only as tall as its one line of text and scrolled content (the BR.1 flags, the
 // promised line) slides visibly through the band above and below it.
-// `-ml-5 pl-5` restores the row's px-5 padding to the pinned cell. Sticking at
-// `left-0` pins to the SCROLLER's edge, not the row's content box, so without this
-// the PO code jumps 20px left the moment you scroll and ends up touching the card
-// border. The negative margin widens the cell's box back over that padding strip
-// (covering it opaquely) while the padding puts the text back where it started; the
-// track itself is fixed-width, so neither the track sizing nor the right edge moves.
-const STICKY_PO =
-  "sticky left-0 z-10 -ml-5 flex items-center self-stretch bg-inherit pl-5 group-data-[scrolled=true]:border-r group-data-[scrolled=true]:border-line";
+// TABLE.1 — the frozen-cell mechanics now live in the DenseTable primitive; this
+// table only says WHICH cell is its identifier. (Was a local STICKY_PO constant.)
+const STICKY_PO = FROZEN_CELL["px-5"];
 
 function fmtDate(d: Date | null): string {
   return d ? new Date(d).toLocaleDateString() : "—";
