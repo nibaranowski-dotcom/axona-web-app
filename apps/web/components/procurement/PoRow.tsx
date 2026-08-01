@@ -73,6 +73,43 @@ const ADVANCE: Partial<Record<QueuePO["status"], string>> = {
 const COLS =
   "grid grid-cols-[minmax(56px,0.8fr)_minmax(0,2.2fr)_minmax(0,1fr)_minmax(76px,0.9fr)_112px_160px] items-center gap-3 px-5";
 
+// UX.17 — the width below which this table stops compressing and starts scrolling.
+// UX.16 made the tracks content-independent, but Item/Vendor are `minmax(0, …)`, so
+// a card narrower than the table just squeezes them toward zero (at a 588px card:
+// Item 56px, Vendor 26px, flags clipping). Their literal floors are 0, so the fix
+// is a floor for the TABLE, set at the narrowest width the layout still reads well
+// — the 1366px viewport (card 674px) UX.16 measured as `56 | 115.5 | 52.5 | 76 |
+// 112 | 160`:
+//
+//     56 + 116 + 52 + 76 + 112 + 160   = 572   tracks (PO · Item · Vendor · Value · Status · Action)
+//   + 5 gaps x 12px                    =  60   gap-3
+//   + px-5 x 2                         =  40   row padding
+//                                        ───
+//                                        672px
+//
+// Above 672px the fr tracks resolve exactly as UX.16 and nothing changes — no
+// scrollbar, 0px drift. Below it the container scrolls and every column keeps the
+// width it has at 1366px. This needs NO change to the track template itself.
+export const PO_MIN_W = "min-w-[672px]";
+
+// UX.17 — the frozen identifier column. `bg-inherit` (not a fixed token) so the
+// pinned cell tracks the row's own background through `hover:bg-panel-2` instead of
+// punching a paper-coloured hole in the hover state. The hairline appears ONLY once
+// the container is actually scrolled (`data-scrolled` on the wrapper): a permanent
+// border would put a vertical rule through the table at every width, and the design
+// has none — ≥1366px must stay pixel-identical to UX.16.
+// `self-stretch` matters: the row is `items-center`, so without it the pinned cell
+// is only as tall as its one line of text and scrolled content (the BR.1 flags, the
+// promised line) slides visibly through the band above and below it.
+// `-ml-5 pl-5` restores the row's px-5 padding to the pinned cell. Sticking at
+// `left-0` pins to the SCROLLER's edge, not the row's content box, so without this
+// the PO code jumps 20px left the moment you scroll and ends up touching the card
+// border. The negative margin widens the cell's box back over that padding strip
+// (covering it opaquely) while the padding puts the text back where it started; the
+// track itself is fixed-width, so neither the track sizing nor the right edge moves.
+const STICKY_PO =
+  "sticky left-0 z-10 -ml-5 flex items-center self-stretch bg-inherit pl-5 group-data-[scrolled=true]:border-r group-data-[scrolled=true]:border-line";
+
 function fmtDate(d: Date | null): string {
   return d ? new Date(d).toLocaleDateString() : "—";
 }
@@ -97,11 +134,15 @@ export function PoRow({
   const status = STATUS[po.status];
   const advanceLabel = ADVANCE[po.status];
   return (
-    <div className={`${COLS} border-t border-line py-[14px] hover:bg-panel-2`}>
+    <div
+      className={`${COLS} border-t border-line bg-paper py-[14px] hover:bg-panel-2`}
+    >
       {/* UX.16 — tabular-nums on every numeric/date cell so digit-width changes
           (1 vs 8, a 5- vs 7-figure value) can't jitter the column. */}
-      <span className="min-w-0 truncate font-mono text-[12.5px] tabular-nums text-ink">
-        {po.code}
+      <span className={`${STICKY_PO} min-w-0`}>
+        <span className="truncate font-mono text-[12.5px] tabular-nums text-ink">
+          {po.code}
+        </span>
       </span>
       <div className="min-w-0">
         {/* UX.16 — `overflow-hidden` + `shrink-0` tags: the Item track no longer
@@ -200,3 +241,4 @@ export function PoRow({
 }
 
 export const PO_HEADER_COLS = COLS;
+export const PO_STICKY_PO = STICKY_PO;

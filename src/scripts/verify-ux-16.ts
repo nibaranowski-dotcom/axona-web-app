@@ -123,20 +123,33 @@ function run(): void {
 
   check("7. UX.15 chain holds — every truncating cell has min-w-0", () => {
     const flat = row.replace(/\s+/g, " ");
-    // Each `truncate` in a grid/flex cell sits in a className that also has
-    // min-w-0, or inside a min-w-0 parent (the item block + the status pill).
+    const flatQueue = queue.replace(/\s+/g, " ");
+    // Assert the PROPERTY, not one markup shape: UX.17 made the PO cell a sticky
+    // min-w-0 flex wrapper with the truncating text as its child, so the chain now
+    // reads `min-w-0 parent > truncate child` there while the other cells still
+    // carry both classes themselves. Either arrangement satisfies UX.15; a
+    // `truncate` with NO min-w-0 anywhere in its chain does not.
     const cells = flat.match(/className="[^"]*truncate[^"]*"/g) ?? [];
     if (cells.length < 3) return false;
+    // Item · Vendor · Value · Status header labels keep both classes inline.
     const headerCells = queue.match(/className="min-w-0 truncate"/g) ?? [];
-    return (
-      headerCells.length === 5 && // PO · Item · Vendor · Value · Status labels
-      /min-w-0 truncate font-mono[^"]*tabular-nums[^"]*">\s*\{po\.code\}/.test(
+    // The PO header label: a min-w-0 sticky cell wrapping a truncating child.
+    const poHeader =
+      /\$\{PO_STICKY_PO\} min-w-0`?\}?>\s*<span className="truncate">PO<\/span>/.test(
+        flatQueue,
+      );
+    // The PO code cell: same shape, and still mono + tabular-nums (UX.16 check 6).
+    const poCell =
+      /\$\{STICKY_PO\} min-w-0`\}>\s*<span className="truncate font-mono text-\[12\.5px\] tabular-nums text-ink">\s*\{po\.code\}/.test(
         flat,
-      ) &&
-      /<span className="min-w-0 truncate font-mono text-\[12\.5px\] tabular-nums text-ink">/.test(
+      );
+    // Vendor + value cells still carry min-w-0 + truncate themselves.
+    const vendorAndValue =
+      /className="min-w-0 truncate text-\[13px\] text-ink-muted"/.test(flat) &&
+      /className="min-w-0 truncate font-mono text-\[12\.5px\] tabular-nums text-ink"/.test(
         flat,
-      )
-    );
+      );
+    return headerCells.length === 4 && poHeader && poCell && vendorAndValue;
   });
 
   check("8. BR.1 intact — promised/received, LATE, and the flag chips", () => {

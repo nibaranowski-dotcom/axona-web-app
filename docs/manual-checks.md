@@ -2648,3 +2648,84 @@ regression, both ways:** add back a raw `action LIKE '…%'` delete → checks 2
 fail; add back a Prisma `startsWith` delete → check 3 fails; restore → 9/9 green. The
 runtime guard is provable on its own: `assertScopedAuditDelete()` throws on `LIKE`,
 `ILIKE`, `SIMILAR TO` and `~~`, and allows `WHERE id = ANY($1::text[])`.
+
+## UX.17 — the PO queue scrolls at narrow widths instead of compressing
+
+**The gap UX.16 left.** UX.16 made the tracks content-independent, so header and rows
+are flush at every width (0px drift). But Item and Vendor are `minmax(0, …)` by
+design, so below a ~672px card the six tracks — including the 160px action column —
+have nowhere to go: at a 588px card Item collapsed to 56px and Vendor to 26px, and
+the BR.1 flags clipped. UX.16 documented this as a known responsive gap rather than
+fixing it unilaterally; UX.17 is the fix.
+
+**One rule, no breakpoints.** The table carries its own minimum width and lives in a
+horizontal scroller, with the PO identifier frozen at the left edge:
+
+```
+56 + 116 + 52 + 76 + 112 + 160   = 572   PO · Item · Vendor · Value · Status · Action
++ 5 gaps x 12px                  =  60   gap-3
++ px-5 x 2                       =  40   row padding
+                                   ───
+PO_MIN_W                           672px
+```
+
+Item/Vendor's literal floors are `0`, so their comfort widths (116/52) come from the
+narrowest layout that already reads well — the 1366px viewport UX.16 measured as
+`56 | 115.5 | 52.5 | 76 | 112 | 160`. **The track template itself is unchanged**; the
+min-width alone makes the `fr` tracks resolve to that layout when scrolling.
+
+Above 672px the scroller has nothing to scroll and the layout is UX.16 exactly.
+Below it, every column keeps its 1366px width and the card scrolls.
+
+**Three things that are easy to get wrong, and how each is handled:**
+- **`self-stretch`** on the pinned cell. The row is `items-center`, so without it the
+  frozen cell is only as tall as its one line of text and the BR.1 flags and promised
+  line slide *visibly through* the band above and below it. (Caught by screenshot,
+  not by measurement — the column-offset numbers were green either way.)
+- **`-ml-5 pl-5`** on the pinned cell. `left-0` pins to the **scroller's** edge, not
+  the row's content box, so the PO code otherwise jumps 20px left the moment you
+  scroll and ends up touching the card border. The negative margin widens the cell's
+  box back over that padding strip (covering it opaquely); the padding puts the text
+  back. The track is fixed-width, so neither the sizing nor the right edge moves.
+- **`bg-inherit`**, not a fixed token — the pinned cell must follow the row through
+  `hover:bg-panel-2` instead of punching a paper-coloured hole in the hover state.
+  This is why the row itself gained an explicit `bg-paper`.
+
+**The hairline is conditional.** It appears only once `scrollLeft > 0`
+(`data-scrolled` on the wrapper). A permanent `border-r` would draw a vertical rule
+through the table at *every* width, and the design has none — ≥1366px has to stay
+identical to UX.16.
+
+**Accessibility.** The scroller is `tabIndex={0}` with `role="region"` +
+`aria-label` (a scrollable region that can't take focus is unreachable without a
+pointer, and a focus stop needs a name). Scroll-behaviour is left at the browser
+default — **not** `scroll-smooth`: leaving it alone is what honours
+prefers-reduced-motion; forcing smooth scrolling is the violation. The focus ring is
+`ring-inset` so the card's rounded clip doesn't cut it.
+
+**Check both regimes:**
+```
+pnpm ux-17:scroll                            # narrow scrolls + pinned; wide doesn't
+UX17_SHOT_DIR=/tmp pnpm ux-17:scroll         # + before/after screenshots
+pnpm ux-16:columns                           # still 0px drift at every width
+```
+Measured: 1180px → card 486, scrolls 186px · 1280px → card 586, scrolls 86px, PO
+pinned at 0px, hairline on · 1366/1440/1512/1728 → no scroll, unchanged.
+
+**Proof that ≥1366px did not regress** — pixel-diff at 1440px against the committed
+UX.16 build: **29 of 1,584,000 pixels differ, max delta 8/255**, all inside a 12px
+band on the card's top hairline (anti-aliasing from the new clip context). The table
+body is pixel-identical. Not literally byte-identical, but there is no structural or
+perceptible change. (A useful side-effect: this also proves that PO-9001's SKU being
+hidden behind its two flags at 1440px is pre-existing UX.16 behaviour, not new.)
+
+**Automated:** `pnpm verify:ux-17` (in `verify:all`) — 10 static checks over the
+structure, comment-stripped so it asserts code rather than prose. **Prove it catches
+a regression:** make the hairline permanent (`border-r` outside the
+`group-data-[scrolled=true]:` variant) → check 6 fails; drop `PO_MIN_W` to `0px` →
+check 1 fails; restore → 10/10 green.
+
+**Still deliberately Procurement-only.** The overflow + frozen-column wrapper is a
+good candidate for a shared table primitive (`/units`, `/changes`, `/tests` and the
+Engineering ECO table have the same shape), but that is a cross-module refactor and
+is FLAGGED here rather than done — see the UX.15/UX.16 notes in `design.md`.
