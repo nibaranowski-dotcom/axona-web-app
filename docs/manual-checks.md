@@ -2969,3 +2969,61 @@ blip, not just the runner. It is not done here because that client sits on the
 production request path: it would need proof it can never swallow auth, config or
 schema errors, and five runs in which the retry never fired is not that proof. Runner-
 only is the safe scope; the client-level option stays a follow-up.
+
+## DEMOVERIFY — "safe to send" guard for prospect demo links
+
+**The problem.** Prospect emails deep-link into a seeded tenant and make factual
+claims about what the recipient will see. Until now a human checked every link and
+every sentence before each send. That worked — it caught two real errors in the first
+email set — but it does not scale and it is exactly the kind of check that gets
+skipped under time pressure.
+
+```
+pnpm verify:demo <prospect>          one prospect
+pnpm verify:demo                     every prospect that has a manifest (what verify:all runs)
+pnpm verify:demo --now=<iso>         pin the clock (VERIFY.3 determinism)
+```
+
+**The manifest turns the email into assertions.** Each step declares the `route` the
+email links, the `heroCode` + `kind` it is about, and `claims[]` — the sentences as
+checkable predicates. Authoring one is the point: you cannot write it without making
+every sentence data-backed. Manifests live at `prospects/<name>/walkthrough.manifest.ts`,
+**gitignored** (they name the tenant + hero codes); only the *shape*
+(`src/scripts/lib/walkthrough.ts`) and the checker are committed, so `verify:seed-1`
+stays green. Claims are declarative descriptors, never functions — manifests stay
+data, the logic stays in committed code, and every failure reports the ACTUAL value.
+
+**Five checks per step:** the hero exists on that tenant · its screen is POPULATED
+(unit has as-built lines, PO has part+qty, NCR has a root cause, test run has results,
+part has stock rows) · the route matches a real app route (walked from `page.tsx`,
+`[param]` → wildcard, so a renamed path is caught) · every claim holds · the hero row
+is org-isolated. Output is `SAFE TO SEND` / `NOT SAFE` with the exact route + failing
+check, non-zero exit on any failure. It never passes to be nice.
+
+**Isolation is checked BY ID, not by code.** Hero codes are NOT tenant-unique — each
+prospect seed replays the base narrative, so `PO-9001` legitimately exists on several
+orgs at once. That is not a leak (every read is org-scoped by session). The property
+that matters is that *this tenant's row* is unreachable through another org's client,
+so the checker resolves the id and probes that.
+
+**Prove the guard bites** — restore the original email's copy in a manifest and run it:
+```
+FAIL <part> in 5 locations                 [actual: 2 location(s)]
+FAIL <part> @ <site> spares == 0           [actual: 2]
+FAIL <po> status == RECEIVED               [actual: SENT]
+NOT SAFE — 3 failing check(s)
+```
+Those first two ARE the two real errors from the first email set — "one part across
+five locations" (it is two) and "no local spare" (there are two on site). A manifest of
+the original copy fails on exactly them.
+
+**Two findings from the authoring pass**, both from real data, neither planted:
+- A part can satisfy a TRUE claim and still be a bad link: one long-lead part reads
+  `onHand 0 / min 30` (claim true) but has **no InventoryStock rows**, so the
+  `/inventory` deep-link opens on a screen that does not show it. The populated-ness
+  check exists for precisely this.
+- The isolation-by-code mistake above, found by the checker failing a legitimate link.
+
+**In `verify:all`:** runs with no argument, checking every prospect that has a
+manifest and skipping cleanly (exit 0) when `prospects/` is absent — so CI and a fresh
+clone pass without the gitignored tenants, the same pattern as the prospect verifies.

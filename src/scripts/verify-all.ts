@@ -130,6 +130,7 @@ const VERIFY_SEQUENCE: string[] = [
   "demo-3",
   "ont-1",
   "seed-1",
+  "demo",
   "ux-12",
   "mem-1",
   "ux-13",

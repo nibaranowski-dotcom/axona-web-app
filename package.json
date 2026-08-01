@@ -150,6 +150,7 @@
     "verify:demo-3": "tsx src/scripts/verify-demo-3.ts",
     "verify:ux-11": "tsx src/scripts/verify-ux-11.ts",
     "verify:ont-1": "tsx src/scripts/verify-ont-1.ts",
+    "verify:demo": "tsx src/scripts/verify-demo.ts",
     "verify:seed-1": "tsx src/scripts/verify-seed-1.ts",
     "verify:ux-12": "tsx src/scripts/verify-ux-12.ts",
     "verify:mem-1": "tsx src/scripts/verify-mem-1.ts",
