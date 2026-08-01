@@ -2903,3 +2903,69 @@ genuinely have no reviewers assigned yet, whereas the design's sample shows `0/2
 draft should display its *policy-required* approver count, that denominator has to come
 from an approval-policy model we do not have — a data-model follow-up, not a chip bug.
 The denominator is never invented to match the mock.
+
+## VERIFY.5 — verify:all stops needing manual re-runs
+
+**The flake.** `verify:all` kept going red on a *different* script each run — LOOP.1,
+SEC.1, AUDIT.1, INV.2, `getQualityData` — every one of which passed in isolation. The
+cause is structural: ~130 sequential script spawns each open their own Prisma pool, so
+under that churn a step occasionally loses its connection. VERIFY.3 already retried
+classified transients, yet some still slipped through as hard failures.
+
+**Why they slipped through — the real bug was CAPTURE, not classification.** A Prisma
+connection error prints its entire minified runtime *before* the actual message, so:
+
+1. `maxBuffer` was 64MB. On a large dump Node **kills the child and truncates both
+   buffers**, cutting off the tail where `P1001` lives. The classifier then saw no
+   signature and called it a hard failure. It is now `Infinity` — whether a step can be
+   classified must never depend on how much it printed.
+2. `r.error` and `r.signal` were discarded (`r.status ?? 1`), so a child killed by a
+   signal, or a spawn that failed outright, reached the classifier as a bare exit-1
+   with no reason attached. Both are now folded into the captured text.
+
+Capture is assembled in full **before** anything decides transient-vs-real.
+
+**Retry policy.** A classified transient is re-run at most **2** times, each attempt
+preceded by a growing backoff (`1500ms x attempt`) and gated on the shared client
+answering `SELECT 1` again. Every retry is logged as `RETRY verify:<id> — transient
+(<signature>), attempt n/2`, and any retry that eventually passes is listed in the run
+summary — a green run always says what it had to retry.
+
+**Classification rule — strictly connection-class, never "any failure once".** Only
+these signatures are retried:
+
+```
+P1001 · P1002 · P1017 · P2024
+Can't reach database server · Timed out fetching a new connection
+Connection terminated unexpectedly · Server has closed the connection
+ECONNRESET · ECONNREFUSED · ETIMEDOUT · Connection refused
+too many clients already          <- Postgres refusing new backends: the literal
+                                     symptom of ~130 sequential pools, transient by
+                                     definition (the next attempt has slots)
+```
+
+Anything else fails immediately, with no retry attempted. A transient that keeps
+failing still goes red, reported as *"still failing after a retry"*. **A real failure
+is never masked** (VERIFY.4's rule).
+
+**Prove both halves** — this is the self-test to re-run if the policy is ever touched:
+```
+# A. a real failure must fail FAST, with no RETRY lines
+#    -> verify:all FAILED at verify:<id> — exit 1
+# B. a P1001 printed AFTER a 3MB dump must still be classified and retried
+#    -> RETRY … transient (P1001), attempt 1/2 … attempt 2/2
+#       FAILED — still failing after a retry (transient signature: P1001)
+```
+B is the regression this story fixes: before the capture fix that signature was
+truncated away and the step was reported as a hard failure.
+
+**Evidence:** `verify:all` green **5 consecutive times** on a fresh seed with zero hand
+re-runs (160 checks each, ~2.2–2.3 min). Zero retries fired across those five — the
+runs prove stability, the self-test proves the retry path.
+
+**Deliberately deferred to VERIFY.6 — client-level retry.** A bounded transient-connect
+retry inside `@axona/db` would make EVERY script (and production) survive a connect
+blip, not just the runner. It is not done here because that client sits on the
+production request path: it would need proof it can never swallow auth, config or
+schema errors, and five runs in which the retry never fired is not that proof. Runner-
+only is the safe scope; the client-level option stays a follow-up.

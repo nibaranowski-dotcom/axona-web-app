@@ -202,7 +202,19 @@ const TRANSIENT = [
   "Connection terminated unexpectedly",
   "ECONNRESET",
   "ECONNREFUSED",
+  "ETIMEDOUT",
+  // Postgres itself refusing new backends — the literal symptom of ~130 sequential
+  // scripts each opening a pool. Transient by definition: the next attempt has slots.
+  "too many clients already",
+  "Server has closed the connection",
+  "server closed the connection",
+  "Connection refused",
 ];
+
+/** How many times a classified transient may be re-run before the gate goes red. */
+const MAX_TRANSIENT_RETRIES = 2;
+/** Backoff before each retry, multiplied by the attempt number. */
+const TRANSIENT_BACKOFF_MS = 1500;
 
 const ROOT = process.cwd();
 const scripts = (
@@ -254,6 +266,24 @@ const env = {
   PATH: `${join(ROOT, "node_modules", ".bin")}:${process.env.PATH ?? ""}`,
 };
 
+/**
+ * Run one step and return its COMPLETE output.
+ *
+ * VERIFY.5 — this is the fix for the recurring "different script every run, passes
+ * in isolation" flake. Two things were feeding the transient classifier bad input:
+ *
+ *  1. `maxBuffer` was 64MB. A Prisma connection error prints its whole minified
+ *     runtime before the actual message, so on a big dump Node KILLS the child and
+ *     TRUNCATES both buffers — cutting off the tail where `P1001` lives. The
+ *     classifier then saw no signature and reported a hard failure. `Infinity`
+ *     removes the ceiling: classification must never depend on how much a step printed.
+ *  2. `r.error` and `r.signal` were discarded (`r.status ?? 1`), so a child killed by
+ *     a signal, or a spawn that failed outright, reached the classifier as a bare
+ *     exit-1 with no reason attached. Both are now folded into the text.
+ *
+ * Everything downstream classifies against this string, so it has to be the whole
+ * picture — captured BEFORE anyone decides transient-vs-real.
+ */
 function runStep(id: string): { code: number; output: string } {
   const cmd = scripts[`verify:${id}`]!;
   const r = spawnSync(cmd, {
@@ -261,11 +291,18 @@ function runStep(id: string): { code: number; output: string } {
     env,
     cwd: ROOT,
     encoding: "utf8",
-    maxBuffer: 64 * 1024 * 1024,
+    maxBuffer: Infinity,
   });
+  const parts = [r.stdout ?? "", r.stderr ?? ""];
+  if (r.error) {
+    const e = r.error as NodeJS.ErrnoException;
+    parts.push(`\n[runner] spawn error: ${e.code ?? ""} ${e.message}\n`);
+  }
+  if (r.signal) parts.push(`\n[runner] child killed by signal ${r.signal}\n`);
   return {
+    // a signal/spawn failure is a failure even though `status` is null
     code: r.status ?? 1,
-    output: `${r.stdout ?? ""}${r.stderr ?? ""}`,
+    output: parts.join(""),
   };
 }
 
@@ -339,15 +376,27 @@ async function main(): Promise<void> {
 
     let { code, output } = runStep(id);
 
-    if (code !== 0) {
+    // VERIFY.5 — bounded transient retry. Up to MAX_TRANSIENT_RETRIES re-runs, each
+    // gated on the DB actually answering again and spaced by a growing backoff so a
+    // pressure spike has time to drain. Deliberately NOT "retry any failure once":
+    // only a classified CONNECTION signature is retried, and if the step keeps
+    // failing it still goes red. A real failure is never masked (VERIFY.4's rule).
+    for (
+      let attempt = 1;
+      code !== 0 && attempt <= MAX_TRANSIENT_RETRIES;
+      attempt++
+    ) {
       const sig = isTransient(output);
-      if (sig) {
-        console.log(
-          `  RETRY verify:${id} — transient (${sig}); the DB blipped, re-running once`,
-        );
-        if (prisma) await waitForDb(prisma);
-        ({ code, output } = runStep(id));
-        if (code === 0) retried.push(id);
+      if (!sig) break; // not a transient — fail fast, do not retry
+      console.log(
+        `  RETRY verify:${id} — transient (${sig}), attempt ${attempt}/${MAX_TRANSIENT_RETRIES}`,
+      );
+      await new Promise((r) => setTimeout(r, TRANSIENT_BACKOFF_MS * attempt));
+      if (prisma) await waitForDb(prisma);
+      ({ code, output } = runStep(id));
+      if (code === 0) {
+        retried.push(`${id} (attempt ${attempt + 1})`);
+        break;
       }
     }
 
