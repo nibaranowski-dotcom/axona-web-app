@@ -77,7 +77,7 @@ function run(): void {
 
   check("3. header + rows share one horizontal scroller", () => {
     // the min-width wrapper holds BOTH, so they scroll locked together
-    const scroller = /className="group overflow-x-auto[^"]*"/.test(prim);
+    const scroller = /group overflow-x-auto/.test(prim);
     const wrapper = /<div className=\{minWidth\}>\{children\}<\/div>/.test(
       prim,
     );
@@ -92,7 +92,7 @@ function run(): void {
   });
 
   check("4. the PO column is frozen (sticky, layered, opaque)", () => {
-    const s = /"px-5":\s*\n?\s*"([^"]+)"/.exec(tokens)?.[1] ?? "";
+    const s = /export function frozenCell[\s\S]*?\n\}/.exec(tokens)?.[0] ?? "";
     return (
       /FROZEN_CELL\["px-5"\]/.test(row) &&
       s.includes("sticky") &&
@@ -100,7 +100,11 @@ function run(): void {
       /z-\d+/.test(s) &&
       // bg-inherit, not a fixed token: the pinned cell must follow the row's
       // hover:bg-panel-2 instead of punching a paper-coloured hole in it
-      s.includes("bg-inherit") &&
+      // TABLE.3a parameterised the colour: the primitive guarantees the cell paints
+      // an opaque background, and the PO queue supplies `bg-inherit` so the pinned
+      // cell follows its row through hover instead of punching a hole in it.
+      s.includes("${bg}") &&
+      /FROZEN_CELL[\s\S]*"bg-inherit"/.test(tokens) &&
       // full row height, or scrolled content shows through above/below the text
       s.includes("self-stretch") &&
       // the row's px-5 padding, restored (left-0 pins to the scroller, not the row)
@@ -127,7 +131,7 @@ function run(): void {
   check("6. the hairline appears ONLY when actually scrolled", () => {
     // A permanent border-r would draw a vertical rule through the table at every
     // width; the design has none and ≥1366px must stay identical to UX.16.
-    const s = /"px-5":\s*\n?\s*"([^"]+)"/.exec(tokens)?.[1] ?? "";
+    const s = /export function frozenCell[\s\S]*?\n\}/.exec(tokens)?.[0] ?? "";
     const conditional = s.includes("group-data-[scrolled=true]:border-r");
     const unconditional = /(^|\s)border-r(\s|$)/.test(s);
     return (

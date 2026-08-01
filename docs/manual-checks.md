@@ -2815,3 +2815,43 @@ pnpm ux-17:scroll       served — both regimes
 **Prove verify:table-1 catches a regression:** re-add `overflow-x-auto` or `useState`
 to `PoQueue.tsx` → check 7 fails; move `FROZEN_CELL` back into `DenseTable.tsx` →
 check 2 fails.
+
+## TABLE.3a — DenseTable narrowed to mechanics only
+
+**What TABLE.1 got wrong.** The primitive was extracted from the PO queue, so it
+carried two of that screen's *choices* as if they were mechanics: it rendered the
+card itself, and it assumed the row's treatment. Adopting it therefore moved any
+table whose design disagreed — Unit Registry's card went **1000px → 748px** because
+its design nests the scroller OUTSIDE the card (`overflow-x-auto` → `min-w-[1000px]`
+→ `rounded-card`) while DenseTable inverted that.
+
+**The narrowing.** `DenseTable` now renders ONLY the scroller and the min-width
+floor — never a card. Which side the card goes on is the consumer's:
+
+```
+<div className="…rounded-card…"><DenseTable …>{rows}</DenseTable></div>   ← PO queue
+<DenseTable …><div className="…rounded-card…">{rows}</div></DenseTable>   ← Unit Registry
+```
+
+The frozen-cell token became `frozenCell(pad, bg)`: the primitive guarantees the
+cell is sticky, layered, opaque, full-row-height and padding-restored — the *colour*
+is the consumer's, matching whatever its own row paints. TABLE.1 hardcoded
+`bg-inherit`, which silently required every adopting row to already be opaque.
+
+**Proof it changed nothing:** Procurement is **0 of 1,584,000 differing pixels at
+1440** against the TABLE.1 build, with `ux-16:columns` 0px and `ux-17:scroll` both
+regimes green. And the narrowing demonstrably fixes the structural damage — on Unit
+Registry the card returns to 1000px, all 8 track widths become identical, and
+columns 2–8 land on identical x-positions (they had been shifted 0.3–1.7px).
+
+**Unit Registry is still NOT migrated** (that is TABLE.3b). After the narrowing its
+diff falls 22,694 → **2,993** (maxDelta 245 → 20), confined entirely to `x=265 w=129`
+— the frozen cell's own column. What remains is inherent to freezing a column on a
+design whose rows are transparent over the card: the cell's box moves 283 → 265 (the
+padding restore) and its height 18.8 → 24 (the stretch), so its opaque background
+paints where the row previously showed the card. Flattening the inner `truncate`
+wrapper was tested and produced *exactly* 2,993 again, so that is not the cause.
+0px@1440 is the gate, so it was reverted rather than shipped.
+
+**Grep proof:** `DenseTable.tsx` contains no `rounded-card` / `bg-paper` / `hover:` /
+row-padding / row-border classes (only comment lines illustrating both nestings).

@@ -10,36 +10,37 @@
 export type DensePad = "px-5" | "px-[18px]";
 
 /**
- * The frozen cell, per row-padding variant. Put this on the identifier cell.
+ * The frozen cell (TABLE.3a) — MECHANICS ONLY.
  *
- * `self-stretch` — the row is `items-center`, so without it the pinned cell is
- * only as tall as one line of text and content slides visibly through the band
- * above and below it.
- * `bg-inherit` — not a fixed token: the pinned cell must follow the row through
- * `hover:bg-panel-2` instead of punching a paper-coloured hole in the hover state.
- * The consumer's row therefore needs an explicit opaque background.
- * `-ml/pl` — `left-0` pins to the SCROLLER's edge, not the row's content box, so
- * without restoring the row's padding the identifier jumps left on scroll and ends
- * up touching the card border. The negative margin widens the cell's box back over
- * that padding strip; the padding puts the text back. Tracks are fixed-width, so
- * neither the sizing nor the cell's right edge moves.
+ * A pinned column has to do exactly three things beyond being sticky, all of them
+ * proven on the PO queue in UX.17, and none of them a styling choice:
+ *
+ *  · `self-stretch` — the row is `items-center`, so otherwise the pinned cell is one
+ *    line tall and the rest of the row's content slides visibly through the band
+ *    above and below it.
+ *  · an OPAQUE background — content sliding underneath must be hidden. The colour is
+ *    the CONSUMER's (`bg`), matching whatever its own row paints; TABLE.1 hardcoded
+ *    `bg-inherit`, which silently required every adopting row to be opaque and to
+ *    have been given a background it may not have had.
+ *  · `-ml/pl` — `left-0` pins to the SCROLLER's edge, not the row's content box, so
+ *    without restoring the row's padding the identifier jumps left on scroll and
+ *    ends up touching the card border.
+ *
+ * Everything else — row height, striping, hover, the card — stays with the table.
+ *
+ * `bg` must be a literal Tailwind class the consumer also uses on its row (e.g.
+ * "bg-paper"), so the pinned cell and its row always paint the same colour.
  */
-export const FROZEN_CELL: Record<DensePad, string> = {
-  "px-5":
-    "sticky left-0 z-10 -ml-5 flex items-center self-stretch bg-inherit pl-5 group-data-[scrolled=true]:border-r group-data-[scrolled=true]:border-line",
-  "px-[18px]":
-    "sticky left-0 z-10 -ml-[18px] flex items-center self-stretch bg-inherit pl-[18px] group-data-[scrolled=true]:border-r group-data-[scrolled=true]:border-line",
-};
+export function frozenCell(pad: DensePad, bg: string): string {
+  const offset = pad === "px-5" ? "-ml-5 pl-5" : "-ml-[18px] pl-[18px]";
+  return `sticky left-0 z-10 ${offset} flex items-center self-stretch ${bg} group-data-[scrolled=true]:border-r group-data-[scrolled=true]:border-line`;
+}
 
 /**
- * A SECOND frozen cell, for a table whose identifier is not the first column.
- * Test Explorer leads with a 15px selection checkbox and carries the run code in
- * column 2; pinning only column 2 is incoherent (the checkbox would scroll under
- * it) and reordering would diverge from `Test Explorer.dc.html`. `left-0` is
- * replaced by an offset equal to the first track plus the gap.
+ * The PO queue's frozen cell, kept as a constant so its class string is byte-stable
+ * (it is the 0px-parity reference every later migration is measured against).
  */
-export const FROZEN_CELL_2ND: Record<string, string> = {
-  // 28px track + 12px gap = 40px, on an 18px-padded row
-  "40px/px-[18px]":
-    "sticky left-[40px] z-10 flex items-center self-stretch bg-inherit pr-2 group-data-[scrolled=true]:border-r group-data-[scrolled=true]:border-line",
+export const FROZEN_CELL: Record<DensePad, string> = {
+  "px-5": frozenCell("px-5", "bg-inherit"),
+  "px-[18px]": frozenCell("px-[18px]", "bg-inherit"),
 };

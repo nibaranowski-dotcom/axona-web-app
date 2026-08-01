@@ -26,7 +26,7 @@ export function PoQueue({
 }) {
   return (
     <div className="overflow-hidden rounded-card border border-line bg-paper">
-      <DenseTable minWidth={PO_MIN_W} label="Purchase order queue" frameless>
+      <DenseTable minWidth={PO_MIN_W} label="Purchase order queue">
         {/* UX.16 — the header shares PO_HEADER_COLS with every row, and that template
             is content-independent (see COLS in PoRow), so the two resolve to the same
             tracks at every width. The header labels also truncate so a longer label

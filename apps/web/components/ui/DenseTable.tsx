@@ -43,31 +43,43 @@ import { useState, type ReactNode } from "react";
 // is the track's own min-content: rows inflate their tracks, the short header
 // labels do not, and header and body drift apart off the same template (UX.16).
 
+// ── nesting (TABLE.3a) ──────────────────────────────────────────────────────
+//
+// DenseTable renders ONLY the scroller and the min-width floor — never a card.
+// That is the whole point: the designs disagree about where the card sits, and
+// TABLE.1 proved that guessing costs pixels. The PO queue puts the card OUTSIDE
+// (card > scroller > rows), so its card stays viewport-width and the rows scroll
+// inside it. Unit Registry puts the scroller OUTSIDE (scroller > min-w > card), so
+// its 1000px card scrolls as a unit. Both are just a matter of which side of
+// <DenseTable> the consumer's card element goes:
+//
+//   <div className="…rounded-card…"><DenseTable …>{rows}</DenseTable></div>
+//   <DenseTable …><div className="…rounded-card…">{rows}</div></DenseTable>
+//
+// Owning a card here would force one of those on everyone — which is exactly the
+// "pure extraction, no redesign" breach TABLE.1 backed out of.
 export function DenseTable({
   minWidth,
   label,
-  children,
   className = "",
-  frameless = false,
+  children,
 }: {
-  /** `min-w-[Npx]` — the sum of the template's track floors, gaps and padding. */
+  /** `min-w-[Npx]` — the width below which the table scrolls instead of compressing. */
   minWidth: string;
   /** Accessible name for the focusable scroll region. */
   label: string;
-  /** Header + rows, all using the consumer's own grid template. */
-  children: ReactNode;
-  /** Extra classes for the outer card. */
+  /** Extra classes for the scroll container itself. */
   className?: string;
-  /** Skip the card chrome when the caller already provides it (e.g. a section). */
-  frameless?: boolean;
+  /** The table (and, for the scroller-outside nesting, its card). */
+  children: ReactNode;
 }) {
   // Drives the frozen column's hairline. React bails out when the boolean is
   // unchanged, so this does not re-render on every scroll event.
   const [scrolled, setScrolled] = useState(false);
 
-  const scroller = (
+  return (
     <div
-      className="group overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+      className={`group overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${className}`}
       data-scrolled={scrolled ? "true" : "false"}
       onScroll={(e) => setScrolled(e.currentTarget.scrollLeft > 0)}
       tabIndex={0}
@@ -75,15 +87,6 @@ export function DenseTable({
       aria-label={label}
     >
       <div className={minWidth}>{children}</div>
-    </div>
-  );
-
-  if (frameless) return scroller;
-  return (
-    <div
-      className={`overflow-hidden rounded-card border border-line bg-paper ${className}`}
-    >
-      {scroller}
     </div>
   );
 }
