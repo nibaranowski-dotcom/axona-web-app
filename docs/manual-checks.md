@@ -3093,3 +3093,74 @@ primitive rather than re-implementing the scroller, its tracks stay content-inde
 `overflow-hidden` anywhere in the file** (the regression that would silently unpin the
 serial), the rows carry an explicit opaque background for `bg-inherit` to occlude
 against, and the pinned cell is the shared `FROZEN_CELL["px-[18px]"]`.
+
+## TABLE.3c — Engineering ECO on DenseTable, ECO code pinned
+
+The ECO table takes the canonical dense-table shell and pins its identifier, same
+pattern as `/units` (TABLE.3b) and `Change Orders.dc.html`.
+
+**Adapted, because this card owns a heading.** The pattern's rule is that no clipping
+box may sit between the sticky cell and the scroller. This card was
+`overflow-hidden` — exactly that box. It now clips nothing, and the scroller wraps
+ONLY the table (carrying `rounded-b-card`, so the last row's opaque background still
+rounds off). Making the whole card the scroller, as on `/units`, would drag the
+"Change orders" heading sideways with the rows. `Change Orders.dc.html` keeps its
+heading outside the card and so needs no equivalent — same shape, not a second
+pattern.
+
+**The floor is 746px** — the design-width layout (1440 → a 748px card, 746px inside
+the borders), sized to the scroller's content box for the same reason `/units` reads
+998 (TABLE.3b). At 1440 there is nothing to scroll; below it the table holds its
+design-width layout instead of compressing. That is also what settles the **~3px
+ECO-code clip TABLE.1 logged at 1366**: the track was 47.75px against 51px of mono
+code, and at the floor it is 57px.
+
+**Parity at 1440, split by cause** (`git stash` one file; both builds byte-stable
+across two runs, so these are signal):
+
+| change | differing px | what they are |
+|---|---|---|
+| shell + frozen cell + explicit row bg, **tracks untouched** | **10** of 1,440,000 | the two bottom corners (x265-266, x1009-1010, y994-999) — AA from `rounded-b-card` clipping instead of the card's `overflow-hidden` |
+| \+ content-independent tracks | 10,948 | the 10 above **+ 4 rows snapping into alignment** |
+
+So the migration mechanics — the pinned cell and the new opaque row backgrounds —
+are invisible at rest to within 10px of corner AA. The card's right edge does NOT
+move here (unlike `/units`): the scroller is inside the card, so the card stays
+viewport-width exactly as before.
+
+**The 10,938px is a bug being fixed, not a regression.** Measured per-row resolved
+tracks at 1440, before → after:
+
+| rows | Stage track | ECO track |
+|---|---|---|
+| header + 7 rows | 71.25px | 57px |
+| ECO-314, ECO-310 (**Approved**) | 80.05px | 55.69px |
+| ECO-311, ECO-305 (**Released**) | 78px | 56px |
+| **all 11 rows, after** | **71.25px** | **57px** |
+
+Three distinct track signatures became one. The Stage cell is a `<span>` wrapping a
+pill, so a bare `1fr` (= `minmax(auto, 1fr)`) floored that track at the pill's
+min-content — and the widest pills, "Approved" and "Released", pushed their own rows'
+tracks out by up to 1.3px while every other row and the header stayed put. Those four
+rows were out of alignment on screen; they are the four bands the diff finds. This is
+precisely the UX.16 rule the primitive requires, so a literal 0px here and
+content-independent tracks are mutually exclusive — the misalignment had to go.
+
+**Stage's pill still overflows its track and is NOT fixed here** (logged, like CHG.1):
+max-content 81px against a 71.25px track at the design width, so it bleeds ~10px into
+the 12px gap. Flooring it at 81px fixes the bleed but moves every other column at the
+design width — a design decision, not a refactor's to make.
+
+**Behaviour** (`table-1:check`): ECO code pins at 1180/1280/1366 with the conditional
+hairline (SCROLLS 260/160/74px); nothing scrolls at 1440/1512/1728. `pinned [0]` here
+(not `[1]` as on `/units`) because this scroller has no border of its own.
+
+**Checks:**
+```
+pnpm verify:table-1    # static half, in CI: checks 12-13 cover the ECO table
+pnpm table-1:check     # served half: all three tables pin narrow, unchanged wide
+```
+Check 13 asserts the shell cannot regress: no `overflow-hidden` anywhere in the file
+(re-adding it fails the check — verified), the scroller carries the bottom corners,
+rows and header paint explicitly, tracks stay content-independent, and the pinned
+cell is the shared `FROZEN_CELL["px-5"]`.

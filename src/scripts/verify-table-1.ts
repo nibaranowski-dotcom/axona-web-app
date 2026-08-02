@@ -8,9 +8,9 @@
  * scroll region. TABLE.1 lifts that out of the Procurement PO queue into
  * `ui/DenseTable.tsx` + `ui/dense-table-tokens.ts` so it is written once.
  *
- * SCOPE: the primitive plus the tables migrated onto it — Procurement (TABLE.1)
- * and Unit Registry (TABLE.3b), each pixel-identical after its migration
- * (0/1,584,000 differing at 1440). Change Orders / Test Explorer / Engineering ECO
+ * SCOPE: the primitive plus the tables migrated onto it — Procurement (TABLE.1),
+ * Unit Registry (TABLE.3b) and the Engineering ECO table (TABLE.3c), each measured
+ * against its pre-migration build at the design width. Change Orders / Test Explorer
  * are deliberately NOT migrated yet — see docs/manual-checks.md -> TABLE.1.
  *
  * This is the STATIC half that CI runs; `pnpm table-1:check` is the served half
@@ -53,6 +53,7 @@ function run(): void {
   const units = codeOnly(
     read("apps/web/components/units/UnitRegistryView.tsx"),
   );
+  const eco = codeOnly(read("apps/web/components/engineering/EcoTable.tsx"));
 
   check("1. the primitive + its tokens exist and are exported", () => {
     return (
@@ -194,6 +195,41 @@ function run(): void {
       /FROZEN_CELL\["px-\[18px\]"\]/.test(units) &&
       !/overflow-hidden/.test(units)
     );
+  });
+
+  check(
+    "12. Engineering ECO consumes the primitive and duplicates none of it",
+    () => {
+      return (
+        /<DenseTable/.test(eco) &&
+        /minWidth=\{ECO_MIN_W\}/.test(eco) &&
+        /const ECO_MIN_W = "min-w-\[746px\]"/.test(eco) &&
+        !/overflow-x-auto/.test(eco) &&
+        !/data-scrolled/.test(eco) &&
+        !/onScroll/.test(eco) &&
+        !/sticky left-0/.test(eco)
+      );
+    },
+  );
+
+  check("13. Engineering ECO pins its code on the canonical shell", () => {
+    // TABLE.3c: this card owns a heading, so the scroller wraps only the table and
+    // carries the bottom corners; the card itself must clip NOTHING, or the sticky
+    // cell resolves against it and pins nothing (the TABLE.3b failure). The card
+    // was `overflow-hidden` before this story — that regression must not return.
+    const shell =
+      !/overflow-hidden/.test(eco) &&
+      /className="rounded-b-card"/.test(eco) &&
+      /const ROW_BG = "bg-paper hover:bg-panel-2"/.test(eco) &&
+      /const HEADER_BG = "bg-paper"/.test(eco);
+    // Content-independent tracks, same contract as /units.
+    const template = eco.match(/grid-cols-\[([^\]]+)\]/)?.[1];
+    const tracks =
+      !!template &&
+      template
+        .split("_")
+        .every((t) => /^(minmax\(.+\)|\d+(\.\d+)?px)$/.test(t));
+    return shell && tracks && /FROZEN_CELL\["px-5"\]/.test(eco);
   });
 
   console.log(`\n  ${passed} passed, ${failed} failed\n`);

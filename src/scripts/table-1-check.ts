@@ -59,10 +59,20 @@ const TARGETS: Target[] = [
     narrow: [1180, 1280, 1366],
     wide: [1728],
   },
-  // Change Orders / Test Explorer / Engineering ECO are NOT here
-  // yet. Each is migrated in its own story with mandatory pixel parity at 1440 —
-  // see docs/manual-checks.md -> TABLE.1 for why (their designs nest the scroller
-  // and treat rows differently, so a naive adoption moved them visibly).
+  {
+    key: "engineering",
+    path: "/engineering",
+    label: "Change orders table",
+    // The ECO table's floor is its design-width layout: a 748px card at 1440, 746px
+    // inside the borders. The scroller sits INSIDE this card (the card owns a
+    // heading that must not slide away), so the floor is the scroller's content.
+    minWidth: 746,
+    frozen: 1, // the ECO code
+    narrow: [1180, 1280, 1366],
+    wide: [1440, 1512, 1728],
+  },
+  // Change Orders / Test Explorer are NOT here yet. Each is migrated in its own
+  // story with mandatory parity at 1440 — see docs/manual-checks.md -> TABLE.1.
 ];
 
 const PROBE = (label: string, frozen: number) => `(() => {
