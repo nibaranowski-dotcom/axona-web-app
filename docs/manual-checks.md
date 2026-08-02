@@ -3246,3 +3246,66 @@ pnpm table-1:check     # served half: all four tables, header/body pinning in lo
 Check 15's no-clipping assertion is scoped to the group card, not the file: the
 compare dialog in the same file has its own unrelated `overflow-hidden` table.
 Re-clipping the group card fails the check — verified.
+
+## TABLE.3-CO — Change Orders on DenseTable, ECO code pinned (closes the series)
+
+The last dense table, and the easiest: `/changes` was ALREADY on the canonical shell.
+CHG.1 had made the card the horizontal scroller — `border-radius` + `overflow-x` on
+one element, the min-width on the rows — so nothing had to be restructured for
+`sticky` to resolve. This story only added the frozen cell and the explicit
+backgrounds it inherits from.
+
+**Design import.** `design/prototypes/axona-v2/Change Orders.dc.html` was replaced
+with the updated export. Verified a strict SUPERSET before staging — a 23-line diff,
+all additive:
+- `.frz{position:sticky;left:0;background:var(--paper);z-index:1}`,
+  `.ecorow:hover .frz{background:var(--panel-2)}`,
+  `.dscroll.scrolled .frz{box-shadow:1px 0 0 0 var(--line)}`
+- `class="dscroll"` + an onScroll handler on the card (already the scroller)
+- explicit `background:var(--paper)` on the header row and each row
+- `class="frz"` on the Code cell, header and rows
+
+The CHG.1 Approval chips and the 878px min-width are untouched by the diff. Marque
+scan clean (`verify:seed-1` green with the file staged; the only hit for a marque
+substring was "audi" inside "Audit trail").
+
+**Parity at 1440: 2 of 1,440,000 differing pixels** — the best of the series, and the
+reason is structural: no shell change. Both pixels are at x=265, y=245-246 (the card's
+top-left corner radius), 250→253 and 252→254 of grey. Nothing else on the page
+differs, so the frozen cell and the explicit row/header backgrounds are invisible at
+rest. Two runs of each build are byte-identical.
+
+**Behaviour** (`table-1:check`): the ECO code pins at 1180-1512 with the conditional
+hairline (SCROLLS 392/292/206/132/60px) and the header pins with it; nothing scrolls
+at 1728. `/changes` scrolls at its design width — expected, since its 878px floor is
+wider than the 746px the shell gives at 1440. `pinned [1]`: the cell pins to the
+scroller's padding box, 1px inside the card border, as on `/units`.
+
+**Preserved deliberately, NOT restyled** (all pre-existing, all logged):
+- **The CHG.1 Approval clip** and any pill bleed — unchanged.
+- **Row hover is `bg-panel`, but the design says `--panel-2`.** A fidelity gap that
+  predates this story (PLM.12), visible only on hover, and orthogonal to freezing —
+  the frozen cell inherits whatever the row paints either way. Worth a one-line fix
+  in its own change; not smuggled into this one.
+- **The design's pagination footer** (`1–8 of 12` + page buttons, `min-width:878px`)
+  has never been implemented on this screen. Still open, still out of scope here.
+
+**The series is closed.** Five dense tables, one primitive, one frozen-identifier
+pattern:
+
+| screen | floor | frozen | parity at the design width |
+|---|---|---|---|
+| Procurement (TABLE.1) | 672 | PO code | 0 px |
+| Unit Registry (TABLE.3b) | 998 | serial | 858 px — card's right edge + corner AA |
+| Engineering ECO (TABLE.3c) | 746 | ECO code | 10 px shell-only; 10,948 with the track fix (4 rows un-drifted) |
+| Test Explorer (TABLE.2) | 746 | checkbox + run code | 263 px — corner AA only |
+| Change Orders (TABLE.3-CO) | 878 | ECO code | **2 px** |
+
+**Checks:**
+```
+pnpm verify:table-1    # static half, in CI: 17 checks, 16-17 cover this screen
+pnpm table-1:check     # served half: all FIVE tables pin narrow, unchanged wide
+```
+Check 16 asserts CHG.1 survives the migration (the fixed 118px Approval track and the
+granted/required chip read off real approvals). Check 17 is the series guard: every
+dense-table consumer uses the primitive and none re-rolls `overflow-x-auto`.

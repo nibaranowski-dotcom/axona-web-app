@@ -57,6 +57,9 @@ function run(): void {
   const tests = codeOnly(
     read("apps/web/components/tests/TestExplorerView.tsx"),
   );
+  const changes = codeOnly(
+    read("apps/web/components/changes/ChangeOrdersView.tsx"),
+  );
 
   check("1. the primitive + its tokens exist and are exported", () => {
     return (
@@ -287,6 +290,39 @@ function run(): void {
         .split("_")
         .every((x) => /^(minmax\(.+\)|\d+(\.\d+)?px)$/.test(x));
     return shell && leads >= 2 && nexts >= 2 && opaque && tracks;
+  });
+
+  check("16. Change Orders pins its code, CHG.1 intact", () => {
+    const shell =
+      /<DenseTable/.test(changes) &&
+      /minWidth=\{CHANGES_MIN_W\}/.test(changes) &&
+      // 878 is the design's own number and stays a CONTENT width — this card was
+      // already the canonical shell, so nothing moved when the primitive took over.
+      /const CHANGES_MIN_W = "min-w-\[878px\]"/.test(changes) &&
+      !/overflow-x-auto/.test(changes) &&
+      !/onScroll/.test(changes) &&
+      !/sticky left-0/.test(changes);
+    const frozen =
+      /FROZEN_CELL\["px-5"\]/.test(changes) &&
+      /const ROW_BG = "bg-paper"/.test(changes) &&
+      /const HEADER_BG = "bg-paper"/.test(changes);
+    // CHG.1 must survive the migration: the Approval track is a fixed 118px (it
+    // clipped at `1fr`), and the chip reads granted/required off real approvals.
+    const chg1 =
+      changes.includes(
+        "grid-cols-[minmax(84px,0.9fr)_minmax(180px,2.1fr)_100px_112px_84px_108px_118px]",
+      ) && /\$\{granted\}\/\$\{required\}/.test(changes);
+    return shell && frozen && chg1;
+  });
+
+  check("17. the dense-table series is closed", () => {
+    // Every dense table in the app is on the primitive. If a sixth appears, it
+    // either consumes DenseTable or this check tells you it re-rolled the frame.
+    const consumers = [queue, units, eco, tests, changes];
+    return (
+      consumers.every((c) => /<DenseTable/.test(c)) &&
+      consumers.every((c) => !/overflow-x-auto/.test(c))
+    );
   });
 
   console.log(`\n  ${passed} passed, ${failed} failed\n`);

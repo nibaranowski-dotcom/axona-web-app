@@ -23,6 +23,9 @@
   .pm-signout{transition:border-color .15s,color .15s}
   .pm-signout:hover{border-color:var(--ink-strong);color:var(--ink)}
   .navitem{transition:background .15s,color .15s}
+  .frz{position:sticky;left:0;background:var(--paper);z-index:1}
+  .ecorow:hover .frz{background:var(--panel-2)}
+  .dscroll.scrolled .frz{box-shadow:1px 0 0 0 var(--line)}
   .navitem:hover{background:var(--panel)}
   .navgroup summary{list-style:none}
   .navgroup summary::-webkit-details-marker{display:none}
@@ -125,13 +128,13 @@
       </div>
 
       <!-- change queue -->
-      <div style="flex:none;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow-x:auto;overflow-y:hidden">
-        <div style="min-width:878px;display:grid;grid-template-columns:minmax(84px,0.9fr) minmax(180px,2.1fr) 100px 112px 84px 108px 118px;gap:12px;padding:11px 20px;border-bottom:1px solid var(--line);font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">
-          <span>Code</span><span>Change</span><span>Type</span><span>Status</span><span>Units</span><span>Effectivity</span><span>Approval</span>
+      <div class="dscroll" onScroll="{{ onScroll }}" style="flex:none;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow-x:auto;overflow-y:hidden">
+        <div style="min-width:878px;background:var(--paper);display:grid;grid-template-columns:minmax(84px,0.9fr) minmax(180px,2.1fr) 100px 112px 84px 108px 118px;gap:12px;padding:11px 20px;border-bottom:1px solid var(--line);font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">
+          <span class="frz">Code</span><span>Change</span><span>Type</span><span>Status</span><span>Units</span><span>Effectivity</span><span>Approval</span>
         </div>
         <sc-for list="{{ ecos }}" as="e" hint-placeholder-count="8">
-          <a class="ecorow" href="Change Order.dc.html" style="min-width:878px;display:grid;grid-template-columns:minmax(84px,0.9fr) minmax(180px,2.1fr) 100px 112px 84px 108px 118px;gap:12px;align-items:center;padding:13px 20px;border-bottom:1px solid var(--line);text-decoration:none;color:inherit">
-            <span style="font-family:var(--font-mono);font-size:12.5px;font-weight:600">{{ e.id }}</span>
+          <a class="ecorow" href="Change Order.dc.html" style="min-width:878px;background:var(--paper);display:grid;grid-template-columns:minmax(84px,0.9fr) minmax(180px,2.1fr) 100px 112px 84px 108px 118px;gap:12px;align-items:center;padding:13px 20px;border-bottom:1px solid var(--line);text-decoration:none;color:inherit">
+            <span class="frz" style="font-family:var(--font-mono);font-size:12.5px;font-weight:600">{{ e.id }}</span>
             <div style="min-width:0">
               <div style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:{{ e.titleWeight }}">{{ e.title }}</div>
               <div style="display:flex;align-items:center;gap:7px;margin-top:3px">
@@ -225,7 +228,8 @@ class Component extends DCLogic {
       eco('ECO-311','Lidar module revision bump rev C → D','REVISE','released','96','From SN-2172',['2/2','APPROVED'],[['OH','a'],['LC','h']],{}),
     ];
 
-    return { navGroups: this._nav(), stats, filters, ecos };
+    return { navGroups: this._nav(), stats, filters, ecos,
+      onScroll: (e)=>{ const el = e.currentTarget; if(el.scrollLeft > 0){ el.classList.add('scrolled'); } else { el.classList.remove('scrolled'); } } };
   }
   _nav(){
     const navRaw = [

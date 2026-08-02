@@ -5,6 +5,7 @@ import type {
   ChangeRow,
   ChangeStatus,
 } from "@/lib/change-orders";
+import { DenseTable, FROZEN_CELL } from "@/components/ui";
 
 // PLM.12 — the Change Orders list (`Change Orders.dc.html` 1:1 on DS.1 primitives).
 // The change queue: a stat strip (awaiting-me + counts by status), server-side filters
@@ -26,7 +27,24 @@ const STATUS_PILL: Record<ChangeStatus, string> = {
 // a 878px minimum and makes the card scroll horizontally rather than compress.
 const COLS =
   "grid grid-cols-[minmax(84px,0.9fr)_minmax(180px,2.1fr)_100px_112px_84px_108px_118px] items-center gap-3 px-5";
+// Stated as a CONTENT width in the design (it sits on the rows, inside the card's
+// 1px borders), so it carries over unchanged — no 998-style adjustment (TABLE.3b).
 const CHANGES_MIN_W = "min-w-[878px]";
+
+// TABLE.3-CO — the frozen Code column, straight from the updated export:
+//   .frz{position:sticky;left:0;background:var(--paper);z-index:1}
+//   .ecorow:hover .frz{background:var(--panel-2)}
+//   .dscroll.scrolled .frz{box-shadow:1px 0 0 0 var(--line)}
+// The shared token is that rule: `bg-inherit` takes the row's own background (so it
+// follows :hover with it), and the hairline appears only once scrolled. This card
+// was ALREADY the scroller — border-radius + overflow-x on one element, the design's
+// canonical shell — so unlike /units and Engineering nothing had to be restructured
+// for `sticky` to resolve against it.
+const FROZEN_CODE = FROZEN_CELL["px-5"];
+// The design paints header and rows explicitly (`background:var(--paper)`), which is
+// what `bg-inherit` needs to occlude against.
+const HEADER_BG = "bg-paper";
+const ROW_BG = "bg-paper";
 
 /**
  * CHG.1 — the approval chip, replacing the avatar stack + prose that clipped.
@@ -229,11 +247,15 @@ export function ChangeOrdersView({
         </div>
 
         {/* change queue */}
-        <div className="flex-none overflow-y-hidden overflow-x-auto rounded-card border border-line bg-paper">
+        <DenseTable
+          minWidth={CHANGES_MIN_W}
+          label="Change queue"
+          className="flex-none rounded-card border border-line bg-paper"
+        >
           <div
-            className={`${COLS} ${CHANGES_MIN_W} border-b border-line py-2.5 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-faint`}
+            className={`${COLS} ${HEADER_BG} border-b border-line py-2.5 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-faint`}
           >
-            <span>Code</span>
+            <span className={FROZEN_CODE}>Code</span>
             <span>Change</span>
             <span>Type</span>
             <span>Status</span>
@@ -248,7 +270,7 @@ export function ChangeOrdersView({
           ) : (
             data.rows.map((e) => <ChangeQueueRow key={e.code} e={e} />)
           )}
-        </div>
+        </DenseTable>
       </div>
     </div>
   );
@@ -259,9 +281,11 @@ function ChangeQueueRow({ e }: { e: ChangeRow }) {
   return (
     <Link
       href={e.href}
-      className={`${COLS} ${CHANGES_MIN_W} border-b border-line py-3 hover:bg-panel`}
+      className={`${COLS} ${ROW_BG} border-b border-line py-3 hover:bg-panel`}
     >
-      <span className="font-mono text-[12.5px] font-semibold text-ink">
+      <span
+        className={`${FROZEN_CODE} font-mono text-[12.5px] font-semibold text-ink`}
+      >
         {e.code}
       </span>
       <div className="min-w-0">

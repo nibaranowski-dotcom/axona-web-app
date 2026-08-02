@@ -95,8 +95,20 @@ const TARGETS: Target[] = [
     narrow: [1180, 1280, 1366],
     wide: [1440, 1512, 1728],
   },
-  // Change Orders is NOT here yet — migrated in its own story with mandatory
-  // parity at 1440 (see docs/manual-checks.md -> TABLE.1).
+  {
+    key: "changes",
+    path: "/changes",
+    label: "Change queue",
+    // Stated as a content width in the design (on the rows, inside the card's
+    // borders), so it carries over as-is. This card was already the canonical
+    // shell — border-radius + overflow-x on one element — before TABLE.3-CO.
+    minWidth: 878,
+    frozen: 1, // the ECO code
+    narrow: [1180, 1280, 1366, 1440, 1512],
+    wide: [1728],
+  },
+  // The dense-table series is complete: every table on this list is on the
+  // primitive with a frozen identifier (TABLE.1 · 3b · 3c · 2 · 3-CO).
 ];
 
 const PROBE = (selector: string, frozen: number) => `(() => {
