@@ -167,7 +167,7 @@ export interface ConfigDetail {
   agent: ConfigAgentProposal | null;
   /** dual-approver lock proposed but not yet finalized (awaiting a second approver). */
   lockAwaitingSecond: boolean;
-  /** the BOM deep-link has no destination yet — stubbed to Engineering (see PLM.13). */
+  /** PLM.13 — the as-designed BOM for this configuration's model (`/bom/:model`). */
   bomHref: string;
 }
 
@@ -332,9 +332,10 @@ export async function getConfigurationDetail(
     approvers,
     related: [
       {
+        // PLM.13 — the BOM screen exists now; this lands on the model's tree.
         label: "BOM · as-designed",
         meta: config.productModel.code,
-        href: "/engineering",
+        href: `/bom/${encodeURIComponent(config.productModel.code)}`,
       },
       {
         label: "Test runs on this config",
@@ -358,7 +359,8 @@ export async function getConfigurationDetail(
         : null,
     lockAwaitingSecond:
       config.lockedAt === null && config.lockProposedById !== null,
-    bomHref: "/engineering", // /// PLM.13-BOM — no BOM screen yet; stub to Engineering hub
+    // PLM.13 — was a stub to the Engineering hub until the BOM screen existed.
+    bomHref: `/bom/${encodeURIComponent(config.productModel.code)}`,
   };
 }
 

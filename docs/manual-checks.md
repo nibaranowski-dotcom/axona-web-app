@@ -3309,3 +3309,94 @@ pnpm table-1:check     # served half: all FIVE tables pin narrow, unchanged wide
 Check 16 asserts CHG.1 survives the migration (the fixed 118px Approval track and the
 granted/required chip read off real approvals). Check 17 is the series guard: every
 dense-table consumer uses the primitive and none re-rolls `overflow-x-auto`.
+
+## PLM.13 — BOM (as-designed) + revision history (`/bom/:model`)
+
+The D4 screen the Configuration detail has been stubbing to since PLM.11. The
+as-designed side of "as-designed vs as-built": the multi-level tree a model
+resolves to at a chosen design revision, the ladder of revisions that produced it,
+and the per-part expand that deep-links out to Inventory and to the change orders
+that touch the part.
+
+**No schema change.** The hierarchy was already modelled (`BomLine.parentLineId`),
+revisions already exist per line (`BomLine.designRevision`), and effectivity +
+originating ECO already live on `PartRevision`/`ECO`. Nothing about a revision is
+stored as prose — see below.
+
+**Everything on the rail is derived.** For each revision the screen diffs its tree
+against the revision below it:
+- **"What changed"** = the positions added and the parts whose revision moved,
+  named ("A-14 SERVO-204 rev B → C · A-15 SERVO-204 added · +1 more").
+- **The driving ECO** = the ECO recorded on the part revisions that revision
+  introduced (`PartRevision.originatingEcoId`).
+- **The effectivity** = that ECO's own `effectiveFromSerial`. So the band reads
+  "rev C · applies from SN-2190 · driven by ECO-314" as a join, never a caption.
+  `verify:plm-13` asserts the join: each rail ECO must resolve to a real change
+  order whose serial matches the rendered string.
+- **"Superseded by"** = a SUPERSEDE-class ECO naming the part, and the part
+  revision that ECO introduced → "SERVO-205 rev A (ECO-318)".
+- A line with no ECO of its own inherits its REVISION's serial rather than reading
+  as unknown; it is genuinely effective from that revision.
+
+**The seed grew a real tree and a real ladder.** HX-2 was 10 flat lines at one
+revision. It now has three assembly roots, a sub-assembly (three levels), and
+revisions A → B → C:
+
+| rev | leaves | what it introduced | driving ECO |
+|---|---|---|---|
+| A | 8 | initial baseline | — |
+| B | 8 | B-08 SENS-12 rev 1 → 2 | ECO-311 · SN-2172 |
+| C (current) | 10 | SERVO-204 rev B → C, +A-15, +B-19 | ECO-314 · SN-2190 |
+
+**rev C's ten leaves are byte-identical to what was there before** — same
+positions, parts, revisions, qty. That is the safety property: everything the
+as-built diff, build readiness and capture already resolve against is untouched.
+
+**The latent bug this surfaced.** Three readers queried `bomLine` by
+`productModelId` ALONE — correct only while exactly one revision existed. With a
+ladder in place they would union every revision, and `captureAsBuilt`'s
+`findFirst` by position could resolve its diff basis against a superseded revision
+and call a correct build a substitution. All of them are now pinned to one design
+revision and filtered to LEAVES (`leafOnly` in `packages/db/src/plm/bom.ts`) — an
+assembly is not a purchasable, installable part, so letting one reach build
+readiness invents a line no supplier can cover. On flat data both are no-ops,
+which is why the numbers on those screens did not move.
+
+**Two verify scripts had the same unpinned query in their own expectations** and
+were corrected, not worked around:
+- `verify:plm-4` computed "every BOM position exactly once" from an unpinned
+  query, so it expected assemblies and old revisions. It now derives the leaf set
+  at the current revision independently of the app's helper.
+- `verify:plm-11` asserted the BOM link was still a stub to `/engineering`. That
+  assertion inverts: both affordances (the manifest's "view all positions" and the
+  Related rail's "BOM · as-designed") now resolve to `/bom/:model`.
+
+**The tree is on the DenseTable primitive.** The agent rail can take ~400px of
+this screen, and at 1440 with it open the tree compressed until part names and
+part numbers wrapped. It now scrolls below a 760px floor with content-independent
+tracks, on the TABLE.3c shell (the card owns a heading, so the scroller wraps only
+the table). **NOTE for design:** the leading column here is the TREE — indented and
+variable-width — not a fixed identifier, so the frozen-identifier pattern has
+nothing stable to pin. Flagged rather than invented.
+
+**Seed-narrative rough edge, logged:** ECO-314's title is "Harness connector keying
+(mis-mate fix)" while the rev-C delta it drives is servo-led. It is the ECO that
+actually carries SN-2190, and inventing a new ECO would change the /changes and
+/engineering counts. Worth a seed pass, not a code change.
+
+**Checks:**
+```
+pnpm verify:plm-13     # 15 checks (in verify:all) — 6 static, 9 over real data
+```
+Static: route + view + committed design, import-first reuses the IO.1 surface (no
+second importer), revision/position are URL state, PLM.11 lands here, v2 tokens,
+and the leaf/revision rule lives in one place. Data: three levels deep, every
+revision resolves its OWN tree and no two are identical, an older revision differs
+in content, the ECO/effectivity join, the change line names real positions, the
+LINK.1 deep-links resolve to a real part and a real ECO, superseded-by is a
+SUPERSEDE-class join, assemblies never reach the flat readers, and a second org
+resolves nothing.
+
+**Manual:** `/bom/HX-2` at 1440 — tree with three assembly roots + a sub-assembly,
+`?rev=A|B|C` re-resolves it, the rail's revision cards select, and
+`?position=A-14` opens the per-part card with both deep-links live.

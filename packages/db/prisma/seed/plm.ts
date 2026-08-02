@@ -244,6 +244,169 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
     });
   }
 
+  // ── 3b. PLM.13 — the MULTI-LEVEL tree + the design-revision ladder ────────
+  //
+  // Everything above stays byte-identical: HX-2 rev C keeps exactly the ten leaf
+  // positions the as-built diff (PLM.4/5), build readiness (BR.1) and capture
+  // already resolve against. This adds
+  //   · ASSEMBLY rows above those leaves (three roots + one sub-assembly, so the
+  //     tree is genuinely three levels deep), and
+  //   · design revisions A and B beneath the current C,
+  // both of which are INVISIBLE to those consumers: they read leaves at the
+  // model's CURRENT revision (`asDesignedLeaves`), and an assembly is by
+  // definition not a leaf. An assembly is not a purchasable part, so letting one
+  // reach build readiness would invent an unsourceable line.
+  const asmParts: [string, string][] = [
+    ["ASM-100", "Upper body assembly"],
+    ["ASM-200", "Lower body assembly"],
+    ["ASM-300", "Sensor & vision assembly"],
+    ["ASM-210", "Actuator sub-assembly"],
+  ];
+  for (const [partNumber, description] of asmParts) {
+    const pm = await mkPart(partNumber, description, "assembly", "active", []);
+    const pr = await db.partRevision.create({
+      data: { partMasterId: pm.id, rev: "A", effectiveFrom: revBFrom },
+    });
+    revByKey.set(`${partNumber}:A`, pr.id);
+  }
+
+  // SENS-12 rev 1 — the revision rev B bumped away from. Introduced ONLY in the
+  // rev-A tree, so nothing that reads the current revision can see it.
+  const sensMaster = await db.partMaster.findFirst({
+    where: { partNumber: "SENS-12" },
+    select: { id: true },
+  });
+  if (sensMaster) {
+    const sensRev1 = await db.partRevision.create({
+      data: {
+        partMasterId: sensMaster.id,
+        rev: "1",
+        effectiveFrom: new Date(revBFrom.getTime() - 200 * DAY),
+        effectiveTo: revBFrom,
+      },
+    });
+    revByKey.set("SENS-12:1", sensRev1.id);
+  }
+
+  // The driving ECO per design revision is READ BACK from the part revisions a
+  // revision introduces (`PartRevision.originatingEcoId`) — the screen derives it,
+  // it is not stored on a revision row. Both ECOs below are real seeded change
+  // orders that already carry an effectivity serial, so "rev B applies from
+  // SN-2172 · ECO-311" is a join over existing data, never a caption.
+  await db.partRevision.updateMany({
+    where: { partMasterId: sensMaster?.id ?? "", rev: "2" },
+    data: { originatingEcoId: "ECO-311" }, // SN-2172 · revision bump
+  });
+  await db.partRevision.updateMany({
+    where: { id: servoRevC.id },
+    data: { originatingEcoId: "ECO-314" }, // SN-2190
+  });
+
+  /** One node of the as-designed tree. `children` nest to any depth. */
+  interface TreeNode {
+    position: string;
+    part: string;
+    rev: string;
+    qty?: number;
+    children?: TreeNode[];
+  }
+  // rev C — the CURRENT tree. Its leaves are BOM_HX2 exactly (same positions,
+  // parts, revisions and qty 1); only the assembly rows above them are new.
+  const HX2_TREE_C: TreeNode[] = [
+    {
+      position: "A-100",
+      part: "ASM-100",
+      rev: "A",
+      children: [
+        { position: "A-14", part: CODES.servoOld, rev: "C" },
+        { position: "A-15", part: CODES.servoOld, rev: "C" },
+        { position: "D-06", part: "CTRL-100", rev: "A" },
+      ],
+    },
+    {
+      position: "A-200",
+      part: "ASM-200",
+      rev: "A",
+      children: [
+        { position: "C-03", part: "BATT-48V", rev: "2" },
+        { position: "C-04", part: "BMS-9", rev: "4" },
+        { position: "D-01", part: "CHASSIS-2", rev: "B" },
+        {
+          position: "A-210",
+          part: "ASM-210",
+          rev: "A",
+          qty: 2,
+          children: [{ position: "E-02", part: "GRIP-300", rev: "A" }],
+        },
+      ],
+    },
+    {
+      position: "A-300",
+      part: "ASM-300",
+      rev: "A",
+      children: [
+        { position: "B-07", part: "HARN-220", rev: "A" },
+        { position: "B-08", part: "SENS-12", rev: "2" },
+        { position: "B-19", part: "SENS-12", rev: "2" },
+      ],
+    },
+  ];
+  // rev B — before the second actuator (A-15) and the redundant sensor (B-19),
+  // with the older servo revision. rev A — before the sensor revision bump.
+  const prune = (nodes: TreeNode[], drop: string[], swap: [string, string][]) =>
+    nodes
+      .map((n) => ({
+        ...n,
+        rev: swap.find(([p]) => p === n.part)?.[1] ?? n.rev,
+        children: n.children ? prune(n.children, drop, swap) : undefined,
+      }))
+      .filter((n) => !drop.includes(n.position));
+  const HX2_TREE_B = prune(
+    HX2_TREE_C,
+    ["A-15", "B-19"],
+    [[CODES.servoOld, "B"]],
+  );
+  const HX2_TREE_A = prune(HX2_TREE_B, [], [["SENS-12", "1"]]);
+
+  const insertTree = async (
+    productModelId: string,
+    designRevision: string,
+    nodes: TreeNode[],
+    parentLineId: string | null = null,
+  ): Promise<void> => {
+    for (const n of nodes) {
+      const line = await db.bomLine.upsert({
+        where: {
+          orgId_productModelId_designRevision_position: {
+            orgId: db.$org,
+            productModelId,
+            designRevision,
+            position: n.position,
+          },
+        },
+        // The rev-C leaves already exist from §3 — adopt them into the tree
+        // rather than re-creating them, so their ids (and anything resolved
+        // against them) survive untouched.
+        update: { parentLineId },
+        create: {
+          orgId: db.$org,
+          productModelId,
+          designRevision,
+          position: n.position,
+          partRevisionId: revId(n.part, n.rev),
+          qty: n.qty ?? 1,
+          parentLineId,
+        },
+        select: { id: true },
+      });
+      if (n.children?.length)
+        await insertTree(productModelId, designRevision, n.children, line.id);
+    }
+  };
+  await insertTree(hx2.id, "C", HX2_TREE_C);
+  await insertTree(hx2.id, "B", HX2_TREE_B);
+  await insertTree(hx2.id, "A", HX2_TREE_A);
+
   // ── 4. Software releases + configuration versions ─────────────────────────
   // The firmware versions are the SAME strings Fleet already carries on Robot
   // (v4.0.2 … v4.2.1) — the Unit spine resolves them rather than storing a second,

@@ -118,9 +118,25 @@ async function run(): Promise<void> {
     async () => {
       const unit = await db.unit.findFirst({ where: { serial: SERIAL } });
       if (!unit) return false;
-      const bom = await db.bomLine.findMany({
-        where: { productModelId: unit.productModelId },
+      // The diff's basis is the PHYSICAL positions at the model's CURRENT design
+      // revision (PLM.13). Computed here independently of the app's helper — the
+      // parent set is derived in this script, so the check still fails if
+      // leafOnly/the revision pin regress.
+      const model = await db.productModel.findUnique({
+        where: { id: unit.productModelId },
+        select: { designRevision: true },
       });
+      const allLines = await db.bomLine.findMany({
+        where: {
+          productModelId: unit.productModelId,
+          designRevision: model?.designRevision,
+        },
+        select: { id: true, parentLineId: true, position: true },
+      });
+      const parentIds = new Set(
+        allLines.map((l) => l.parentLineId).filter(Boolean),
+      );
+      const bom = allLines.filter((l) => !parentIds.has(l.id));
       const built = await db.asBuiltRecord.findMany({
         where: { unitId: unit.id },
       });

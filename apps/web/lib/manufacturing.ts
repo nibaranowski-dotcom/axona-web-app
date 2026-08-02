@@ -1,4 +1,10 @@
-import { dbForOrg, asBuiltDiff, paginateArgs, pageResult } from "@axona/db";
+import {
+  leafOnly,
+  dbForOrg,
+  asBuiltDiff,
+  paginateArgs,
+  pageResult,
+} from "@axona/db";
 
 // MFG.1 — Manufacturing (MES) read/API layer (build-spec §4.11, §6). Read-only
 // over the existing WorkOrderMfg model: no schema change, no mutations (the
@@ -238,19 +244,30 @@ export async function getAsBuiltCapture(
   const db = dbForOrg(orgId);
   const unit = await db.unit.findFirst({
     where: { serial },
-    select: { id: true, serial: true, productModelId: true },
+    select: {
+      id: true,
+      serial: true,
+      productModelId: true,
+      productModel: { select: { designRevision: true } },
+    },
   });
   if (!unit) return null;
 
-  const [diff, model, bom, lastRecord] = await Promise.all([
+  const [diff, model, bomAll, lastRecord] = await Promise.all([
     asBuiltDiff(db, unit.id),
     db.productModel.findUnique({
       where: { id: unit.productModelId },
       select: { designRevision: true },
     }),
+    // PLM.13: one design revision, leaves only (see apps/web/lib/as-built.ts).
     db.bomLine.findMany({
-      where: { productModelId: unit.productModelId },
+      where: {
+        productModelId: unit.productModelId,
+        designRevision: unit.productModel.designRevision,
+      },
       select: {
+        id: true,
+        parentLineId: true,
         position: true,
         partRevisionId: true,
         partRevision: {
@@ -264,6 +281,8 @@ export async function getAsBuiltCapture(
       select: { installedAt: true },
     }),
   ]);
+  // PLM.13 — assemblies are not scannable positions.
+  const bom = leafOnly(bomAll);
 
   const total = diff.lines.filter((l) => l.expected !== null).length;
   const scanned = diff.lines.filter((l) => l.actual !== null).length;

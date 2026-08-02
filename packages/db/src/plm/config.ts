@@ -1,3 +1,4 @@
+import { leafOnly } from "./bom";
 import type { OrgScopedDb } from "../client";
 
 // PLM.1a — the keystone resolvers over the Unit spine (L1 capture fidelity).
@@ -192,11 +193,23 @@ export async function resolveConfigManifest(
   db: OrgScopedDb,
   config: { productModelId: string; swSpec: unknown },
 ): Promise<ConfigManifest> {
-  const bom = await db.bomLine.findMany({
-    where: { productModelId: config.productModelId },
-    include: { partRevision: { include: { partMaster: true } } },
-    orderBy: { position: "asc" },
+  // PLM.13: one design revision (the model's current) and leaves only. Without
+  // the revision filter a model with a revision ladder returns every revision's
+  // rows at once, and an assembly node is not an installable position.
+  const manifestModel = await db.productModel.findUnique({
+    where: { id: config.productModelId },
+    select: { designRevision: true },
   });
+  const bom = leafOnly(
+    await db.bomLine.findMany({
+      where: {
+        productModelId: config.productModelId,
+        designRevision: manifestModel?.designRevision,
+      },
+      include: { partRevision: { include: { partMaster: true } } },
+      orderBy: { position: "asc" },
+    }),
+  );
   const hw: ConfigHwPosition[] = bom.map((b) => ({
     position: b.position,
     name: b.partRevision.partMaster.description,
@@ -263,13 +276,22 @@ export async function asBuiltDiff(
   db: OrgScopedDb,
   unitId: string,
 ): Promise<AsBuiltDiffResult> {
-  const unit = await db.unit.findUnique({ where: { id: unitId } });
+  const unit = await db.unit.findUnique({
+    where: { id: unitId },
+    include: { productModel: { select: { designRevision: true } } },
+  });
   if (!unit) throw new Error(`Unit ${unitId} not found in this org`);
 
-  const bom = await db.bomLine.findMany({
-    where: { productModelId: unit.productModelId },
-    include: { partRevision: { include: { partMaster: true } } },
-  });
+  // PLM.13: the model's current design revision, leaves only (see above).
+  const bom = leafOnly(
+    await db.bomLine.findMany({
+      where: {
+        productModelId: unit.productModelId,
+        designRevision: unit.productModel.designRevision,
+      },
+      include: { partRevision: { include: { partMaster: true } } },
+    }),
+  );
   const asBuilt = await db.asBuiltRecord.findMany({
     where: { unitId },
     include: { partRevision: { include: { partMaster: true } } },

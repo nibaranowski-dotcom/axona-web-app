@@ -38,12 +38,22 @@ export async function captureAsBuilt(
   db: OrgScopedDb,
   input: CaptureInput,
 ): Promise<CaptureResult> {
-  const unit = await db.unit.findUnique({ where: { id: input.unitId } });
+  const unit = await db.unit.findUnique({
+    where: { id: input.unitId },
+    include: { productModel: { select: { designRevision: true } } },
+  });
   if (!unit) throw new Error(`Unit ${input.unitId} not found in this org`);
 
-  // The as-designed part at this position (the diff basis, resolved at write time).
+  // The as-designed part at this position (the diff basis, resolved at write
+  // time). PLM.13: pinned to the model's CURRENT design revision — a position
+  // exists at every revision, so an unpinned findFirst could resolve the basis
+  // against a superseded revision and call a correct build a substitution.
   const designed = await db.bomLine.findFirst({
-    where: { productModelId: unit.productModelId, position: input.bomPosition },
+    where: {
+      productModelId: unit.productModelId,
+      designRevision: unit.productModel.designRevision,
+      position: input.bomPosition,
+    },
     select: { partRevisionId: true },
   });
   const expectedPartRevisionId = designed?.partRevisionId ?? null;

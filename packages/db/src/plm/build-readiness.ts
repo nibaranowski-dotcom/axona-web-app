@@ -1,3 +1,4 @@
+import { leafOnly } from "./bom";
 import type { OrgScopedDb } from "../client";
 
 // BR.1 — Build-readiness rollup. A PURE read over data we already capture: the
@@ -196,15 +197,19 @@ export async function computeBuildReadiness(
   });
   if (!unit) throw new Error(`Unit ${unitId} not found in this org`);
 
-  // as-designed BOM for this unit's model (one row per position).
-  const bom = await db.bomLine.findMany({
-    where: {
-      productModelId: unit.productModelId,
-      designRevision: unit.productModel.designRevision,
-    },
-    include: { partRevision: { include: { partMaster: true } } },
-    orderBy: { position: "asc" },
-  });
+  // as-designed BOM for this unit's model (one row per PHYSICAL position).
+  // PLM.13: leaves only — an assembly node is not a purchasable part, so
+  // sourcing one would invent a line no supplier can cover.
+  const bom = leafOnly(
+    await db.bomLine.findMany({
+      where: {
+        productModelId: unit.productModelId,
+        designRevision: unit.productModel.designRevision,
+      },
+      include: { partRevision: { include: { partMaster: true } } },
+      orderBy: { position: "asc" },
+    }),
+  );
 
   // bridge design → procurement by the shared code (partNumber === sku).
   const partNumbers = [

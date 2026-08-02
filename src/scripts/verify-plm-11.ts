@@ -10,7 +10,7 @@
  *   4. Version diff renders HW+SW deltas via the as-built alignment (changed vs matched).
  *   5. Lock is gated + DUAL-APPROVER + audited: a single approver cannot finalize; it
  *      routes through decide() + writes AUDIT.1; a locked config is immutable.
- *   6. D4/BOM is FLAGGED (PLM.13), not scoped in; additive migration only.
+ *   6. D4/BOM is BUILT (PLM.13) — the manifest + Related rail land on /bom/:model.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -78,12 +78,18 @@ async function run(): Promise<void> {
     },
   );
   await check(
-    "D4/BOM is FLAGGED (PLM.13), NOT scoped in — stub to Engineering hub",
+    "D4/BOM is BUILT (PLM.13) — both affordances land on /bom/:model",
     () => {
+      // Was: asserts the stub to the Engineering hub. PLM.13 shipped the screen,
+      // so the assertion inverts — the manifest's "view all positions" link and
+      // the Related rail's "BOM · as-designed" both resolve to the model's tree.
       return (
-        /PLM\.13-BOM/.test(lib) &&
-        /PLM\.13-BOM/.test(view) &&
-        /bomHref: "\/engineering"/.test(lib)
+        /bomHref: `\/bom\/\$\{encodeURIComponent\(config\.productModel\.code\)\}`/.test(
+          lib,
+        ) &&
+        /label: "BOM · as-designed"[\s\S]{0,160}href: `\/bom\//.test(lib) &&
+        !/bomHref: "\/engineering"/.test(lib) &&
+        /data\.bomHref/.test(view)
       );
     },
   );

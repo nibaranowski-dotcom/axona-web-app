@@ -175,6 +175,7 @@
     "verify:prospect-2": "tsx src/scripts/verify-prospect-2.ts",
     "verify:conf-1": "tsx src/scripts/verify-conf-1.ts",
     "verify:plm-12": "tsx src/scripts/verify-plm-12.ts",
+    "verify:plm-13": "tsx src/scripts/verify-plm-13.ts",
     "verify:lead-1": "tsx src/scripts/verify-lead-1.ts",
     "verify:golive-1": "tsx src/scripts/verify-golive-1.ts",
     "verify:prospect-3": "tsx src/scripts/verify-prospect-3.ts",

@@ -154,6 +154,16 @@ export {
 
 // PLM.1a — the Unit spine core logic: resolveConfigAt · asBuiltDiff · CSV import.
 // (affectedUnits lives in @axona/agents — it reuses ONT.1 getBlastRadius.)
+// PLM.13 — the as-designed BOM read as leaves (physical positions at one design
+// revision) or as the nested tree the BOM screen renders.
+export {
+  asDesignedLeaves,
+  getBomTree,
+  flattenTree,
+  leafOnly,
+  type BomLeaf,
+  type BomNode,
+} from "./plm/bom";
 export {
   resolveConfigAt,
   asBuiltDiff,

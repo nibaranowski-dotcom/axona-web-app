@@ -264,7 +264,7 @@ export function ConfigurationDetailView({
               </div>
             ))}
             <div className="border-t border-line px-5 py-2.5">
-              {/* /// PLM.13-BOM — no BOM (D4) screen yet; stub to the Engineering hub. */}
+              {/* PLM.13 — the as-designed BOM for this model (/bom/:model). */}
               <Link
                 href={data.bomHref}
                 className="text-[12.5px] font-semibold text-ink hover:underline"

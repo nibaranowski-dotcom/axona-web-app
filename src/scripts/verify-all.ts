@@ -161,6 +161,7 @@ const VERIFY_SEQUENCE: string[] = [
   "plm-10",
   "plm-11",
   "plm-12",
+  "plm-13",
   "plm-v5",
   "plm-v6",
   "agt-3",

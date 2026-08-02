@@ -1,4 +1,4 @@
-import { dbForOrg, asBuiltDiff } from "@axona/db";
+import { leafOnly, dbForOrg, asBuiltDiff } from "@axona/db";
 
 // PLM.4 — the as-built diff read model. Answers Q1: "the same robot is not
 // actually the same." Aligns the as-designed BOM to the captured AsBuiltRecords
@@ -83,17 +83,24 @@ export async function getAsBuiltView(
   });
   if (!unit) return null;
 
-  const [diff, records, bom] = await Promise.all([
+  const [diff, records, bomAll] = await Promise.all([
     asBuiltDiff(db, unit.id),
     db.asBuiltRecord.findMany({
       where: { unitId: unit.id },
       include: { partRevision: { include: { partMaster: true } } },
     }),
+    // PLM.13: the model's CURRENT design revision, leaves only. Querying by
+    // productModelId alone was correct while one revision existed; with a
+    // revision ladder it unions all of them, and assemblies are not installable.
     db.bomLine.findMany({
-      where: { productModelId: unit.productModelId },
+      where: {
+        productModelId: unit.productModelId,
+        designRevision: unit.productModel.designRevision,
+      },
       include: { partRevision: { include: { partMaster: true } } },
     }),
   ]);
+  const bom = leafOnly(bomAll);
 
   // Which of these lots is flagged? A REAL cross-check, not a hardcoded lot
   // number: the part master this lot was built from is on NCR hold / quarantined
