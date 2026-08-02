@@ -10,6 +10,7 @@ import type {
   CompareData,
 } from "@/lib/tests-types";
 import { compareRunsAction } from "@/app/(shell)/tests/actions";
+import { DenseTable, FROZEN_PAIR } from "@/components/ui";
 
 export type { TestExplorerData };
 
@@ -18,8 +19,26 @@ export type { TestExplorerData };
 // point — "how the builds differed"). Config-at-run is the FROZEN snapshot.
 // LIST screen: back-arrow to Quality + mono eyebrow (not breadcrumbs).
 
+// TABLE.2 — content-independent tracks (the UX.16 rule). Every data cell here is
+// already `min-w-0 truncate`, so the auto floors were 0 in practice and this is a
+// restatement, not a change: measured, all four group cards resolve ONE track
+// signature before and after. Every flexible column is long free text that truncates
+// by design, so each stays `minmax(0, …)`; the checkbox track is a fixed 28px.
 const COLS =
-  "grid grid-cols-[28px_1fr_1fr_1.1fr_1.4fr_0.8fr] items-center gap-3 px-[18px]";
+  "grid grid-cols-[28px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1.4fr)_minmax(0,0.8fr)] items-center gap-3 px-[18px]";
+
+// The width below which a group table scrolls instead of compressing: its
+// DESIGN-WIDTH layout (1440 → a 748px card, 746px inside the 1px borders), sized to
+// the scroller's content box — the same rule as TABLE.3b/3c. NOTE for design: the
+// `.dc.html` states a page-level `min-width:920px` (≈870px of card), i.e. a wider
+// floor than this. Adopting it would make the table scroll AT the design width and
+// move every column there, so it is flagged in docs/manual-checks.md rather than
+// taken unilaterally.
+const TESTS_MIN_W = "min-w-[746px]";
+// The frozen pair needs something opaque to inherit; the row's own background then
+// carries :hover with it.
+const HEADER_BG = "bg-paper";
+const ROW_BG = "bg-paper hover:bg-panel-2";
 const FACETS: {
   key: keyof TestFilters;
   label: string;
@@ -179,9 +198,16 @@ export function TestExplorerView({
         ) : (
           <div className="flex flex-col gap-[18px]">
             {data.groups.map((g) => (
+              // TABLE.2 — the canonical shell, scoped the way TABLE.3c scoped it:
+              // the card owns a heading (procedure · code · stat), so the scroller
+              // wraps ONLY the table and the heading stays put instead of sliding
+              // out sideways. The card itself clips NOTHING — its `overflow-hidden`
+              // was the box between the sticky cells and the scrollport, which is
+              // what makes a pinned column pin nothing (TABLE.3b) — and the scroller
+              // carries the bottom corners so the last row still rounds off.
               <div
                 key={g.procedure}
-                className="overflow-hidden rounded-[14px] border border-line bg-paper"
+                className="rounded-card border border-line bg-paper"
               >
                 <div className="flex items-center justify-between border-b border-line px-[18px] py-3.5">
                   <div className="flex items-center gap-2.5">
@@ -196,80 +222,90 @@ export function TestExplorerView({
                     {g.stat}
                   </span>
                 </div>
-                <div
-                  className={`${COLS} border-b border-line py-[9px] font-mono text-[9px] uppercase tracking-[0.06em] text-ink-faint`}
+                <DenseTable
+                  minWidth={TESTS_MIN_W}
+                  label={`${g.procedure} runs`}
+                  className="rounded-b-card"
                 >
-                  <span aria-hidden />
-                  <span>Run</span>
-                  <span>Unit</span>
-                  <span>Config at run</span>
-                  <span>Key measurement</span>
-                  <span>Outcome</span>
-                </div>
-                {g.runs.map((r) => {
-                  const sel = selected.has(r.code);
-                  const failed = r.outcome === "fail";
-                  return (
-                    <div
-                      key={r.code}
-                      className={`${COLS} border-t border-line py-3 transition-colors hover:bg-panel-2`}
-                    >
-                      <button
-                        type="button"
-                        role="checkbox"
-                        aria-checked={sel}
-                        aria-label={`Select ${r.code} to compare`}
-                        onClick={() => toggle(r.code)}
-                        className={`inline-flex h-[15px] w-[15px] items-center justify-center rounded-[4px] border-[1.5px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-                          sel
-                            ? "border-accent bg-accent"
-                            : "border-line-strong bg-transparent"
-                        }`}
+                  <div
+                    className={`${COLS} ${HEADER_BG} border-b border-line py-[9px] font-mono text-[9px] uppercase tracking-[0.06em] text-ink-faint`}
+                  >
+                    <span aria-hidden className={FROZEN_PAIR.lead} />
+                    <span className={FROZEN_PAIR.next}>Run</span>
+                    <span>Unit</span>
+                    <span>Config at run</span>
+                    <span>Key measurement</span>
+                    <span>Outcome</span>
+                  </div>
+                  {g.runs.map((r) => {
+                    const sel = selected.has(r.code);
+                    const failed = r.outcome === "fail";
+                    return (
+                      <div
+                        key={r.code}
+                        className={`${COLS} ${ROW_BG} border-t border-line py-3 transition-colors`}
                       >
-                        {sel && (
-                          <Check
-                            className="h-2.5 w-2.5 text-accent-ink"
-                            strokeWidth={3.5}
-                          />
-                        )}
-                      </button>
-                      <Link
-                        href={`/tests/${encodeURIComponent(r.code)}`}
-                        className="min-w-0 truncate font-mono text-[12px] font-semibold text-ink underline decoration-transparent underline-offset-2 hover:decoration-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                      >
-                        {r.code}
-                      </Link>
-                      <span
-                        className="min-w-0 truncate font-mono text-[11.5px] text-ink-muted"
-                        title={r.serial}
-                      >
-                        {r.serial}
-                      </span>
-                      <span
-                        className="min-w-0 truncate font-mono text-[11px] text-ink-muted"
-                        title={r.configVersion ?? "—"}
-                      >
-                        {r.configVersion ?? "—"}
-                      </span>
-                      <span
-                        className={`min-w-0 truncate font-mono text-[11.5px] ${r.keyBad ? "text-ink-strong" : "text-ink"}`}
-                      >
-                        {r.keyMeasurement}
-                      </span>
-                      <span>
-                        <span
-                          className={`inline-flex items-center gap-1.5 font-mono text-[11px] font-bold ${failed ? "text-ink-strong" : "text-success"}`}
-                        >
-                          <span
-                            aria-hidden
-                            className={`h-1.5 w-1.5 rounded-full ${failed ? "bg-ink-strong" : "bg-success"}`}
-                          />
-                          {r.outcome.toUpperCase()}
+                        <span className={FROZEN_PAIR.lead}>
+                          <button
+                            type="button"
+                            role="checkbox"
+                            aria-checked={sel}
+                            aria-label={`Select ${r.code} to compare`}
+                            onClick={() => toggle(r.code)}
+                            className={`inline-flex h-[15px] w-[15px] items-center justify-center rounded-[4px] border-[1.5px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                              sel
+                                ? "border-accent bg-accent"
+                                : "border-line-strong bg-transparent"
+                            }`}
+                          >
+                            {sel && (
+                              <Check
+                                className="h-2.5 w-2.5 text-accent-ink"
+                                strokeWidth={3.5}
+                              />
+                            )}
+                          </button>
                         </span>
-                      </span>
-                    </div>
-                  );
-                })}
+                        <span className={FROZEN_PAIR.next}>
+                          <Link
+                            href={`/tests/${encodeURIComponent(r.code)}`}
+                            className="min-w-0 truncate font-mono text-[12px] font-semibold text-ink underline decoration-transparent underline-offset-2 hover:decoration-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                          >
+                            {r.code}
+                          </Link>
+                        </span>
+                        <span
+                          className="min-w-0 truncate font-mono text-[11.5px] text-ink-muted"
+                          title={r.serial}
+                        >
+                          {r.serial}
+                        </span>
+                        <span
+                          className="min-w-0 truncate font-mono text-[11px] text-ink-muted"
+                          title={r.configVersion ?? "—"}
+                        >
+                          {r.configVersion ?? "—"}
+                        </span>
+                        <span
+                          className={`min-w-0 truncate font-mono text-[11.5px] ${r.keyBad ? "text-ink-strong" : "text-ink"}`}
+                        >
+                          {r.keyMeasurement}
+                        </span>
+                        <span>
+                          <span
+                            className={`inline-flex items-center gap-1.5 font-mono text-[11px] font-bold ${failed ? "text-ink-strong" : "text-success"}`}
+                          >
+                            <span
+                              aria-hidden
+                              className={`h-1.5 w-1.5 rounded-full ${failed ? "bg-ink-strong" : "bg-success"}`}
+                            />
+                            {r.outcome.toUpperCase()}
+                          </span>
+                        </span>
+                      </div>
+                    );
+                  })}
+                </DenseTable>
               </div>
             ))}
           </div>

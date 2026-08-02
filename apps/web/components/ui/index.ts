@@ -8,7 +8,7 @@ export { MonoChip } from "./MonoChip";
 export { Card } from "./Card";
 // TABLE.1 — dense-table mechanics (scroll frame + frozen leading column).
 export { DenseTable } from "./DenseTable";
-export { FROZEN_CELL, frozenCell } from "./dense-table-tokens";
+export { FROZEN_CELL, FROZEN_PAIR, frozenCell } from "./dense-table-tokens";
 export type { DensePad } from "./dense-table-tokens";
 export { AgentGlyph } from "../agents/AgentGlyph";
 export type { AgentTone } from "../agents/AgentGlyph";

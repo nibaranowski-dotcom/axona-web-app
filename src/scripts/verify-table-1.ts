@@ -54,6 +54,9 @@ function run(): void {
     read("apps/web/components/units/UnitRegistryView.tsx"),
   );
   const eco = codeOnly(read("apps/web/components/engineering/EcoTable.tsx"));
+  const tests = codeOnly(
+    read("apps/web/components/tests/TestExplorerView.tsx"),
+  );
 
   check("1. the primitive + its tokens exist and are exported", () => {
     return (
@@ -230,6 +233,60 @@ function run(): void {
         .split("_")
         .every((t) => /^(minmax\(.+\)|\d+(\.\d+)?px)$/.test(t));
     return shell && tracks && /FROZEN_CELL\["px-5"\]/.test(eco);
+  });
+
+  check("14. the 2-column freeze is defined ONCE, in the tokens", () => {
+    const t = codeOnly(tokens);
+    // The lead pins at the scroller edge and draws NO hairline; the next pins beside
+    // it and draws the only one. `left-[46px]` = 18px row padding + the 28px checkbox
+    // track; `-ml-3/pl-3` closes the 12px grid gap so the two backgrounds meet —
+    // without it the row scrolls visibly through the slot between them.
+    const lead = t.match(/lead:\s*"([^"]+)"/)?.[1] ?? "";
+    const next = t.match(/next:\s*"([^"]+)"/)?.[1] ?? "";
+    return (
+      /export const FROZEN_PAIR/.test(t) &&
+      /sticky left-0/.test(lead) &&
+      !/border-r/.test(lead) &&
+      /sticky left-\[46px\]/.test(next) &&
+      /-ml-3 pl-3/.test(next) &&
+      /group-data-\[scrolled=true\]:border-r/.test(next) &&
+      /bg-inherit/.test(lead) &&
+      /bg-inherit/.test(next) &&
+      /self-stretch/.test(lead) &&
+      /self-stretch/.test(next)
+    );
+  });
+
+  check("15. Test Explorer freezes BOTH leading columns, per group", () => {
+    // Every group card is its own scroller (TABLE.3c's scoping: the card owns a
+    // heading, so the scroller wraps only the table). No clipping box may sit
+    // between the sticky cells and it — the card's `overflow-hidden` is gone.
+    const shell =
+      /<DenseTable/.test(tests) &&
+      /minWidth=\{TESTS_MIN_W\}/.test(tests) &&
+      /const TESTS_MIN_W = "min-w-\[746px\]"/.test(tests) &&
+      /className="rounded-b-card"/.test(tests) &&
+      // The GROUP CARD specifically must not clip. Scoped, not a file-wide ban:
+      // the compare dialog in this file has its own unrelated `overflow-hidden`
+      // table, and banning the string outright would fail on that.
+      /className="rounded-card border border-line bg-paper"/.test(tests) &&
+      !/overflow-hidden rounded-(card|\[14px\])/.test(tests) &&
+      !/overflow-x-auto/.test(tests) &&
+      !/onScroll/.test(tests);
+    // Both frozen cells, in both the column-header row and the data rows — the
+    // header must pin in lockstep or it drifts off the body across the freeze.
+    const leads = tests.match(/FROZEN_PAIR\.lead/g)?.length ?? 0;
+    const nexts = tests.match(/FROZEN_PAIR\.next/g)?.length ?? 0;
+    const opaque =
+      /const ROW_BG = "bg-paper hover:bg-panel-2"/.test(tests) &&
+      /const HEADER_BG = "bg-paper"/.test(tests);
+    const template = tests.match(/grid-cols-\[([^\]]+)\]/)?.[1];
+    const tracks =
+      !!template &&
+      template
+        .split("_")
+        .every((x) => /^(minmax\(.+\)|\d+(\.\d+)?px)$/.test(x));
+    return shell && leads >= 2 && nexts >= 2 && opaque && tracks;
   });
 
   console.log(`\n  ${passed} passed, ${failed} failed\n`);

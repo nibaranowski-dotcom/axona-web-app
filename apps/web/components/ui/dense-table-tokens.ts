@@ -44,3 +44,27 @@ export const FROZEN_CELL: Record<DensePad, string> = {
   "px-5": frozenCell("px-5", "bg-inherit"),
   "px-[18px]": frozenCell("px-[18px]", "bg-inherit"),
 };
+
+/**
+ * TABLE.2 — a TWO-column freeze, for a table whose identifier sits behind a
+ * selection checkbox (Test Explorer). Three things differ from the single-column
+ * case, none of them optional:
+ *
+ *  · **Only the LAST frozen column draws the hairline.** One between the two would
+ *    put a rule inside the pinned block, which the v2 design has nowhere.
+ *  · **The `next` cell closes the grid gap.** `left` pins its BORDER box, so without
+ *    `-ml/pl` the 12px gap between the two frozen tracks is transparent and the row
+ *    scrolls visibly through the slot between them. With it, the two backgrounds
+ *    meet and the pinned block reads as one surface.
+ *  · **The lead sits above.** Both are pinned so they never overlap each other, but
+ *    both must sit above the cells sliding underneath.
+ *
+ * The offsets are the CONSUMER's geometry, written out because Tailwind cannot see
+ * a composed class: `left-[46px]` is row padding 18px + the 28px checkbox track, and
+ * `-ml-3/pl-3` is the 12px `gap-3`. A table with a different leading track needs its
+ * own literal entry here — not a computed string.
+ */
+export const FROZEN_PAIR: { lead: string; next: string } = {
+  lead: "sticky left-0 z-20 -ml-[18px] pl-[18px] flex items-center self-stretch bg-inherit",
+  next: "sticky left-[46px] z-10 -ml-3 pl-3 flex min-w-0 items-center self-stretch bg-inherit group-data-[scrolled=true]:border-r group-data-[scrolled=true]:border-line",
+};

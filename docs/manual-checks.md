@@ -3164,3 +3164,85 @@ Check 13 asserts the shell cannot regress: no `overflow-hidden` anywhere in the 
 (re-adding it fails the check — verified), the scroller carries the bottom corners,
 rows and header paint explicitly, tracks stay content-independent, and the pinned
 cell is the shared `FROZEN_CELL["px-5"]`.
+
+## TABLE.2 — Test Explorer on DenseTable, checkbox + run code pinned (2-col freeze)
+
+The last dense table, and the only one whose identifier sits BEHIND something: a
+15px selection checkbox in a fixed 28px track. So it freezes **two** columns.
+
+**Structure, and where the brief's assumption was wrong.** The brief describes "a
+header row per procedure group inside one scroller". The screen — and
+`Test Explorer.dc.html`, which it matches 1:1 — is not built that way: it renders
+**one card per procedure group**, each with its own heading, its own column-header
+row and its own runs. So there is no repeating header inside a shared scroller to
+reconcile. Each group card gets its own scroller, scoped the way TABLE.3c scoped the
+ECO table (the card owns a heading, so the scroller wraps only the table and the
+heading stays put). The card's `overflow-hidden` is gone — it was the clipping box
+between the sticky cells and the scrollport, i.e. the thing that makes a pinned
+column pin nothing — and the scroller carries `rounded-b-card` so the last row still
+rounds off.
+
+**Consequence, flagged for design:** the four group scrollers scroll INDEPENDENTLY.
+The `.dc.html` scrolls the whole page instead (`min-width:920px` on the page
+wrapper), which would keep the groups in lockstep but drag every group heading
+sideways and put an `overflow-hidden` card back between the sticky cells and the
+scroller. Per-card scrollers were the choice; whether the groups should scroll
+together is a design call.
+
+**The 2-column freeze** (`FROZEN_PAIR` in `dense-table-tokens.ts`, defined once):
+
+| | lead (checkbox) | next (run code) |
+|---|---|---|
+| pin | `sticky left-0` | `sticky left-[46px]` = 18px row padding + the 28px track |
+| gap | `-ml-[18px] pl-[18px]` restores the row padding | `-ml-3 pl-3` closes the 12px `gap-3` |
+| hairline | **none** | the only one, on scroll |
+| z | `z-20` | `z-10` |
+
+Both offsets are written out because Tailwind cannot see a composed class. The
+gap-closing on `next` is not cosmetic: `left` pins the BORDER box, so without it the
+12px slot between the two frozen tracks stays transparent and the row is visibly
+seen scrolling through it. Only the LAST frozen column draws the hairline — one
+between the two would be a rule inside the pinned block, which the v2 design has
+nowhere.
+
+**Parity at 1440: 263 of 1,440,000 pixels, and the body is CLEAN.** Every differing
+pixel is ±1..5/255 sub-pixel AA on a rounded corner — the four cards' own corners
+(x265-277 and x998-1010, the 14px radii) and the 5px corners of the code chip in
+three group headings, which shift because the card is no longer a clipping box and
+Chrome composites the corner differently. Sampled directly: no differing pixel lies
+inside the table body. Both frozen cells, their wrappers and the new opaque row
+backgrounds are invisible at rest. Two runs of each build are byte-identical.
+
+**Tracks were already content-independent in practice** — every data cell is
+`min-w-0 truncate`, so the auto floors were 0. Measured before and after: ONE track
+signature, `28px 117.344px 117.359px 129.094px 164.312px 93.8906px`, identical. The
+`minmax(0, …)` restatement is a guard, not a change (unlike TABLE.3c, where it moved
+four rows).
+
+**Floor 746px**, the design-width layout, same rule as TABLE.3b/3c. NOTE: the
+`.dc.html` states a page-level `min-width:920px` (≈870px of card) — a wider floor
+than this. Adopting it would make the table scroll AT the design width and move every
+column there, so it is flagged, not taken.
+
+**Behaviour** (`table-1:check`): both columns pin at `[0, 46]` at 1180/1280/1366 with
+the hairline on the second, and the column-header row pins to the SAME offsets — the
+group headers stay aligned with the body across the freeze. Nothing scrolls at
+1440/1512/1728. All four scroll regions are asserted present.
+
+**Checker upgrades this story needed** (they apply to every table):
+- targets can name their region by SELECTOR, not just an exact label — Test Explorer
+  names each scroller `"<procedure> runs"`, so it matches on the suffix;
+- the probe measures the frozen offsets on the header row AND a data row and fails on
+  any drift between them;
+- multi-column freezes must stay in reading order, and only the final frozen column
+  may carry a hairline;
+- the expected number of scroll regions is asserted (4 here).
+
+**Checks:**
+```
+pnpm verify:table-1    # static half, in CI: checks 14-15 cover the pair + this screen
+pnpm table-1:check     # served half: all four tables, header/body pinning in lockstep
+```
+Check 15's no-clipping assertion is scoped to the group card, not the file: the
+compare dialog in the same file has its own unrelated `overflow-hidden` table.
+Re-clipping the group card fails the check — verified.
