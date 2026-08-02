@@ -21,6 +21,12 @@ Status: ✅ done · 🟡 partial/verify · ⬜ open · N/A not applicable.*
    governing entity/refund/support filled. Defense-tenant sensitivity governance = a data-handling note.
 5. **Email authenticated** — ✅ Resend on send.axonahq.com (GOLIVE.1). 🟡 Confirm **SPF + DKIM + DMARC** all
    published (Gmail/Yahoo require all three); a transactional test hits the inbox.
+
+   **Google Workspace aliases (receiving, on axonahq.com — logged 2026-08-01):** `nic@` (primary/personal —
+   use as the from/reply for founder prospect + investor outreach) · `support@` · `contact@` · `hello@` ·
+   `management@` · `fundraising@` (investor outreach). All alias into one inbox. `support@`/`contact@` satisfy
+   the §7/§10 "working support address" item. Note: these RECEIVE only — the app's transactional mail still
+   sends via Resend on send.axonahq.com, a separate system. (`management@` — confirm it's actually needed.)
 6. **Roll back + know if it breaks** — 🟡 Railway redeploys the previous build; ⬜ **write the rollback
    command down**; ⬜ **error tracking + uptime alerting** to a channel you watch (§11).
 7. **Performs** — 🟡 core states render; a11y gate real in CI (A11Y.2/3). ⬜ CWV read on prod; cross-browser
