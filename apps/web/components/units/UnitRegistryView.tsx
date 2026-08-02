@@ -10,6 +10,7 @@ import {
   type FilterKey,
   type UnitRegistryData,
 } from "@/lib/units";
+import { DenseTable, FROZEN_CELL } from "@/components/ui";
 import { ScreenShell } from "@/components/shell/ScreenShell";
 import { ImportUnitsPanel } from "./ImportUnitsPanel";
 
@@ -222,69 +223,102 @@ function statusLabel(s: string): string {
   return STATUS_LABEL[s] ?? s;
 }
 
+// TABLE.3b — content-independent tracks (the UX.16 rule): a bare `Nfr` is
+// `minmax(auto, Nfr)`, whose floor is the track's own min-content, so rows inflate
+// their tracks while the short header labels do not and the two drift apart off one
+// template. Floors are each column's MEASURED max-content (Serial 60 · Model 30 ·
+// Config 90 · SW 60 · Status 61 · Issues 36 · Last event 60), every one already below
+// the width that column resolves to — so this is a no-op at wide widths and the
+// floors only bind once the table scrolls. Site/customer is long free text and stays
+// `minmax(0, …)` so it truncates exactly as today.
 const COLS =
-  "grid grid-cols-[1fr_0.9fr_1.1fr_0.9fr_1.3fr_1fr_0.7fr_1fr] gap-3 px-[18px]";
+  "grid grid-cols-[minmax(60px,1fr)_minmax(30px,0.9fr)_minmax(90px,1.1fr)_minmax(60px,0.9fr)_minmax(0,1.3fr)_minmax(61px,1fr)_minmax(36px,0.7fr)_minmax(60px,1fr)] gap-3 px-[18px]";
+// The floor is the same BOX as before, expressed against its new owner. It used to
+// sit on a wrapper OUTSIDE the card, so 1000px was the card's border-box; now it sits
+// on the card's scrollable content, inside the 1px borders — 998px keeps the card
+// exactly 1000px and the eight tracks resolving against exactly the width they did
+// before, which is what holds 1440 at parity. (Change Orders.dc.html states its floor
+// as a content width for the same reason — there the two happen to coincide.)
+const UNITS_MIN_W = "min-w-[998px]";
+
+// TABLE.3b — the canonical dense-table shell (design note 2026-08-01, recorded in
+// specs/design-brief-dense-table-frozen-columns.md): the rounded card IS the
+// horizontal scroller — border-radius + overflow-x on ONE element. The first cut of
+// this screen nested an `overflow-hidden` card between the sticky cell and the
+// scrollport, which made `position: sticky` resolve against the card (it scrolled as
+// a unit) and pin nothing. `overflow-x` still clips the rounded corners, so the card
+// keeps its shape without a second clipping box.
+const CARD = "rounded-card border border-line bg-paper";
+// The frozen cell is `bg-inherit`, so header and rows must paint an EXPLICIT opaque
+// background for content to occlude cleanly under it — and the row's follows :hover
+// to panel-2, which the pinned cell then inherits with it.
+const HEADER_BG = "bg-paper";
+const ROW_BG = "bg-paper hover:bg-panel-2";
+// Same pinned-identifier mechanics as the PO queue (UX.17), at this table's padding.
+const FROZEN_SERIAL = FROZEN_CELL["px-[18px]"];
 
 function UnitTable({ data }: { data: UnitRegistryData }) {
   return (
-    <div className="min-w-0 overflow-x-auto">
-      <div className="min-w-[1000px]">
-        <div className="overflow-hidden rounded-card border border-line bg-paper">
-          <div
-            className={`${COLS} border-b border-line py-[11px] font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted`}
-          >
-            <span>Serial</span>
-            <span>Model</span>
-            <span>Config version</span>
-            <span>SW version</span>
-            <span>Site / customer</span>
-            <span>Status</span>
-            <span>Issues</span>
-            <span>Last event</span>
-          </div>
-          {data.rows.map((u) => (
-            <Link
-              key={u.serial}
-              href={`/units/${encodeURIComponent(u.serial)}`}
-              className={`${COLS} items-center border-t border-line py-[13px] text-ink transition-colors first:border-t-0 hover:bg-panel-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent`}
-            >
-              <span className="font-mono text-[12.5px] font-semibold">
-                {u.serial}
-              </span>
-              <span className="min-w-0 truncate text-[12.5px] text-ink-muted">
-                {u.modelCode}
-              </span>
-              <span className="font-mono text-[11.5px]">
-                {u.configVersion ?? "—"}
-              </span>
-              <span className="font-mono text-[11.5px]">
-                {u.swVersion ?? "—"}
-              </span>
-              <span className="min-w-0 truncate text-[12.5px] text-ink-muted">
-                {[u.customer, u.site].filter(Boolean).join(" · ") || "—"}
-              </span>
-              <span>
-                <StatusDot status={u.status} />
-              </span>
-              <span>
-                {u.openIssues > 0 ? (
-                  <span className="font-mono text-[11px] font-bold text-ink-strong">
-                    {u.openIssues}
-                  </span>
-                ) : (
-                  <span className="font-mono text-[11px] text-ink-muted">
-                    —
-                  </span>
-                )}
-              </span>
-              <span className="font-mono text-[10.5px] text-ink-muted">
-                {relative(u.lastEventAt)}
-              </span>
-            </Link>
-          ))}
+    <DenseTable
+      minWidth={UNITS_MIN_W}
+      label="Unit registry"
+      className={`min-w-0 ${CARD}`}
+    >
+      <>
+        <div
+          className={`${COLS} ${HEADER_BG} border-b border-line py-[11px] font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted`}
+        >
+          <span className={FROZEN_SERIAL}>Serial</span>
+          <span>Model</span>
+          <span>Config version</span>
+          <span>SW version</span>
+          <span>Site / customer</span>
+          <span>Status</span>
+          <span>Issues</span>
+          <span>Last event</span>
         </div>
-      </div>
-    </div>
+        {data.rows.map((u) => (
+          <Link
+            key={u.serial}
+            href={`/units/${encodeURIComponent(u.serial)}`}
+            className={`${COLS} ${ROW_BG} items-center border-t border-line py-[13px] text-ink transition-colors first:border-t-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent`}
+          >
+            <span
+              className={`${FROZEN_SERIAL} font-mono text-[12.5px] font-semibold`}
+            >
+              {u.serial}
+            </span>
+            <span className="min-w-0 truncate text-[12.5px] text-ink-muted">
+              {u.modelCode}
+            </span>
+            <span className="font-mono text-[11.5px]">
+              {u.configVersion ?? "—"}
+            </span>
+            <span className="font-mono text-[11.5px]">
+              {u.swVersion ?? "—"}
+            </span>
+            <span className="min-w-0 truncate text-[12.5px] text-ink-muted">
+              {[u.customer, u.site].filter(Boolean).join(" · ") || "—"}
+            </span>
+            <span>
+              <StatusDot status={u.status} />
+            </span>
+            <span>
+              {u.openIssues > 0 ? (
+                <span className="font-mono text-[11px] font-bold text-ink-strong">
+                  {u.openIssues}
+                </span>
+              ) : (
+                <span className="font-mono text-[11px] text-ink-muted">—</span>
+              )}
+            </span>
+            <span className="font-mono text-[10.5px] text-ink-muted">
+              {relative(u.lastEventAt)}
+            </span>
+          </Link>
+        ))}
+      </>
+    </DenseTable>
   );
 }
 

@@ -48,7 +48,18 @@ const TARGETS: Target[] = [
     narrow: [1180, 1280],
     wide: [1366, 1440, 1512],
   },
-  // Unit Registry / Change Orders / Test Explorer / Engineering ECO are NOT here
+  {
+    key: "units",
+    path: "/units",
+    label: "Unit registry",
+    // 998, not 1000: the card is now the scroller, so the floor is its CONTENT
+    // width and its 1px borders sit outside — the card is still exactly 1000px.
+    minWidth: 998,
+    frozen: 1, // the serial, on the canonical shell (card == scroller)
+    narrow: [1180, 1280, 1366],
+    wide: [1728],
+  },
+  // Change Orders / Test Explorer / Engineering ECO are NOT here
   // yet. Each is migrated in its own story with mandatory pixel parity at 1440 —
   // see docs/manual-checks.md -> TABLE.1 for why (their designs nest the scroller
   // and treat rows differently, so a naive adoption moved them visibly).
@@ -168,19 +179,26 @@ async function main(): Promise<void> {
         const s = (await page.evaluate(PROBE(t.label, t.frozen))) as Probe;
         const maxScroll = p.scrollWidth - p.clientWidth;
         if (s.scrollLeft <= 0) problems.push("did not actually scroll");
-        if (!s.sticky.every(Boolean))
-          problems.push("frozen column(s) not sticky");
-        if (s.pinned.some((x, i) => (i === 0 ? Math.abs(x) > 1 : x < 0)))
-          problems.push(`frozen column drifted: [${s.pinned.join(", ")}]`);
         if (s.dataScrolled !== "true")
           problems.push("data-scrolled did not flip");
-        if (!s.hairline) problems.push("frozen-column hairline did not appear");
+        // `frozen: 0` is a real configuration, not an omission: a design that nests
+        // its card (with overflow-hidden) between the sticky cell and the scrollport
+        // cannot pin a column at all, so the table gets the scroll floor WITHOUT a
+        // frozen identifier. Only assert pinning where a column is meant to freeze.
+        if (t.frozen > 0) {
+          if (!s.sticky.every(Boolean))
+            problems.push("frozen column(s) not sticky");
+          if (s.pinned.some((x, i) => (i === 0 ? Math.abs(x) > 1 : x < 0)))
+            problems.push(`frozen column drifted: [${s.pinned.join(", ")}]`);
+          if (!s.hairline)
+            problems.push("frozen-column hairline did not appear");
+        }
         if (SHOT_DIR && width === 1280)
           await page.screenshot({
             path: `${SHOT_DIR}/table1-${t.key}-1280-scrolled.png`,
           });
         console.log(
-          `  ${problems.length ? "FAIL" : "  ok"} ${width}px · card ${p.clientWidth}px · SCROLLS ${maxScroll}px · pinned [${s.pinned.join(", ")}] · hairline ${s.hairline ? "on" : "off"}`,
+          `  ${problems.length ? "FAIL" : "  ok"} ${width}px · card ${p.clientWidth}px · SCROLLS ${maxScroll}px · ${t.frozen > 0 ? `pinned [${s.pinned.join(", ")}] · hairline ${s.hairline ? "on" : "off"}` : "no frozen column (by design)"}`,
         );
       } else {
         if (p.scrollable)

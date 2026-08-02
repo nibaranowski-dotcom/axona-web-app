@@ -3027,3 +3027,69 @@ the original copy fails on exactly them.
 **In `verify:all`:** runs with no argument, checking every prospect that has a
 manifest and skipping cleanly (exit 0) when `prospects/` is absent — so CI and a fresh
 clone pass without the gitignored tenants, the same pattern as the prospect verifies.
+
+## TABLE.3b — Unit Registry on the DenseTable primitive, serial pinned
+
+`/units` takes its scroll floor, its content-independent tracks and its pinned
+identifier from the shared primitive, on the **canonical dense-table shell**: the
+rounded card IS the horizontal scroller — `border-radius` + `overflow-x` on ONE
+element (design note 2026-08-01, recorded in
+`specs/design-brief-dense-table-frozen-columns.md`; `Change Orders.dc.html` is the
+reference impl).
+
+**Why the shell had to change.** The first cut of this migration nested the scroller
+outside an `overflow-hidden` card (`scroller → min-w → overflow-hidden rounded-card →
+rows`). `position: sticky` resolves against the nearest scrollport, and that card's
+`overflow-hidden` — which it needed to clip its rounded corners — sat between the
+sticky cell and the scrollport, so the cell stuck to the *card*, which scrolls as a
+unit, and pinned nothing (measured: `pinned [-511]`, the serial scrolled straight
+off). With the card itself as the scroller there is no intervening clipping box, and
+`overflow-x` clips the corners anyway — so the card keeps its shape AND pins.
+
+**The floor is 998px, not 1000px.** Same box, new owner: it used to sit on a wrapper
+*outside* the card, so 1000px was the card's border-box; now it sits on the card's
+scrollable content, inside the 1px borders. 998 keeps the card exactly 1000px and the
+eight tracks resolving against the width they always did. Stating it as 1000 instead
+costs **20,603 px @1440** — pure sub-pixel text reflow from a 2px-wider grid.
+
+**Parity vs the unpinned build (`git stash` one file, same browser, same seed):**
+
+| width | regime | differing px | what they are |
+|---|---|---|---|
+| 1728 | no scroll | **54** of 1,728,000 | the two top corners only (x 264-277 + 1286-1299, y 175-188 — 14px radius, 14 rows): corner AA, now composited from the row's own opaque bg under the scroller's rounded clip |
+| 1440 | scrolls | **858** of 1,440,000 | x1011 = **762** (the card's right border, full height) · x264-276 + x998-1010 = **96** (corner AA) |
+
+Column-by-column, **nothing differs inside the table body** — which is the real gate:
+the frozen cell and the new explicit row backgrounds are invisible at rest. Two runs
+of the same build are byte-identical, so those counts are signal, not noise.
+
+**The 762px is the pattern working, not a regression.** At 1440 the card used to be
+1000px wide inside an outer scroller, so its right edge sat off-screen at x≈1264 and
+the table just ran off under the agent panel. As the scroller it is viewport-width and
+draws its own right edge at x≈1011 — a complete card that scrolls, which is what
+`Change Orders` does and what the design's own full-page-scroll layout implies. The
+remaining ~150px across both widths is sub-pixel corner AA. FLAGGED rather than ground
+down: removing it means re-introducing a clipping box, which is exactly what broke
+`sticky`.
+
+**Behaviour** (`table-1:check`): serial pins at 1180/1280/1366 with the conditional
+hairline; scroll amounts 512/412/326px are unchanged from the unpinned build; nothing
+scrolls at 1728. `pinned [1]` (not `[0]`) is correct here — the cell pins to the
+scroller's *padding* box, 1px inside the card's border.
+
+**Plan revised by the same decision:** TABLE.3c (Engineering ECO) and TABLE.2 (Test
+Explorer) get the frozen identifier too, on this shell. Test Explorer is the 2-column
+freeze (checkbox + identifier) and its per-procedure group headers need `.frz` on
+their leading cells so they align across the freeze.
+
+**Checks:**
+```
+pnpm verify:table-1    # static half, in CI: checks 9-11 cover /units
+pnpm table-1:check     # served half: /units + /procurement both pin, unchanged wide
+```
+The static half asserts what a later edit could quietly undo: `/units` consumes the
+primitive rather than re-implementing the scroller, its tracks stay content-independent
+(no bare `Nfr`), the card classes ride on the `DenseTable` itself with **no
+`overflow-hidden` anywhere in the file** (the regression that would silently unpin the
+serial), the rows carry an explicit opaque background for `bg-inherit` to occlude
+against, and the pinned cell is the shared `FROZEN_CELL["px-[18px]"]`.
