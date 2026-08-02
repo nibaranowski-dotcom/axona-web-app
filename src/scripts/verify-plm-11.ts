@@ -172,12 +172,25 @@ async function run(): Promise<void> {
     async () => {
       const hx2 = await prisma.productModel.findFirst({
         where: { orgId: DEMO, code: "HX-2" },
-        select: { id: true },
+        select: { id: true, designRevision: true },
       });
-      const line = await prisma.bomLine.findFirst({
-        where: { productModelId: hx2!.id },
-        select: { id: true, qty: true, position: true },
+      // PLM.13: the manifest resolves LEAVES at the model's CURRENT design
+      // revision, so the line this check mutates has to be one of those. An
+      // unpinned findFirst can return an assembly or an older revision's row —
+      // neither appears in the manifest, so the draft would never move and the
+      // check would fail for the wrong reason.
+      const candidates = await prisma.bomLine.findMany({
+        where: {
+          productModelId: hx2!.id,
+          designRevision: hx2!.designRevision,
+        },
+        select: { id: true, qty: true, position: true, parentLineId: true },
+        orderBy: { position: "asc" },
       });
+      const parentIds = new Set(
+        candidates.map((c) => c.parentLineId).filter(Boolean),
+      );
+      const line = candidates.find((c) => !parentIds.has(c.id));
       if (!line) return false;
       const baseBefore = await getConfigurationDetail(DEMO, BASELINE);
       const draftBefore = await getConfigurationDetail(DEMO, DRAFT);
