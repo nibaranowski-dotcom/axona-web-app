@@ -1,7 +1,7 @@
 /**
  * Verify PROSPECT-PLM — deep golden-thread overlays for seeded prospect tenants:
  * (a) config management + traceability + BR.1 for a multi-factory defense manufacturer
- * (resolved by the SN-H-4471 serial), and (b) agentic procurement + per-cell genealogy
+ * (resolved by the SN-DC-4471 serial), and (b) agentic procurement + per-cell genealogy
  * for a robotic-cell manufacturer (resolved by the NM-PICK-0142 serial). Each tenant
  * config is gitignored (SEED.1: its real marque is never committed — this verify is
  * marque-free and resolves every org by a non-marque serial, never by name), so this is
@@ -17,10 +17,10 @@
  *   2. (db) a dual-approver locked config (proposer≠locker, frozen) — resolveConfigAt matches it.
  *   3. (db) ECO blast reaches units across 3 distinct factories (siteLabel grouping).
  *   4. (db) org isolation — readiness on another tenant's unit is "not found".
- *   5. (db·gated) real SN-H-4471: as-built COMPUTE-720 rev B / lot 88471 substitution.
- *   6. (db·gated) real NCR-H118 (component · frozen snapshot · fail run) + a passing run.
- *   7. (db·gated) real ECO-H318 blast = units across 3 factories; lot 88471 reach.
- *   8. (db·gated) real CFG-HX2-r4.2 dual-approver + "which units run v4.2.1" resolves.
+ *   5. (db·gated) real SN-DC-4471: as-built COMPUTE-720 rev B / lot 88471 substitution.
+ *   6. (db·gated) real NCR-DC-118 (component · frozen snapshot · fail run) + a passing run.
+ *   7. (db·gated) real ECO-DC-318 blast = units across 3 factories; lot 88471 reach.
+ *   8. (db·gated) real CFG-DC-r4.2 dual-approver + "which units run v4.2.1" resolves.
  *   9. (db·gated) real BR.1 card blocked on single-source long-lead specialty parts.
  *  10. (db·gated) export-control HOLD + config-lock audit + persona + modules populated.
  *  11. (db·gated) SENSITIVITY: NO operational content in any seeded text field.
@@ -379,7 +379,7 @@ async function run(): Promise<void> {
   // ── the REAL prospect seed, when present (gitignored → local/prod only) ────────
   // Resolve the org by a NON-marque anchor (the golden-thread serial), never by name.
   const heroUnit = await prisma.unit.findFirst({
-    where: { serial: "SN-H-4471" },
+    where: { serial: "SN-DC-4471" },
     select: { id: true, orgId: true },
   });
   if (!heroUnit?.orgId) {
@@ -391,7 +391,7 @@ async function run(): Promise<void> {
     const hero = { id: heroUnit.id };
 
     await check(
-      "real SN-H-4471: as-built COMPUTE-720 rev B / lot 88471 substitution",
+      "real SN-DC-4471: as-built COMPUTE-720 rev B / lot 88471 substitution",
       async () => {
         const rec = await hdb.asBuiltRecord.findFirst({
           where: { unitId: hero.id, isSubstitution: true, lotCode: "88471" },
@@ -405,10 +405,10 @@ async function run(): Promise<void> {
     );
 
     await check(
-      "real NCR-H118 (component · frozen snapshot · fail run) + a passing run on the same procedure",
+      "real NCR-DC-118 (component · frozen snapshot · fail run) + a passing run on the same procedure",
       async () => {
         const ncr = await hdb.nCR.findFirst({
-          where: { code: "NCR-H118" },
+          where: { code: "NCR-DC-118" },
           select: { rootCause: true, testRunId: true, configSnapshot: true },
         });
         const fail = await hdb.testRun.findFirst({
@@ -430,9 +430,9 @@ async function run(): Promise<void> {
     );
 
     await check(
-      "real ECO-H318 blast = units across 3 factories; lot 88471 reach across factories",
+      "real ECO-DC-318 blast = units across 3 factories; lot 88471 reach across factories",
       async () => {
-        const ecoRes = await affectedUnits(hdb, { ecoId: "ECO-H318" });
+        const ecoRes = await affectedUnits(hdb, { ecoId: "ECO-DC-318" });
         const ecoFac = new Set(
           ecoRes.units.map((u) => u.siteLabel).filter(Boolean),
         );
@@ -450,10 +450,10 @@ async function run(): Promise<void> {
     );
 
     await check(
-      "real CFG-HX2-r4.2 dual-approver + 'which units run v4.2.1' resolves to a real set",
+      "real CFG-DC-r4.2 dual-approver + 'which units run v4.2.1' resolves to a real set",
       async () => {
         const cfg = await hdb.configurationVersion.findFirst({
-          where: { name: "CFG-HX2-r4.2" },
+          where: { name: "CFG-DC-r4.2" },
           select: {
             lockProposedById: true,
             lockedById: true,
@@ -488,7 +488,7 @@ async function run(): Promise<void> {
     );
 
     await check(
-      "real BR.1 card: SN-H-4471 blocked on single-source long-lead specialty parts",
+      "real BR.1 card: SN-DC-4471 blocked on single-source long-lead specialty parts",
       async () => {
         const r = await computeBuildReadiness(hdb, hero.id);
         if (r.blockingParts.length < 1) return false;

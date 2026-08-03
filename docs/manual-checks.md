@@ -2189,7 +2189,7 @@ A gitignored prospect overlay that deepens a multi-factory defense-manufacturer 
 so every module renders full and the config golden thread lands end-to-end. Per SEED.1
 the tenant's real marque is NEVER committed — the config lives under gitignored
 `prospects/<tenant>/`, and the committed verify is marque-free (it resolves the org by a
-non-marque anchor, the `SN-H-4471` serial). This story added NO app code — it reuses the
+non-marque anchor, the `SN-DC-4471` serial). This story added NO app code — it reuses the
 existing PLM read models (RCA · Configurations · blast radius · BR.1). Automated:
 `pnpm verify:prospect-plm` (a CI-safe throwaway fixture proving the integration + a
 real-thread block gated on the gitignored seed being present).
@@ -2202,18 +2202,18 @@ field for operational terms and fails on any hit.
 
 **Seed + demo (local):** `pnpm db:seed:prospect prospects/<tenant>` (needs the local logo +
 S3/R2 for the branding upload; skip S3 to seed without the logo). Then:
-- `/units/SN-H-4471` — as-built diff shows the COMPUTE-720 **rev B / lot 88471** substitution
+- `/units/SN-DC-4471` — as-built diff shows the COMPUTE-720 **rev B / lot 88471** substitution
   (flagged lot, `ncr_hold`); the **Build readiness** card reads ~85% blocked on 2 single-
   source long-lead specialty parts (ACTUATOR-560 late · OPTICS-620 short).
-- Test → NCR → **RCA** (`/rca/NCR-H118`): assembled evidence (config diff vs a passing run ·
+- Test → NCR → **RCA** (`/rca/NCR-DC-118`): assembled evidence (config diff vs a passing run ·
   shared lot 88471 · a prior failure via memory) → agent-proposed cause (component) → human
   classification, audited.
-- **ECO-H318** supersede → **blast radius** (`/blast-radius?type=eco&value=ECO-H318`): 8
+- **ECO-DC-318** supersede → **blast radius** (`/blast-radius?type=eco&value=ECO-DC-318`): 8
   affected units across **Factory-1/2/3** (units grouped by `siteLabel`); dual-approver release.
-- **Configurations** (`/configurations`): CFG-HX2-r4.1 (superseded) → r4.2 (**baseline · locked
-  · dual-approver**, frozen manifest) → r4.3 (draft). "Which units run CFG-HX2-r4.2 / firmware
+- **Configurations** (`/configurations`): CFG-DC-r4.1 (superseded) → r4.2 (**baseline · locked
+  · dual-approver**, frozen manifest) → r4.3 (draft). "Which units run CFG-DC-r4.2 / firmware
   v4.2.1" resolves to the real fleet set.
-- **Legal / Fulfillment:** one shipment (DLV-H3320) carries a dual-use **export-control HOLD**
+- **Legal / Fulfillment:** one shipment (DLV-DC-3320) carries a dual-use **export-control HOLD**
   (ECCN 9A991) — mechanics only, no trade-compliance engine.
 - Persona is the fictional "Lena Brandt · Production Quality Lead"; approvers (Jonas Weiss)
   and technicians fictional. Every other module re-skins the PROSPECT.3 base to the defense
@@ -2278,7 +2278,7 @@ permitted to contain a marque token, each with a documented reason. Two kinds:
 Anything matching a marque OUTSIDE the allowlist is a real leak and fails the wall.
 The prospect tenant configs themselves stay gitignored (`prospects/`) and are never
 scanned; every committed verify resolves a prospect org by a NON-marque serial
-(`SN-H-4471` / `NM-PICK-0142` / `CE-2026-007`), never by name.
+(`SN-DC-4471` / `NM-PICK-0142` / `CE-2026-007`), never by name.
 
 **Self-test (so the wall can't silently rot):** `verify:seed-1` includes two positive
 controls — (a) the grep is LIVE and the allowlist is exactly the marque-bearing files
@@ -2303,7 +2303,7 @@ RBAC-gated in `RootCauseCell` (unchanged).
 shows **"Open RCA →"** under its Root cause cell → one click lands on `/rca/NCR-118`. An
 NCR without an RCA workspace shows no such link (bare classification only).
 
-**Click path — Unit page:** `/units/<serial>` (the golden-thread unit, e.g. `SN-H-4471`
+**Click path — Unit page:** `/units/<serial>` (the golden-thread unit, e.g. `SN-DC-4471`
 on the defense tenant or the base demo's NCR-118 unit) → the **Open issues** rail → the
 NCR card gains an **"Open RCA →"** footer link → one click lands on the same `/rca/<code>`.
 
@@ -3577,3 +3577,58 @@ construction — they inherit tenancy through a parent FK (`Message`→Chat,
 `AgentRun`→Agent, `MatrixColumn`→Project, `MachineSignal`→Machine) or are global
 (`Module`, `Lead`, the auth tokens). If one of those ever gains an `orgId`, the
 guard catches it that day.
+
+## DRONECO.1 — rename the defense demo tenant to a neutral identity
+
+The defense prospect tenant is going to a recipient list that includes a competitor of
+the company it was originally tailored to. A tailored tenant leaks its subject two ways:
+the org identity (name · slug · demo login) and the *shape of its codes* — a serial or
+config prefix carrying the subject's product initials identifies it as surely as the
+name does. Both are now neutral: the tenant is **DroneCo**, on `org_droneco_demo` /
+`droneco-demo`, login `demo@droneco-demo.test`, and every code reads `…-DC-…`
+(`SN-DC-4471` · `TR-DC-8841` · `NCR-DC-118` · `ECO-DC-318` · `CFG-DC-r4.2`).
+
+**Rename only.** No data, flow, layout or seed volume changed — 240 units, 3 factories,
+Program-A/B + Customer-1, 4 lot-cohort units across 2 factories, 8 ECO-affected units,
+5 memory-recall hits, all identical before and after. Generic codes that carry no tell
+(`COMPUTE-720/721`, lot `88471`, `Factory-1/2/3`, `Program-A/B`) are deliberately
+unchanged. `logoFile` is now OMITTED — the tenant renders the default wordmark, because
+the previous tenant shipped a real prospect logo, which is itself an identity tell.
+
+**The committed surface is small but load-bearing.** The tenant config is gitignored, so
+the only tracked change is the wiring that *anchors* on the tenant: `verify:prospect-plm`
+resolves the prospect org by a non-marque serial, and that serial moved. Because the
+script SKIPS its whole real-thread block when the anchor is absent, a stale anchor does
+not fail — it drops 7 of its 17 assertions and still exits 0. `verify:all` cannot reveal
+this: its headline count is the number of verify SCRIPTS (164), not assertions, so it
+reads 164 PASSED whether the block ran or skipped. It was re-anchored, taking
+`verify:prospect-plm` from 10 back to 17. **Any future tenant re-code must move this
+anchor in the same commit**, and the thing to check is that script's own count, not the
+exit code and not the `verify:all` total.
+
+**Checks:**
+```
+pnpm db:seed:prospect prospects/droneco   # re-seed the renamed tenant
+pnpm tsx prospects/droneco/_check.ts      # 19 checks — thread + isolation (local, gitignored)
+pnpm verify:demo droneco                  # 7 steps — SAFE TO SEND on the new codes
+pnpm verify:prospect-plm                  # 17 checks (10 = the anchor is stale and it skipped)
+```
+The tenant check also fixed two assertions that had been failing since an earlier
+baseline rename (they asserted a config name the seed no longer produced).
+
+**Isolation:** unchanged and re-proven both ways — the tenant cannot see the investor
+org's serial, the investor org cannot see the tenant's, and the investor demo thread is
+intact. The superseded org row was dropped from the local db so no stale tenant lingers.
+
+**Prod:** `pnpm db:seed:prospect prospects/droneco` against the prod env re-seeds it
+there (human-gated). The superseded org must be dropped in prod too — re-seeding creates
+the new org but does NOT remove the old one, and the old identity would still be live.
+
+**Open — the product designation is NOT yet banned.** DRONECO.1 was specified to add the
+designation to the SEED.3 banned list. It is deliberately not done, because it is not a
+tenant-only string: the same designation is the **investor demo seed's** flagship product
+code (`packages/db/prisma/seed/constants.ts`), with ~400 occurrences across app source,
+seed, specs, the design exports, `exports/` deck crops and these docs. Adding it to the
+list fails `verify:seed-1` with 154 hits. Banning it requires renaming the base seed's
+product code repo-wide — a separate story that touches the investor demo and the
+human-gated deck crops. Tracked as such; the tenant rename does not depend on it.
