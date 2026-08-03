@@ -258,16 +258,11 @@ const fileSource: ExportSource = {
     "createdAt",
   ],
   async readRows(db) {
-    // ISOLATION, EXPLICIT: `File` is deliberately NOT in TENANT_MODELS — a file
-    // scopes either by its own orgId (entity/org attachments) or through its
-    // project (ATTACH.1), so the client extension pins NOTHING here. An unscoped
-    // findMany would put every tenant's files in this bundle. The predicate is
-    // the same join getProjectFiles uses.
+    // ISO.1 — the tenant predicate moved INTO the client extension (File scopes by
+    // its own orgId OR through its project). This read carries only its business
+    // filter; scoping is not this file's job and no longer duplicated here.
     const rows = await db.file.findMany({
-      where: {
-        OR: [{ orgId: db.$org }, { project: { orgId: db.$org } }],
-        deletedAt: null,
-      },
+      where: { deletedAt: null },
       orderBy: { createdAt: "asc" },
     });
     return rows.map((r) => ({
@@ -364,14 +359,11 @@ export async function buildOrgExport(
   db: OrgScopedDb,
   opts: { now?: Date } = {},
 ): Promise<OrgExportBundle> {
-  // EXPLICIT `where`: `Org` is not in TENANT_MODELS either (the extension scopes
-  // rows BELONGING to an org, not the org row itself), so an unqualified findFirst
-  // returns whichever org the database hands back first — another tenant's NAME in
-  // this tenant's bundle. Small leak, same class as the File one.
-  const org = await db.org.findFirst({
-    where: { id: db.$org },
-    select: { id: true, name: true },
-  });
+  // ISO.1 — `Org` is tenant-scoped by the extension now (its rule pins `id`), so
+  // this findFirst can only ever return the caller's own org. Before that rule it
+  // returned whichever org the database handed back first, and stamped another
+  // tenant's NAME on this bundle.
+  const org = await db.org.findFirst({ select: { id: true, name: true } });
   const entities: OrgExportEntity[] = [];
   for (const source of ORG_EXPORT_SOURCES) {
     const { headers, rows } = await exportEntity(db, source);

@@ -162,6 +162,7 @@ const VERIFY_SEQUENCE: string[] = [
   "plm-11",
   "plm-12",
   "plm-13",
+  "iso-1",
   "priv-1a",
   "plm-v5",
   "plm-v6",

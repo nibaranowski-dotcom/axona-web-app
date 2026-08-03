@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 
 /**
  * The bare client — for migrations, seed, and system tasks ONLY. Request paths
@@ -16,10 +16,17 @@ if (process.env.NODE_ENV !== "production") g.__axonaPrisma = prisma;
 
 /**
  * Tenant-owned models that carry a real `orgId` column. Children that inherit
- * tenancy via a parent FK (Message/AgentRun/File/MatrixColumn/MachineSignal) are
+ * tenancy via a parent FK (Message/AgentRun/MatrixColumn/MachineSignal) are
  * deliberately excluded — scope them through their parent. `Module` is global and
  * never scoped. `WorkflowRun` gained a scalar `orgId` in WF.1 (the engine sets it
  * on create) → it is scoped directly here.
+ *
+ * ISO.1 — this set is now COVERAGE-GUARDED: `tenantCoverageGaps()` below reads the
+ * Prisma DMMF and reports any model with an `orgId` column that is missing here.
+ * `verify:iso-1` fails on a non-empty result, so an org-scoped model cannot be
+ * added to the schema without being scoped. PRIV.1a found `File` the hard way —
+ * an unqualified `findMany` on it read every tenant's rows — and the same audit
+ * turned up four more (NotificationPref · SsoConfig · Invite · SearchDoc).
  */
 const TENANT_MODELS = new Set<string>([
   "User",
@@ -85,7 +92,73 @@ const TENANT_MODELS = new Set<string>([
   "ChangeRequest",
   // PLM.12 — the ECO review roster (per-reviewer approval; awaiting-me is org-scoped).
   "EcoReviewer",
+  // ISO.1 — the gap PRIV.1a surfaced. All five carry an `orgId` and were being
+  // read UNSCOPED. `File` and `SearchDoc` hold it nullably (a file scopes by its
+  // own orgId OR through its project — see SCOPE_RULES), the other three require it.
+  "File",
+  "SearchDoc",
+  "NotificationPref",
+  "SsoConfig",
+  "Invite",
+  // ISO.1 — the org row ITSELF. Its tenant key is `id`, not `orgId`, so it needs a
+  // rule below; without it `db.org.findFirst()` returned an arbitrary tenant's org
+  // (PRIV.1a stamped another tenant's NAME on an export bundle).
+  "Org",
 ]);
+
+/**
+ * ISO.1 — how a model pins to one tenant, for the models where `{ orgId }` is not
+ * the answer. Everything absent here uses the default `{ orgId }`.
+ *
+ * `where` is applied to READ ops only. Unique-target ops (`findUnique`/`update`/
+ * `delete`/`upsert`) take a unique `where`, and neither an `OR` nor a foreign key
+ * is legal there — the house rule below (scope mutations via `updateMany`/
+ * `deleteMany`, or do an explicit ownership check) is what covers those.
+ */
+interface ScopeRule {
+  /** the READ predicate that pins a row to one tenant. */
+  where(orgId: string): Record<string, unknown>;
+  /** whether `create`/`createMany` inject `{ orgId }`. */
+  injectOnCreate: boolean;
+  /** whether unique-target ops get the defensive `orgId` tag. */
+  tagUniqueOps: boolean;
+}
+
+const DEFAULT_RULE: ScopeRule = {
+  where: (orgId) => ({ orgId }),
+  injectOnCreate: true,
+  tagUniqueOps: true,
+};
+
+const SCOPE_RULES: Record<string, ScopeRule> = {
+  // A file belongs to the org directly (entity/org attachments, ATTACH.1) OR
+  // through its project (the original FILE.1 uploads). This is the predicate
+  // `getProjectFiles` has always used, lifted here so EVERY read gets it.
+  File: {
+    where: (orgId) => ({ OR: [{ orgId }, { project: { orgId } }] }),
+    // A file's tenancy is set by the caller (orgId for entity/org attachments,
+    // projectId for project files). Injecting `orgId` here would quietly change
+    // ATTACH.1's shape for project uploads.
+    injectOnCreate: false,
+    tagUniqueOps: false,
+  },
+  // The org row's tenant key is its own id.
+  Org: {
+    where: (orgId) => ({ id: orgId }),
+    // Creating an org has no enclosing tenant — provisioning uses the bare client.
+    injectOnCreate: false,
+    tagUniqueOps: false,
+  },
+  // These three are read/written through unique compound keys (userId, domain,
+  // token), so tagging a unique `where` with `orgId` would make Prisma reject the
+  // call. Reads are scoped; their mutations already pass explicit ids.
+  NotificationPref: { ...DEFAULT_RULE, tagUniqueOps: false },
+  SsoConfig: { ...DEFAULT_RULE, tagUniqueOps: false },
+  Invite: { ...DEFAULT_RULE, tagUniqueOps: false },
+  // The search index is written by the system path on the bare client; scoping
+  // its reads is the isolation win, and its `orgId` is nullable.
+  SearchDoc: { ...DEFAULT_RULE, tagUniqueOps: false },
+};
 
 /** Operations whose `where` we tag with `orgId` (non-unique-target). */
 const READ_OPS = new Set([
@@ -119,14 +192,18 @@ export function dbForOrg(orgId: string) {
             return query(args);
           }
           const a = (args ?? {}) as Record<string, unknown>;
+          const rule = SCOPE_RULES[model] ?? DEFAULT_RULE;
           if (READ_OPS.has(operation)) {
-            a.where = { ...((a.where as object) ?? {}), orgId };
+            a.where = { ...((a.where as object) ?? {}), ...rule.where(orgId) };
           } else if (operation === "create") {
-            a.data = { ...((a.data as object) ?? {}), orgId };
+            if (rule.injectOnCreate)
+              a.data = { ...((a.data as object) ?? {}), orgId };
           } else if (operation === "createMany") {
-            const data = a.data as unknown;
-            const rows = Array.isArray(data) ? data : [data];
-            a.data = rows.map((r) => ({ ...(r as object), orgId }));
+            if (rule.injectOnCreate) {
+              const data = a.data as unknown;
+              const rows = Array.isArray(data) ? data : [data];
+              a.data = rows.map((r) => ({ ...(r as object), orgId }));
+            }
           } else if (
             operation === "update" ||
             operation === "delete" ||
@@ -134,7 +211,8 @@ export function dbForOrg(orgId: string) {
           ) {
             // Unique-target op: `orgId` can't be added to a findUnique-style
             // where. Tag defensively; the house rule above is the real guard.
-            a.where = { ...((a.where as object) ?? {}), orgId };
+            if (rule.tagUniqueOps)
+              a.where = { ...((a.where as object) ?? {}), orgId };
           }
           return query(a);
         },
@@ -156,3 +234,54 @@ export function dbForOrg(orgId: string) {
 }
 
 export type OrgScopedDb = ReturnType<typeof dbForOrg>;
+
+/**
+ * ISO.1 — the coverage guard. Every Prisma model carrying an `orgId` column must
+ * be tenant-scoped; anything else is a model whose unqualified reads cross
+ * tenants. Returns the offenders (empty = covered), so a verify can fail on it
+ * rather than the gap being discovered by an export bundle again.
+ *
+ * Models with NO `orgId` are out of scope by construction — they either inherit
+ * tenancy through a parent FK (Message → Chat, AgentRun → Agent, MatrixColumn →
+ * Project, MachineSignal → Machine) or are genuinely global (Module, Lead, the
+ * auth tokens). `Org` is the one exception in the other direction: it has no
+ * `orgId` yet IS tenant-scoped, by `id`.
+ */
+export function tenantCoverageGaps(): string[] {
+  const models = Prisma.dmmf.datamodel.models;
+  return models
+    .filter((m) => m.fields.some((f) => f.name === "orgId"))
+    .map((m) => m.name)
+    .filter((name) => !TENANT_MODELS.has(name))
+    .sort();
+}
+
+/**
+ * ISO.1 — what the guard can SEE. A coverage guard that reads an empty model list
+ * would pass vacuously forever, so the verify asserts these numbers are sane
+ * before trusting `tenantCoverageGaps()`.
+ */
+export function tenantModelCensus(): {
+  models: number;
+  withOrgId: number;
+  scoped: number;
+} {
+  const models = Prisma.dmmf.datamodel.models;
+  return {
+    models: models.length,
+    withOrgId: models.filter((m) => m.fields.some((f) => f.name === "orgId"))
+      .length,
+    scoped: TENANT_MODELS.size,
+  };
+}
+
+/** ISO.1 — the scoped model set + rule names, for the coverage guard's report. */
+export function tenantScopingSummary(): {
+  scoped: string[];
+  ruled: string[];
+} {
+  return {
+    scoped: [...TENANT_MODELS].sort(),
+    ruled: Object.keys(SCOPE_RULES).sort(),
+  };
+}

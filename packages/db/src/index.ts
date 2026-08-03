@@ -5,6 +5,12 @@
  * extension); the bare `prisma` is for migrations/seed/system tasks only.
  */
 export { prisma, dbForOrg } from "./client";
+// ISO.1 — the tenant-scoping coverage guard (every orgId model must be scoped).
+export {
+  tenantCoverageGaps,
+  tenantScopingSummary,
+  tenantModelCensus,
+} from "./client";
 export {
   s3Configured,
   ensureBucket,

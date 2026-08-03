@@ -108,15 +108,20 @@ async function run(): Promise<void> {
   });
 
   await check(
-    "File scopes ITSELF (it is not in TENANT_MODELS, so nothing else will)",
+    "File + Org are scoped by the EXTENSION, not by this bundle (ISO.1)",
     () => {
+      // PRIV.1a carried both predicates by hand because the extension did not
+      // cover these models. ISO.1 moved that INTO the extension, so the bundle
+      // must no longer restate it — one scoping authority, not two.
       const client = read("packages/db/src/client.ts");
-      const fileIsTenantScoped = /^\s*"File",/m.test(client);
-      const scopesItself =
-        /OR: \[\{ orgId: db\.\$org \}, \{ project: \{ orgId: db\.\$org \} \}\]/.test(
-          bundleSrc,
-        );
-      return !fileIsTenantScoped && scopesItself;
+      const scopedInExtension =
+        /^\s*"File",/m.test(client) &&
+        /^\s*"Org",/m.test(client) &&
+        /OR: \[\{ orgId \}, \{ project: \{ orgId \} \}\]/.test(client);
+      const bundleDoesNotRestate =
+        !/OR: \[\{ orgId: db\.\$org \}/.test(bundleCode) &&
+        !/where: \{ id: db\.\$org \}/.test(bundleCode);
+      return scopedInExtension && bundleDoesNotRestate;
     },
   );
 

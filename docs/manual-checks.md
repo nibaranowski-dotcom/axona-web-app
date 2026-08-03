@@ -3496,3 +3496,84 @@ predicate delete against AuditLog is exactly what that rule bans, however narrow
 **Manual:** `/settings/org` as an ADMIN → "Export all data" downloads
 `axona-export-<orgId>-<date>.json` and the per-entity coverage table appears
 under the button.
+
+## ISO.1 — tenant scoping: close the gap at the source, then make it non-reintroducible
+
+PRIV.1a found `File` the hard way: an unqualified `findMany` through the org-scoped
+client read **every tenant's** rows, because `File` was not in `TENANT_MODELS`. That
+story patched the one caller. ISO.1 fixes it in the extension and audits the rest.
+
+**The audit found five, not one.** Every Prisma model carrying an `orgId` column,
+cross-checked against `TENANT_MODELS`:
+
+| model | orgId | was |
+|---|---|---|
+| `File` | nullable | unscoped — the PRIV.1a leak |
+| `SearchDoc` | nullable | unscoped — the per-tenant search index |
+| `NotificationPref` | required | unscoped |
+| `SsoConfig` | required | unscoped |
+| `Invite` | required | unscoped |
+| `Org` | *(no orgId — its key is `id`)* | unscoped — returned an arbitrary tenant |
+
+**Per-model scope rules.** `{ orgId }` is not the right predicate for all of them,
+so the extension now carries a `ScopeRule` per model (default: the old behaviour):
+- **`File`** — `{ OR: [{ orgId }, { project: { orgId } }] }`. A file belongs to the
+  org directly (ATTACH.1 entity/org attachments) or through its project (FILE.1
+  uploads). This is the predicate `getProjectFiles` always used, lifted so EVERY
+  read gets it.
+- **`Org`** — `{ id: orgId }`. The org row's tenant key is its own id.
+- Both, plus the other four, set `tagUniqueOps: false`: an `OR`, a foreign key, or
+  a stray `orgId` is illegal in a findUnique-style `where`, and these models are
+  addressed by compound uniques (`userId`, `domain`, `token`). Tagging those would
+  make Prisma reject the call outright — e.g. `notificationPref.upsert({ where: {
+  userId } })`. `File`/`Org` also set `injectOnCreate: false`: a file's tenancy is
+  the caller's choice (orgId vs projectId), and creating an org has no enclosing
+  tenant.
+
+**Per-model isolation, measured:**
+```
+CENSUS  models=74  withOrgId=65  scoped=66      GAPS: (none)
+
+model              A sees   B sees   shared   all(db)
+File                   51        0        0       206
+Org                     1        1        0         5
+SearchDoc             193        0        0       215
+```
+`A sees 51 of 206` is the whole story: before ISO.1 that same unqualified read
+returned all 206.
+
+**One scoping authority, not two.** PRIV.1a's hand-carried predicates are REMOVED —
+the export's File `OR` and its `where: { id: db.$org }` for the org name. The bundle
+now carries only its business filter (`deletedAt: null`), and its output is
+unchanged (51 files, same isolation, org name still this tenant's).
+
+**The real fix is the guard.** `tenantCoverageGaps()` lives in `client.ts` next to
+the set it guards: it reads the Prisma DMMF and returns every model with an `orgId`
+that is not scoped. `verify:iso-1` fails on a non-empty result, so an org-scoped
+model cannot be added to the schema without being scoped. `tenantModelCensus()`
+backs it with a liveness assertion — a guard reading an empty model list would pass
+vacuously forever.
+
+**Negative control (run):** removing `PurchaseOrder` from `TENANT_MODELS` →
+```
+        unscoped: PurchaseOrder
+  FAIL COVERAGE: every model with an orgId column is tenant-scoped
+```
+restored → 14/14 pass.
+
+**Checks:**
+```
+pnpm verify:iso-1     # 14 checks (in verify:all) — 5 static, 9 over real data
+```
+Static: per-model rules exist, File's OR predicate, Org's id pin, the six models
+that must not tag unique ops, and that the export no longer restates scoping. Data:
+the coverage guard + its liveness, the newly-scoped set, unqualified reads on
+File/Org/SearchDoc returning only the caller's rows (against a second tenant AND
+the unscoped total), `findFirst` on Org (the exact PRIV.1a bug), the three
+unpopulated models pinned by count-equality, and PRIV.1a's export byte-unchanged.
+
+**Not covered, deliberately:** models with NO `orgId` are out of scope by
+construction — they inherit tenancy through a parent FK (`Message`→Chat,
+`AgentRun`→Agent, `MatrixColumn`→Project, `MachineSignal`→Machine) or are global
+(`Module`, `Lead`, the auth tokens). If one of those ever gains an `orgId`, the
+guard catches it that day.
