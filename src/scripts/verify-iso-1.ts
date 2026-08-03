@@ -172,11 +172,25 @@ async function run(): Promise<void> {
       const theirs = await dbForOrg(other).file.findMany({
         select: { id: true },
       });
-      const all = await prisma.file.count();
       const mineIds = new Set(mine.map((r) => r.id));
       const shared = theirs.filter((r) => mineIds.has(r.id));
-      // non-vacuous: this org HAS files, and the database holds more than it sees
-      return mine.length > 0 && all > mine.length && shared.length === 0;
+      // The scoped read must equal an INDEPENDENT org-scoped count, and the two
+      // tenants' views must not overlap. Deliberately NOT "the database holds
+      // more than this org sees": on a CI seed the second tenant owns no files,
+      // so that clause would fail for lack of other tenants' data rather than
+      // for a leak — a seed-shaped assertion, not a property.
+      const owned = await prisma.file.count({
+        where: { OR: [{ orgId: DEMO }, { project: { orgId: DEMO } }] },
+      });
+      const otherOwned = await prisma.file.count({
+        where: { OR: [{ orgId: other }, { project: { orgId: other } }] },
+      });
+      return (
+        mine.length > 0 &&
+        mine.length === owned &&
+        theirs.length === otherOwned &&
+        shared.length === 0
+      );
     },
   );
 
@@ -188,6 +202,8 @@ async function run(): Promise<void> {
         select: { id: true },
       });
       const all = await prisma.org.count();
+      // `all > 1` is safe on any seed: `other` was resolved from the org table,
+      // so at least two exist by construction.
       return (
         mine.length === 1 &&
         mine[0]?.id === DEMO &&
@@ -213,9 +229,12 @@ async function run(): Promise<void> {
     "ISOLATION: SearchDoc reads are scoped (the index is per-tenant)",
     async () => {
       const mine = await dbForOrg(DEMO).searchDoc.count();
-      const all = await prisma.searchDoc.count();
       const theirs = await dbForOrg(other).searchDoc.count();
-      return mine > 0 && all > mine && mine + theirs <= all;
+      const all = await prisma.searchDoc.count();
+      const owned = await prisma.searchDoc.count({ where: { orgId: DEMO } });
+      // Same shape as the File check: equality with an independent org-scoped
+      // count, plus the two tenants' views summing within the total.
+      return mine > 0 && mine === owned && mine + theirs <= all;
     },
   );
 
