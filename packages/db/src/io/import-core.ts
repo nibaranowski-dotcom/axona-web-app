@@ -296,9 +296,18 @@ export async function importEntity<Ctx, Parsed>(
  * order, so exporting an entity → re-importing the file is a round-trip no-op (the
  * cells match, upsert mode reports every row skipped). Org-scoped via `db`.
  */
-export async function exportEntity<Ctx, Parsed>(
+export async function exportEntity(
   db: OrgScopedDb,
-  descriptor: EntityDescriptor<Ctx, Parsed>,
+  // PRIV.1a widened the parameter to the EXPORT HALF of a descriptor — the two
+  // fields this function actually reads. A full `EntityDescriptor` satisfies it
+  // structurally, so every existing caller is unchanged, and the org-export
+  // bundle can pass export-only sources through the SAME function instead of
+  // growing a second serializer.
+  descriptor: {
+    entity: string;
+    columns?: string[];
+    readRows?(db: OrgScopedDb): Promise<ExportRow[]>;
+  },
 ): Promise<{ headers: string[]; rows: (string | number)[][] }> {
   if (!descriptor.columns || !descriptor.readRows)
     throw new Error(`entity "${descriptor.entity}" is not exportable`);

@@ -3400,3 +3400,99 @@ resolves nothing.
 **Manual:** `/bom/HX-2` at 1440 — tree with three assembly roots + a sub-assembly,
 `?rev=A|B|C` re-resolves it, the rail's revision cards select, and
 `?position=A-14` opens the per-part card with both deep-links live.
+
+## PRIV.1a — org data export (portability)
+
+An ADMIN exports everything the workspace holds as one JSON bundle, from
+`/settings/org` → **Data & portability → Export all data**. The portability half
+of PRD-PRIV.1; the deletion half is PRIV.1b.
+
+**Built ON IO.2, not beside it.** `exportEntity` is still the only thing that turns
+an entity into `{headers, rows}` — `buildOrgExport` just drives it across the org's
+entity set. The three registered import descriptors (unit · bomLine · partMaster)
+are reused BY REFERENCE, so their columns and readRows are not restated; adding an
+entity to the import registry widens the bundle for free. The nine export-only
+entities declare the export half of the same descriptor shape and nothing more.
+`exportEntity`'s parameter was widened from a full `EntityDescriptor` to the two
+fields it actually reads, so every existing caller is untouched.
+
+**Coverage on the seeded tenant** — 12 entities, 442 rows:
+
+| entity | rows | entity | rows |
+|---|---|---|---|
+| unit | 30 | eco | 10 |
+| bomLine | 44 | testRun | 8 |
+| partMaster | 13 | configurationVersion | 7 |
+| part | 10 | file (metadata) | 51 |
+| inventoryStock | 16 | auditLog | 230 |
+| purchaseOrder | 11 | ncr | 12 |
+
+File rows are METADATA only — the bytes stay in the blob store, addressed by
+`blobKey`. A bundle that inlined every attachment is a different product.
+
+**Isolation (P0) — and the two traps it caught.** The client extension pins `orgId`
+on every query for models in `TENANT_MODELS`. Two models in this bundle are NOT in
+that list, and both had to scope themselves:
+- **`File`** — a file scopes either by its own `orgId` or through its project
+  (ATTACH.1), so the extension pins nothing. An unqualified `findMany` would have
+  put **every tenant's** files in the bundle. It now carries the same
+  `OR: [{orgId}, {project: {orgId}}]` predicate `getProjectFiles` uses. Measured:
+  org A 51 files, org B 51 files, **0 shared ids**, 206 in the database.
+- **`Org`** — the extension scopes rows BELONGING to an org, not the org row. The
+  first cut read the org name with a bare `findFirst` and stamped **another
+  tenant's name** on the bundle (both orgs came back "Isolation Test Co"). Now
+  `where: { id: db.$org }`.
+
+**How isolation is asserted.** NOT by comparing natural keys: the prospect seeds
+deliberately replay the base narrative, so `PO-9001` / `ECO-305` / `CFG-HX2-r4.2`
+legitimately exist on several tenants as different rows — a key-collision check
+flags those and proves nothing. Three assertions instead: per entity, the bundle's
+row count must equal an INDEPENDENT count taken with an explicit `orgId` predicate
+on the raw client; the database must hold strictly more rows than the bundle
+carries (so "scoped" is distinguishable from "everything"); and **no row ID from
+the second tenant's bundle may appear in this one**, checked on the two id-keyed
+entities (`auditLog`, `file`) whose cuids are globally unique, so a shared key IS
+a leak.
+
+**The second tenant is DISCOVERED, never named** — the non-DEMO org carrying the
+most audit rows. Hardcoding one put a prospect marque in the tracked tree and
+`verify:seed-1` rejected the push; naming a tenant that only exists on a dev
+machine would have made the check vacuous in CI. The committed seed's second org
+carries 50 audit rows, so the probe is real on a fresh CI database.
+
+Measured locally:
+
+```
+entity            A bundle   A rows(db)   B rows(db)   ALL rows(db)
+unit                    30           30          240          284
+bomLine                 44           44           13          130
+eco                     10           10           11           44
+purchaseOrder           11           11           19           71
+auditLog               230          230           33          371
+file                    51           51           51          206
+```
+(row-ID probe: 0 shared `auditLog`/`file` ids between the two bundles.)
+
+**Gating.** `requireRole(["ADMIN"])` is the first statement in the action, before
+any data is read (asserted by position, not just presence), and the export writes
+an `org.data_export` AUDIT.1 entry — actor · per-entity counts · totalRows —
+BEFORE the bundle leaves the building. An export of everything is a
+security-relevant event; the record of who took it is the point.
+
+**Checks:**
+```
+pnpm verify:priv-1a    # 15 checks (in verify:all) — 6 static, 9 over real data
+```
+Static: the spec is committed, no parallel exporter (drives `exportEntity`, reuses
+the descriptors, grows no second serializer), the bundle never imports the unscoped
+client, `File` scopes itself, the action is ADMIN-gated + audited, the surface is in
+org settings on v2 tokens. Data: entity coverage vs the PRD list, headers + row
+counts, the org name and id are this tenant's, the three isolation assertions
+above, and the audit entry lands in THIS org's log and not the other's — self-cleaned via
+`captureSeededState().restore()`, which deletes BY ID. The first cut used a narrow
+predicate delete (`action` + `summary`) and `verify:verify-4` rejected it: a
+predicate delete against AuditLog is exactly what that rule bans, however narrow.
+
+**Manual:** `/settings/org` as an ADMIN → "Export all data" downloads
+`axona-export-<orgId>-<date>.json` and the per-entity coverage table appears
+under the button.

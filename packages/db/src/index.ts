@@ -212,6 +212,15 @@ export {
   type CoveringPo,
 } from "./plm";
 
+// PRIV.1a — the org data-export bundle (portability). Built ON exportEntity below.
+export {
+  buildOrgExport,
+  ORG_EXPORT_SOURCES,
+  type ExportSource,
+  type OrgExportBundle,
+  type OrgExportEntity,
+} from "./io/org-export";
+
 // IO.1 — the universal spreadsheet-import core (generalizes importUnits).
 export {
   importEntity,

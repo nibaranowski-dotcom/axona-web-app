@@ -10,6 +10,7 @@ import {
   updateOrgProfile,
   updateOrgDefaults,
   setEnabledModules,
+  exportOrgData,
   type OrgActionResult,
 } from "@/app/(shell)/settings/org/actions";
 
@@ -42,6 +43,10 @@ export function OrgSettingsView({
 }) {
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  // PRIV.1a — the last export's per-entity coverage, shown after it runs.
+  const [exported, setExported] = useState<
+    { entity: string; label: string; count: number }[] | null
+  >(null);
 
   // profile
   const [name, setName] = useState(settings.name);
@@ -394,6 +399,75 @@ export function OrgSettingsView({
                 Save modules
               </SaveButton>
             </div>
+          )}
+        </section>
+
+        {/* PRIV.1a — data export (portability). ADMIN-only, audited on the server. */}
+        <section className="overflow-hidden rounded-card border border-line bg-paper">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-6 pb-4 pt-[22px]">
+            <div>
+              <h2 className="text-[15px] font-semibold text-ink">
+                Data &amp; portability
+              </h2>
+              <p className="mt-1 max-w-[68ch] text-[12.5px] text-ink-muted">
+                Export everything this workspace holds — units, BOMs, parts,
+                inventory, purchase orders, quality, change orders, tests,
+                configurations, file metadata and the audit trail — as one JSON
+                bundle. Only this workspace&rsquo;s records are included.
+              </p>
+            </div>
+            {isAdmin && (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() =>
+                  startTransition(async () => {
+                    const res = await exportOrgData();
+                    if (!res.ok) {
+                      setNotice(res.message ?? "Export failed.");
+                      return;
+                    }
+                    setExported(res.entities ?? null);
+                    // The bundle never touches the network again — it is written
+                    // straight from the action's response to a local file.
+                    const blob = new Blob([res.bundle ?? ""], {
+                      type: "application/json",
+                    });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = res.filename ?? "axona-export.json";
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    setNotice(
+                      `Exported ${res.totalRows ?? 0} rows across ${res.entities?.length ?? 0} entities.`,
+                    );
+                  })
+                }
+                className="rounded-btn border border-line-strong px-4 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:border-ink-strong disabled:opacity-60"
+              >
+                {pending ? "Exporting…" : "Export all data"}
+              </button>
+            )}
+          </div>
+          {exported && (
+            <>
+              <div className="grid grid-cols-[2fr_1fr] gap-3 border-t border-line px-6 py-2.5 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-muted">
+                <span>Entity</span>
+                <span className="text-right">Rows</span>
+              </div>
+              {exported.map((e) => (
+                <div
+                  key={e.entity}
+                  className="grid grid-cols-[2fr_1fr] items-center gap-3 border-t border-line px-6 py-2.5"
+                >
+                  <span className="text-[13px] text-ink">{e.label}</span>
+                  <span className="text-right font-mono text-[12px] text-ink-muted">
+                    {e.count}
+                  </span>
+                </div>
+              ))}
+            </>
           )}
         </section>
       </div>

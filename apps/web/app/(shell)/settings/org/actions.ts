@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { dbForOrg, type Role } from "@axona/db";
+import { dbForOrg, buildOrgExport, type Role } from "@axona/db";
 import { writeAudit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/session";
 import { requireRole } from "@/lib/rbac";
@@ -144,4 +144,53 @@ export async function setEnabledModules(
   revalidatePath("/settings/org");
   revalidatePath("/", "layout"); // the sidebar nav (shell layout) reflects enablement
   return { ok: true };
+}
+
+// PRIV.1a — export ALL of this org's data (portability half of data-subject
+// rights, PRD-PRIV.1 §1). ADMIN-only, audited, and org-scoped by construction:
+// the bundle is built through `dbForOrg(user.orgId)`, so every source reads the
+// caller's tenant and no orgId is passed around to get wrong. No parallel
+// exporter — buildOrgExport drives IO.2's exportEntity over the org's entity set.
+export interface OrgExportResult extends OrgActionResult {
+  /** The bundle as a JSON string, ready for the browser to save. */
+  bundle?: string;
+  filename?: string;
+  totalRows?: number;
+  entities?: { entity: string; label: string; count: number }[];
+}
+
+export async function exportOrgData(): Promise<OrgExportResult> {
+  const user = await getCurrentUser();
+  requireRole(user, ["ADMIN"]);
+  const db = dbForOrg(user!.orgId);
+  const bundle = await buildOrgExport(db);
+  // Audited BEFORE it leaves the building: an export of everything is a
+  // security-relevant event, and the record of who took it is the point.
+  await writeAudit(db, {
+    orgId: user!.orgId,
+    actor: { type: "HUMAN", id: user!.id, label: actor(user!).label },
+    action: "org.data_export",
+    target: { type: "Org", id: user!.orgId },
+    summary: `Exported all org data (${bundle.entities.length} entities · ${bundle.totalRows} rows)`,
+    output: {
+      entities: bundle.entities.map((e) => ({
+        entity: e.entity,
+        count: e.count,
+      })),
+      totalRows: bundle.totalRows,
+      generatedAt: bundle.generatedAt,
+    },
+    approver: actor(user!),
+  });
+  return {
+    ok: true,
+    bundle: JSON.stringify(bundle, null, 2),
+    filename: `axona-export-${user!.orgId}-${bundle.generatedAt.slice(0, 10)}.json`,
+    totalRows: bundle.totalRows,
+    entities: bundle.entities.map((e) => ({
+      entity: e.entity,
+      label: e.label,
+      count: e.count,
+    })),
+  };
 }
