@@ -3956,3 +3956,60 @@ writes all five audit fields, LOOP.1 fires, and reviewing mutates NO configurati
 **Copy note worth keeping:** the finding is assembled from only the facts that are
 actually non-zero. The first version said "and 0 field modifications landed after the
 lock", which reads like a filled-in template — the exact tell this beat exists to remove.
+
+## DEMO hardening — the spoken number, and the unscanned half of the demo path
+
+Two pre-demo fixes. The second one found a real bug the moment it was allowed to look.
+
+**1 · The presenter's number now matches the screen.** The run-of-show says the
+single-source servo is "0 on hand vs a min of 8"; the tenant seeded a reorder point of
+6 — while the seeded agent audit line in the SAME config already said 8. So the seed
+contradicted itself and the demo contradicted the screen mid-sentence. The spec gained
+an optional `min` (defaulting to 6) rather than a special case in the create loop, so
+the exception is declared where the part is declared. The walkthrough manifest asserts
+`onHandBelowMin: true`, not a literal, so it needed no change and stays SAFE. **A number
+a human says out loud is part of the contract** — it just isn't one any gate checks.
+
+**2 · The demo path was only half-scanned, and the unscanned half was broken.**
+The served axe gate scans a route list. Most of the demo path was already on it (units ·
+rca · tests · changes · configurations · procurement), which is why the config beat's new
+labels WERE verified. Three screens were not: the as-built diff, field service, and
+inventory. Adding them — plus two `?focus=` arrival states, because that URL renders a
+component the bare routes never show — took the list to 24 routes and immediately failed
+with **4 serious violations across 4 routes**.
+
+All four were ONE token. `--on-dark-faint` was `rgba(255,255,255,0.4)`, which composites
+over ink to **3.77:1** — a WCAG AA fail for the 12px mono micro-labels it exists for. Not
+introduced by any recent story; it had simply never been looked at, because no scanned
+route used it. Raised to 0.5 (**5.29:1**), which keeps a clear step below `--on-dark-mut`
+(0.7) so the on-dark hierarchy still reads. **Fixed at the token, nothing baselined** —
+`A11Y_BASELINE` is still empty, exactly as A11Y.3 left it.
+
+Two things worth carrying forward:
+- **Picking 0.5, not 0.45.** 0.45 computes to 4.48 — a fail by 0.02, and the previous
+  contrast bug was a fail by 0.01. A margin that thin is not a pass, it is a coin toss
+  against the next rounding difference.
+- **The gate now prints the offending NODES**, not just a count. "5 nodes" sends whoever
+  hit it hunting through the route by hand; the selector plus axe's own measured ratio
+  names the element and the number in one line. That hunt is what the first contrast
+  failure cost, and it should not cost it twice.
+
+**Two lessons about the gate itself.** A green a11y job means "no violations *on the
+scanned routes*" — for an unlisted route it means nothing at all, and the difference is
+invisible in the output. And `verify:all` says nothing about contrast: the axe gate is
+CI-only (Playwright against a served build), so a token this wrong passed every local
+gate for as long as it existed.
+
+**Checks:**
+```
+pnpm --filter @axona/web build && PORT=3001 pnpm --filter @axona/web start &
+pnpm a11y:scan --selftest    # the gate must CATCH a seeded violation
+pnpm a11y:scan               # 24 routes · 0 NEW serious/critical
+pnpm verify:demo <tenant>    # SAFE, with the corrected min
+```
+Reproduces CI exactly — the same two commands the workflow runs, in the same order.
+The selftest is not ceremony: it proves the scan can still fail before its pass counts.
+
+**Still open:** the scan reports **1 moderate**, unbaselined and pre-existing. Moderates
+do not fail the gate, so it is untouched here rather than folded into a demo fix — but
+it is a real violation nobody has triaged.

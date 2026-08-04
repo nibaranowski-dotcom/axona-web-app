@@ -86,6 +86,38 @@ export const A11Y_ROUTES: A11yRoute[] = [
     label: "Procurement (dense PO queue)",
     auth: true,
   },
+  // DEMO-HARDENING — the rest of the demo click-path. Most of it was already here
+  // (units · rca · tests · changes · configurations · procurement); these close the
+  // gap so EVERY screen a demo walks is axe-verified, not just most of them.
+  {
+    path: `/units/${A11Y_DETAIL_SERIAL}/as-built`,
+    label: "As-built diff (demo path · design-vs-as-built)",
+    auth: true,
+  },
+  {
+    path: "/field-service",
+    label: "Field service dispatch (demo path)",
+    auth: true,
+  },
+  {
+    path: "/inventory",
+    label: "Inventory & warehouse (demo path)",
+    auth: true,
+  },
+  // DEMO.6 #10 — the `?focus=` arrival state renders <FocusedRecord>, a component the
+  // bare routes never show. Without a focused route it is invisible to the gate: I
+  // wrote its eyebrow with the AA-safe token deliberately, but "deliberately" is not
+  // a check. Scan the state a human actually lands in when they follow a link.
+  {
+    path: "/inventory?focus=SERVO-204",
+    label: "Inventory — LINK.1 focused record (demo path)",
+    auth: true,
+  },
+  {
+    path: "/field-service?focus=WO-5521",
+    label: "Field service — LINK.1 focused record (demo path)",
+    auth: true,
+  },
 ];
 
 // A11Y.2 TRIAGE BASELINE — serious/critical violations that already existed on

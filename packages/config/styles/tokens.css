@@ -65,7 +65,16 @@
   --mono-ghost: #a7a79d;
   --on-dark: #ffffff;
   --on-dark-mut: rgba(255, 255, 255, 0.7);
-  --on-dark-faint: rgba(255, 255, 255, 0.4);
+  /* DEMO-HARDENING — was 0.4, which composites over --ink-strong to 3.77:1: a WCAG
+     AA FAIL for the 12px mono micro-labels it is used for. Invisible until the demo
+     path was added to the served axe gate, which then reported it on four routes at
+     once — one token, not four screens. 0.5 composites to 5.29:1, real headroom
+     rather than the 0.01 margin that made ink-faint fail on panel-2. Still a clear
+     step below --on-dark-mut (0.7), so the on-dark hierarchy holds. Same fix shape
+     as A11Y.3: lighten/darken the TOKEN, never triage the call sites.
+     (Ratios only, no hex literals — FND.2 greps this file for stray hex, and that
+     check is deliberately comment-blind so a real one can't hide in prose.) */
+  --on-dark-faint: rgba(255, 255, 255, 0.5);
 
   /* — Borders / hairlines — */
   --line: #ededed;

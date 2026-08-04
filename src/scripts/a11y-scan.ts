@@ -39,6 +39,8 @@ const BLOCKING = new Set(["serious", "critical"]);
 
 interface AxeNode {
   target?: unknown;
+  /** axe's own per-node explanation (includes the measured contrast ratio). */
+  failureSummary?: string;
 }
 interface AxeViolation {
   id: string;
@@ -207,6 +209,24 @@ async function main(): Promise<void> {
       console.log(
         `  [${impactOf(v)}] ${route} · ${v.id} — ${v.help} (${v.nodes.length} node${v.nodes.length === 1 ? "" : "s"})`,
       );
+      // DEMO-HARDENING — print the offending NODES, not just a count. A bare "5
+      // nodes" sends whoever hit this hunting through the route by hand (which is
+      // exactly what the first contrast failure cost). The selector + the failure
+      // summary axe already computed name the element and the measured ratio.
+      for (const n of v.nodes.slice(0, 5)) {
+        const target = Array.isArray(n.target)
+          ? n.target.join(" ")
+          : String(n.target ?? "");
+        const why = (n.failureSummary ?? "")
+          .split("\n")
+          .map((l) => l.trim())
+          .filter((l) => l && !/^Fix (any|all) of the following/.test(l))
+          .join(" · ");
+        console.log(`      ${target}`);
+        if (why) console.log(`        ${why}`);
+      }
+      if (v.nodes.length > 5)
+        console.log(`      …and ${v.nodes.length - 5} more node(s)`);
     }
     console.error(
       "\nFAILED — new serious/critical accessibility violations (not baselined).",
