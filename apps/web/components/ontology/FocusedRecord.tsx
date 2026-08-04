@@ -39,7 +39,7 @@ export function FocusedRecord({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="font-mono text-[9px] uppercase tracking-[0.05em] text-ink-faint">
+          <div className="font-mono text-[9px] uppercase tracking-[0.05em] text-mono-faint">
             Followed here from a connected record
           </div>
           <h2

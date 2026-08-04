@@ -181,7 +181,7 @@ export function PoRow({
             the proposal surface to it (which is exactly what happened when this shared
             that branch). */}
         {po.agentDrafted && po.agentConfidence && (
-          <div className="mt-0.5 flex min-w-0 items-center gap-1.5 overflow-hidden font-mono text-[10px] tabular-nums text-ink-faint">
+          <div className="mt-0.5 flex min-w-0 items-center gap-1.5 overflow-hidden font-mono text-[10px] tabular-nums text-mono-faint">
             <span className="truncate">
               Agent-proposed · confidence{" "}
               {po.agentConfidence.calibrated.toFixed(2)}

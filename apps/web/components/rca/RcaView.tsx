@@ -22,9 +22,11 @@ import type { RecordAttachments } from "@/lib/attachments";
 // classifies (Confirm) — the agent never auto-classifies. Fully usable with the
 // suggestion hidden. DETAIL screen → breadcrumbs. Classification reuses PLM.V2's
 // RBAC-gated + audited action.
-// SEED.4 — the proposal renders NO confidence. It previously showed a hardcoded
-// 0.82 as "confidence 0.82 (uncal)"; a number returns only when CONF.1 calibrates
-// a real model-emitted value (DEMO.6 beat #4).
+// DEMO.6 #4 — the proposal renders a CONF.1-calibrated confidence plus the evidence
+// signals that produced it, so the number is inspectable rather than asserted. Those
+// signals are mono micro-labels on `bg-panel-2`: they use `text-mono-faint`, the token
+// A11Y.3 darkened for exactly this (AA >=4.5:1 on paper/panel/panel-2). `ink-faint` is
+// one step lighter and FAILED the served axe gate here — 4 nodes, serious.
 
 const LABEL: Record<string, string> = {
   software: "Software",
@@ -233,7 +235,7 @@ export function RcaView({
                     {rca.suggestion.signals.map((s) => (
                       <li
                         key={s.key}
-                        className="font-mono text-[10.5px] text-ink-faint"
+                        className="font-mono text-[10.5px] text-mono-faint"
                       >
                         {s.detail}{" "}
                         <span className="text-ink-muted">
