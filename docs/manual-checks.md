@@ -3885,3 +3885,74 @@ places encode route expectations.
 **Still open:** only these three screens deep-link. `/quality`, `/fulfillment`,
 `/finance` and `/engineering` still resolve to bare lists, so hops landing there remain
 soft dead-ends. They need the same `?focus=` treatment when their beats come up.
+
+## DEMO.6 #6 — the config-first beat: a real agent proposal on the locked baseline
+
+The Phase-1 audit found this beat half-right: the dual-approver lock and frozen manifest
+were genuinely correct — (c)/(d)/(e) real — while the "agent" was a hardcoded seam with
+static text and the fabricated confidence SEED.4 removed. So the beat the config-first
+buyer judges FIRST was the one whose agent was least real. (a)/(b) are now real, and the
+lock is untouched.
+
+**What the agent actually does.** It audits whether the fleet still MATCHES the baseline
+— the only question that makes a baseline worth locking. It reads the units resolving to
+this configuration and looks for deviations never captured as a configuration change: an
+as-built substitution, or a field modification recorded after the lock. Both are real
+rows, so the finding is checkable:
+
+```
+manifest frozen at lock — a fixed reference to compare against   +0.30
+4 of 197 units carry an as-built substitution                    +0.35
+<successor> supersedes this baseline                             +0.15
+197 of 240 units resolve to this baseline                        +0.12
+                                            raw = 0.92  →  calibrated 0.75
+```
+
+Same evidence-signals → raw → CONF.1 pattern as the RCA hero, and the verify asserts the
+raw score EQUALS the sum of its signals, so a cleaner baseline necessarily scores lower.
+The 4 deviating units are the quarantined-lot cohort — the same units the RCA thread is
+about, which is what makes this read as one system rather than four screens.
+
+**A draft gets no assessment at all.** There is nothing to have drifted FROM before a
+lock, and inventing a finding there would be exactly the theatre this beat removes.
+
+**The review is deliberately a SEPARATE decide() kind.** `config.review` sits beside
+`config.lock`/`config.unlock`, which are untouched — the dual-approver contract this
+screen is judged on carries no risk from the agent layer. Confirming an assessment
+changes NO configuration state; it records that a human reviewed the finding. APPROVE =
+the finding stands, REJECT = the human calls it a false positive, and that agree/disagree
+bit is the CONF.1 label. Both fire LOOP.1 through `decide()`. Routing deviations into a
+change order stays a separate human action — an agent assessment must never mutate a
+frozen baseline as a side effect of being acknowledged, and a verify asserts exactly that.
+
+**The confidence is re-read server-side.** The action takes only `(code, upheld)`; it
+re-resolves the proposal from the same read model the screen rendered. A client cannot
+assert a confidence, which would otherwise make the audited number meaningless.
+
+Measured from a real UI click:
+```
+AGENT config.review.propose   model=claude-sonnet-4-6 conf=0.75 inputs=yes output=yes
+HUMAN config.review.approve   model=claude-sonnet-4-6 conf=0.75 approver=<name>
+LOOP.1 OUTCOME episodes: 0 → 1 · baseline untouched (locked, dual-approver intact)
+```
+
+**a11y, learned the hard way.** Every faint label added here uses `text-mono-faint` from
+the start. `ink-faint` misses WCAG AA by 0.01 on `panel-2` and the served axe gate reds
+it — which is how the previous beat's CI went red. That gate is CI-only (it needs
+Playwright against a served build), so `verify:all` green says nothing about contrast.
+
+**Checks:**
+```
+pnpm verify:demo-6-6    # 15 checks (in verify:all) — 5 static, 10 over live data
+```
+Static: the kind is registered and separate from the lock, the action routes through
+`decide()` with the proposal context, the confidence is server-side, no literal survives,
+the view renders confidence + signals + writeback with AA-safe labels. Live: a fitted
+CONF.1 model, the proposal is `calibrated`, the score equals its signals, the finding is
+backed by real rows, the dual-approver lock is intact, a real `decide()` round-trip
+writes all five audit fields, LOOP.1 fires, and reviewing mutates NO configuration state.
+**Self-cleans.**
+
+**Copy note worth keeping:** the finding is assembled from only the facts that are
+actually non-zero. The first version said "and 0 field modifications landed after the
+lock", which reads like a filled-in template — the exact tell this beat exists to remove.

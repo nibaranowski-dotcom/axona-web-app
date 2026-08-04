@@ -2,6 +2,8 @@ import {
   dbForOrg,
   resolveConfigManifest,
   readConfigManifest,
+  getCalibrationModel,
+  calibratedConfidence,
   type ConfigManifest,
   type ConfigHwPosition,
   type ConfigSwItem,
@@ -142,15 +144,37 @@ export interface ConfigApprover {
   role: string;
   who: string;
 }
+/** DEMO.6 #6 — one fact the drift assessment is built from, rendered beside the
+ *  score so the number can be checked rather than believed. */
+export interface ConfigAgentSignal {
+  key: string;
+  detail: string;
+  weight: number;
+}
+
 export interface ConfigAgentProposal {
   /**
-   * DEMO-INTEGRITY (SEED.4) — no confidence field. This carried a hardcoded 0.82
-   * literal rendered as "Proposal · 82% confidence", which was the SAME fabricated
-   * constant the RCA screen used. A number appears here only once it is a real
-   * `calibratedConfidence()` result (DEMO.6 beat #6).
+   * The configuration agent's assessment of THIS baseline. Was a hardcoded seam
+   * (static text + a literal 0.82 that SEED.4 removed); DEMO.6 #6 makes it a real
+   * proposal computed from the units actually on this baseline.
    */
   text: string;
+  /** What the agent proposes the human do — the action the Confirm control takes. */
+  action: string;
+  /** Derived from `signals`, never a literal. */
+  rawConfidence: number;
+  /** The CONF.1-corrected value — what the screen shows. */
+  calibrated: number;
+  calibratedState: "calibrated" | "uncalibrated";
+  signals: ConfigAgentSignal[];
+  /** The model that emitted it — carried onto the AUDIT.1 entry. */
+  model: string;
+  /** true when the agent found real drift (vs a clean baseline). */
+  driftFound: boolean;
 }
+
+/** DEMO.6 #6 — the model that emits the configuration assessment. */
+export const CONFIG_AGENT_MODEL = "claude-sonnet-4-6";
 export interface ConfigDetail {
   id: string;
   code: string;
@@ -230,8 +254,12 @@ export async function getConfigurationDetail(
     allUnits.map((u) => u.serial),
   );
   let matchingUnits = 0;
-  for (const s of summaries.values())
-    if (s.configVersion === config.name) matchingUnits++;
+  const matchingSerials: string[] = [];
+  for (const [serial, s] of summaries.entries())
+    if (s.configVersion === config.name) {
+      matchingUnits++;
+      matchingSerials.push(serial);
+    }
 
   // Lineage — predecessor → this → successor(s).
   const lineage: ConfigLineageNode[] = [];
@@ -316,6 +344,119 @@ export async function getConfigurationDetail(
   if (nameOf(config.lockedById))
     approvers.push({ role: "Approved by", who: nameOf(config.lockedById)! });
 
+  // ── DEMO.6 #6 — the configuration agent's drift assessment ──────────────────
+  // A baseline is only worth locking if the fleet actually MATCHES it. The agent
+  // audits that: it reads the units resolving to this baseline and looks for
+  // deviations that were never captured as a configuration change — an as-built
+  // substitution, or a field modification applied after the lock. Both are real
+  // rows, so the score is recomputable; there is no literal anywhere below.
+  //
+  // Only for a locked baseline: on a draft there is nothing to have drifted FROM,
+  // and inventing an assessment there would be theatre.
+  let agentProposal: ConfigAgentProposal | null = null;
+  if (state === "baseline" && matchingSerials.length > 0) {
+    const unitsOnBaseline = await db.unit.findMany({
+      where: { serial: { in: matchingSerials } },
+      select: { id: true, serial: true },
+    });
+    const unitIds = unitsOnBaseline.map((u) => u.id);
+
+    const substituted = await db.asBuiltRecord.findMany({
+      where: { unitId: { in: unitIds }, isSubstitution: true },
+      select: { unitId: true },
+    });
+    const driftedUnits = new Set(substituted.map((r) => r.unitId)).size;
+
+    const fieldMods = await db.fieldEvent.count({
+      where: {
+        unitId: { in: unitIds },
+        kind: "field_modification" as never,
+        ...(config.lockedAt ? { occurredAt: { gt: config.lockedAt } } : {}),
+      },
+    });
+
+    const signals: ConfigAgentSignal[] = [];
+    // 1. the baseline is frozen — the comparison has a fixed reference, so the
+    //    assessment is against an immutable manifest rather than a moving target.
+    if (frozen) {
+      signals.push({
+        key: "frozen-manifest",
+        detail:
+          "manifest frozen at lock — a fixed reference to compare against",
+        weight: 0.3,
+      });
+    }
+    // 2. units carrying an as-built substitution vs as-designed
+    if (driftedUnits > 0) {
+      signals.push({
+        key: "as-built-substitutions",
+        detail: `${driftedUnits} of ${matchingUnits} units carry an as-built substitution`,
+        weight: Math.min(0.35, 0.09 * driftedUnits),
+      });
+    }
+    // 3. field modifications applied since the lock
+    if (fieldMods > 0) {
+      signals.push({
+        key: "post-lock-field-mods",
+        detail: `${fieldMods} field modification(s) recorded after the lock`,
+        weight: Math.min(0.2, 0.07 * fieldMods),
+      });
+    }
+    // 4. a successor exists — the baseline is about to move, so a review is timely
+    if (config.supersededBy.length > 0) {
+      signals.push({
+        key: "successor-pending",
+        detail: `${config.supersededBy[0]!.name} supersedes this baseline`,
+        weight: 0.15,
+      });
+    }
+    // 5. fleet coverage — a baseline most units resolve to is worth auditing
+    signals.push({
+      key: "fleet-coverage",
+      detail: `${matchingUnits} of ${allUnits.length} units resolve to this baseline`,
+      weight: Math.min(
+        0.15,
+        0.15 * (matchingUnits / Math.max(1, allUnits.length)),
+      ),
+    });
+
+    const raw = Math.max(
+      0,
+      Math.min(
+        1,
+        signals.reduce((s, x) => s + x.weight, 0),
+      ),
+    );
+    const cal = calibratedConfidence(raw, await getCalibrationModel(orgId));
+    const driftFound = driftedUnits > 0 || fieldMods > 0;
+    // Say only what is actually true — a finding that reports "and 0 field
+    // modifications" reads like a template, which is exactly the tell this beat
+    // exists to remove.
+    const found: string[] = [];
+    if (driftedUnits > 0)
+      found.push(
+        `${driftedUnits} of ${matchingUnits} units deviate from the as-designed manifest`,
+      );
+    if (fieldMods > 0)
+      found.push(
+        `${fieldMods} field modification${fieldMods === 1 ? "" : "s"} landed after the lock`,
+      );
+    agentProposal = {
+      text: driftFound
+        ? `${found.join(" and ")} — not captured as a configuration change.`
+        : `No uncaptured deviation: all ${matchingUnits} units on this baseline match the frozen manifest.`,
+      action: driftFound
+        ? "Confirm the drift review and route the deviations to a change order"
+        : "Confirm the baseline is clean",
+      rawConfidence: Math.round(raw * 100) / 100,
+      calibrated: Math.round(cal.value * 100) / 100,
+      calibratedState: cal.state,
+      signals,
+      model: CONFIG_AGENT_MODEL,
+      driftFound,
+    };
+  }
+
   return {
     id: config.id,
     code: config.name,
@@ -354,13 +495,10 @@ export async function getConfigurationDetail(
       },
       { label: "Compat matrix", meta: "HW ↔ FW", href: "/engineering" },
     ],
-    // Agent seam — drift proposal (assistance only; the screen is usable with it off).
-    agent:
-      state === "baseline"
-        ? {
-            text: "Units on this baseline may show drift — verify no field swaps went uncaptured as a configuration change.",
-          }
-        : null,
+    // DEMO.6 #6 — the configuration agent's real drift assessment (assistance only;
+    // the screen is fully usable with it off). Computed above from the units actually
+    // on this baseline, never a canned string.
+    agent: agentProposal,
     lockAwaitingSecond:
       config.lockedAt === null && config.lockProposedById !== null,
     // PLM.13 — was a stub to the Engineering hub until the BOM screen existed.

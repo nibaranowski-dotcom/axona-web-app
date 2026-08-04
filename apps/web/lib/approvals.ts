@@ -36,7 +36,8 @@ export type ApprovalKind =
   | "config.lock" // PLM.10/11 — baseline/lock a ConfigurationVersion (dual-approver)
   | "config.unlock" // PLM.11 — unlock a baselined ConfigurationVersion (second approver)
   | "field.mod" // PLM.V5 — approve a recorded field modification (applies the delta)
-  | "ncr.rootcause"; // DEMO.6 #4 — confirm/override the RCA agent's proposed cause
+  | "ncr.rootcause" // DEMO.6 #4 — confirm/override the RCA agent's proposed cause
+  | "config.review"; // DEMO.6 #6 — confirm/dismiss the config agent's drift assessment
 
 export type Decision = "APPROVE" | "REJECT";
 
@@ -537,6 +538,50 @@ const REGISTRY: { [K in ApprovalKind]: ApprovalDef<unknown> } = {
           agreedWithAgent: false,
         },
         summary: `${ncr.code} classified as ${cause} — OVERRODE the agent's proposed ${p?.proposedCause ?? "cause"}`,
+      };
+    },
+  } as ApprovalDef<unknown>,
+
+  /**
+   * DEMO.6 #6 — the configuration agent's drift assessment on a locked baseline,
+   * confirmed or dismissed by a human. `targetId` is the config NAME.
+   *
+   * Deliberately SEPARATE from `config.lock`: the dual-approver baseline lock is the
+   * contract this screen is judged on and it is untouched. This is the agent layer
+   * ON TOP — confirming an assessment changes no configuration state, it records
+   * that a human reviewed the agent's finding. APPROVE = the assessment stands (the
+   * deviations are real); REJECT = the human dismisses it (a false positive). That
+   * agree/disagree bit is the CONF.1 label; both fire LOOP.1 through decide().
+   *
+   * The effect is intentionally read-only on the config. Routing the deviations to a
+   * change order is a separate, human-initiated action — an agent assessment must
+   * never mutate a frozen baseline as a side effect of being acknowledged.
+   */
+  "config.review": {
+    kind: "config.review",
+    roles: ["ENGINEER", "OPS", "ADMIN"],
+    targetType: "ConfigurationVersion",
+    load: (db, _org, name) =>
+      db.configurationVersion.findFirst({ where: { name } }),
+    // A baseline can be re-reviewed as the fleet moves under it; there is no
+    // terminal state to guard. The audit log carries the full review sequence.
+    isPending: () => true,
+    onApprove: async (_db, _org, t, _by, ctx) => {
+      const c = t as { name: string; lockedAt: Date | null };
+      const p = ctx?.payload as { finding?: string } | undefined;
+      return {
+        inputs: { config: c.name, finding: p?.finding ?? null },
+        output: { status: "confirmed", assessmentUpheld: true },
+        summary: `${c.name} drift review CONFIRMED — the agent's finding stands`,
+      };
+    },
+    onReject: async (_db, _org, t, _by, ctx) => {
+      const c = t as { name: string };
+      const p = ctx?.payload as { finding?: string } | undefined;
+      return {
+        inputs: { config: c.name, finding: p?.finding ?? null },
+        output: { status: "dismissed", assessmentUpheld: false },
+        summary: `${c.name} drift review DISMISSED — the human judged the finding a false positive`,
       };
     },
   } as ApprovalDef<unknown>,

@@ -14,6 +14,8 @@ import type { RecordAttachments } from "@/lib/attachments";
 import {
   lockConfigAction,
   unlockConfigAction,
+  reviewConfigDriftAction,
+  type ConfigReviewResult,
 } from "@/app/(shell)/configurations/[code]/actions";
 
 // PLM.11 — the Configuration detail (`Configuration.dc.html` 1:1 on DS.1 primitives).
@@ -63,6 +65,29 @@ export function ConfigurationDetailView({
   const [notice, setNotice] = useState<string | null>(null);
   const [agentDismissed, setAgentDismissed] = useState(false);
   const [pending, startTransition] = useTransition();
+  // DEMO.6 #6 — the agent drift review: its verdict, the LOOP.1 writeback it fired,
+  // and its own pending/error state (kept separate from the lock's, so a review
+  // never looks like it changed the baseline).
+  const [reviewLoop, setReviewLoop] =
+    useState<ConfigReviewResult["loopWriteback"]>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewPending, startReview] = useTransition();
+
+  const review = (upheld: boolean) => {
+    setReviewError(null);
+    startReview(async () => {
+      try {
+        const res = await reviewConfigDriftAction(data.code, upheld);
+        setReviewLoop(res.loopWriteback);
+        if (!upheld) setAgentDismissed(true);
+        router.refresh();
+      } catch (e) {
+        setReviewError(
+          e instanceof Error ? e.message : "Could not record the review.",
+        );
+      }
+    });
+  };
 
   const pill = STATE_PILL[data.state];
 
@@ -508,7 +533,12 @@ export function ConfigurationDetailView({
             )}
           </div>
 
-          {/* agent proposal (assistance only · dismissible) */}
+          {/* DEMO.6 #6 — the configuration agent's REAL drift assessment: computed
+              from the units on this baseline, carrying a CONF.1-calibrated confidence
+              and the signals that produced it. Assistance only — confirming it changes
+              no configuration state, and the dual-approver lock above is untouched.
+              Faint labels use `text-mono-faint`: `ink-faint` misses WCAG AA by 0.01 on
+              panel-2 and the served axe gate reds it (learned on beat #4). */}
           {data.agent && !agentDismissed && (
             <div className="rounded-card border border-line p-4">
               <div className="flex items-center gap-2.5">
@@ -517,31 +547,75 @@ export function ConfigurationDetailView({
                   <div className="text-[12.5px] font-semibold text-ink">
                     Configuration agent
                   </div>
-                  {/* SEED.4 — no confidence: the prior "· 82% confidence" was a
-                      hardcoded literal, not a calibrated result. */}
-                  <div className="font-mono text-[9px] uppercase tracking-[0.05em] text-ink-faint">
-                    Proposal
+                  <div className="font-mono text-[9px] uppercase tracking-[0.05em] text-mono-faint">
+                    Proposal · confidence {data.agent.calibrated.toFixed(2)}
+                    {data.agent.calibratedState === "calibrated"
+                      ? ` · calibrated from ${data.agent.rawConfidence.toFixed(2)}`
+                      : " · uncalibrated"}
                   </div>
                 </div>
               </div>
               <p className="mt-2.5 text-[12.5px] leading-relaxed text-ink">
                 {data.agent.text}
               </p>
+              {/* the score is inspectable: each signal is a fact about this baseline */}
+              {data.agent.signals.length > 0 && (
+                <ul className="mt-2 space-y-0.5">
+                  {data.agent.signals.map((s) => (
+                    <li
+                      key={s.key}
+                      className="font-mono text-[10px] leading-[1.4] text-mono-faint"
+                    >
+                      {s.detail}{" "}
+                      <span className="text-ink-muted">
+                        +{s.weight.toFixed(2)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-2.5 text-[11.5px] leading-[1.4] text-ink-muted">
+                Proposed: {data.agent.action}
+              </p>
               <div className="mt-3 flex gap-2">
-                <Link
-                  href={data.matchingHref}
-                  className="flex-1 rounded-lg bg-accent px-3 py-2 text-center text-[12px] font-semibold text-accent-ink"
-                >
-                  Review drift
-                </Link>
                 <button
                   type="button"
-                  onClick={() => setAgentDismissed(true)}
-                  className="rounded-lg border border-line-strong px-3 py-2 text-[12px] font-semibold text-ink-muted hover:border-ink-strong"
+                  onClick={() => void review(true)}
+                  disabled={reviewPending}
+                  className="flex-1 rounded-lg bg-ink-strong px-3 py-2 text-center text-[12px] font-semibold text-on-dark transition-colors hover:bg-black disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  {reviewPending ? "Saving…" : "Confirm assessment"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void review(false)}
+                  disabled={reviewPending}
+                  className="rounded-lg border border-line-strong px-3 py-2 text-[12px] font-semibold text-ink-muted transition-colors hover:border-ink-strong disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   Dismiss
                 </button>
               </div>
+              {reviewError && (
+                <p role="alert" className="mt-2 text-[11.5px] text-ink">
+                  {reviewError}
+                </p>
+              )}
+              {/* LOOP.1 made visible — only when recordOutcome actually fired. */}
+              {reviewLoop?.recorded && (
+                <p
+                  role="status"
+                  className="mt-2.5 border-t border-line pt-2.5 text-[11.5px] leading-[1.4] text-ink"
+                >
+                  <span className="font-semibold">Learning loop updated.</span>{" "}
+                  {reviewLoop.note}
+                </p>
+              )}
+              <Link
+                href={data.matchingHref}
+                className="mt-2.5 inline-block font-mono text-[10px] uppercase tracking-[0.05em] text-ink-muted underline underline-offset-2 hover:text-ink"
+              >
+                See the units on this baseline
+              </Link>
             </div>
           )}
 
