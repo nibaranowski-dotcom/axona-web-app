@@ -1,4 +1,10 @@
-import { dbForOrg, paginateArgs, pageResult } from "@axona/db";
+import {
+  dbForOrg,
+  paginateArgs,
+  pageResult,
+  getCalibrationModel,
+  calibratedConfidence,
+} from "@axona/db";
 import type { POStatus } from "@axona/db";
 
 // PROC.1 — Procurement read/API layer (build-spec §4.10, §6). Read-only over the
@@ -37,6 +43,18 @@ export interface QueuePO {
   partSku: string; // resolved from partId
   draftedByAgentId: string | null;
   agentDrafted: boolean;
+  /**
+   * DEMO.6 #10 — for an agent-drafted PO: the confidence the agent STATED when it
+   * drafted (read from its `po.draft` AUDIT.1 entry — the immutable record, never a
+   * literal), corrected through the org's fitted CONF.1 map. Null when the PO was
+   * raised by a human, or when the draft entry carried no confidence.
+   */
+  agentConfidence: {
+    calibrated: number;
+    raw: number;
+    state: "calibrated" | "uncalibrated";
+    model: string;
+  } | null;
   // BR.1 supplier-risk flags (derived — no new columns):
   late: boolean; // past its promised date and not yet received
   longLead: boolean; // Part.leadDays ≥ LONG_LEAD_DAYS
@@ -117,6 +135,35 @@ export async function getProcurementQueue(
   );
 
   const now = Date.now();
+  // DEMO.6 #10 — the CONF.1-corrected confidence for every agent-drafted PO on this
+  // page. The raw value is whatever the agent stated in its own `po.draft` AUDIT.1
+  // entry; the map is the org's fitted model. One batched read, then a pure
+  // calibration per row — an agent-drafted PO with no recorded confidence stays null
+  // rather than being given a number.
+  const agentCodes = items.filter((r) => r.draftedByAgentId).map((r) => r.code);
+  const draftByCode = new Map<string, { model: string; confidence: number }>();
+  if (agentCodes.length) {
+    const drafts = await db.auditLog.findMany({
+      where: {
+        actorType: "AGENT",
+        targetType: "PurchaseOrder",
+        targetId: { in: agentCodes },
+        confidence: { not: null },
+      },
+      orderBy: { createdAt: "asc" },
+      select: { targetId: true, model: true, confidence: true },
+    });
+    for (const d of drafts) {
+      if (!d.model || d.confidence == null || draftByCode.has(d.targetId))
+        continue;
+      draftByCode.set(d.targetId, {
+        model: d.model,
+        confidence: d.confidence,
+      });
+    }
+  }
+  const calModel = draftByCode.size ? await getCalibrationModel(orgId) : null;
+
   const pos: QueuePO[] = items.map((r) => ({
     id: r.id,
     code: r.code,
@@ -129,6 +176,17 @@ export async function getProcurementQueue(
     partSku: r.part.sku,
     draftedByAgentId: r.draftedByAgentId,
     agentDrafted: r.draftedByAgentId !== null,
+    agentConfidence: (() => {
+      const d = draftByCode.get(r.code);
+      if (!d) return null;
+      const cal = calibratedConfidence(d.confidence, calModel);
+      return {
+        calibrated: Math.round(cal.value * 100) / 100,
+        raw: Math.round(d.confidence * 100) / 100,
+        state: cal.state,
+        model: d.model,
+      };
+    })(),
     late:
       r.status !== "RECEIVED" &&
       r.status !== "REJECTED" &&

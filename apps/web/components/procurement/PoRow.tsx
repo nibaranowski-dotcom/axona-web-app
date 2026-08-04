@@ -174,6 +174,23 @@ export function PoRow({
             <span>—</span>
           )}
         </div>
+        {/* DEMO.6 #10 — the agent PROPOSED this order: show the CONF.1-corrected
+            confidence it stated, so the approver sees what they are approving and how
+            much the org's own track record discounts it. Its OWN line — the row above
+            is the BR.1 promised-vs-actual date, and a PO carrying an ETA must not lose
+            the proposal surface to it (which is exactly what happened when this shared
+            that branch). */}
+        {po.agentDrafted && po.agentConfidence && (
+          <div className="mt-0.5 flex min-w-0 items-center gap-1.5 overflow-hidden font-mono text-[10px] tabular-nums text-ink-faint">
+            <span className="truncate">
+              Agent-proposed · confidence{" "}
+              {po.agentConfidence.calibrated.toFixed(2)}
+              {po.agentConfidence.state === "calibrated"
+                ? ` (calibrated from ${po.agentConfidence.raw.toFixed(2)})`
+                : " (uncalibrated)"}
+            </span>
+          </div>
+        )}
       </div>
       <span
         className="min-w-0 truncate text-[13px] text-ink-muted"

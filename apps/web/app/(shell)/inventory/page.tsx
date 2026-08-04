@@ -1,6 +1,8 @@
 import { dbForOrg } from "@axona/db";
 import { getCurrentUser } from "@/lib/session";
 import { getInventoryData } from "@/lib/inventory";
+import { getFocusedRecord } from "@/lib/connected-objects";
+import { FocusedRecord } from "@/components/ontology/FocusedRecord";
 import {
   InventoryView,
   type InventoryScreenData,
@@ -27,7 +29,11 @@ const EMPTY: InventoryScreenData = {
   traceLines: [],
 };
 
-export default async function InventoryPage() {
+export default async function InventoryPage({
+  searchParams,
+}: {
+  searchParams?: { focus?: string | string[] };
+}) {
   const user = await getCurrentUser();
   if (!user) return <InventoryView data={EMPTY} />;
 
@@ -43,7 +49,33 @@ export default async function InventoryPage() {
     const traceLines = Array.isArray(latestRun?.trace)
       ? (latestRun.trace as { ts?: string; kind?: string; text?: string }[])
       : [];
-    return <InventoryView data={{ ...inventory, traceLines }} />;
+    // DEMO.6 #10 — LINK.1 arrival point for a part reached from the fault loop.
+    const focused = await getFocusedRecord(
+      user.orgId,
+      "PART",
+      searchParams?.focus,
+      async (code) =>
+        (
+          await db.part.findFirst({
+            where: { sku: code },
+            select: { name: true },
+          })
+        )?.name ?? null,
+    );
+    return (
+      <>
+        {focused && (
+          <FocusedRecord
+            type={focused.type}
+            code={focused.code}
+            label={focused.label}
+            groups={focused.groups}
+            basePath="/inventory"
+          />
+        )}
+        <InventoryView data={{ ...inventory, traceLines }} />
+      </>
+    );
   } catch {
     return <InventoryView data={EMPTY} error />;
   }

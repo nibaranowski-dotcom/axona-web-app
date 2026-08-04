@@ -2,6 +2,8 @@ import { dbForOrg } from "@axona/db";
 import { getCurrentUser } from "@/lib/session";
 import { getProcurementQueue } from "@/lib/procurement";
 import { hasRole } from "@/lib/rbac";
+import { getFocusedRecord } from "@/lib/connected-objects";
+import { FocusedRecord } from "@/components/ontology/FocusedRecord";
 import {
   ProcurementView,
   type ProcurementData,
@@ -21,7 +23,11 @@ const EMPTY: ProcurementData = {
   traceLines: [],
 };
 
-export default async function ProcurementPage() {
+export default async function ProcurementPage({
+  searchParams,
+}: {
+  searchParams?: { focus?: string | string[] };
+}) {
   const user = await getCurrentUser();
   if (!user) return <ProcurementView data={EMPTY} />;
 
@@ -41,16 +47,42 @@ export default async function ProcurementPage() {
       ? (latestRun.trace as { ts?: string; kind?: string; text?: string }[])
       : [];
 
+    // DEMO.6 #10 — LINK.1 arrival point for a reorder PO reached from the fault loop.
+    const focused = await getFocusedRecord(
+      user.orgId,
+      "PURCHASE_ORDER",
+      searchParams?.focus,
+      async (code) => {
+        const po = await db.purchaseOrder.findFirst({
+          where: { code },
+          select: { status: true, qty: true, part: { select: { sku: true } } },
+        });
+        return po
+          ? `${po.status} · ${po.qty}x ${po.part?.sku ?? "part"}`
+          : null;
+      },
+    );
     return (
-      <ProcurementView
-        data={{
-          pos,
-          reorderCandidates,
-          agentCount,
-          canApprove: hasRole(user, ["OPS", "ADMIN"]),
-          traceLines,
-        }}
-      />
+      <>
+        {focused && (
+          <FocusedRecord
+            type={focused.type}
+            code={focused.code}
+            label={focused.label}
+            groups={focused.groups}
+            basePath="/procurement"
+          />
+        )}
+        <ProcurementView
+          data={{
+            pos,
+            reorderCandidates,
+            agentCount,
+            canApprove: hasRole(user, ["OPS", "ADMIN"]),
+            traceLines,
+          }}
+        />
+      </>
     );
   } catch {
     return <ProcurementView data={EMPTY} error />;

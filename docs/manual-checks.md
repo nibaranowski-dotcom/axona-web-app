@@ -3815,3 +3815,73 @@ absence-check without replacing it would have left the invariant unguarded.
 #1/#2/#3 (as-built capture, drift flag, test-to-config) remain DATA-ONLY, and the second
 tenant's hero beat (#10, the fault-to-part-order loop) has no LINK.1 coverage at all.
 `DecideContext` is the seam both should reuse.
+
+## DEMO.6 #10 — the fault-to-part-order loop: navigable, both directions
+
+The Phase-1 audit called this the "money moment" and found it the least connected
+screen in the app. Two separate failures, and the second was the worse one.
+
+**1 · The chain wasn't in the graph at all.** The loop existed only as prose inside
+each record — the work order said "swap servo from on-site spares", the reorder said it
+covered the shortage, and NOTHING joined them: **zero EntityLink edges touched the work
+order, the cell, the part or the reorder.** Four edges now make the loop the graph
+itself. `getEntityLinks` already returns inbound AND outbound neighbours, so one edge
+serves both directions — the backward walk needed no extra data, only the edge to exist:
+
+```
+work order → cell        the fault: which cell failed
+work order → part        the fix: the spare the swap consumes
+reorder    → part        the reorder covering the shortage the swap created
+reorder    → work order  back to the fault that caused it   ← this CLOSES the loop
+```
+
+That last edge is the difference between a chain and a loop: from the reorder a human
+gets back to the originating work order in one click, rather than trailing off.
+
+**2 · Landing on a module screen was a soft DEAD END.** `entityRoute` sent the
+record-less types (parts, POs, work orders) to their bare module screen. The hop
+"resolved" — the verify would have passed — while the human arrived at a list and still
+had to hunt for the record they followed. That is the dead-end the beat is about, and it
+is invisible to any check that only asserts a route is non-empty.
+
+Those three screens now deep-link (`?focus=<code>`) and host the LINK.1 panel above the
+list: which record you followed, and its 1-hop neighbours as onward links. It is
+deliberately **not** a detail page and not a second navigation — the same
+`getConnectedObjects` the detail views use, hosted where the record actually lives.
+An unknown code renders the plain screen rather than inventing a record. Still ONE
+resolver: the focus param is part of `entityRoute`, not a fork beside it. Screens
+without focus support keep their bare route until they grow one.
+
+**The agent surface on the reorder** reuses beat #4's `DecideContext` seam rather than
+adding a second agent layer. The confidence is the one the agent STATED in its own
+`po.draft` AUDIT.1 entry — read from the immutable log, never a literal in app code —
+corrected through the tenant's fitted CONF.1 map, and rendered on the row:
+`Agent-proposed · confidence 0.61 (calibrated from 0.74)`. Approve/Reject already routed
+through `decide()`; they now pass the proposal so the audit entry carries model +
+confidence alongside the approver.
+
+One layout trap worth recording: the proposal line first shared a branch with the BR.1
+promised-vs-actual date, so **any PO carrying an ETA silently lost its agent surface** —
+the confidence rendered only for orders with no promised date, which is close to none of
+them. It has its own line now. The lesson generalises: an agent surface folded into an
+existing conditional inherits that conditional's blind spot.
+
+**Checks:**
+```
+pnpm verify:demo-6-10   # 10 checks (in verify:all) — 3 static, 7 over live data
+```
+Static: `entityRoute` deep-links, all three screens host the panel, the panel reuses
+ConnectedObjects. Live: every FORWARD hop resolves, every hop is reachable BACKWARD from
+its far end, the loop closes, every neighbour on the path carries a resolvable route,
+every module hop deep-links to the record, and the reorder carries a calibrated (not
+raw, not literal) confidence. Read-only — nothing to clean up.
+
+**One earlier assertion was updated, not deleted.** `verify:plm-13` asserted the bare
+`"/inventory"` string. It now asserts the screen AND the focused record, which is the
+same intent expressed against the stronger contract. `verify:audit-2` also hardcodes
+module hrefs but reads a different code path and stayed green — worth knowing that two
+places encode route expectations.
+
+**Still open:** only these three screens deep-link. `/quality`, `/fulfillment`,
+`/finance` and `/engineering` still resolve to bare lists, so hops landing there remain
+soft dead-ends. They need the same `?focus=` treatment when their beats come up.

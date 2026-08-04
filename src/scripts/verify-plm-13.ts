@@ -238,7 +238,17 @@ async function run(): Promise<void> {
       where: { partNumber: part.partNumber },
       select: { partNumber: true },
     });
-    if (!pm || part.inventoryHref !== "/inventory") return false;
+    // DEMO.6 #10 — the LINK.1 route now DEEP-LINKS the record on its module screen
+    // (`/inventory?focus=<sku>`) instead of dropping the human on a bare list, which
+    // was a soft dead-end. Assert the screen + the focused record, not a literal.
+    if (
+      !pm ||
+      !part.inventoryHref.startsWith("/inventory") ||
+      !part.inventoryHref.includes(
+        `focus=${encodeURIComponent(part.partNumber)}`,
+      )
+    )
+      return false;
     // the ECO link points at a REAL change order's detail route
     if (!part.ecoCode || !part.ecoHref) return false;
     const eco = await db.eCO.findFirst({

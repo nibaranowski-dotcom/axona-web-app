@@ -66,3 +66,38 @@ export async function getConnectedObjects(
     }))
     .sort((a, b) => a.relation.localeCompare(b.relation));
 }
+
+/**
+ * DEMO.6 #10 — resolve a module screen's `?focus=<code>` into the record + its 1-hop
+ * neighbours, so the three list screens on the fault loop wire focus identically
+ * instead of each inventing it. Returns null when the param is absent or names
+ * nothing on this tenant — an unknown code must render the plain screen, never a
+ * fabricated record.
+ *
+ * Deliberately the SAME getConnectedObjects the detail views use: one read model.
+ */
+export interface FocusedRecordData {
+  type: EntityType;
+  code: string;
+  label: string | null;
+  groups: ConnectedGroup[];
+}
+
+export async function getFocusedRecord(
+  orgId: string,
+  type: EntityType,
+  focus: string | string[] | undefined,
+  label: (code: string) => Promise<string | null>,
+): Promise<FocusedRecordData | null> {
+  const code = Array.isArray(focus) ? focus[0] : focus;
+  if (!code) return null;
+  const db = dbForOrg(orgId);
+  const id = await resolveEntityId(db, type, code);
+  if (!id) return null; // unknown code → plain screen
+  return {
+    type,
+    code,
+    label: await label(code),
+    groups: await getConnectedObjects(orgId, type, code),
+  };
+}

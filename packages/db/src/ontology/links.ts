@@ -216,20 +216,25 @@ export function entityRoute(type: EntityType, code: string): string {
       return `/configurations/${c}`;
     case "TEST_RUN":
       return `/tests/${c}`;
-    // module screens (no per-record detail route yet — link to where it lives).
+    // Module screens (no per-record detail route). DEMO.6 #10: the three screens on
+    // the fault-to-part-order loop carry `?focus=<code>`, which those screens read to
+    // open the record's connected-objects panel. Landing on a bare list was a soft
+    // DEAD END — the chain "resolved" while the human arrived somewhere they still had
+    // to hunt. Still ONE resolver: the focus param is part of this map, not a fork.
+    // Screens without focus support keep their bare route until they grow one.
     case "SPC_SAMPLE":
       return "/quality";
     case "PART":
     case "LOT":
-      return "/inventory";
+      return `/inventory?focus=${c}`;
     case "SUPPLIER":
     case "PURCHASE_ORDER":
-      return "/procurement";
+      return `/procurement?focus=${c}`;
     case "DELIVERY":
       return "/fulfillment";
     case "WORK_ORDER":
     case "FIELD_EVENT":
-      return "/field-service";
+      return `/field-service?focus=${c}`;
     case "INVOICE":
       return "/finance";
     case "PRODUCT_MODEL":

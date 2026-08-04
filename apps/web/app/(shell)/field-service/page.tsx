@@ -2,6 +2,8 @@ import { dbForOrg } from "@axona/db";
 import { getCurrentUser } from "@/lib/session";
 import { hasRole } from "@/lib/rbac";
 import { getFieldServiceData } from "@/lib/field-service";
+import { getFocusedRecord } from "@/lib/connected-objects";
+import { FocusedRecord } from "@/components/ontology/FocusedRecord";
 import {
   FieldServiceView,
   type FieldServiceScreenData,
@@ -23,7 +25,11 @@ const EMPTY: FieldServiceScreenData = {
   canRecord: false,
 };
 
-export default async function FieldServicePage() {
+export default async function FieldServicePage({
+  searchParams,
+}: {
+  searchParams?: { focus?: string | string[] };
+}) {
   const user = await getCurrentUser();
   if (!user) return <FieldServiceView data={EMPTY} />;
 
@@ -41,8 +47,36 @@ export default async function FieldServicePage() {
       ? (latestRun.trace as { ts?: string; kind?: string; text?: string }[])
       : [];
 
+    // DEMO.6 #10 — LINK.1 arrival point: a hop that reached a work order lands here
+    // with ?focus=<code> and opens that record's connected objects.
+    const focused = await getFocusedRecord(
+      user.orgId,
+      "WORK_ORDER",
+      searchParams?.focus,
+      async (code) =>
+        (
+          await db.workOrderField.findFirst({
+            where: { code },
+            select: { issue: true },
+          })
+        )?.issue ?? null,
+    );
+
     const canRecord = hasRole(user, ["OPS", "ADMIN", "ENGINEER", "TECH"]);
-    return <FieldServiceView data={{ ...field, traceLines, canRecord }} />;
+    return (
+      <>
+        {focused && (
+          <FocusedRecord
+            type={focused.type}
+            code={focused.code}
+            label={focused.label}
+            groups={focused.groups}
+            basePath="/field-service"
+          />
+        )}
+        <FieldServiceView data={{ ...field, traceLines, canRecord }} />
+      </>
+    );
   } catch {
     return <FieldServiceView data={EMPTY} error />;
   }
