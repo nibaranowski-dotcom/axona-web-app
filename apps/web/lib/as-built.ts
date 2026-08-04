@@ -1,4 +1,9 @@
 import { leafOnly, dbForOrg, asBuiltDiff } from "@axona/db";
+import {
+  buildAgentProposal,
+  type AgentProposal,
+  type AgentSignal,
+} from "./agent-proposal";
 
 // PLM.4 — the as-built diff read model. Answers Q1: "the same robot is not
 // actually the same." Aligns the as-designed BOM to the captured AsBuiltRecords
@@ -47,6 +52,13 @@ export interface AsBuiltView {
     lots: number;
     matching: number;
   };
+  /**
+   * DEMO.6 #2 — the genealogy agent FLAGGING the drift, rather than the screen
+   * rendering a passive diff and leaving the reader to spot it. Null when the
+   * as-built matches the design: a clean unit gets no finding, because a
+   * zero-evidence "proposal" is noise dressed as intelligence.
+   */
+  agent: AgentProposal | null;
 }
 
 /** Classify HOW a position diverged — the design's "Substitution" column. */
@@ -172,6 +184,54 @@ export async function getAsBuiltView(
     };
   });
 
+  // ── DEMO.6 #2 — the genealogy agent's drift flag ────────────────────────────
+  // Every signal is a row already on this screen; the agent is not seeing anything
+  // the reader could not, it is doing the noticing. A quarantined lot weighs most
+  // because it is the one deviation with fleet-wide consequences — the same
+  // COMPUTE-720 / lot-88471 substitution the RCA thread traces, so the two screens
+  // tell one story rather than two.
+  const subRows = rows.filter((r) => r.isSubstitution);
+  // `quarantined` above is the Set of lot CODES; these are the ROWS carrying one.
+  const quarantinedRows = subRows.filter((r) => r.lotQuarantined);
+  const uncaptured = subRows.filter((r) => !r.reason);
+  const signals: AgentSignal[] = [];
+  if (subRows.length > 0)
+    signals.push({
+      key: "substituted-positions",
+      detail: `${subRows.length} of ${diff.summary.positions} positions differ from the as-designed BOM`,
+      weight: Math.min(0.4, 0.2 * subRows.length),
+    });
+  if (quarantinedRows.length > 0)
+    signals.push({
+      key: "quarantined-lot",
+      detail: `${quarantinedRows[0]!.built?.partNumber ?? "a part"} came from quarantined lot ${quarantinedRows[0]!.lotCode}`,
+      weight: 0.35,
+    });
+  if (uncaptured.length > 0)
+    signals.push({
+      key: "no-recorded-reason",
+      detail: `${uncaptured.length} substitution(s) carry no recorded reason`,
+      weight: Math.min(0.2, 0.1 * uncaptured.length),
+    });
+  if (lotCodes.length > 0)
+    signals.push({
+      key: "lot-traceability",
+      detail: `${lotCodes.length} lot code(s) captured at build — traceable`,
+      weight: 0.08,
+    });
+
+  const agent = await buildAgentProposal(orgId, {
+    text:
+      quarantinedRows.length > 0
+        ? `${quarantinedRows[0]!.built?.partNumber ?? "A part"} at ${quarantinedRows[0]!.position} was built from quarantined lot ${quarantinedRows[0]!.lotCode} instead of the as-designed revision.`
+        : `${subRows.length} position(s) deviate from the as-designed BOM.`,
+    action:
+      quarantinedRows.length > 0
+        ? "Acknowledge the drift and trace the lot to every unit that carries it"
+        : "Acknowledge the drift and record a reason against each substitution",
+    signals,
+  });
+
   return {
     serial: unit.serial,
     modelCode: unit.productModel.code,
@@ -184,5 +244,6 @@ export async function getAsBuiltView(
       lots: lotCodes.length,
       matching: diff.summary.positions - diff.summary.substitutions,
     },
+    agent,
   };
 }

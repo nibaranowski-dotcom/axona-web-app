@@ -10,6 +10,8 @@ import {
   type TraceType,
 } from "@/lib/blast-radius-shared";
 import { handToFieldServiceAction } from "@/app/(shell)/blast-radius/actions";
+import { reviewBlastRadiusAction } from "@/app/(shell)/blast-radius/agent-actions";
+import { AgentProposalPanel } from "@/components/agents/AgentProposalPanel";
 
 // PLM.5 — the blast radius (`Blast Radius.dc.html` 1:1 on the DS.1 primitives).
 // The ONT.1 traversal already ships; this is its UI. Results are grouped by
@@ -136,6 +138,22 @@ export function BlastRadiusView({
       </div>
 
       <div className="min-w-0 flex-1 px-6 pb-6 pt-5">
+        {/* DEMO.6 #5 — the agent that COMPUTED this set. The traversal was always
+            real; what was missing was any sign something did it, and any statement of
+            how well corroborated the answer is. Only shown for an ECO root, because
+            that is the one whose set a human is asked to confirm and hand off. */}
+        {data.agent && data.type === "eco" && data.value && (
+          <AgentProposalPanel
+            title="Blast-radius agent"
+            proposal={data.agent}
+            confirmLabel="Confirm affected set"
+            className="mb-[18px]"
+            onDecide={async (upheld) => {
+              const r = await reviewBlastRadiusAction(data.value!, upheld);
+              return r.loopWriteback;
+            }}
+          />
+        )}
         {!data.found ? (
           <div className="rounded-card border border-line bg-paper px-6 py-14 text-center">
             <p className="text-[13.5px] font-semibold text-ink">

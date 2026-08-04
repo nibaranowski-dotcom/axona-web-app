@@ -9,6 +9,11 @@ import type {
   ResolvedConfig,
   BuildReadiness,
 } from "@axona/db";
+import {
+  buildAgentProposal,
+  type AgentProposal,
+  type AgentSignal,
+} from "./agent-proposal";
 
 // PLM.3 — the Unit page read model. The unit is the HERO OBJECT: identity, the
 // configuration it is running NOW, how its as-built diverges from as-designed,
@@ -67,6 +72,12 @@ export interface UnitDetail {
   diff: AsBuiltDiffResult;
   /** BR.1 — build-readiness rollup (BOM × on-hand × open-PO coverage). */
   buildReadiness: BuildReadiness;
+  /**
+   * DEMO.6 #11 — the readiness agent's proposed NEXT ACTION. BR.1 already computes
+   * the percentage and names the blockers; what was missing is anyone proposing what
+   * to DO about them. Null when the build is unblocked — nothing to propose.
+   */
+  readinessAgent: AgentProposal | null;
   lotsInvolved: string[];
   /** The substituted positions, with the captured "why · who · when". */
   substitutions: {
@@ -309,6 +320,70 @@ export async function getUnitDetail(
     (c) => c.name === current.configVersion?.name,
   );
 
+  // ── DEMO.6 #11 — the readiness agent's next action ──────────────────────────
+  // BR.1 names WHAT is blocking; the agent proposes what to do about it. The
+  // distinction that matters to a buyer: a blocker with a covering PO needs
+  // EXPEDITING, one without needs ORDERING — different actions, and the screen
+  // previously made the reader work that out.
+  const blockers = buildReadiness.blockingParts;
+  const late = blockers.filter((b) => b.state === "late");
+  const missing = blockers.filter((b) => b.state === "missing");
+  const readinessSignals: AgentSignal[] = [];
+  if (blockers.length > 0)
+    readinessSignals.push({
+      key: "blocking-parts",
+      detail: `${blockers.length} part(s) block the build at ${buildReadiness.pctInHouse}% in-house`,
+      weight: Math.min(0.35, 0.18 * blockers.length),
+    });
+  if (late.length > 0)
+    readinessSignals.push({
+      key: "late-with-cover",
+      detail: `${late.length} late, covered by ${
+        late
+          .map((b) => b.coveringPo)
+          .filter(Boolean)
+          .join(", ") || "an open order"
+      } — expedite`,
+      weight: 0.25,
+    });
+  if (missing.length > 0)
+    readinessSignals.push({
+      key: "missing-no-cover",
+      detail: `${missing.length} with no covering order — needs raising`,
+      weight: 0.3,
+    });
+  const singleSourced = blockers.filter((b) => b.tracked).length;
+  if (singleSourced > 0)
+    readinessSignals.push({
+      key: "tracked-blockers",
+      detail: `${singleSourced} blocker(s) tracked against the as-designed BOM`,
+      weight: 0.1,
+    });
+
+  const readinessAgent =
+    blockers.length > 0
+      ? await buildAgentProposal(orgId, {
+          text: `Build is ${buildReadiness.pctInHouse}% in-house; ${blockers.map((b) => b.partNumber).join(" and ")} ${blockers.length === 1 ? "blocks" : "block"} completion.`,
+          action:
+            missing.length > 0 && late.length > 0
+              ? `Expedite ${late
+                  .map((b) => b.coveringPo)
+                  .filter(Boolean)
+                  .join(
+                    ", ",
+                  )} and raise an order for ${missing.map((b) => b.partNumber).join(", ")}`
+              : missing.length > 0
+                ? `Raise an order for ${missing.map((b) => b.partNumber).join(", ")}`
+                : `Expedite ${
+                    late
+                      .map((b) => b.coveringPo)
+                      .filter(Boolean)
+                      .join(", ") || "the covering order"
+                  }`,
+          signals: readinessSignals,
+        })
+      : null;
+
   return {
     serial: unit.serial,
     modelCode: unit.productModel.code,
@@ -323,6 +398,7 @@ export async function getUnitDetail(
     configBaselinedAt: baselineConfig?.lockedAt ?? null,
     diff,
     buildReadiness,
+    readinessAgent,
     lotsInvolved,
     substitutions,
 

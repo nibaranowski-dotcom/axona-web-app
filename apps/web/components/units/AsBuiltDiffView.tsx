@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
 import type { AsBuiltView, AsBuiltRow } from "@/lib/as-built";
+import { AgentProposalPanel } from "@/components/agents/AgentProposalPanel";
+import { reviewAsBuiltDriftAction } from "@/app/(shell)/units/[serial]/as-built/actions";
 
 // PLM.4 — the as-built diff (`As-Built Diff.dc.html` 1:1 on the DS.1 primitives).
 // Answers Q1: "the same robot is not actually the same." Every BOM position
@@ -86,6 +88,23 @@ export function AsBuiltDiffView({ data }: { data: AsBuiltView }) {
           tone="success"
         />
       </div>
+
+      {/* DEMO.6 #2 — the genealogy agent FLAGS the drift instead of leaving the
+          reader to spot it in the table. Acknowledging mutates nothing: an as-built
+          capture is immutable by design. */}
+      {data.agent && (
+        <div className="flex-none px-6 pt-5">
+          <AgentProposalPanel
+            title="As-built genealogy agent"
+            proposal={data.agent}
+            confirmLabel="Acknowledge drift"
+            onDecide={async (upheld) => {
+              const r = await reviewAsBuiltDriftAction(data.serial, upheld);
+              return r.loopWriteback;
+            }}
+          />
+        </div>
+      )}
 
       <div className="min-w-0 flex-1 overflow-x-auto px-6 pb-6 pt-5">
         <div className="min-w-[860px]">

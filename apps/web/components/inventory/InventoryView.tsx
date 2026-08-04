@@ -11,6 +11,8 @@ import type {
 import { useUi } from "@/lib/ui-store";
 import { useCopilotSeed } from "@/lib/copilot-seed";
 import { StatStrip } from "@/components/shell/StatStrip";
+import { AgentProposalPanel } from "@/components/agents/AgentProposalPanel";
+import { reviewReorderAction } from "@/app/(shell)/inventory/agent-actions";
 import {
   TraceConsole,
   type TraceLine as ConsoleLine,
@@ -126,6 +128,24 @@ export function InventoryView({
       ) : (
         <>
           <StatStrip stats={stats} />
+
+          {/* DEMO.6 #7 — the reorder agent's min-breach finding. Confirming does NOT
+              approve the PO: money stays behind decide("po.approve") on /procurement. */}
+          {data.agent && (
+            <AgentProposalPanel
+              title="Reorder agent"
+              proposal={data.agent}
+              confirmLabel="Confirm shortage"
+              className="shrink-0"
+              onDecide={async (upheld) => {
+                const r = await reviewReorderAction(
+                  data.criticalParts.find((p) => p.reorderNeeded)?.sku ?? "",
+                  upheld,
+                );
+                return r.loopWriteback;
+              }}
+            />
+          )}
 
           {/* stock by location */}
           <section className="shrink-0 rounded-card border border-line bg-paper px-5 py-[18px]">

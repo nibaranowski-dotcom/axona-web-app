@@ -4013,3 +4013,77 @@ The selftest is not ceremony: it proves the scan can still fail before its pass 
 **Still open:** the scan reports **1 moderate**, unbaselined and pre-existing. Moderates
 do not fail the gate, so it is untouched here rather than folded into a demo fix — but
 it is a real violation nobody has triaged.
+
+## DEMO.6 surfacing batch — beats #2 · #5 · #7 · #11
+
+Four data-only screens made agent-acting, reusing the seams beats #4/#6/#10 proved. One
+part of #5 turned out not to be cheap and was NOT forced — see the end.
+
+**Three shared pieces, not four copies.** Beats #4 and #6 each grew their own proposal
+shape, and four more would have meant four more copies of the one rule that matters —
+that the confidence is DERIVED and never a literal. So this batch extracted it:
+`buildAgentProposal` (evidence → weighted signals → raw → CONF.1), `AgentProposalPanel`
+(the panel, with the AA-safe token decided ONCE rather than re-decided per screen), and
+`recordAgentReview` (materialise the AGENT proposal → `decide()` with DecideContext →
+LOOP.1 note). Dropping any one of those three steps silently breaks CONF.1, because
+`calibrate()` pairs an AGENT entry carrying a confidence with a HUMAN `.approve` on the
+same target — one path, so that pairing cannot rot.
+
+**Acknowledging mutates nothing.** Each beat gets a review kind whose effect writes
+NOTHING; the state each finding is about is protected elsewhere (an as-built capture is
+immutable, an ECO's release is `eco.release`, money is `po.approve`, readiness is
+derived). Every verify asserts it with a before/after snapshot of exactly the state the
+beat must not touch — not a comment promising inertness, a check that fails if it lies.
+
+What each surfaces, all evidence-derived and CONF.1-calibrated on live data:
+
+| beat | screen | finding |
+|---|---|---|
+| #2 | as-built diff | the quarantined-lot substitution, flagged — same lot the RCA thread traces |
+| #5 | blast radius | the affected set was COMPUTED, with how well corroborated it is |
+| #7 | inventory | the min breach, and the drafted reorder awaiting approval |
+| #11 | unit page | a proposed NEXT ACTION — expedite what is covered, raise what is not |
+
+**Three real bugs the work surfaced**, all caught by checks rather than by reading:
+- **A kind loading the wrong subject.** #7 reused a Unit-loading review kind for a PART,
+  so `decide()` looked up a unit named after a SKU and returned `not_found`. Each
+  subject type needs its own loader; there is now an `inventory.review`.
+- **A ranking that named the wrong part.** "Deepest breach" picked whichever part had the
+  largest minimum, which on a tenant carrying both the base narrative and its own parts
+  is not the one that stops production. Now ranked by real severity: on the as-designed
+  BOM at all → single-source → no cover. A part with no PartMaster cannot block a build.
+- **Copy that stated something false.** The reorder text said "drafted and awaiting
+  approval" regardless of the order's actual status, so it told a buyer to approve an
+  order that was already SENT. It now reads the status and says expedite or approve
+  accordingly, and prefers the order a human can actually act on.
+
+**LINK.1:** #11's blockers now deep-link to the record (`?focus=`) instead of a bare
+list — the soft dead-end beat #10 removed elsewhere.
+
+**Checks:**
+```
+pnpm verify:demo-6-2 · -5 · -7 · -11      # 13-14 checks each, in verify:all, self-cleaning
+```
+The invariants live in `lib/demo-6-surface`, shared by all four so they cannot drift:
+the score is recomputable from its signals, the confidence is calibrated (not raw, not a
+literal), the audit entry carries all five fields, LOOP.1 fires, the protected state is
+unchanged, and the panel uses the AA-safe faint token.
+
+**Two lessons about the local gates:**
+- **Root `tsc --noEmit` does NOT typecheck `apps/web`** — the root tsconfig includes only
+  `src/scripts`. A missing field on a page's `EMPTY` constant passed `tsc` and failed the
+  Next build. The build is the typecheck for app code.
+- **A served axe run can pass on UNSTYLED pages.** A stale `next start` was serving a
+  build whose CSS 404'd; axe then measured default black-on-white and reported clean. The
+  first pass here was a FALSE pass — caught by fetching the stylesheet and seeing HTTP
+  400. Re-run against a properly served build before trusting a green scan.
+
+**NOT DONE — flagged, not forced.** Beat #5 asked for real dual sign-off on the ECO
+(proposer ≠ approver, like the baseline lock). `ECO` has no proposer/approver columns —
+it carries a plain `stage` string, and the schema comment says to keep it that way. Real
+dual sign-off needs a migration, a two-step release state machine, new UI, and updates to
+the SIX verifies that assert the current single-step release. That is a story about a
+gated change-control transition, not a surfacing change, and batching it here would have
+put a demo-critical state machine behind four screens' worth of unrelated review. The
+AUDIT half of that beat IS done: releasing an agent-proposed ECO now carries model +
+confidence + approver via DecideContext.

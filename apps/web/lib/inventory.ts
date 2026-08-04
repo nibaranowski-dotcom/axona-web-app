@@ -1,6 +1,11 @@
 import { dbForOrg, paginateArgs, pageResult } from "@axona/db";
 import type { InventoryKind } from "@axona/db";
 import { affectedUnits } from "@axona/agents";
+import {
+  buildAgentProposal,
+  type AgentProposal,
+  type AgentSignal,
+} from "./agent-proposal";
 
 // INV.1 — Inventory read/API layer (build-spec §4.11b, §6). Read-only over the
 // EXISTING Part + PurchaseOrder models plus the bounded INV.1 InventoryStock
@@ -91,6 +96,12 @@ export interface PartMasterRow {
 }
 
 export interface InventoryData {
+  /**
+   * DEMO.6 #7 — the reorder agent's proposal for the worst below-min part. The
+   * min-breach and the drafted PO already existed as DATA; this is the agent saying
+   * so, with a confidence you can check. Null when nothing is below min.
+   */
+  agent: AgentProposal | null;
   criticalParts: CriticalPart[];
   stockByLocation: LocationStock[];
   edgeCaches: EdgeCache[];
@@ -358,7 +369,100 @@ export async function getInventoryData(orgId: string): Promise<InventoryData> {
     }))
     .sort((a, b) => a.location.localeCompare(b.location));
 
+  // ── DEMO.6 #7 — the reorder agent on the worst below-min part ───────────────
+  // Picks the part with the deepest breach rather than the first row, because that
+  // is the one a buyer asks about. A part with a covering PO already drafted scores
+  // HIGHER, not lower: the agent has already done something about it, and that is
+  // corroboration the finding is real.
+  // Severity, not raw depth. "Deepest breach" picked whichever part happened to have
+  // the biggest min, which on a tenant carrying both the base narrative and its own
+  // parts is not the one that stops production. What actually blocks a build is a
+  // shortage that is (1) ON the as-designed BOM at all — a part with no PartMaster
+  // cannot block anything — (2) SINGLE-SOURCE, so there is no alternate to switch to,
+  // and (3) LONG-LEAD, so it cannot be recovered quickly. Depth breaks remaining ties.
+  const masters = await partMasterP;
+  const masterBySku = new Map(masters.map((m) => [m.partNumber, m]));
+  const severity = (p: CriticalPart): number => {
+    const m = masterBySku.get(p.sku);
+    if (!m) return 0; // not on the BOM → cannot block a build
+    const singleSource =
+      /^(?!\d)/.test(m.vendors) && !/approved/.test(m.vendors);
+    return (
+      100 + (singleSource ? 50 : 0) + Math.min(40, p.daysOfCover <= 0 ? 40 : 0)
+    );
+  };
+  const worst = criticalParts
+    .filter((p) => p.reorderNeeded)
+    .sort((a, b) => {
+      const d = severity(b) - severity(a);
+      if (d !== 0) return d;
+      return a.onHand - a.reorderPoint - (b.onHand - b.reorderPoint);
+    })[0];
+  let inventoryAgent = null as AgentProposal | null;
+  if (worst) {
+    const invSignals: AgentSignal[] = [
+      {
+        key: "below-min",
+        detail: `${worst.sku} at ${worst.onHand} on hand vs a min of ${worst.reorderPoint}`,
+        weight: 0.4,
+      },
+    ];
+    if (worst.daysOfCover <= 0)
+      invSignals.push({
+        key: "no-cover",
+        detail: "zero days of cover at the current run rate",
+        weight: 0.25,
+      });
+    if (worst.incomingPo)
+      invSignals.push({
+        key: "reorder-on-order",
+        detail: `${worst.incomingPo.code} is on order (${worst.incomingPo.status.replace(/_/g, " ").toLowerCase()})`,
+        weight: 0.25,
+      });
+    if (worst.reserved > 0)
+      invSignals.push({
+        key: "reserved-against",
+        detail: `${worst.reserved} already reserved against builds`,
+        weight: 0.1,
+      });
+    // Say what is TRUE of the covering order, not what is convenient. An order that
+    // is already SENT cannot be "approved" — telling a buyer to approve it is a
+    // factual error on screen, and the whole point of these surfaces is that the
+    // numbers and the verbs survive scrutiny.
+    // Prefer a covering order the human can ACT on. `incomingPo` is the screen's
+    // general "what's inbound" pick; for a proposal the useful one is the order
+    // awaiting a decision, because that is what the Confirm control is about. Falls
+    // back to whatever is inbound when nothing is awaiting approval.
+    const actionable = await db.purchaseOrder.findFirst({
+      where: {
+        partId: worst.id,
+        status: { in: ["AWAITING_APPROVAL", "DRAFTED"] },
+      },
+      orderBy: { code: "desc" },
+      select: { code: true, qty: true, eta: true, status: true },
+    });
+    const po = actionable ?? worst.incomingPo;
+    const awaiting =
+      po?.status === "AWAITING_APPROVAL" || po?.status === "DRAFTED";
+    inventoryAgent = await buildAgentProposal(orgId, {
+      text: `${worst.sku} is below its minimum (${worst.onHand} on hand vs ${worst.reorderPoint})${
+        po
+          ? awaiting
+            ? ` — reorder ${po.code} is drafted and awaiting approval`
+            : ` — ${po.code} is already on order (${po.status.replace(/_/g, " ").toLowerCase()}) and has not closed the gap`
+          : " and has no covering order"
+      }.`,
+      action: !po
+        ? `Raise a reorder for ${worst.sku}`
+        : awaiting
+          ? `Approve ${po.code} to cover the shortage`
+          : `Expedite ${po.code} — it is on order but the shortage stands`,
+      signals: invSignals,
+    });
+  }
+
   return {
+    agent: inventoryAgent,
     criticalParts,
     stockByLocation,
     edgeCaches,

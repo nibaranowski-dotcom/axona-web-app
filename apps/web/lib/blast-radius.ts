@@ -1,4 +1,5 @@
 import { dbForOrg, entityRoute } from "@axona/db";
+import { buildAgentProposal, type AgentSignal } from "./agent-proposal";
 import { getBlastRadius, affectedUnits } from "@axona/agents";
 import type { EntityType } from "@axona/db";
 
@@ -89,6 +90,7 @@ export async function getBlastRadiusView(
     summary: { units: 0, sites: 0, customers: 0 },
     options,
     handoffSerials: [],
+    agent: null,
   };
   if (!chosen) {
     return {
@@ -180,9 +182,53 @@ export async function getBlastRadiusView(
     a === "Units" ? -1 : b === "Units" ? 1 : a.localeCompare(b),
   );
 
+  // ── DEMO.6 #5 — the agent that computed this set ────────────────────────────
+  // The traversal is real (ONT.1 + capture-backed units); what was missing is any
+  // sign that something DID it. Confidence rises with how much independently
+  // corroborated the answer: units the capture confirms, modules the graph reached,
+  // and deployed units a hand-off could act on. A one-node trace scores low, which
+  // is correct — a blast radius of one is barely a radius.
+  const blastSignals: AgentSignal[] = [];
+  if (serials.length > 0)
+    blastSignals.push({
+      key: "affected-units",
+      detail: `${serials.length} unit(s) carry ${base.rootLabel}`,
+      weight: Math.min(0.4, 0.1 * serials.length),
+    });
+  if (ordered.length > 1)
+    blastSignals.push({
+      key: "modules-reached",
+      detail: `${ordered.length} modules reached by the traversal`,
+      weight: Math.min(0.25, 0.05 * ordered.length),
+    });
+  if (sites.size > 1)
+    blastSignals.push({
+      key: "spans-sites",
+      detail: `spans ${sites.size} sites — not a single-line issue`,
+      weight: 0.15,
+    });
+  if (handoffSerials.length > 0)
+    blastSignals.push({
+      key: "deployed-units",
+      detail: `${handoffSerials.length} of them are DEPLOYED (field hand-off)`,
+      weight: Math.min(0.2, 0.05 * handoffSerials.length),
+    });
+
+  const blastAgent = found
+    ? await buildAgentProposal(orgId, {
+        text: `Traced ${base.rootLabel} to ${serials.length} unit(s) across ${sites.size} site(s) — captured genealogy, not inferred.`,
+        action:
+          handoffSerials.length > 0
+            ? "Confirm the affected set and hand the deployed units to field service"
+            : "Confirm the affected set",
+        signals: blastSignals,
+      })
+    : null;
+
   return {
     ...base,
     found,
+    agent: blastAgent,
     groups: ordered.map(([module, rows]) => ({
       module,
       count: rows.length,

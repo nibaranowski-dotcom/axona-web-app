@@ -15,6 +15,7 @@ import {
 export const dynamic = "force-dynamic";
 
 const EMPTY: InventoryScreenData = {
+  agent: null,
   criticalParts: [],
   stockByLocation: [],
   edgeCaches: [],

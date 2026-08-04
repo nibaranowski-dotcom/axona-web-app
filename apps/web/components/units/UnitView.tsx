@@ -7,6 +7,8 @@ import { STATUS_LABEL } from "@/lib/units";
 import { ConnectedObjects } from "@/components/ontology/ConnectedObjects";
 import type { ConnectedGroup } from "@/lib/connected-objects";
 import { RecordHistory } from "@/components/audit/RecordHistory";
+import { AgentProposalPanel } from "@/components/agents/AgentProposalPanel";
+import { reviewReadinessAction } from "@/app/(shell)/units/[serial]/readiness-actions";
 import type { AuditEntry } from "@/lib/audit-trail";
 import { Attachments } from "@/components/attachments/Attachments";
 import type { RecordAttachments } from "@/lib/attachments";
@@ -398,7 +400,14 @@ function BuildReadinessCard({ unit }: { unit: UnitDetail }) {
                   {blocking.map((b) => (
                     <Link
                       key={b.position}
-                      href={b.coveringPo ? "/procurement" : "/inventory"}
+                      // DEMO.6 #11 — land ON the record via beat #10's ?focus= seam:
+                      // a blocker that drops you on a bare list is the soft dead-end
+                      // that beat existed to remove.
+                      href={
+                        b.coveringPo
+                          ? `/procurement?focus=${encodeURIComponent(b.coveringPo)}`
+                          : `/inventory?focus=${encodeURIComponent(b.partNumber)}`
+                      }
                       className="flex items-center gap-2.5 rounded-[9px] border border-line px-3 py-2 transition-colors hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                     >
                       <span
@@ -428,6 +437,21 @@ function BuildReadinessCard({ unit }: { unit: UnitDetail }) {
                     </Link>
                   ))}
                 </div>
+              )}
+              {/* DEMO.6 #11 — BR.1 names WHAT blocks; the agent proposes what to DO.
+                  Confirming mutates nothing — expediting or raising an order is a
+                  procurement action behind its own gated kind. */}
+              {unit.readinessAgent && (
+                <AgentProposalPanel
+                  title="Build-readiness agent"
+                  proposal={unit.readinessAgent}
+                  confirmLabel="Confirm next action"
+                  className="mt-3"
+                  onDecide={async (upheld) => {
+                    const r = await reviewReadinessAction(unit.serial, upheld);
+                    return r.loopWriteback;
+                  }}
+                />
               )}
             </div>
           </>

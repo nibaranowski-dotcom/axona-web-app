@@ -37,7 +37,15 @@ export type ApprovalKind =
   | "config.unlock" // PLM.11 — unlock a baselined ConfigurationVersion (second approver)
   | "field.mod" // PLM.V5 — approve a recorded field modification (applies the delta)
   | "ncr.rootcause" // DEMO.6 #4 — confirm/override the RCA agent's proposed cause
-  | "config.review"; // DEMO.6 #6 — confirm/dismiss the config agent's drift assessment
+  | "config.review" // DEMO.6 #6 — confirm/dismiss the config agent's drift assessment
+  // DEMO.6 #2/#5/#11 — acknowledge an agent FINDING. Each mutates nothing: the record
+  // it is about (an as-built capture, a released blast set, a build) is either
+  // immutable or owned by another gated kind. Acknowledging records that a human read
+  // the finding and agreed or disagreed — which is the CONF.1 label — and nothing else.
+  | "asbuilt.review" // #2 — the as-built drift flag on a unit
+  | "blast.review" // #5 — the computed affected-units set
+  | "inventory.review" // #7 — the reorder agent's min-breach finding (a Part)
+  | "readiness.review"; // #11 — the build-readiness next action
 
 export type Decision = "APPROVE" | "REJECT";
 
@@ -145,6 +153,95 @@ const PO_NEXT: Partial<Record<POStatus, POStatus>> = {
   AWAITING_APPROVAL: "APPROVED",
   APPROVED: "SENT",
 };
+
+/**
+ * DEMO.6 — the acknowledge-only review kinds (#2 as-built · #5 blast · #11 readiness).
+ * Each loads its subject by human code purely so `decide()` can confirm the target
+ * exists and is org-scoped; the effect writes NOTHING. The verdict lands in AUDIT.1
+ * (with the proposal's model + confidence via DecideContext) and fires LOOP.1.
+ */
+type AckReviewKind =
+  | "asbuilt.review"
+  | "blast.review"
+  | "inventory.review"
+  | "readiness.review";
+
+function ackReviewKinds(): Record<AckReviewKind, ApprovalDef<unknown>> {
+  const specs = [
+    {
+      kind: "asbuilt.review" as const,
+      targetType: "Unit",
+      noun: "as-built drift",
+      load: (db: OrgScopedDb, code: string) =>
+        db.unit.findFirst({ where: { serial: code } }),
+    },
+    {
+      kind: "blast.review" as const,
+      targetType: "ECO",
+      noun: "blast radius",
+      load: (db: OrgScopedDb, code: string) =>
+        db.eCO.findFirst({ where: { code } }),
+    },
+    {
+      // #7 loads a PART by sku — NOT a Unit. Reusing readiness.review here made
+      // decide() look up a unit named "NM-GRIP-SERVO" and return not_found; the
+      // verify caught it. Each subject type needs its own loader.
+      kind: "inventory.review" as const,
+      targetType: "Part",
+      noun: "shortage",
+      load: (db: OrgScopedDb, code: string) =>
+        db.part.findFirst({ where: { sku: code } }),
+    },
+    {
+      kind: "readiness.review" as const,
+      targetType: "Unit",
+      noun: "build readiness",
+      load: (db: OrgScopedDb, code: string) =>
+        db.unit.findFirst({ where: { serial: code } }),
+    },
+  ];
+  const out = {} as Record<AckReviewKind, ApprovalDef<unknown>>;
+  for (const s of specs) {
+    const effect =
+      (upheld: boolean) =>
+      async (
+        _db: OrgScopedDb,
+        _org: string,
+        _t: unknown,
+        _by: Approver,
+        ctx?: DecideContext,
+      ): Promise<Effect> => {
+        const p = ctx?.payload as
+          | { code?: string; finding?: string }
+          | undefined;
+        return {
+          inputs: { subject: p?.code ?? null, finding: p?.finding ?? null },
+          output: {
+            status: upheld ? "confirmed" : "dismissed",
+            assessmentUpheld: upheld,
+            // stated explicitly so the log itself records that acknowledging is inert
+            mutatedState: false,
+          },
+          summary: `${p?.code ?? s.targetType} ${s.noun} ${upheld ? "CONFIRMED" : "DISMISSED"} — agent finding ${upheld ? "upheld" : "judged a false positive"}`,
+        };
+      };
+    out[s.kind] = {
+      kind: s.kind,
+      roles: ["ENGINEER", "OPS", "ADMIN"],
+      targetType: s.targetType,
+      load: (db, _org, code) => s.load(db, code),
+      isPending: () => true,
+      onApprove: effect(true),
+      onReject: effect(false),
+    } as ApprovalDef<unknown>;
+  }
+  // The loop fills exactly the three keys in `specs`, which are literal-typed above;
+  // TS cannot narrow a loop-built object to a mapped type, so the assertion is on the
+  // accumulator rather than on any individual def. If a key is ever added to
+  // AckReviewKind without a matching spec, the REGISTRY's mapped type fails to
+  // typecheck — the gap surfaces at the call site, not silently here.
+  return out;
+}
 
 // ── the registry ──────────────────────────────────────────────────────────
 const REGISTRY: { [K in ApprovalKind]: ApprovalDef<unknown> } = {
@@ -585,6 +682,20 @@ const REGISTRY: { [K in ApprovalKind]: ApprovalDef<unknown> } = {
       };
     },
   } as ApprovalDef<unknown>,
+
+  /**
+   * DEMO.6 #2/#5/#11 — the acknowledge-only review kinds.
+   *
+   * Built from one factory because they are genuinely the same operation: load the
+   * record by its human code, record a human verdict on an agent finding, mutate
+   * NOTHING. Writing three near-identical registry entries would invite one of them
+   * to quietly grow a side effect — which is the exact failure the separation exists
+   * to prevent. The state each finding is about is protected elsewhere: an as-built
+   * capture is immutable by design, an ECO's release is `eco.release`, a build's
+   * readiness is derived. `isPending` is always true — a finding can be re-reviewed
+   * as the underlying data moves, and the audit log carries the full sequence.
+   */
+  ...ackReviewKinds(),
 
   // Finance credit note — registered; UI later.
   "creditnote.issue": {
