@@ -94,7 +94,7 @@ async function run(): Promise<void> {
           m.hwRevs.length >= 4 &&
           m.fwVersions.length >= 4 &&
           m.cells.length >= 12 &&
-          m.hwRevs[0] === "HX-2 r4" && // rows newest-first
+          m.hwRevs[0] === "AX-2 r4" && // rows newest-first
           m.fwVersions[0] === "v4.0.2" && // cols oldest-first
           m.cells.some((c) => c.state === "cert") &&
           m.cells.some((c) => c.state === "in-test")

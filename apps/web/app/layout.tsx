@@ -3,9 +3,13 @@ import "@axona/config/styles/tokens.css";
 import "./globals.css";
 import { archivo, jetbrainsMono } from "./fonts";
 
+// DEMO-INTEGRITY (SEED.4): this <meta description> is one devtools glance (or link
+// preview) away from a category word the engineering buyer reads as vaporware. Kept
+// to what the product does. The marketing site keeps its own positioning copy.
 export const metadata = {
   title: "Axona",
-  description: "The AI-native operating system for robotics companies.",
+  description:
+    "Axona — configuration management and traceability for how robotics companies build.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

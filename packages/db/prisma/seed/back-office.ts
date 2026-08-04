@@ -1,7 +1,7 @@
 import type { OrgScopedDb } from "../../src";
 import { CODES, d } from "./constants";
 
-// Back-office close of the §3.7 narrative: HX-2 margin −2.1pt from ECO-318;
+// Back-office close of the §3.7 narrative: AX-2 margin −2.1pt from ECO-318;
 // Tier-1 Auto OEM net-60 + OEM-2 overdue invoices; Tier-1 Auto OEM 99.5% SLA obligation at risk;
 // DLV-3312 EAR99 export license hold; ECO-318 patent + INC-201 legal matters.
 
@@ -46,14 +46,14 @@ export async function seedBackOffice(db: OrgScopedDb): Promise<void> {
   await db.unitEconomic.createMany({
     data: [
       {
-        product: CODES.product, // HX-2 — flagship, margin dented by ECO-318
+        product: CODES.product, // AX-2 — flagship, margin dented by ECO-318
         asp: 210_000,
         cogs: 132_000,
         marginPct: 37.1,
         trend: `-2.1pt from ${CODES.eco}`,
       },
       {
-        product: "HX-1",
+        product: "AX-1",
         asp: 58_000,
         cogs: 31_000,
         marginPct: 46.6,
@@ -81,7 +81,7 @@ export async function seedBackOffice(db: OrgScopedDb): Promise<void> {
       {
         code: "INV-7741",
         account: "Tier-1 Auto OEM",
-        source: "DLV · 24× HX-2 + RaaS",
+        source: "DLV · 24× AX-2 + RaaS",
         amount: 8_400_000,
         terms: "net-60",
         dueDate: d("+38d"),
@@ -142,7 +142,7 @@ export async function seedBackOffice(db: OrgScopedDb): Promise<void> {
           {
             ts: d("-2h").toISOString(),
             kind: "cost-roll",
-            text: `${CODES.eco} +$140/unit → HX-2 margin -2.1pt`,
+            text: `${CODES.eco} +$140/unit → AX-2 margin -2.1pt`,
           },
           {
             ts: d("-2h").toISOString(),

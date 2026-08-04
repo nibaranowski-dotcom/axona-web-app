@@ -130,8 +130,8 @@ async function run(): Promise<void> {
         expected > 0 &&
         !!servoRow &&
         servoRow.unitsInField === expected &&
-        // the demo thread's cohort — HX2-0208 / HX2-0214 carry lot 88421
-        facade.units.some((u) => u.serial === "HX2-0208")
+        // the demo thread's cohort — AX2-0208 / AX2-0214 carry lot 88421
+        facade.units.some((u) => u.serial === "AX2-0208")
       );
     },
   );

@@ -7,7 +7,7 @@ brief, deferred). This brief adds it. It's the **as-designed** side of the "as-d
 (PLM.4 is the as-built diff; this is the design source of truth those diffs align against).
 
 **Screen:** `BOM.dc.html` · **Route:** `/bom/:model` (with a model + design-revision selector) · **Type:** detail
-with a list-like tree. Breadcrumb `Engineering › BOM › HX-2 (rev C)`.
+with a list-like tree. Breadcrumb `Engineering › BOM › AX-2 (rev C)`.
 
 ## What it answers
 
@@ -23,7 +23,7 @@ substitution/effectivity legibility are the point.
 
 ## Elements
 
-- **Header / selectors:** model (`HX-2`) + **design-revision selector** (rev A · rev B · **rev C** current) —
+- **Header / selectors:** model (`AX-2`) + **design-revision selector** (rev A · rev B · **rev C** current) —
   changing the revision re-resolves the whole tree to that revision's content.
 - **BOM tree (the hero):** indented expandable rows; each line = position/ref-des · part number → **part
   revision** · description · qty · UoM. Assemblies expand to their children; a running part count in a mono

@@ -15,7 +15,7 @@ export const CODES = {
   delivery: "DLV-3312",
   robot: "SN-2196",
   policy: "p-13",
-  product: "HX-2",
+  product: "AX-2",
   incident: "INC-201",
   // PLM.1b — the deferred-tier thread codes (extend the SN-2208 story).
   testFail: "TR-8841", // FAIL on the post-upgrade config (v4.2.1)

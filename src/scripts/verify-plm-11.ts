@@ -33,8 +33,8 @@ const check = async (
 
 const DEMO = "org_axona_demo";
 const SECOND = "org_isolation_test";
-const BASELINE = "CFG-HX2-r4.2";
-const DRAFT = "CFG-HX2-r4.3";
+const BASELINE = "CFG-AX2-r4.2";
+const DRAFT = "CFG-AX2-r4.3";
 
 async function run(): Promise<void> {
   console.log("\nVerifying PLM.11 — Configuration detail\n");
@@ -170,8 +170,8 @@ async function run(): Promise<void> {
   await check(
     "frozen baseline: a BOM change does NOT alter the baseline manifest; a draft resolves live",
     async () => {
-      const hx2 = await prisma.productModel.findFirst({
-        where: { orgId: DEMO, code: "HX-2" },
+      const ax2 = await prisma.productModel.findFirst({
+        where: { orgId: DEMO, code: "AX-2" },
         select: { id: true, designRevision: true },
       });
       // PLM.13: the manifest resolves LEAVES at the model's CURRENT design
@@ -181,8 +181,8 @@ async function run(): Promise<void> {
       // check would fail for the wrong reason.
       const candidates = await prisma.bomLine.findMany({
         where: {
-          productModelId: hx2!.id,
-          designRevision: hx2!.designRevision,
+          productModelId: ax2!.id,
+          designRevision: ax2!.designRevision,
         },
         select: { id: true, qty: true, position: true, parentLineId: true },
         orderBy: { position: "asc" },

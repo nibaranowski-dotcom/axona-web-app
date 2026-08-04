@@ -56,6 +56,21 @@ export const BANNED_MARQUES = [
   "MicrofluidX",
   "Marcel Gordon",
   "Marcel",
+  // SEED.4 — a real PRODUCT designation, not a company. The base seed modelled its
+  // flagship as "HX-2" (with unit serials "HX2-0208", config baselines "CFG-HX2-r4.2"),
+  // and because the base narrative is seeded into EVERY tenant, those strings rendered
+  // live on the prospect demo orgs — a designation identifies its maker as surely as a
+  // company name. Renamed to the neutral fictional "AX-2"/"AX2" across the seed, app,
+  // exports, docs, verifies and specs; both spellings banned so it cannot return.
+  // (design/ still carries it in the generated .dc.html mocks — out of the scan scope
+  // and regenerated from the design tool, so renaming there would desync it.)
+  // BOTH generations are banned: the "HX" PREFIX is the tell, so banning only the
+  // flagship would leave the previous-gen rev naming the same family. Renamed to the
+  // neutral AX-1/AX-2 everywhere in scope.
+  "HX-2",
+  "HX2",
+  "HX-1",
+  "HX1",
 ] as const;
 
 /** Case-insensitive, word-bounded matcher over the banned list. */

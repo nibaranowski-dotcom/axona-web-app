@@ -94,15 +94,15 @@ async function run(): Promise<void> {
     } else {
       const data = await getFinanceData(org.id);
       await check(
-        "HX-2 −2.1pt + Tier-1 Auto OEM net-60 + OEM-2 overdue surface",
+        "AX-2 −2.1pt + Tier-1 Auto OEM net-60 + OEM-2 overdue surface",
         () => {
-          const hx2 = data.unitEconomics.find((u) => u.product === "HX-2");
+          const ax2 = data.unitEconomics.find((u) => u.product === "AX-2");
           const bmw = data.invoices.find(
             (i) => i.account === "Tier-1 Auto OEM",
           );
           const kaw = data.invoices.find((i) => i.account === "OEM-2");
           return (
-            hx2?.marginDeltaPt === -2.1 &&
+            ax2?.marginDeltaPt === -2.1 &&
             bmw?.terms === "net-60" &&
             bmw.overdue === false &&
             kaw?.overdue === true

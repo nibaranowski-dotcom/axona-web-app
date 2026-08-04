@@ -23,7 +23,7 @@ real — N units run exactly this" proof. Not a generic table: the manifest + lo
 
 ## Elements
 
-- **Identity header:** config code (`CFG-B-4.2`) · model (`HX-2`) · **baseline vs draft** state + lock icon
+- **Identity header:** config code (`CFG-B-4.2`) · model (`AX-2`) · **baseline vs draft** state + lock icon
   (functional green for baseline/locked) · lineage (**supersedes / superseded-by** the adjacent version).
 - **Resolved content (the manifest):** HW — each position → its part revision (e.g. `COMPUTE-720 rev C`); SW —
   firmware/software versions (e.g. `firmware v4.2.1`). Mono, specific, itemized.

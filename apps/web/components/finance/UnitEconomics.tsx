@@ -3,7 +3,7 @@ import type { UnitEcon } from "@/lib/finance";
 import { fmtMoney, fmtPct } from "./format";
 
 // Per-unit economics (Finance.dc.html) — product · ASP · unit COGS · gross-margin
-// bar · trend. A margin eroding (HX-2, ECO-318) reads ink; improving reads green
+// bar · trend. A margin eroding (AX-2, ECO-318) reads ink; improving reads green
 // (functional live/positive). Brand palette only.
 const COLS = "grid grid-cols-[1.5fr_1fr_1fr_1fr_1.1fr] items-center gap-3 px-5";
 

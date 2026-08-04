@@ -41,7 +41,7 @@ function autonomySeries(): {
 
 export async function seedRobotics(db: OrgScopedDb): Promise<void> {
   // Technicians first (WorkOrderField.techId references Technician). Each carries
-  // a cert matrix across 5 cert types — hx2Service · hx1Service · hvBattery ·
+  // a cert matrix across 5 cert types — ax2Service · ax1Service · hvBattery ·
   // safetyLoto · commissioning — with a VALID / EXPIRING / TRAINING / (missing)
   // mix (PPL.2). M. Osei's hvBattery is EXPIRING (12d) — the Field Service
   // dispatch gate. A missing key = "not held". (TRAINING certs sit far out so the
@@ -57,8 +57,8 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       site: "Site-3",
       status: "ON_JOB",
       certs: {
-        hx2Service: cert("VALID", "+9m"),
-        hx1Service: cert("VALID", "+9m"),
+        ax2Service: cert("VALID", "+9m"),
+        ax1Service: cert("VALID", "+9m"),
         hvBattery: cert("EXPIRING", "+12d"), // the dispatch gate
         safetyLoto: cert("VALID", "+7m"),
         commissioning: cert("VALID", "+10m"),
@@ -72,8 +72,8 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       site: "Site-1",
       status: "AVAILABLE",
       certs: {
-        hx2Service: cert("VALID", "+8m"),
-        hx1Service: cert("TRAINING", "+6m"),
+        ax2Service: cert("VALID", "+8m"),
+        ax1Service: cert("TRAINING", "+6m"),
         hvBattery: cert("VALID", "+8m"),
         safetyLoto: cert("VALID", "+11m"),
       },
@@ -88,8 +88,8 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
         site: "Site-3",
         status: "ON_SITE",
         certs: {
-          hx2Service: cert("VALID", "+10m"),
-          hx1Service: cert("VALID", "+10m"),
+          ax2Service: cert("VALID", "+10m"),
+          ax1Service: cert("VALID", "+10m"),
           hvBattery: cert("VALID", "+10m"),
           safetyLoto: cert("VALID", "+9m"),
           commissioning: cert("TRAINING", "+6m"),
@@ -101,8 +101,8 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
         site: "Site-2",
         status: "ON_SITE",
         certs: {
-          hx2Service: cert("VALID", "+6m"),
-          hx1Service: cert("VALID", "+6m"),
+          ax2Service: cert("VALID", "+6m"),
+          ax1Service: cert("VALID", "+6m"),
           safetyLoto: cert("VALID", "+7m"),
           commissioning: cert("VALID", "+12m"),
         },
@@ -113,8 +113,8 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
         site: "Site-1",
         status: "AVAILABLE",
         certs: {
-          hx2Service: cert("VALID", "+14m"),
-          hx1Service: cert("VALID", "+14m"),
+          ax2Service: cert("VALID", "+14m"),
+          ax1Service: cert("VALID", "+14m"),
           hvBattery: cert("VALID", "+14m"),
           safetyLoto: cert("VALID", "+12m"),
         },
@@ -125,8 +125,8 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
         site: "Site-2",
         status: "SCHEDULED",
         certs: {
-          hx2Service: cert("TRAINING", "+6m"),
-          hx1Service: cert("VALID", "+9m"),
+          ax2Service: cert("TRAINING", "+6m"),
+          ax1Service: cert("VALID", "+9m"),
           hvBattery: cert("EXPIRING", "+21d"),
           safetyLoto: cert("VALID", "+8m"),
         },
@@ -176,7 +176,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       },
       {
         serial: "SN-2184",
-        model: "HX-1",
+        model: "AX-1",
         customer: "OEM-2",
         site: "Site-1",
         uptimePct: 99.7,
@@ -196,7 +196,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       },
       {
         serial: "SN-2133",
-        model: "HX-1",
+        model: "AX-1",
         customer: "OEM-2",
         site: "Site-1",
         uptimePct: 85.3,
@@ -206,7 +206,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       },
       {
         serial: "SN-2120",
-        model: "HX-1",
+        model: "AX-1",
         customer: "OEM-2",
         site: "Site-2",
         uptimePct: 91.0,
@@ -246,7 +246,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       },
       {
         serial: "SN-2044",
-        model: "HX-1",
+        model: "AX-1",
         customer: "OEM-2",
         site: "Site-1",
         uptimePct: 99.3,
@@ -266,7 +266,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       },
       {
         serial: "SN-2027",
-        model: "HX-1",
+        model: "AX-1",
         customer: "OEM-4",
         site: "Site-2",
         uptimePct: 97.6,
@@ -286,7 +286,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       },
       {
         serial: "SN-2003",
-        model: "HX-1",
+        model: "AX-1",
         customer: "OEM-4",
         site: "Site-3",
         uptimePct: 96.8,
@@ -584,7 +584,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
       title: "Battery pack thermal shim (cell-4 hotspot)",
       changeType: "HW",
       changeClass: "REVISE",
-      affected: `HX-2 · ${CODES.robot} thermal watch`,
+      affected: `AX-2 · ${CODES.robot} thermal watch`,
       stage: "APPROVED",
       source: "From field service",
       reviewers: [{ role: "ops", pending: false }],
@@ -699,20 +699,20 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
   // Compat matrix — HW revs × firmware; pairs not listed render as n/a (ENG.2).
   await db.compatCell.createMany({
     data: [
-      { hwRev: "HX-2 r4", fwVersion: "v4.0.2", state: "compatible" },
-      { hwRev: "HX-2 r4", fwVersion: "v4.1.0", state: "compatible" },
-      { hwRev: "HX-2 r4", fwVersion: "v4.2.1", state: "cert" },
-      { hwRev: "HX-2 r4", fwVersion: "v4.2.2", state: "in-test" },
-      { hwRev: "HX-2 r3", fwVersion: "v4.0.2", state: "compatible" },
-      { hwRev: "HX-2 r3", fwVersion: "v4.1.0", state: "cert" },
-      { hwRev: "HX-2 r3", fwVersion: "v4.2.1", state: "cert" },
-      { hwRev: "HX-2 r3", fwVersion: "v4.2.2", state: "in-test" },
-      { hwRev: "HX-1 r5", fwVersion: "v4.0.2", state: "compatible" },
-      { hwRev: "HX-1 r5", fwVersion: "v4.1.0", state: "compatible" },
-      { hwRev: "HX-1 r5", fwVersion: "v4.2.1", state: "cert" },
-      { hwRev: "HX-1 r5", fwVersion: "v4.2.2", state: "in-test" },
-      { hwRev: "HX-1 r4", fwVersion: "v4.0.2", state: "cert" },
-      { hwRev: "HX-1 r4", fwVersion: "v4.1.0", state: "compatible" },
+      { hwRev: "AX-2 r4", fwVersion: "v4.0.2", state: "compatible" },
+      { hwRev: "AX-2 r4", fwVersion: "v4.1.0", state: "compatible" },
+      { hwRev: "AX-2 r4", fwVersion: "v4.2.1", state: "cert" },
+      { hwRev: "AX-2 r4", fwVersion: "v4.2.2", state: "in-test" },
+      { hwRev: "AX-2 r3", fwVersion: "v4.0.2", state: "compatible" },
+      { hwRev: "AX-2 r3", fwVersion: "v4.1.0", state: "cert" },
+      { hwRev: "AX-2 r3", fwVersion: "v4.2.1", state: "cert" },
+      { hwRev: "AX-2 r3", fwVersion: "v4.2.2", state: "in-test" },
+      { hwRev: "AX-1 r5", fwVersion: "v4.0.2", state: "compatible" },
+      { hwRev: "AX-1 r5", fwVersion: "v4.1.0", state: "compatible" },
+      { hwRev: "AX-1 r5", fwVersion: "v4.2.1", state: "cert" },
+      { hwRev: "AX-1 r5", fwVersion: "v4.2.2", state: "in-test" },
+      { hwRev: "AX-1 r4", fwVersion: "v4.0.2", state: "cert" },
+      { hwRev: "AX-1 r4", fwVersion: "v4.1.0", state: "compatible" },
     ],
   });
 
@@ -751,7 +751,7 @@ export async function seedRobotics(db: OrgScopedDb): Promise<void> {
           {
             ts: d("-3h").toISOString(),
             kind: "compat",
-            text: "certify HX-2 r4,r3 · HX-1 in test",
+            text: "certify AX-2 r4,r3 · AX-1 in test",
           },
         ],
       },

@@ -9,6 +9,7 @@ import {
   s3Configured,
   ensureBucket,
   ingestMemory,
+  reindex,
   type ProspectConfig,
   type OrgScopedDb,
 } from "@axona/db";
@@ -113,6 +114,14 @@ export async function clearOrgData(orgId: string): Promise<void> {
   await prisma.apiKey.deleteMany({ where: { orgId } });
   await prisma.loginSession.deleteMany({ where: { orgId } });
   await prisma.user.deleteMany({ where: { orgId } });
+
+  // SEED.4 — the SEARCH INDEX is a separate materialization of the rows above, and it
+  // outlived every clear until now: `reindex()` UPSERTS, so a doc whose source row is
+  // gone (or whose text was renamed) simply persisted. That is how a scrubbed
+  // designation kept rendering on `/search` after a full re-seed. Clearing it here
+  // makes the reset automatic — local AND prod — instead of a manual step nobody
+  // remembers. seedProspectOrg rebuilds it for this org at the end of the seed.
+  await prisma.searchDoc.deleteMany({ where: { orgId } });
 }
 
 const CONTENT_TYPE: Record<string, string> = {
@@ -231,6 +240,22 @@ export async function seedProspectOrg(
   } catch (err) {
     console.error(
       `[prospect-seed] ingestMemory skipped for ${orgId}:`,
+      (err as Error).message,
+    );
+  }
+
+  // 8. SEED.4 — rebuild THIS org's search index over the rows just written. Required,
+  //    not optional: clearOrgData now deletes the org's SearchDoc rows, and the
+  //    prospect path never reindexed — the tenants' docs were a side effect of the
+  //    BASE seed's global `reindex()`. Without this the tenant would seed to an EMPTY
+  //    `/search` (a worse failure than the stale index this replaces). Org-scoped, so
+  //    no other tenant is touched. Best-effort, like ingestMemory: a search-index
+  //    failure must not fail the seed.
+  try {
+    await reindex(orgId);
+  } catch (err) {
+    console.error(
+      `[prospect-seed] reindex skipped for ${orgId}:`,
       (err as Error).message,
     );
   }

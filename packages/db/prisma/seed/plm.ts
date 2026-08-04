@@ -6,10 +6,10 @@ import { CODES } from "./constants";
 // BOM, as-built capture and time-resolved config as ONE coherent thread that
 // EXTENDS (never forks) the ONT.1 narrative:
 //
-//   Unit SN-2208 (HX-2, built then deployed)
+//   Unit SN-2208 (AX-2, built then deployed)
 //     └─ as-built A-14: SERVO-204 rev B, lot 88421  ← SUBSTITUTION vs designed rev C
 //     └─ as-built B-07: HARN-220 rev B (ECO-314 rev bump) · C-03: alt-vendor cells
-//     └─ config: HW rev B + firmware v4.1.0 → v4.2.1 → CFG-HX2-r4.2 (baselined)
+//     └─ config: HW rev B + firmware v4.1.0 → v4.2.1 → CFG-AX2-r4.2 (baselined)
 //     └─ ECO-318: supersede SERVO-204 → SERVO-205, effectivity from SN-2210
 //          └─ affected units via the ONT.1 graph → field service
 //
@@ -29,7 +29,7 @@ const DAY = 24 * 60 * 60 * 1000;
 const SUSPECT_LOT = "88421";
 
 /**
- * The units that consumed the suspect lot. HX2-0208/HX2-0214 are the serials the
+ * The units that consumed the suspect lot. AX2-0208/AX2-0214 are the serials the
  * ONT.1 graph already links to the lot; SN-2208/09/10 are the PLM thread's units.
  * Seeding as-built lot records for BOTH sets is what makes the graph traversal
  * and the as-built capture query agree on "who has lot 88421" (PLM.5).
@@ -38,8 +38,8 @@ const LOT_COHORT = [
   "SN-2208",
   "SN-2209",
   "SN-2210",
-  "HX2-0208",
-  "HX2-0214",
+  "AX2-0208",
+  "AX2-0214",
 ] as const;
 
 interface BomSpec {
@@ -53,7 +53,7 @@ interface BomSpec {
 // The as-designed BOM per model. Positions + part vocabulary follow
 // `As-Built Diff.dc.html` (A-14/A-15/B-07/B-08/B-19/C-03/C-04/D-01) so the diff
 // screen renders against real rows of the shape its design specifies.
-const BOM_HX2: BomSpec[] = [
+const BOM_AX2: BomSpec[] = [
   { position: "A-14", part: "SERVO-204", rev: "C", lotTraced: true },
   { position: "A-15", part: "SERVO-204", rev: "C", lotTraced: true },
   { position: "B-07", part: "HARN-220", rev: "A", lotTraced: true },
@@ -65,7 +65,7 @@ const BOM_HX2: BomSpec[] = [
   { position: "D-06", part: "CTRL-100", rev: "A" },
   { position: "E-02", part: "GRIP-300", rev: "A" },
 ];
-const BOM_HX1: BomSpec[] = [
+const BOM_AX1: BomSpec[] = [
   { position: "A-14", part: "SERVO-204", rev: "C", lotTraced: true },
   { position: "B-07", part: "HARN-220", rev: "A", lotTraced: true },
   { position: "B-08", part: "SENS-12", rev: "2" },
@@ -93,14 +93,14 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
   const revCFrom = new Date(now.getTime() - 120 * DAY);
 
   // ── 1. Design side — the product models ───────────────────────────────────
-  // HX-2 + HX-1 are the models the rest of the seed already builds and deploys
+  // AX-2 + AX-1 are the models the rest of the seed already builds and deploys
   // (WorkOrderMfg.product / Robot.model), so the Unit spine reuses them rather
   // than inventing a parallel catalogue.
-  const hx2 = await db.productModel.create({
-    data: { code: "HX-2", name: "HX-2 humanoid", designRevision: "C" },
+  const ax2 = await db.productModel.create({
+    data: { code: "AX-2", name: "AX-2 humanoid", designRevision: "C" },
   });
-  const hx1 = await db.productModel.create({
-    data: { code: "HX-1", name: "HX-1 humanoid", designRevision: "D" },
+  const ax1 = await db.productModel.create({
+    data: { code: "AX-1", name: "AX-1 humanoid", designRevision: "D" },
   });
 
   // ── 2. Part masters + revisions ───────────────────────────────────────────
@@ -227,10 +227,10 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
   };
 
   // ── 3. As-designed BOM per model ──────────────────────────────────────────
-  const bomFor = (code: string) => (code === "HX-1" ? BOM_HX1 : BOM_HX2);
+  const bomFor = (code: string) => (code === "AX-1" ? BOM_AX1 : BOM_AX2);
   for (const [model, bom] of [
-    [hx2, BOM_HX2],
-    [hx1, BOM_HX1],
+    [ax2, BOM_AX2],
+    [ax1, BOM_AX1],
   ] as const) {
     await db.bomLine.createMany({
       data: bom.map((b) => ({
@@ -246,7 +246,7 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
 
   // ── 3b. PLM.13 — the MULTI-LEVEL tree + the design-revision ladder ────────
   //
-  // Everything above stays byte-identical: HX-2 rev C keeps exactly the ten leaf
+  // Everything above stays byte-identical: AX-2 rev C keeps exactly the ten leaf
   // positions the as-built diff (PLM.4/5), build readiness (BR.1) and capture
   // already resolve against. This adds
   //   · ASSEMBLY rows above those leaves (three roots + one sub-assembly, so the
@@ -310,9 +310,9 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
     qty?: number;
     children?: TreeNode[];
   }
-  // rev C — the CURRENT tree. Its leaves are BOM_HX2 exactly (same positions,
+  // rev C — the CURRENT tree. Its leaves are BOM_AX2 exactly (same positions,
   // parts, revisions and qty 1); only the assembly rows above them are new.
-  const HX2_TREE_C: TreeNode[] = [
+  const AX2_TREE_C: TreeNode[] = [
     {
       position: "A-100",
       part: "ASM-100",
@@ -361,12 +361,12 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
         children: n.children ? prune(n.children, drop, swap) : undefined,
       }))
       .filter((n) => !drop.includes(n.position));
-  const HX2_TREE_B = prune(
-    HX2_TREE_C,
+  const AX2_TREE_B = prune(
+    AX2_TREE_C,
     ["A-15", "B-19"],
     [[CODES.servoOld, "B"]],
   );
-  const HX2_TREE_A = prune(HX2_TREE_B, [], [["SENS-12", "1"]]);
+  const AX2_TREE_A = prune(AX2_TREE_B, [], [["SENS-12", "1"]]);
 
   const insertTree = async (
     productModelId: string,
@@ -403,9 +403,9 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
         await insertTree(productModelId, designRevision, n.children, line.id);
     }
   };
-  await insertTree(hx2.id, "C", HX2_TREE_C);
-  await insertTree(hx2.id, "B", HX2_TREE_B);
-  await insertTree(hx2.id, "A", HX2_TREE_A);
+  await insertTree(ax2.id, "C", AX2_TREE_C);
+  await insertTree(ax2.id, "B", AX2_TREE_B);
+  await insertTree(ax2.id, "A", AX2_TREE_A);
 
   // ── 4. Software releases + configuration versions ─────────────────────────
   // The firmware versions are the SAME strings Fleet already carries on Robot
@@ -425,7 +425,7 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
   }
 
   // Named configurations = (hw rev, firmware + policy/os/cal) tuples with a lineage.
-  // CFG-HX2-r4.2 is the locked baseline the demo unit resolves to today (PLM.1a pins
+  // CFG-AX2-r4.2 is the locked baseline the demo unit resolves to today (PLM.1a pins
   // NOW→r4.2, PAST→r4.1 by firmware — keep those firmwares). PLM.11: richer swSpec so
   // the manifest SW section is populated; supersedes chains the lineage; baselines are
   // dual-approver locked (proposer + finalizer) with a FROZEN manifest snapshot.
@@ -438,8 +438,8 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
     supersedes: string | null;
   }[] = [
     {
-      name: "CFG-HX2-r4.0",
-      model: "HX-2",
+      name: "CFG-AX2-r4.0",
+      model: "AX-2",
       hwRev: "A",
       sw: {
         firmware: "v4.0.2",
@@ -451,8 +451,8 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
       supersedes: null,
     },
     {
-      name: "CFG-HX2-r4.1",
-      model: "HX-2",
+      name: "CFG-AX2-r4.1",
+      model: "AX-2",
       hwRev: "A",
       sw: {
         firmware: "v4.1.0",
@@ -461,11 +461,11 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
         cal: "cal-2026.04",
       },
       baseline: false,
-      supersedes: "CFG-HX2-r4.0",
+      supersedes: "CFG-AX2-r4.0",
     },
     {
-      name: "CFG-HX2-r4.1b",
-      model: "HX-2",
+      name: "CFG-AX2-r4.1b",
+      model: "AX-2",
       hwRev: "B",
       sw: {
         firmware: "v4.2.0",
@@ -477,8 +477,8 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
       supersedes: null,
     },
     {
-      name: "CFG-HX2-r4.2",
-      model: "HX-2",
+      name: "CFG-AX2-r4.2",
+      model: "AX-2",
       hwRev: "B",
       sw: {
         firmware: "v4.2.1",
@@ -487,11 +487,11 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
         cal: "cal-2026.05",
       },
       baseline: true,
-      supersedes: "CFG-HX2-r4.1",
+      supersedes: "CFG-AX2-r4.1",
     },
     {
-      name: "CFG-HX2-r4.3",
-      model: "HX-2",
+      name: "CFG-AX2-r4.3",
+      model: "AX-2",
       hwRev: "B",
       sw: {
         firmware: "v4.2.2",
@@ -500,23 +500,23 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
         cal: "cal-2026.05",
       },
       baseline: false,
-      supersedes: "CFG-HX2-r4.2",
+      supersedes: "CFG-AX2-r4.2",
     },
     {
-      name: "CFG-HX1-r4.9",
-      model: "HX-1",
+      name: "CFG-AX1-r4.9",
+      model: "AX-1",
       hwRev: "A",
       sw: { firmware: "v4.1.0", policy: "p-12.0" },
       baseline: false,
       supersedes: null,
     },
     {
-      name: "CFG-HX1-r5.0",
-      model: "HX-1",
+      name: "CFG-AX1-r5.0",
+      model: "AX-1",
       hwRev: "A",
       sw: { firmware: "v4.2.1", policy: "p-12.4" },
       baseline: true,
-      supersedes: "CFG-HX1-r4.9",
+      supersedes: "CFG-AX1-r4.9",
     },
   ];
 
@@ -531,7 +531,7 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
     const created = await db.configurationVersion.create({
       data: {
         name: c.name,
-        productModelId: c.model === "HX-1" ? hx1.id : hx2.id,
+        productModelId: c.model === "AX-1" ? ax1.id : ax2.id,
         hwSpec: { rev: c.hwRev },
         swSpec: c.sw,
         isBaseline: c.baseline,
@@ -578,7 +578,7 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
       await db.workOrderMfg.create({
         data: {
           serial,
-          product: "HX-2",
+          product: "AX-2",
           station: "Final QA",
           status: "DONE",
           startedAt: build,
@@ -606,8 +606,8 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
     const robot = robotBySerial.get(serial) ?? null;
     const wo = woBySerial.get(serial) ?? null;
     // The model is whatever the build/deploy record already says this unit is.
-    const modelCode = robot?.model ?? wo?.product ?? "HX-2";
-    const model = modelCode === "HX-1" ? hx1 : hx2;
+    const modelCode = robot?.model ?? wo?.product ?? "AX-2";
+    const model = modelCode === "AX-1" ? ax1 : ax2;
     // Status: deployed once a Robot exists; otherwise it is still on the line.
     const status = robot
       ? "deployed"
@@ -776,7 +776,7 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
 
   // NCR-118 is raised against SN-2208 — the ONE demo thread the PRD states
   // (SN-2208 → SERVO-204 lot 88421 → NCR-118 → ECO-318). ONT.1 also links the NCR
-  // to HX2-0208; both are real units that consumed the lot, so both edges stand.
+  // to AX2-0208; both are real units that consumed the lot, so both edges stand.
   const ncr = await db.nCR.findFirst({ where: { code: CODES.ncr } });
   if (ncr)
     links.push({
@@ -805,7 +805,7 @@ export async function seedPlm(db: OrgScopedDb): Promise<{
   for (const l of links) {
     const unit = unitBySerial.get(l.toSerial);
     if (!unit) continue;
-    // The ONT.1 seed already wires LOT→HX2-0208/HX2-0214; don't double-edge them.
+    // The ONT.1 seed already wires LOT→AX2-0208/AX2-0214; don't double-edge them.
     const existing = await db.entityLink.findFirst({
       where: {
         fromType: l.fromType,

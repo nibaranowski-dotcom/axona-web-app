@@ -136,8 +136,8 @@ export async function seedOntology(db: OrgScopedDb): Promise<number> {
   const LOT = await part("LOT-88421"); // quarantined lot (a Part row)
   const ACTUATOR_CO = await supplier("Tier-1 Actuator Co");
   const PO9002 = await po("PO-9002"); // the received actuator order
-  const HX0208 = await unit("HX2-0208"); // held-at-Test unit
-  const HX0214 = await unit("HX2-0214"); // a second unit from the lot
+  const AX0208 = await unit("AX2-0208"); // held-at-Test unit
+  const AX0214 = await unit("AX2-0214"); // a second unit from the lot
   const DLV = await delivery(CODES.delivery); // DLV-3312
   const WO = await wof("WO-5518"); // actuator recalibration
   const INV = await invoice("INV-7741"); // the affected order's invoice
@@ -164,7 +164,7 @@ export async function seedOntology(db: OrgScopedDb): Promise<number> {
       ECO318,
       "supersede SERVO-204 → -205",
     ),
-    E("NCR", NCR118, "AFFECTS", "UNIT", HX0208, "unit held at Test"),
+    E("NCR", NCR118, "AFFECTS", "UNIT", AX0208, "unit held at Test"),
     E("ECO", ECO318, "AFFECTS", "PART", SERVO204, "tighter tolerance"),
     E(
       "ECO",
@@ -192,11 +192,11 @@ export async function seedOntology(db: OrgScopedDb): Promise<number> {
     ),
     E("PURCHASE_ORDER", PO9002, "CONTAINS", "LOT", LOT, "the suspect lot"),
     E("LOT", LOT, "SUPPLIED_BY", "SUPPLIER", ACTUATOR_CO, "lot origin"),
-    E("LOT", LOT, "AFFECTS", "UNIT", HX0208, "consumed a bad actuator"),
-    E("LOT", LOT, "AFFECTS", "UNIT", HX0214, "consumed a bad actuator"),
+    E("LOT", LOT, "AFFECTS", "UNIT", AX0208, "consumed a bad actuator"),
+    E("LOT", LOT, "AFFECTS", "UNIT", AX0214, "consumed a bad actuator"),
     E(
       "UNIT",
-      HX0208,
+      AX0208,
       "SHIPPED_IN",
       "DELIVERY",
       DLV,
@@ -207,7 +207,7 @@ export async function seedOntology(db: OrgScopedDb): Promise<number> {
       WO,
       "DISPATCHED_FOR",
       "UNIT",
-      HX0208,
+      AX0208,
       "actuator recalibration in the field",
     ),
     E("DELIVERY", DLV, "IMPACTS", "INVOICE", INV, "at-risk order value"),

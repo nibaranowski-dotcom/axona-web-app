@@ -52,8 +52,8 @@ const EXTRA_PARTS: PartSpec[] = [
     dailyUse: 1,
   },
   {
-    sku: "HX2-UNIT",
-    name: "HX-2 · finished unit",
+    sku: "AX2-UNIT",
+    name: "AX-2 · finished unit",
     onHand: 18,
     reorderPoint: 0,
     leadDays: 0,
@@ -65,7 +65,7 @@ const EXTRA_PARTS: PartSpec[] = [
 const DAILY_USE: Record<string, number> = {
   [CODES.servoOld]: 3, // SERVO-204: 6 on hand → ~2 builds of cover
   [CODES.servoNew]: 2, // SERVO-205: new rev, not yet stocked
-  "BATT-HX2": 2,
+  "BATT-AX2": 2,
 };
 
 type StockSpec = {
@@ -97,7 +97,7 @@ const STOCK: StockSpec[] = [
     valueUsd: 40_000,
   },
   {
-    sku: "BATT-HX2",
+    sku: "BATT-AX2",
     location: "Central warehouse",
     kind: "CENTRAL",
     onHand: 22,
@@ -138,7 +138,7 @@ const STOCK: StockSpec[] = [
     valueUsd: 2_000,
   },
   {
-    sku: "BATT-HX2",
+    sku: "BATT-AX2",
     location: "Line-side",
     kind: "LINE_SIDE",
     onHand: 4,
@@ -184,7 +184,7 @@ const STOCK: StockSpec[] = [
     valueUsd: 40_000,
   },
   {
-    sku: "BATT-HX2",
+    sku: "BATT-AX2",
     location: "Osaka",
     kind: "EDGE_CACHE",
     onHand: 2,
@@ -213,7 +213,7 @@ const STOCK: StockSpec[] = [
   },
   // Finished goods — units pre-delivery.
   {
-    sku: "HX2-UNIT",
+    sku: "AX2-UNIT",
     location: "Finished goods",
     kind: "FINISHED_GOODS",
     onHand: 18,

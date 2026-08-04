@@ -86,19 +86,24 @@ async function run(): Promise<void> {
 
   // ── 2: agent proposal with calibrated confidence, doesn't set rootCause ──
   await check(
-    "agent proposal carries CALIBRATED confidence (CONF.1); does not classify",
+    "agent proposal is evidence-derived + carries NO fabricated confidence; does not classify",
     async () => {
       const rca = await getRcaWorkspace(DEMO, "NCR-118");
       if (!rca?.suggestion) return false;
-      const s = rca.suggestion;
-      // calibrated is the CONF.1-corrected value (differs from raw here), and the
-      // proposal never wrote rootCause (that stays whatever the human set).
+      const s = rca.suggestion as typeof rca.suggestion &
+        Record<string, unknown>;
+      // SEED.4 — this check previously asserted a CALIBRATED confidence, but the
+      // value it calibrated was a hardcoded 0.82 literal, so the number was
+      // fabricated (and rendered "(uncal)" on any org without a fitted model).
+      // The proposal must now carry no confidence at all until CONF.1 is wired to
+      // a real emitted value. The proposal itself still never writes rootCause.
       return (
         s.cause === "component" &&
-        typeof s.calibrated === "number" &&
-        s.calibrated !== s.rawConfidence && // calibration actually applied
-        (s.calibratedState === "calibrated" ||
-          s.calibratedState === "uncalibrated")
+        typeof s.rationale === "string" &&
+        s.rationale.length > 0 &&
+        !("calibrated" in s) &&
+        !("rawConfidence" in s) &&
+        !("calibratedState" in s)
       );
     },
   );

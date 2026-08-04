@@ -3,7 +3,7 @@
  *
  * Run: `pnpm verify:fnd-12` (needs a migrated + seeded DB; DATABASE_URL set).
  *   STATIC: seed orchestrator + per-domain modules exist.
- *   DATA: counts + the SERVO/NCR-118/ECO-318/Tier-1 Auto OEM/DLV-3312/SN-2196/Osei/p-13/HX-2
+ *   DATA: counts + the SERVO/NCR-118/ECO-318/Tier-1 Auto OEM/DLV-3312/SN-2196/Osei/p-13/AX-2
  *     chain, and tenant-orgId integrity.
  */
 import { existsSync } from "node:fs";
@@ -106,8 +106,8 @@ async function run(): Promise<void> {
           },
         })) >= 1,
     );
-    await check("HX-2 margin -2.1pt + OEM-2 overdue invoice", async () => {
-      const u = await db.unitEconomic.findFirst({ where: { product: "HX-2" } });
+    await check("AX-2 margin -2.1pt + OEM-2 overdue invoice", async () => {
+      const u = await db.unitEconomic.findFirst({ where: { product: "AX-2" } });
       const inv = await db.invoice.findFirst({
         where: { account: "OEM-2", status: "OVERDUE" },
       });

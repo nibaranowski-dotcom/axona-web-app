@@ -67,7 +67,7 @@ OEM-2 / role labels); every crop carries a sample-data chip.
     </tr>
     <tr>
       <td class="mono">PO-9014</td>
-      <td>BATT-HX2 · qty 16<br><span class="mono" style="font-size:11px;color:rgba(10,10,10,.5)">Drafted by agent · conf 0.79</span></td>
+      <td>BATT-AX2 · qty 16<br><span class="mono" style="font-size:11px;color:rgba(10,10,10,.5)">Drafted by agent · conf 0.79</span></td>
       <td>Cells Co</td><td class="mono">$51,200</td>
       <td style="text-align:right"><span class="badge" style="background:#c6f24f;color:#0a0a0a">Awaiting approval</span></td>
     </tr>
@@ -109,7 +109,7 @@ OEM-2 / role labels); every crop carries a sample-data chip.
     <div><div class="eyebrow">Manufacturing · as-built genealogy</div><div class="h1">Every unit, fully traced · SN-0208</div></div>
     <span class="chip">sample data — illustrative</span>
   </div>
-  <div class="mono" style="font-size:12px;color:rgba(10,10,10,.55);margin-top:10px">Customer Tier-1 Auto OEM · product HX-2 · captured at each station — not reconstructed later</div>
+  <div class="mono" style="font-size:12px;color:rgba(10,10,10,.55);margin-top:10px">Customer Tier-1 Auto OEM · product AX-2 · captured at each station — not reconstructed later</div>
 
   <div style="margin-top:18px">
     <div class="station"><span class="node" style="background:#1f9e6f"></span><div style="flex:1"><div style="display:flex;justify-content:space-between"><span class="st-name">Frame build</span><span class="stat" style="background:rgba(31,158,111,.12);color:#1f9e6f">Done</span></div><div class="built">FRM-88 · s/n F88-0208 · 2026-06-27</div></div></div>

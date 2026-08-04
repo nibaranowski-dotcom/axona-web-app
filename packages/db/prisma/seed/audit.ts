@@ -193,8 +193,8 @@ export async function seedAudit(
       action: "compat.check",
       targetType: "ECO",
       targetId: ecoId,
-      summary: `Compat check for ${CODES.servoNew} — HX-1 r5 cert pending`,
-      output: { blocked: ["HX-1 r5"] },
+      summary: `Compat check for ${CODES.servoNew} — AX-1 r5 cert pending`,
+      output: { blocked: ["AX-1 r5"] },
       correlationId: runId,
       confidence: 0.31, // low — flag for human review (cert pending, uncertain)
     },

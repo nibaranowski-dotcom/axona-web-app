@@ -25,7 +25,7 @@ narrative. CMD.2 renders it; the copilot (GA.1) answers over it.
 | `GET /api/core/summary` returns per-module KPIs + a cross-module exception feed, org-scoped | yes |
 | KPIs derive from seeded data (no hardcoded numbers) | 100% |
 | Exceptions are real (queried) + carry a source link and the modules they ripple to | yes |
-| The seeded narrative surfaces as exceptions (NCR-118, DLV-3312 customs, SN-2196, Osei cert, HX-2 margin, Tier-1 Auto OEM SLA, p-13) | all present |
+| The seeded narrative surfaces as exceptions (NCR-118, DLV-3312 customs, SN-2196, Osei cert, AX-2 margin, Tier-1 Auto OEM SLA, p-13) | all present |
 | Latency on the seeded dataset | < 100ms |
 | Verify + typecheck | `pnpm verify:cmd-1` green, `tsc` clean |
 
@@ -55,7 +55,7 @@ narrative. CMD.2 renders it; the copilot (GA.1) answers over it.
 - [ ] `GET /api/core/summary` returns `{ company, kpisByModule, exceptions }`, org-scoped; numbers come from seeded rows (change the seed → numbers change).
 - [ ] `kpisByModule` covers the agent-bearing modules with 2–4 KPIs each (e.g. Procurement: open POs, awaiting approval; Quality: open NCRs, SPC breaches; Fleet: uptime %, units in watch/fault; Finance: AR overdue, margin trend).
 - [ ] `exceptions` is a ranked feed where each item has a title, severity (ink/lime/green — never red), the source module + a link to the object, and a `ripples` list of affected modules.
-- [ ] The seeded narrative appears as exceptions: NCR-118 (Quality → Engineering/Procurement/Fulfillment), DLV-3312 customs hold (Fulfillment → Legal/Finance), SN-2196 thermal (Fleet → Field Service), Osei HV cert expiring (People → Field Service), HX-2 margin −2.1pt (Finance), Tier-1 Auto OEM SLA at-risk (Legal → Autonomy), agent-drafted PO awaiting approval (Procurement), p-13 canary regression (Autonomy → Fleet).
+- [ ] The seeded narrative appears as exceptions: NCR-118 (Quality → Engineering/Procurement/Fulfillment), DLV-3312 customs hold (Fulfillment → Legal/Finance), SN-2196 thermal (Fleet → Field Service), Osei HV cert expiring (People → Field Service), AX-2 margin −2.1pt (Finance), Tier-1 Auto OEM SLA at-risk (Legal → Autonomy), agent-drafted PO awaiting approval (Procurement), p-13 canary regression (Autonomy → Fleet).
 - [ ] Org isolation: org B's summary never includes org A's rows.
 - [ ] `pnpm verify:cmd-1` green; `tsc` clean; committed + pushed.
 
@@ -238,7 +238,7 @@ run();
 
 **Manual (docker up)**
 - [ ] curl localhost:3001/api/core/summary | jq → company KPIs, kpisByModule, exceptions.
-- [ ] Exceptions include the narrative (NCR-118, DLV-3312, SN-2196, Osei cert, HX-2 margin, Tier-1 Auto OEM SLA, p-13) with ripples + links.
+- [ ] Exceptions include the narrative (NCR-118, DLV-3312, SN-2196, Osei cert, AX-2 margin, Tier-1 Auto OEM SLA, p-13) with ripples + links.
 - [ ] Numbers match the seed; change a seeded row → number changes.
 ```
 
@@ -255,7 +255,7 @@ run();
 
 - `getCoreSummary(orgId)` — all queries via `dbForOrg`, parallelized; numbers from the seed, never hardcoded.
 - Exceptions are real rows + a curated `ripples` mapping; severity ink/lime/green (no red); each links to its object.
-- The narrative must surface (NCR-118, DLV-3312, SN-2196, Osei, HX-2, Tier-1 Auto OEM SLA, p-13).
+- The narrative must surface (NCR-118, DLV-3312, SN-2196, Osei, AX-2, Tier-1 Auto OEM SLA, p-13).
 - Route org-scoped via `getCurrentUser`; cap exceptions; `$queryRaw` for column compares.
 
 ## Rollback Plan

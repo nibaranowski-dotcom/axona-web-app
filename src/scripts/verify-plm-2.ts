@@ -122,7 +122,7 @@ async function run(): Promise<void> {
   // ── 2: filters compose (AND, not OR) ──
   await check("filters compose — combined filters AND (never OR)", async () => {
     if (all.matched === 0) return false;
-    const byModel = await getUnitRegistry(DEMO, { model: "HX-2" }, 1, 500);
+    const byModel = await getUnitRegistry(DEMO, { model: "AX-2" }, 1, 500);
     const byStatus = await getUnitRegistry(
       DEMO,
       { status: "deployed" },
@@ -131,7 +131,7 @@ async function run(): Promise<void> {
     );
     const both = await getUnitRegistry(
       DEMO,
-      { model: "HX-2", status: "deployed" },
+      { model: "AX-2", status: "deployed" },
       1,
       500,
     );
@@ -143,7 +143,7 @@ async function run(): Promise<void> {
       byStatus.matched > 0 &&
       both.matched === expected.length &&
       both.matched <= Math.min(byModel.matched, byStatus.matched) &&
-      both.rows.every((r) => r.modelCode === "HX-2" && r.status === "deployed")
+      both.rows.every((r) => r.modelCode === "AX-2" && r.status === "deployed")
     );
   });
 
@@ -174,7 +174,7 @@ async function run(): Promise<void> {
     "filters are URL-addressable (same params ⇒ same rows, page included)",
     async () => {
       const url = new URL(
-        "http://x/units?model=HX-2&status=deployed&sw=v4.2.1&page=1",
+        "http://x/units?model=AX-2&status=deployed&sw=v4.2.1&page=1",
       );
       const fromUrl = {
         model: url.searchParams.get("model") ?? undefined,
@@ -184,7 +184,7 @@ async function run(): Promise<void> {
       const a = await getUnitRegistry(DEMO, fromUrl, 1, 500);
       const b = await getUnitRegistry(
         DEMO,
-        { model: "HX-2", status: "deployed", sw: "v4.2.1" },
+        { model: "AX-2", status: "deployed", sw: "v4.2.1" },
         1,
         500,
       );
@@ -224,10 +224,10 @@ async function run(): Promise<void> {
         const before = await db.unit.count();
         const csv = [
           "serial,model,status",
-          "SN-REG-1,HX-2,in_build",
-          "SN-REG-2,HX-2,in_build",
+          "SN-REG-1,AX-2,in_build",
+          "SN-REG-2,AX-2,in_build",
           "SN-REG-3,NOPE,in_build", // unknown model
-          "SN-REG-4,HX-2,teleporting", // bad enum
+          "SN-REG-4,AX-2,teleporting", // bad enum
         ].join("\n");
 
         // dry run — reports the same shape, writes nothing

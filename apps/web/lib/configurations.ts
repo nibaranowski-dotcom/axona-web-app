@@ -143,7 +143,12 @@ export interface ConfigApprover {
   who: string;
 }
 export interface ConfigAgentProposal {
-  confidence: number; // agent-EMITTED (uncalibrated) — assistance only
+  /**
+   * DEMO-INTEGRITY (SEED.4) — no confidence field. This carried a hardcoded 0.82
+   * literal rendered as "Proposal · 82% confidence", which was the SAME fabricated
+   * constant the RCA screen used. A number appears here only once it is a real
+   * `calibratedConfidence()` result (DEMO.6 beat #6).
+   */
   text: string;
 }
 export interface ConfigDetail {
@@ -353,7 +358,6 @@ export async function getConfigurationDetail(
     agent:
       state === "baseline"
         ? {
-            confidence: 0.82,
             text: "Units on this baseline may show drift — verify no field swaps went uncaptured as a configuration change.",
           }
         : null,

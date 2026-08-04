@@ -135,7 +135,7 @@ async function run(): Promise<void> {
       return (
         !/#[0-9a-fA-F]{3,6}\b/.test(row) &&
         !/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(row) &&
-        !/Tier-1 Auto OEM|SN-2196|SN-2208|HX-2|SERVO-20|Nomagic/.test(view)
+        !/Tier-1 Auto OEM|SN-2196|SN-2208|AX-2|SERVO-20|Nomagic/.test(view)
       );
     },
   );

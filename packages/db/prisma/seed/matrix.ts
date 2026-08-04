@@ -25,7 +25,7 @@ const COLUMNS: { question: string; answers: Record<string, Answer> }[] = [
         confidence: 0.86,
       },
       "Impact analysis — Tier-1 Auto OEM order": {
-        value: "24× HX-2 slip ~3 weeks; phased delivery proposed",
+        value: "24× AX-2 slip ~3 weeks; phased delivery proposed",
         citation: "Sales · Tier-1 Auto OEM",
         confidence: 0.72,
       },

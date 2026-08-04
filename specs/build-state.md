@@ -120,7 +120,7 @@ hand-edited — its `&` breaks the design's find/replace scripts), Marketing, Se
 
 **Cross-module narrative (the through-line — keep every new screen consistent with it):** the
 Tier-1 Auto OEM / OEM-2 sample deal → **ECO-318** (engineering change) → **SERVO-204 vs SERVO-205** drive →
-**lot-88421** defect → **NCR-118** (the quality nonconformance) → held unit **HX2-0208** at Test →
+**lot-88421** defect → **NCR-118** (the quality nonconformance) → held unit **AX2-0208** at Test →
 **M. Osei's** expiring HV/battery cert gating field dispatch. It's now told across ~10 module screens.
 Tier-1 Auto OEM/OEM-2 are **anonymized fictional labels** — anonymized at the source (SEED.1; no real marque
 anywhere in the repo or app). Anything that leaves the app (decks/screenshots) also carries a "sample data —

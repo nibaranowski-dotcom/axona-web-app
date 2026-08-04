@@ -77,7 +77,7 @@ export async function getCoreSummary(orgId: string): Promise<CoreSummary> {
     canaries,
     canary,
     arOverdue,
-    hx2,
+    ax2,
     technicians,
     openCves,
     obligationsAtRisk,
@@ -177,7 +177,7 @@ export async function getCoreSummary(orgId: string): Promise<CoreSummary> {
   const spcBreaches = spcBreach[0]?.n ?? 0;
   const uptimeAvg = robotAgg._avg.uptimePct ?? 0;
   const expiringTechs = technicians.filter((t) => hasExpiringCert(t.certs));
-  const marginDown = !!hx2 && /-/.test(hx2.trend);
+  const marginDown = !!ax2 && /-/.test(ax2.trend);
 
   // ── the Fleet → Field Service exception (VERIFY.3) ──────────────────────
   // Which flagged unit surfaces used to be arbitrary Postgres heap order. It is
@@ -347,9 +347,9 @@ export async function getCoreSummary(orgId: string): Promise<CoreSummary> {
         },
         {
           key: "margin",
-          label: hx2 ? `${hx2.product} margin` : "Margin",
-          value: hx2 ? `${hx2.marginPct.toFixed(1)}%` : "—",
-          hint: hx2?.trend,
+          label: ax2 ? `${ax2.product} margin` : "Margin",
+          value: ax2 ? `${ax2.marginPct.toFixed(1)}%` : "—",
+          hint: ax2?.trend,
           severity: marginDown ? "warn" : "ok",
         },
       ],
@@ -457,13 +457,13 @@ export async function getCoreSummary(orgId: string): Promise<CoreSummary> {
     });
   }
 
-  if (marginDown && hx2)
+  if (marginDown && ax2)
     exceptions.push({
-      id: `margin-${hx2.id}`,
-      title: `${hx2.product} margin ${hx2.trend}`,
+      id: `margin-${ax2.id}`,
+      title: `${ax2.product} margin ${ax2.trend}`,
       severity: "warn",
       module: "finance",
-      sourceLabel: hx2.product,
+      sourceLabel: ax2.product,
       url: "/finance",
       ripples: [],
     });

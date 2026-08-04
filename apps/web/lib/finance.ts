@@ -4,7 +4,7 @@ import { dbForOrg, paginateArgs, pageResult } from "@axona/db";
 // existing LedgerEntry / Invoice / UnitEconomic models: no schema change, no
 // mutations (the P&L / unit-economics / AR screen is FIN.2). Org-scoped via
 // dbForOrg; lists paginated with the FND.11 helpers. Continues the Tier-1 Auto OEM thread:
-// HX-2 margin −2.1pt from ECO-318 · Tier-1 Auto OEM net-60 + OEM-2 overdue.
+// AX-2 margin −2.1pt from ECO-318 · Tier-1 Auto OEM net-60 + OEM-2 overdue.
 
 const LEDGER_CAP = 500;
 const INVOICE_CAP = 500;
@@ -46,7 +46,7 @@ export interface UnitEcon {
   cogs: number;
   marginPct: number;
   trend: string;
-  marginDeltaPt: number | null; // parsed from trend (HX-2 = −2.1)
+  marginDeltaPt: number | null; // parsed from trend (AX-2 = −2.1)
 }
 export interface FinanceInvoice {
   id: string;
@@ -129,7 +129,7 @@ const INVOICE_SELECT = {
 /**
  * Everything the P&L / unit-economics / AR screen (FIN.2) needs, org-scoped and
  * read-only: the revenue split (lumpy hardware recognized at commissioning vs
- * ratable RaaS), unit economics (HX-2 margin −2.1pt from ECO-318), invoices with
+ * ratable RaaS), unit economics (AX-2 margin −2.1pt from ECO-318), invoices with
  * a derived AR-aging bucket (Tier-1 Auto OEM net-60 current + OEM-2 overdue), and a rollup.
  */
 export async function getFinanceData(orgId: string): Promise<FinanceData> {

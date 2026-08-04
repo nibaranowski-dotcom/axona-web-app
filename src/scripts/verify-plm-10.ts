@@ -104,7 +104,7 @@ async function run(): Promise<void> {
   await check(
     "version diff surfaces the sw delta (r4.1 v4.1.0 vs r4.2 v4.2.1)",
     async () => {
-      const d = await compareConfigs(DEMO, "CFG-HX2-r4.1", "CFG-HX2-r4.2");
+      const d = await compareConfigs(DEMO, "CFG-AX2-r4.1", "CFG-AX2-r4.2");
       if (!d) return false;
       const swRow = d.sw.find((r) => r.key === "firmware");
       return (

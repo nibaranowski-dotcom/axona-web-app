@@ -1,18 +1,16 @@
-import {
-  dbForOrg,
-  recallMemory,
-  getCalibrationModel,
-  calibratedConfidence,
-  type FrozenConfigSnapshot,
-} from "@axona/db";
+import { dbForOrg, recallMemory, type FrozenConfigSnapshot } from "@axona/db";
 import { affectedUnits } from "@axona/agents";
 
 // PLM.8 — the RCA workspace read model. Answers Q4: assembles the failure + its
 // evidence (config diffs vs passing units · shared lots · sw deltas · SIMILAR
 // PRIOR FAILURES via graph proximity + MEM.1 recallMemory), and an AGENT-PROPOSED
-// candidate cause carried with CALIBRATED confidence (CONF.1). The human classifies
-// (setNcrRootCause) — the agent never auto-classifies. Fully usable with AI off:
-// the evidence + classification work without the suggestion. Org-scoped.
+// candidate cause. The human classifies via setNcrRootCause.
+// The agent never auto-classifies.
+// Fully usable with AI off: evidence + classification work without the suggestion.
+// Org-scoped.
+// SEED.4 — the proposal carries NO confidence (see RcaCandidate). It previously
+// claimed CONF.1-calibrated confidence, but the value calibrated was a hardcoded
+// literal, so the number was fabricated.
 
 export interface RcaEvidenceItem {
   k: string;
@@ -28,9 +26,15 @@ export interface RcaCandidate {
   /** The proposed RootCause enum value. */
   cause: string;
   rationale: string;
-  rawConfidence: number;
-  calibrated: number;
-  calibratedState: "calibrated" | "uncalibrated";
+  /**
+   * DEMO-INTEGRITY (SEED.4) — no confidence field. The prior shape carried
+   * `rawConfidence`/`calibrated`/`calibratedState`, but the raw input was a
+   * HARDCODED 0.82 literal, so the rendered number was fabricated: on an org with
+   * no fitted CalibrationModel (both prospect demo tenants) it surfaced as
+   * "confidence 0.82 (uncal)" — a made-up number that announces its own
+   * unreliability. A confidence returns here only when it is a real
+   * `calibratedConfidence()` result over a real model-emitted value.
+   */
 }
 export interface SimilarFailure {
   code: string;
@@ -209,18 +213,16 @@ export async function getRcaWorkspace(
     },
   ];
 
-  // ── the agent's proposal — calibrated confidence, never auto-applied ───────
+  // ── the agent's proposal — evidence-derived, never auto-applied ────────────
+  // DEMO-INTEGRITY (SEED.4): no confidence is emitted. The proposal itself is real
+  // (it fires only when a quarantined lot is present in the config at failure), but
+  // there is no model-emitted confidence to calibrate yet — the previous 0.82 was a
+  // literal. Wire CONF.1 here when a real emitted value exists (DEMO.6 beat #4).
   let suggestion: RcaCandidate | null = null;
   if (sharedLot) {
-    const raw = 0.82; // the model's emitted confidence for the component hypothesis
-    const model = await getCalibrationModel(orgId);
-    const cal = calibratedConfidence(raw, model);
     suggestion = {
       cause: "component",
       rationale: `Quarantined lot ${sharedLot} on ${subLines[0]?.partNumber ?? "a substituted part"} is present in the config at failure.`,
-      rawConfidence: raw,
-      calibrated: cal.value,
-      calibratedState: cal.state,
     };
   }
 

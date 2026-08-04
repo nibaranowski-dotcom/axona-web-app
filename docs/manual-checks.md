@@ -224,7 +224,7 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ## FND.12 — Cross-module narrative seed
 
 **Automated**
-- `pnpm db:seed` then `pnpm verify:fnd-12` — counts + the SERVO/NCR-118/ECO-318/Tier-1 Auto OEM/DLV-3312/SN-2196/Osei/p-13/HX-2 chain + tenant-orgId integrity (15 checks).
+- `pnpm db:seed` then `pnpm verify:fnd-12` — counts + the SERVO/NCR-118/ECO-318/Tier-1 Auto OEM/DLV-3312/SN-2196/Osei/p-13/AX-2 chain + tenant-orgId integrity (15 checks).
 - Re-run `pnpm db:seed` and `pnpm verify:fnd-12` — identical counts (idempotent; clear-then-seed scoped to the demo org).
 - `pnpm typecheck` + root `tsc --noEmit -p tsconfig.json` clean.
 
@@ -488,7 +488,7 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ## CMD.1 — Command Center rollups API
 
 **Automated**
-- `pnpm verify:cmd-1` — lib + route exist; `kpisByModule` covers core modules; KPIs derive from seeded rows (procurement open POs > 0); exceptions present + shaped (url, sourceLabel, ripples[], severity ink/lime/green); the **full seeded narrative surfaces** — NCR-118 (critical → engineering/procurement/fulfillment), DLV-3312 customs hold (→ legal/finance), SN-2196 thermal (→ field-service), Osei cert-expiring (people → field-service), HX-2 margin (finance), Tier-1 Auto OEM SLA at-risk (legal → autonomy), agent-drafted PO awaiting approval (procurement), p-13 canary regression (→ fleet); no red severities; critical ranked first; org isolation.
+- `pnpm verify:cmd-1` — lib + route exist; `kpisByModule` covers core modules; KPIs derive from seeded rows (procurement open POs > 0); exceptions present + shaped (url, sourceLabel, ripples[], severity ink/lime/green); the **full seeded narrative surfaces** — NCR-118 (critical → engineering/procurement/fulfillment), DLV-3312 customs hold (→ legal/finance), SN-2196 thermal (→ field-service), Osei cert-expiring (people → field-service), AX-2 margin (finance), Tier-1 Auto OEM SLA at-risk (legal → autonomy), agent-drafted PO awaiting approval (procurement), p-13 canary regression (→ fleet); no red severities; critical ranked first; org isolation.
 - `pnpm typecheck` (workspace + root) clean.
 
 **Manual (docker up, ./dev.sh)**
@@ -594,13 +594,13 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ## ENG.1 — Engineering data/API
 
 **Automated**
-- `pnpm verify:eng-1` — routes (ecos/firmware/compat); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getEngineeringData returns the stage-grouped ecoBoard (DRAFT/REVIEW/APPROVED/RELEASED) with ECO-318 in REVIEW referencing NCR-118, firmwareReleases (v4.2.2-rc awaiting HX-1 cert), compatMatrix with axes (hwRevs/fwVersions) + cells; org isolation (unknown org → empty).
+- `pnpm verify:eng-1` — routes (ecos/firmware/compat); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getEngineeringData returns the stage-grouped ecoBoard (DRAFT/REVIEW/APPROVED/RELEASED) with ECO-318 in REVIEW referencing NCR-118, firmwareReleases (v4.2.2-rc awaiting AX-1 cert), compatMatrix with axes (hwRevs/fwVersions) + cells; org isolation (unknown org → empty).
 - `pnpm typecheck` clean.
 
 **Manual (./dev.sh, http://localhost:3001)**
-- [ ] `curl 'http://localhost:3001/api/engineering/ecos?stage=REVIEW'` returns ECO-318 (Supersede SERVO-204 → SERVO-205; affected: SERVO-204; NCR-118; Tier-1 Auto OEM order; HX-2).
+- [ ] `curl 'http://localhost:3001/api/engineering/ecos?stage=REVIEW'` returns ECO-318 (Supersede SERVO-204 → SERVO-205; affected: SERVO-204; NCR-118; Tier-1 Auto OEM order; AX-2).
 - [ ] `curl http://localhost:3001/api/engineering/firmware` returns v4.2.2-rc (RC) + v4.2.1 (RELEASED).
-- [ ] `curl http://localhost:3001/api/engineering/compat` returns HX-1/HX-2 × v4.2.2-rc/v4.2.1 cells (cert / compatible / in-test).
+- [ ] `curl http://localhost:3001/api/engineering/compat` returns AX-1/AX-2 × v4.2.2-rc/v4.2.1 cells (cert / compatible / in-test).
 
 **Notes**
 - Read/API only over existing ECO/FirmwareRelease/CompatCell (no schema change, no mutations — the ECO board + compat matrix screen is ENG.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; caps (ECOs 200, firmware 100, compat 400/list 100). Continues the seeded narrative NCR-118 → ECO-318. compatMatrix derives distinct hwRevs (sorted) + fwVersions (newest first) as the grid axes.
@@ -614,9 +614,9 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - `pnpm typecheck` clean.
 
 **Manual (./dev.sh, http://localhost:3001/engineering)**
-- [ ] Matches Engineering.dc.html on the v2 shell — the **ECO stage board** (Draft→Review→Approved→Released) + the **HW↔firmware compat matrix** lead (signature artifacts). ECO-318 card in Review ("Supersede SERVO-204 → SERVO-205 (torque-comp)"; affected: SERVO-204; NCR-118; Tier-1 Auto OEM order; HX-2).
-- [ ] Compat matrix: HX-1/HX-2 × v4.2.2-rc/v4.2.1; cert = green, compatible = neutral, in-test = lime. No red.
-- [ ] Firmware releases: v4.2.2-rc (RC — awaiting HX-1 cert before Fleet OTA), v4.2.1 (Released).
+- [ ] Matches Engineering.dc.html on the v2 shell — the **ECO stage board** (Draft→Review→Approved→Released) + the **HW↔firmware compat matrix** lead (signature artifacts). ECO-318 card in Review ("Supersede SERVO-204 → SERVO-205 (torque-comp)"; affected: SERVO-204; NCR-118; Tier-1 Auto OEM order; AX-2).
+- [ ] Compat matrix: AX-1/AX-2 × v4.2.2-rc/v4.2.1; cert = green, compatible = neutral, in-test = lime. No red.
+- [ ] Firmware releases: v4.2.2-rc (RC — awaiting AX-1 cert before Fleet OTA), v4.2.1 (Released).
 - [ ] As ENGINEER/ADMIN, an ECO card shows Submit/Approve/Release → advances a stage (RELEASE is the human step; attributed via trace line). As VIEWER the button is hidden (server action requireRole-throws — defense in depth).
 - [ ] Engineering agents (change / compatibility / firmware-release / impact / requirements / CAD-config) appear in the module-aware pane; "New ECO" seeds the agent.
 - [ ] accessibility-review 0 violations.
@@ -626,7 +626,7 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 ### ENG.2 — reconciled to Engineering.dc.html (table + design stats + enriched seed)
 - Change orders is now a **TABLE** (ECO · Change · Type · Affected · Stage + role-gated advance), not a kanban board. Stats strip = Open ECOs · In review · Current HW rev · Released firmware (real data; "avg change cycle" needs ECO timestamps we don't model — In review fills that slot).
-- Enriched seed (FND.12, idempotent): ECO-318 (HW, Review) + ECO-316 (FW, Review) + ECO-314 (HW, Approved); firmware v4.2.2-rc (RC) · v4.2.1 (Released) · v4.1.0 (Maint); compat matrix HX-2 r4/r3 · HX-1 r5/r4 × v4.0.2/v4.1.0/v4.2.1/v4.2.2; a real eng-orchestrator AgentRun so the AGENT TRACE block renders.
+- Enriched seed (FND.12, idempotent): ECO-318 (HW, Review) + ECO-316 (FW, Review) + ECO-314 (HW, Approved); firmware v4.2.2-rc (RC) · v4.2.1 (Released) · v4.1.0 (Maint); compat matrix AX-2 r4/r3 · AX-1 r5/r4 × v4.0.2/v4.1.0/v4.2.1/v4.2.2; a real eng-orchestrator AgentRun so the AGENT TRACE block renders.
 
 ### Deferred decisions
 - ECO `createdAt`/`updatedAt` → compute "avg change cycle" (Engineering stat). Schema change (ENG model has no timestamps); deferred.
@@ -640,7 +640,7 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - `pnpm typecheck` clean.
 
 **Manual (./dev.sh, http://localhost:3001)**
-- [ ] `curl 'http://localhost:3001/api/fulfillment/deliveries?stage=CUSTOMS'` returns DLV-3312 (Tier-1 Auto OEM, Osaka JP, 24× HX-2, EAR99 customs hold).
+- [ ] `curl 'http://localhost:3001/api/fulfillment/deliveries?stage=CUSTOMS'` returns DLV-3312 (Tier-1 Auto OEM, Osaka JP, 24× AX-2, EAR99 customs hold).
 - [ ] `curl http://localhost:3001/api/fulfillment/deliveries` returns DLV-3312 + DLV-3309 (OEM-2, Freight, on-track).
 
 **Notes**
@@ -677,11 +677,11 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ## FLEET.1 — Fleet data/API
 
 **Automated**
-- `pnpm verify:fleet-1` — routes (robots/telemetry); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getFleetData returns robots (SN-2196 WATCH · HX-2 · Tier-1 Auto OEM · Site-3 · alert), per-robot telemetry series (SN-2196 thermal, ordered), fleet rollup (avg uptime · byStatus · firmware), the predictive-alert list (incl. SN-2196); org isolation (unknown org → empty).
+- `pnpm verify:fleet-1` — routes (robots/telemetry); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getFleetData returns robots (SN-2196 WATCH · AX-2 · Tier-1 Auto OEM · Site-3 · alert), per-robot telemetry series (SN-2196 thermal, ordered), fleet rollup (avg uptime · byStatus · firmware), the predictive-alert list (incl. SN-2196); org isolation (unknown org → empty).
 - `pnpm typecheck` clean.
 
 **Manual (./dev.sh, http://localhost:3001)**
-- [ ] `curl 'http://localhost:3001/api/fleet/robots?status=WATCH'` returns SN-2196 (HX-2, Tier-1 Auto OEM, Site-3, uptime, firmware, lat/lng).
+- [ ] `curl 'http://localhost:3001/api/fleet/robots?status=WATCH'` returns SN-2196 (AX-2, Tier-1 Auto OEM, Site-3, uptime, firmware, lat/lng).
 - [ ] `curl 'http://localhost:3001/api/fleet/telemetry?robotId=<SN-2196 id>'` returns the battery_temp_c climb.
 
 **Notes**
@@ -796,16 +796,16 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ## FIN.1 — Finance data/API
 
 **Automated**
-- `pnpm verify:fin-1` — routes (ledger/invoices/unit-economics); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getFinanceData returns the revenue split (lumpy hardware vs ratable RaaS), unit economics (HX-2 margin −2.1pt from ECO-318, parsed marginDeltaPt), invoices with a derived AR-aging bucket (Tier-1 Auto OEM net-60 current + OEM-2 overdue), the rollup (recognized revenue, AR total + overdue, netIncome; cash/runway flagged null); org isolation (unknown org → empty).
+- `pnpm verify:fin-1` — routes (ledger/invoices/unit-economics); lib org-scoped (dbForOrg) + paginated (FND.11); read-only (no mutations); getFinanceData returns the revenue split (lumpy hardware vs ratable RaaS), unit economics (AX-2 margin −2.1pt from ECO-318, parsed marginDeltaPt), invoices with a derived AR-aging bucket (Tier-1 Auto OEM net-60 current + OEM-2 overdue), the rollup (recognized revenue, AR total + overdue, netIncome; cash/runway flagged null); org isolation (unknown org → empty).
 - `pnpm typecheck` clean.
 
 **Manual (./dev.sh, http://localhost:3001)**
 - [ ] `curl 'http://localhost:3001/api/finance/ledger?period=2026-Q2'` returns the Q2 ledger (Hardware/RaaS revenue, COGS, Opex).
 - [ ] `curl 'http://localhost:3001/api/finance/invoices?status=OVERDUE'` returns OEM-2 INV-7702 (overdue, agingBucket 1-30).
-- [ ] `curl http://localhost:3001/api/finance/unit-economics` returns HX-2 (marginPct 22.9, marginDeltaPt −2.1) + HX-1.
+- [ ] `curl http://localhost:3001/api/finance/unit-economics` returns AX-2 (marginPct 22.9, marginDeltaPt −2.1) + AX-1.
 
 **Notes / flags**
-- Read/API only over LedgerEntry/Invoice/UnitEconomic (no schema change, no mutations — the P&L / unit-economics / AR screen is FIN.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; aggregates computed in JS over org-scoped findMany (small data; keeps the dbForOrg org-scope guarantee — no raw SQL that could bypass it); caps (ledger/invoices 500, UE 200 / lists 50–100). Continues the Tier-1 Auto OEM thread: HX-2 −2.1pt from ECO-318 · Tier-1 Auto OEM net-60 (current) + OEM-2 (overdue). `recognition` = lumpy (hardware, recognized at commissioning) vs ratable (RaaS); AR `agingBucket` = current / 1-30 / 31-60 / 61-90 / 90+ / paid from days-past-`dueDate`.
+- Read/API only over LedgerEntry/Invoice/UnitEconomic (no schema change, no mutations — the P&L / unit-economics / AR screen is FIN.2). All via getCurrentUser → dbForOrg; lists paginated with paginateArgs/pageResult; aggregates computed in JS over org-scoped findMany (small data; keeps the dbForOrg org-scope guarantee — no raw SQL that could bypass it); caps (ledger/invoices 500, UE 200 / lists 50–100). Continues the Tier-1 Auto OEM thread: AX-2 −2.1pt from ECO-318 · Tier-1 Auto OEM net-60 (current) + OEM-2 (overdue). `recognition` = lumpy (hardware, recognized at commissioning) vs ratable (RaaS); AR `agingBucket` = current / 1-30 / 31-60 / 61-90 / 90+ / paid from days-past-`dueDate`.
 - **Flag: cash / runway are not derivable from the ledger** (no cash-balance or burn entries) → `rollup.cash` / `rollup.runwayMonths` return `null`; `netIncome` (revenue − COGS − Opex) is the derivable rollup. A cash/burn model = schema addition (deferred to FIN.2 notes).
 
 ### Deferred decisions (FIN.1)
@@ -816,17 +816,17 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ## FIN.2 — Finance screen
 
 **Automated**
-- `pnpm verify:fin-2` — route + components (FinanceView/RevenueChart/WorkingCapital/UnitEconomics/Receivables); renders getFinanceData; two-revenue-engine chart (hardware + RaaS, signature); per-unit economics + AR-aging tables; read-only (no mutations); no red/emoji/raw hex; HX-2 −2.1pt + Tier-1 Auto OEM net-60 + OEM-2 overdue; chart full (≥6 periods, both engines); tables full (≥3 products, ≥3 invoices).
+- `pnpm verify:fin-2` — route + components (FinanceView/RevenueChart/WorkingCapital/UnitEconomics/Receivables); renders getFinanceData; two-revenue-engine chart (hardware + RaaS, signature); per-unit economics + AR-aging tables; read-only (no mutations); no red/emoji/raw hex; AX-2 −2.1pt + Tier-1 Auto OEM net-60 + OEM-2 overdue; chart full (≥6 periods, both engines); tables full (≥3 products, ≥3 invoices).
 - `pnpm typecheck` clean.
 
 **Manual (./dev.sh, http://localhost:3001/finance)**
-- [ ] Matches Finance.dc.html on the v2 shell — the **two-engine recognized-revenue chart** (hardware ink / RaaS lime, stacked per month), **per-unit economics** (HX-2 margin bar + ▼ −2.1pt · ECO-318), **AR-aging receivables** (Tier-1 Auto OEM net-60 "Current", OEM-2 "62d overdue" ink). No red.
-- [ ] HX-2 −2.1pt shows in the topbar pill + the unit-economics trend; Tier-1 Auto OEM + OEM-2 surface in AR.
+- [ ] Matches Finance.dc.html on the v2 shell — the **two-engine recognized-revenue chart** (hardware ink / RaaS lime, stacked per month), **per-unit economics** (AX-2 margin bar + ▼ −2.1pt · ECO-318), **AR-aging receivables** (Tier-1 Auto OEM net-60 "Current", OEM-2 "62d overdue" ink). No red.
+- [ ] AX-2 −2.1pt shows in the topbar pill + the unit-economics trend; Tier-1 Auto OEM + OEM-2 surface in AR.
 - [ ] Finance agents appear in the module-aware pane; "Run month-end close" seeds the fin agent.
 - [ ] accessibility-review 0 violations.
 
 **Notes / flags**
-- Read-only reads over FIN.1 getFinanceData (org-scoped) — extended with `revenueByPeriod` (hardware+RaaS per period) for the chart. Enriched seed (FND.12, idempotent): 8-month P&L ledger + 4 products (HX-2 −2.1pt kept) + 4 AR invoices (Tier-1 Auto OEM/OEM-2 kept, +OEM-4 due-soon, +OEM-3 current) + a real fin-orchestrator AgentRun.
+- Read-only reads over FIN.1 getFinanceData (org-scoped) — extended with `revenueByPeriod` (hardware+RaaS per period) for the chart. Enriched seed (FND.12, idempotent): 8-month P&L ledger + 4 products (AX-2 −2.1pt kept) + 4 AR invoices (Tier-1 Auto OEM/OEM-2 kept, +OEM-4 due-soon, +OEM-3 current) + a real fin-orchestrator AgentRun.
 - **Design deviations flagged (data-shape mismatch — not substituted silently):**
   1. The design's **Cash & runway** panel + Cash/Runway stats need a treasury/burn feed the ledger doesn't carry (`rollup.cash`/`runwayMonths` = null) → the right card is replaced with the derivable **Working capital** view (AR open, overdue, net income); stats show **ARR (RaaS×12)** + **Net income** instead of Cash/Runway. A cash/burn model = schema addition (deferred, per FIN.1).
   2. **"Run month-end close"** seeds the fin agent (proposes); the real close (revenue recognition + period lock) is a **gated write** needing a period-close model (no `status` field on a period to transition without a schema change) — deferred. Kept read-only per the "no new columns" guardrail.
@@ -885,7 +885,7 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 
 **Manual (./dev.sh, http://localhost:3001)**
 - [ ] `curl 'http://localhost:3001/api/manufacturing/work-orders?station=Test'` returns the Test-station WOs.
-- [ ] `curl 'http://localhost:3001/api/manufacturing/genealogy?serial=HX2-0419'` returns that serial's ordered build trace.
+- [ ] `curl 'http://localhost:3001/api/manufacturing/genealogy?serial=AX2-0419'` returns that serial's ordered build trace.
 
 **Notes / flags**
 - **MOAT (load-bearing):** `WorkOrderMfg.serial` is the as-built genealogy anchor — capture stays **as-built, never reconstructed** (capture fidelity caps the moat). MFG.1 exposes the serial→work-order **station** trace only; the FULL **parts·serials·firmware** genealogy graph (SERVO-204/-205, lot 88421, firmware) is **ONT.2** — `/// pointer` left in the lib; ONT.2 extends this, it does not replace it.
@@ -904,17 +904,17 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 ## MFG.2 — Manufacturing screen
 
 **Automated**
-- `pnpm verify:mfg-2` — route + components (MfgView/LineFlowBoard/BuildGenealogy/ThroughputPanel); renders getManufacturingData + getGenealogy; line-flow station pipeline (signature); build-genealogy as-built trace + ONT.2 pointer; read-only (no mutations); no red/emoji/raw hex; line full (units across ≥4 stations, ≥10 in build); HX2-0221 clean SERVO-205 full multi-station as-built trace (all DONE); HX2-0208 lot-88421 defect trace ends HOLD at Test.
+- `pnpm verify:mfg-2` — route + components (MfgView/LineFlowBoard/BuildGenealogy/ThroughputPanel); renders getManufacturingData + getGenealogy; line-flow station pipeline (signature); build-genealogy as-built trace + ONT.2 pointer; read-only (no mutations); no red/emoji/raw hex; line full (units across ≥4 stations, ≥10 in build); AX2-0221 clean SERVO-205 full multi-station as-built trace (all DONE); AX2-0208 lot-88421 defect trace ends HOLD at Test.
 - `pnpm typecheck` clean.
 
 **Manual (./dev.sh, http://localhost:3001/manufacturing)**
-- [ ] Matches Manufacturing.dc.html on the v2 shell — the **line-flow board** (6-station pipeline Frame → Drive → Actuators → Firmware → Test → Pack, units at each node) + **build genealogy** (HX2-0208 as-built station trace, HOLD at Test) + throughput/bottlenecks + the scheduler-agent flag. No red.
-- [ ] `?serial=HX2-0221` shows the clean SERVO-205 unit's full pass; default shows the held defect unit.
+- [ ] Matches Manufacturing.dc.html on the v2 shell — the **line-flow board** (6-station pipeline Frame → Drive → Actuators → Firmware → Test → Pack, units at each node) + **build genealogy** (AX2-0208 as-built station trace, HOLD at Test) + throughput/bottlenecks + the scheduler-agent flag. No red.
+- [ ] `?serial=AX2-0221` shows the clean SERVO-205 unit's full pass; default shows the held defect unit.
 - [ ] Manufacturing agents appear in the module-aware pane; "Work order" / "Apply" seed the mfg agent.
 - [ ] accessibility-review 0 violations.
 
 **Notes / flags**
-- **MOAT:** `serial` is the as-built genealogy anchor — the genealogy panel shows the as-built **station** trace (captured as-built, never reconstructed). Enriched seed (FND.12, idempotent): 15 units across the 6 stations + 2 multi-station traces — **HX2-0221** clean build on the **SERVO-205** drive (post-ECO-318, full pass) and **HX2-0208** carrying the **SERVO-204 / lot-88421** defect (→ HOLD at Test = the NCR-118 source) + a real mfg-orchestrator AgentRun.
+- **MOAT:** `serial` is the as-built genealogy anchor — the genealogy panel shows the as-built **station** trace (captured as-built, never reconstructed). Enriched seed (FND.12, idempotent): 15 units across the 6 stations + 2 multi-station traces — **AX2-0221** clean build on the **SERVO-205** drive (post-ECO-318, full pass) and **AX2-0208** carrying the **SERVO-204 / lot-88421** defect (→ HOLD at Test = the NCR-118 source) + a real mfg-orchestrator AgentRun.
 - **Design deviations flagged (data-shape mismatch — not substituted silently):**
   1. Stats **on-time build / first-pass yield / units-day / takt** need an OEE / cycle-time feed the MES model lacks → real **In build / In progress / Built / On hold** counts fill the strip (OEE deferred, per MFG.1).
   2. The design's **3 production lines (Line 1/2/3)** have no per-line grouping in the model → the plant renders as **one station pipeline** with units at their current station. A first-class Line/routing model = schema addition (deferred).
@@ -954,13 +954,13 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - `pnpm typecheck` clean · `verify-field-1` stays 8/8 (shared cert seed).
 
 **Manual (./dev.sh, http://localhost:3001/people)**
-- [ ] Matches People.dc.html on the v2 shell — the **certification matrix** (techs × HX-2 svc / HX-1 svc / HV·batt / Safety LOTO / Commission; green = certified, **ink = expiring < 30d**, lime = in-training, skeleton = not-held) with **M. Osei's HV/battery cell ink "12d"** (the dispatch gate) + field-team-growth + headcount. No invented reds.
+- [ ] Matches People.dc.html on the v2 shell — the **certification matrix** (techs × AX-2 svc / AX-1 svc / HV·batt / Safety LOTO / Commission; green = certified, **ink = expiring < 30d**, lime = in-training, skeleton = not-held) with **M. Osei's HV/battery cell ink "12d"** (the dispatch gate) + field-team-growth + headcount. No invented reds.
 - [ ] Osei's expiring cert is flagged; legend renders; "Open requisition" seeds the ppl agent.
 - [ ] People agents appear in the module-aware pane.
 - [ ] accessibility-review 0 violations.
 
 **Notes / flags**
-- Read-only reads over PPL.1 getPeopleData (org-scoped). Enriched seed (FND.12, idempotent): 6 techs × 5 cert types (hx2Service · hx1Service · hvBattery · safetyLoto · commissioning) with a VALID/EXPIRING/TRAINING/missing mix (Osei + Sato hvBattery EXPIRING kept) + 5 headcount requisitions + a real ppl-orchestrator AgentRun. FIELD.1/FIELD.2 stay green (shared lib/certs; certExpiring unchanged for the dispatch board).
+- Read-only reads over PPL.1 getPeopleData (org-scoped). Enriched seed (FND.12, idempotent): 6 techs × 5 cert types (ax2Service · ax1Service · hvBattery · safetyLoto · commissioning) with a VALID/EXPIRING/TRAINING/missing mix (Osei + Sato hvBattery EXPIRING kept) + 5 headcount requisitions + a real ppl-orchestrator AgentRun. FIELD.1/FIELD.2 stay green (shared lib/certs; certExpiring unchanged for the dispatch board).
 - **Design deviations flagged (data-shape mismatch — not substituted silently):**
   1. Stat **"Headcount" (org-wide 142)** has no first-class people/org model → approximated by the **requisition fill** (sum of filled); **"Cert compliance"** is derived from the matrix (current held certs / all held).
   2. The design's **Headcount by function** implies an org-structure tree the model lacks → the panel derives headcount from the **requisition roles** (function ≈ role). A first-class org model = schema addition (deferred).
@@ -979,7 +979,7 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - [ ] `curl http://localhost:3001/api/security/posture` returns the device-posture spread (Hardened/Needs patch/Degraded), the v4.2.2-rc patch rollout (certGate in-test, gated), and the rollup.
 
 **Notes**
-- Read/API only over the existing CVE model (no schema change, no mutations — the screen is SEC.2). CVE list via getCurrentUser → dbForOrg + paginated; the derived posture/rollout summary via getSecurityData. Composes over **FLEET.1** (`getFleetData` — device posture over robot firmware/status) + **ENG.1** (`getEngineeringData` — firmware releases + the cert gate from CompatCell). **Through-line preserved:** CVE-2026-3187 (CRITICAL, 42 deployed HX-2 units) → fix = signed firmware **v4.2.2-rc** → must clear **Engineering's cert gate** (CompatCell `in-test`) before rollout. Posture buckets: Degraded (fault/offline) · Needs patch (behind latest released fw) · Hardened.
+- Read/API only over the existing CVE model (no schema change, no mutations — the screen is SEC.2). CVE list via getCurrentUser → dbForOrg + paginated; the derived posture/rollout summary via getSecurityData. Composes over **FLEET.1** (`getFleetData` — device posture over robot firmware/status) + **ENG.1** (`getEngineeringData` — firmware releases + the cert gate from CompatCell). **Through-line preserved:** CVE-2026-3187 (CRITICAL, 42 deployed AX-2 units) → fix = signed firmware **v4.2.2-rc** → must clear **Engineering's cert gate** (CompatCell `in-test`) before rollout. Posture buckets: Degraded (fault/offline) · Needs patch (behind latest released fw) · Hardened.
 - **MOAT / gating:** patch rollout + access changes are **agent-DRAFTED/proposed only** — `/// RBAC.4` (Engineering's cert gate = approval owner) + `/// AUDIT.3` (inputs·output·model·confidence·approver) seams left; no event-log/confidence/approver columns added.
 
 ### Deferred decisions (SEC.1)
@@ -1020,15 +1020,15 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - `pnpm typecheck` clean · `verify-ful-1` / `verify-mfg-1` / `verify-proc-1` stay green.
 
 **Manual (./dev.sh, http://localhost:3001)**
-- [ ] `curl 'http://localhost:3001/api/sales/deals?stage=COMMIT'` returns the Tier-1 Auto OEM deal (HX-2 ×24, $4.8M).
-- [ ] `curl http://localhost:3001/api/sales/forecast` returns the funnel (all 5 stages), weighted forecast, deliverability spread; Tier-1 Auto OEM deliverability AT_RISK with a reason referencing DLV-3312 + the HX-2 line hold.
+- [ ] `curl 'http://localhost:3001/api/sales/deals?stage=COMMIT'` returns the Tier-1 Auto OEM deal (AX-2 ×24, $4.8M).
+- [ ] `curl http://localhost:3001/api/sales/forecast` returns the funnel (all 5 stages), weighted forecast, deliverability spread; Tier-1 Auto OEM deliverability AT_RISK with a reason referencing DLV-3312 + the AX-2 line hold.
 
 **Notes**
-- Read/API only over the existing Deal model (no schema change, no mutations — the pipeline screen is SALES.2). Deal list via getCurrentUser → dbForOrg + paginated; the funnel/forecast summary via getSalesData. The **DELIVERABILITY badge is DERIVED, not the stored string**: getSalesData composes **FUL.1** (`getFulfillmentData` — the deal account's delivery hold/late) + **MFG.1** (`getManufacturingData` — a line hold on the deal's product). **Through-line preserved:** Tier-1 Auto OEM → DLV-3312 EAR99 hold (FUL) + HX2-0208 line hold (MFG, ECO-318/lot-88421) → **AT_RISK +3w**. Deals with no ops commitment yet fall back to the stored agent-checked feasibility. Weighted forecast = Σ(value × stage-probability) [QUALIFY .1 · DEMO .25 · PROPOSAL .5 · NEGOTIATION .7 · COMMIT .9].
+- Read/API only over the existing Deal model (no schema change, no mutations — the pipeline screen is SALES.2). Deal list via getCurrentUser → dbForOrg + paginated; the funnel/forecast summary via getSalesData. The **DELIVERABILITY badge is DERIVED, not the stored string**: getSalesData composes **FUL.1** (`getFulfillmentData` — the deal account's delivery hold/late) + **MFG.1** (`getManufacturingData` — a line hold on the deal's product). **Through-line preserved:** Tier-1 Auto OEM → DLV-3312 EAR99 hold (FUL) + AX2-0208 line hold (MFG, ECO-318/lot-88421) → **AT_RISK +3w**. Deals with no ops commitment yet fall back to the stored agent-checked feasibility. Weighted forecast = Σ(value × stage-probability) [QUALIFY .1 · DEMO .25 · PROPOSAL .5 · NEGOTIATION .7 · COMMIT .9].
 - **MOAT / gating:** CPQ config, contracts, forecast commits are **agent-DRAFTED/proposed only** — `/// RBAC.4` + `/// AUDIT.3` seams; no event-log/confidence/approver columns.
 
 ### Deferred decisions (SALES.1)
-- (a) **No CPQ / quote model** → `Deal.config` is a string ("HX-2 ×24"); a real CPQ (line items, options, pricing rules) = schema addition; deferred.
+- (a) **No CPQ / quote model** → `Deal.config` is a string ("AX-2 ×24"); a real CPQ (line items, options, pricing rules) = schema addition; deferred.
 - (b) **No forecast model** → the weighted Q3 forecast is derived (value × stage-probability); a first-class forecast/quota model = schema addition; deferred.
 - (c) **Deliverability has no model** → derived over FUL.1 + MFG.1 per deal; a stored deliverability check (with confidence/approver) = the AUDIT.3 event-log layer; deferred.
 
@@ -1041,7 +1041,7 @@ Tracked decisions opened across FND.5–FND.10, executed in FND.11. See the "FND
 - CI gate (`pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm verify:all`) green · `accessibility-review` 0 · SALES.1/FUL.1/MFG.1 stay green.
 
 **Manual (./dev.sh, http://localhost:3001/sales)**
-- [ ] Matches Sales & CRM.dc.html on the v2 shell — the **pipeline funnel** (5 stages, Commit lime) + **Q3 forecast** (weighted commit vs best-case, Tier-1 Auto OEM the swing) + the **top-deals table** with the agent-checked **deliverability badge** (Tier-1 Auto OEM **At risk** ink, reason "DLV-3312 EAR99 customs hold · HX-2 line hold"). AT_RISK in ink, never red.
+- [ ] Matches Sales & CRM.dc.html on the v2 shell — the **pipeline funnel** (5 stages, Commit lime) + **Q3 forecast** (weighted commit vs best-case, Tier-1 Auto OEM the swing) + the **top-deals table** with the agent-checked **deliverability badge** (Tier-1 Auto OEM **At risk** ink, reason "DLV-3312 EAR99 customs hold · AX-2 line hold"). AT_RISK in ink, never red.
 - [ ] Tier-1 Auto OEM deliverability AT_RISK reads on-screen (derived through FUL/MFG, not a hardcoded badge); "New deal" seeds the crm agent; Sales agents pane populated.
 - [ ] accessibility-review 0 violations.
 
@@ -3338,7 +3338,7 @@ against the revision below it:
 - A line with no ECO of its own inherits its REVISION's serial rather than reading
   as unknown; it is genuinely effective from that revision.
 
-**The seed grew a real tree and a real ladder.** HX-2 was 10 flat lines at one
+**The seed grew a real tree and a real ladder.** AX-2 was 10 flat lines at one
 revision. It now has three assembly roots, a sub-assembly (three levels), and
 revisions A → B → C:
 
@@ -3397,7 +3397,7 @@ LINK.1 deep-links resolve to a real part and a real ECO, superseded-by is a
 SUPERSEDE-class join, assemblies never reach the flat readers, and a second org
 resolves nothing.
 
-**Manual:** `/bom/HX-2` at 1440 — tree with three assembly roots + a sub-assembly,
+**Manual:** `/bom/AX-2` at 1440 — tree with three assembly roots + a sub-assembly,
 `?rev=A|B|C` re-resolves it, the rail's revision cards select, and
 `?position=A-14` opens the per-part card with both deep-links live.
 
@@ -3444,7 +3444,7 @@ that list, and both had to scope themselves:
   `where: { id: db.$org }`.
 
 **How isolation is asserted.** NOT by comparing natural keys: the prospect seeds
-deliberately replay the base narrative, so `PO-9001` / `ECO-305` / `CFG-HX2-r4.2`
+deliberately replay the base narrative, so `PO-9001` / `ECO-305` / `CFG-AX2-r4.2`
 legitimately exist on several tenants as different rows — a key-collision check
 flags those and proves nothing. Three assertions instead: per entity, the bundle's
 row count must equal an INDEPENDENT count taken with an explicit `orgId` predicate
@@ -3632,3 +3632,93 @@ seed, specs, the design exports, `exports/` deck crops and these docs. Adding it
 list fails `verify:seed-1` with 154 hits. Banning it requires renaming the base seed's
 product code repo-wide — a separate story that touches the investor demo and the
 human-gated deck crops. Tracked as such; the tenant rename does not depend on it.
+
+## SEED.4 — demo pre-integrity pass (designation · fabricated confidence · jargon)
+
+Three demo-enders the DEMO.6 Phase-1 audit surfaced, fixed before any beat surfacing.
+Written marque-free: this file is inside the SEED.1 scan scope, so it names neither the
+banned designation nor a prospect tenant. (Drafting it the obvious way failed the wall on
+both counts — the entry documenting the ban reintroduced the ban's own target.)
+
+**1 · The designation lived in the BASE seed, so it leaked into every tenant.**
+The flagship product code, its unit serials and its config-baseline names all carried a
+real product designation. Because the base narrative seeds into EVERY org, those strings
+rendered live on both prospect demo tenants — 11 of 14 NCRs carried it in `linkedTo`, on
+the quality screen. A designation identifies its maker as surely as a company name does.
+Renamed to the neutral fictional **`AX-2`/`AX2`** across seed · app · exports · docs ·
+verifies · specs, and both old spellings are now in the SEED.3 banned list (31 marques).
+
+The **previous-generation rev had to move too** (→ `AX-1`), for two reasons: it shared the
+real family prefix, and the compat-matrix rows sort `.sort().reverse()` lexically — with
+the old prefix still present, its `r5` row outranked `AX-2 r4` and stole row 0, failing
+`verify:eng-1`. Renaming the whole family restored the intended newest-first order.
+
+**`design/` still carries the old designation — 121 occurrences, TRACKED SEPARATELY.**
+Those `.dc.html` files are generated exports from Claude Design and sit outside the
+SEED.1 scan scope, so they neither fail the wall nor get swept by a repo rename: editing
+them by hand would desync the per-screen fidelity reference from the tool that owns it.
+**The fix is a Claude Design re-export with the neutral codes**, not a find/replace here.
+Until that lands, the mock data in those files disagrees with the seed — illustrative
+numbers only, no effect on what the app renders.
+
+**Verify against live ROWS, not the tree.** This is the gap DRONECO.1's scan had: it
+checked the config file and the committed tree and passed, while the seeded rows leaked.
+The sweep now walks the Prisma DMMF and greps EVERY String/Json column of EVERY
+org-scoped model, so it cannot miss a field a hand-written list forgot. It carries a
+liveness probe (must match the old serial form, must ignore the new one) so it can't pass
+vacuously, and anchors on a word boundary — without it, a cuid whose id merely ENDS in
+those characters reads as a hit.
+
+Two things the row sweep caught that a field-list scan would not have:
+- **`SearchDoc` used to survive a re-seed — now FIXED at the source.** The search index
+  is a separate materialization of the tenant's rows, and `reindex()` UPSERTS, so a doc
+  whose source row was renamed or deleted simply persisted: `/search` kept surfacing the
+  old designation after a full re-seed. `clearOrgData` now deletes the org's `SearchDoc`
+  rows, and `seedProspectOrg` rebuilds the index for that org at the end of the seed.
+  **Both halves are required.** The prospect path never reindexed — those tenants' docs
+  were a side effect of the BASE seed's global `reindex()` — so clearing alone would have
+  seeded the tenant to an EMPTY `/search`, a worse failure than the stale index. This now
+  resets automatically on local AND prod re-seeds, with no manual step.
+  Proven by poisoning the index with a doc naming the old designation, then running a
+  plain `db:seed:prospect` with no manual delete or reindex: the poisoned row went to 0,
+  designation-naming docs went to 0, and the index rebuilt to its full 87 rows (the
+  "not empty" half of the assertion — a clear-only fix would also have shown 0 hits).
+- **Re-seeding invalidates blob objects.** New `File` rows have no bytes until
+  `pnpm db:seed:blobs` runs (CI does this as a post-seed step); skipping it fails
+  `verify:file-1`.
+
+**2 · No fabricated confidence renders.** `rca.ts` and `configurations.ts` each carried a
+hardcoded `0.82` — the SAME literal in two places. On any org without a fitted
+`CalibrationModel` (both prospect tenants have zero) `calibratedConfidence()` returns the
+raw value unchanged, so the RCA screen rendered `confidence 0.82 (uncal)`: a made-up
+number that announces its own unreliability, to the exact audience primed to distrust it.
+Both literals and both render paths are gone; `RcaCandidate` and `ConfigAgentProposal` no
+longer carry a confidence field at all. The proposals themselves are unchanged and still
+evidence-derived (the RCA one fires only when a quarantined lot is in the config at
+failure). A number returns only as a real `calibratedConfidence()` result over a real
+model-emitted value (DEMO.6 beats #4/#6). Note the base demo org DOES have a fitted model
+(`org`, n=42) — calibration is genuinely wired; it was the *input* that was invented.
+
+`verify:agt-3` and `verify:plm-8` asserted the OLD contract (a calibrated number, and
+`calibrated !== rawConfidence`). Both now assert the opposite: the proposal is
+evidence-derived AND carries no confidence field. Removing the field without moving those
+two would have failed them both.
+
+**3 · Jargon a devtools glance would show.** The app `<meta description>`
+(`apps/web/app/layout.tsx`) and the email footer (`lib/email/templates/layout.tsx`) both
+said "the operating system for robotics companies" — not visible labels, but one
+view-source or link preview from confirming the category read. Both now say
+"configuration management and traceability for how robotics companies build." The
+marketing site keeps its own positioning copy — deliberately untouched.
+
+**Checks:**
+```
+pnpm verify:seed-1                    # 10 checks — 31 banned marques
+pnpm verify:all                       # 164
+pnpm verify:demo <tenant>             # both demo tenants: SAFE TO SEND
+```
+Live-row proof: 0 hits across 7,287 rows / 65 models on all three orgs.
+
+**Both generations are banned.** The previous-generation rev is on the list alongside the
+flagship: the shared PREFIX is the tell, so banning only the flagship would have left the
+older rev naming the same family. 33 banned marques.

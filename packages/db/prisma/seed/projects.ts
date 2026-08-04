@@ -61,7 +61,7 @@ const PROJECTS: Seed[] = [
   {
     moduleKey: "fulfillment",
     name: `${CODES.delivery} — Tier-1 Auto OEM · Osaka delivery`,
-    description: "24× HX-2 to Osaka; EAR99 customs hold.",
+    description: "24× AX-2 to Osaka; EAR99 customs hold.",
     status: "BLOCKED",
     files: [
       {
@@ -138,11 +138,11 @@ const PROJECTS: Seed[] = [
   },
   {
     moduleKey: "finance",
-    name: "HX-2 margin review",
+    name: "AX-2 margin review",
     description: "−2.1pt margin from ECO-318; rev-rec split.",
     status: "ACTIVE",
     files: [
-      { name: "Unit economics HX-2", ext: "xlsx", type: "Data" },
+      { name: "Unit economics AX-2", ext: "xlsx", type: "Data" },
       { name: "Rev-rec split memo", ext: "docx", type: "Memo" },
       { name: "ECO-318 cost impact", ext: "xlsx", type: "Data" },
       { name: "Q3 margin bridge", ext: "pdf", type: "Report" },
@@ -167,7 +167,7 @@ const PROJECTS: Seed[] = [
   },
   {
     moduleKey: "sales",
-    name: "Tier-1 Auto OEM HX-2 ×24",
+    name: "Tier-1 Auto OEM AX-2 ×24",
     description: "Commit-stage deal; deliverability AT_RISK +3w.",
     status: "ACTIVE",
     files: [
@@ -179,16 +179,16 @@ const PROJECTS: Seed[] = [
       },
       { name: "MSA redlines", ext: "docx", type: "Memo" },
       { name: "Deliverability assessment", ext: "pdf", type: "Report" },
-      { name: "Pricing model HX-2 ×24", ext: "xlsx", type: "Data" },
+      { name: "Pricing model AX-2 ×24", ext: "xlsx", type: "Data" },
     ],
   },
   {
     moduleKey: "manufacturing",
-    name: "HX-2 line ramp",
-    description: "Build genealogy + OEE for the HX-2 line.",
+    name: "AX-2 line ramp",
+    description: "Build genealogy + OEE for the AX-2 line.",
     status: "ACTIVE",
     files: [
-      { name: "Build genealogy HX2-0418", ext: "csv", type: "Data" },
+      { name: "Build genealogy AX2-0418", ext: "csv", type: "Data" },
       { name: "OEE dashboard export", ext: "csv", type: "Data" },
       { name: "Line balance plan", ext: "pdf", type: "Plan" },
       { name: "Station takt study", ext: "xlsx", type: "Data" },

@@ -68,7 +68,9 @@ export function EmailLayout({
               margin: 0,
             }}
           >
-            Axona — the operating system for robotics companies.
+            {/* SEED.4 — no category word in the footer; see app/layout.tsx. */}
+            Axona — configuration management and traceability for how robotics
+            companies build.
           </Text>
         </Container>
       </Body>

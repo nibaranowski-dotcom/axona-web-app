@@ -60,7 +60,7 @@ client so it also dogfoods per-tenant isolation.
 - [ ] `pnpm db:seed` completes on a freshly migrated DB; re-running yields identical counts (idempotent).
 - [ ] 24 Modules exist with the four groups and stable `orderIndex` ordering the sidebar.
 - [ ] Each agent-bearing module has ~6 Agents with non-placeholder `code`/`role`/`description`.
-- [ ] The narrative is present and cross-linked: SpcSample torque points over UCL → `NCR-118` (CRITICAL, `linkedTo` lot 88421) → `ECO-318` (supersedes SERVO-204 with -205, fw v4.2.2 torque-comp) → Tier-1 Auto OEM 24-unit `Deal` (feasibility AT_RISK, +3w) → `DLV-3312` Delivery (stage CUSTOMS, Osaka, EAR99 hold) → `ExportLicense` (DLV-3312 EAR99) → fleet `Robot` SN-2196 (thermal) → `WorkOrderField` (SN-2196 battery swap, SLA countdown) → Technician M. Osei (HV/battery cert expiring 12d) → `AutonomyMetric` Site-3 p-13 canary regression + `PolicyVersion` p-13 canary + `SafetyIncident` INC-201 → `UnitEconomic` HX-2 margin −2.1pt → `Invoice` Tier-1 Auto OEM net-60 + OEM-2 overdue → `Obligation` Tier-1 Auto OEM 99.5% SLA → `LegalMatter` (INC-201, ECO-318 patent).
+- [ ] The narrative is present and cross-linked: SpcSample torque points over UCL → `NCR-118` (CRITICAL, `linkedTo` lot 88421) → `ECO-318` (supersedes SERVO-204 with -205, fw v4.2.2 torque-comp) → Tier-1 Auto OEM 24-unit `Deal` (feasibility AT_RISK, +3w) → `DLV-3312` Delivery (stage CUSTOMS, Osaka, EAR99 hold) → `ExportLicense` (DLV-3312 EAR99) → fleet `Robot` SN-2196 (thermal) → `WorkOrderField` (SN-2196 battery swap, SLA countdown) → Technician M. Osei (HV/battery cert expiring 12d) → `AutonomyMetric` Site-3 p-13 canary regression + `PolicyVersion` p-13 canary + `SafetyIncident` INC-201 → `UnitEconomic` AX-2 margin −2.1pt → `Invoice` Tier-1 Auto OEM net-60 + OEM-2 overdue → `Obligation` Tier-1 Auto OEM 99.5% SLA → `LegalMatter` (INC-201, ECO-318 patent).
 - [ ] 14 Projects with Files; 21 Machines (8 FIXED, ≥6 MOBILE) with at least a few MachineSignals each.
 - [ ] Every seeded tenant row has the demo `orgId`; the second org has only its own minimal rows.
 - [ ] `pnpm verify:fnd-12` green; `pnpm typecheck` clean; committed and pushed.
@@ -79,7 +79,7 @@ packages/db/prisma/
     users.ts                   // one per role
     value-chain.ts             // Suppliers, Parts, POs, WorkOrderMfg, NCR-118, SPC, Certs, Tier-1 Auto OEM Deal, Campaigns, DLV-3312
     robotics.ts                // Robots (SN-2196), Telemetry, WorkOrderField, Technicians (Osei), ECO-318, Firmware, Compat, Autonomy (p-13), SafetyIncident, PolicyVersion
-    back-office.ts             // Ledger, Invoices (Tier-1 Auto OEM/OEM-2), UnitEconomic (HX-2), Requisitions, CVEs, Obligations, ExportLicense, LegalMatter
+    back-office.ts             // Ledger, Invoices (Tier-1 Auto OEM/OEM-2), UnitEconomic (AX-2), Requisitions, CVEs, Obligations, ExportLicense, LegalMatter
     projects.ts                // 14 projects + files
     machines.ts                // 21 machines + signals
 ```
@@ -162,15 +162,15 @@ await db.nCR.create({ data: { code: "NCR-118", defect: "Drive torque over UCL (s
 
 // Engineering: ECO-318 from NCR-118, supersedes SERVO-204 with -205 + firmware torque-comp
 await db.eCO.create({ data: { code: "ECO-318", title: "Supersede SERVO-204 → -205 (torque-comp)", changeType: "SUPERSEDE", affected: "SERVO-204; NCR-118; Tier-1 Auto OEM order", stage: "REVIEW" } });
-await db.firmwareRelease.create({ data: { version: "v4.2.2-rc", note: "Torque-comp; awaiting HX-1 cert before Fleet OTA", state: "RC" } });
+await db.firmwareRelease.create({ data: { version: "v4.2.2-rc", note: "Torque-comp; awaiting AX-1 cert before Fleet OTA", state: "RC" } });
 
 // Sales/Fulfillment: Tier-1 Auto OEM 24-unit deal at-risk +3w → DLV-3312 Osaka customs (EAR99)
-await db.deal.create({ data: { account: "Tier-1 Auto OEM", config: "HX-2 ×24", value: 4_800_000, stage: "COMMIT", feasibility: "AT_RISK" } });
-await db.delivery.create({ data: { code: "DLV-3312", account: "Tier-1 Auto OEM", destination: "Osaka, JP", units: "24× HX-2", stage: "CUSTOMS", committedDate: d("+21d"), etaDate: d("+42d"), riskState: "EAR99 customs hold" } });
+await db.deal.create({ data: { account: "Tier-1 Auto OEM", config: "AX-2 ×24", value: 4_800_000, stage: "COMMIT", feasibility: "AT_RISK" } });
+await db.delivery.create({ data: { code: "DLV-3312", account: "Tier-1 Auto OEM", destination: "Osaka, JP", units: "24× AX-2", stage: "CUSTOMS", committedDate: d("+21d"), etaDate: d("+42d"), riskState: "EAR99 customs hold" } });
 await db.exportLicense.create({ data: { destination: "Osaka, JP", code: "EAR99-DLV-3312", state: "HOLD" } });
 
 // Fleet/Field: SN-2196 thermal → battery swap WO → Tech M. Osei cert expiring 12d
-const sn2196 = await db.robot.create({ data: { serial: "SN-2196", model: "HX-2", customer: "Tier-1 Auto OEM", site: "Site-3", uptimePct: 96.4, firmware: "v4.2.1", status: "WATCH" } });
+const sn2196 = await db.robot.create({ data: { serial: "SN-2196", model: "AX-2", customer: "Tier-1 Auto OEM", site: "Site-3", uptimePct: 96.4, firmware: "v4.2.1", status: "WATCH" } });
 await db.workOrderField.create({ data: { code: "WO-5521", robotSerial: "SN-2196", site: "Site-3", issue: "Thermal anomaly — battery swap", slaDueAt: d("+6h"), status: "DISPATCH", severity: "MAJOR" } });
 await db.technician.create({ data: { name: "M. Osei", initials: "MO", site: "Site-3", status: "ON_JOB", certs: { hvBattery: { state: "EXPIRING", expiresAt: d("+12d") } } } });
 
@@ -179,8 +179,8 @@ await db.policyVersion.create({ data: { version: "p-13", note: "Canary on Site-3
 await db.autonomyMetric.createMany({ data: autonomySeries("Site-3", { regressionAfter: "p-13" }) });
 await db.safetyIncident.create({ data: { code: "INC-201", type: "near-miss", robotSerial: "SN-2196", site: "Site-3", severity: "MAJOR", status: "REVIEW" } });
 
-// Finance/Legal: HX-2 margin −2.1pt, Tier-1 Auto OEM net-60 + OEM-2 overdue, SLA obligation, IP matter
-await db.unitEconomic.create({ data: { product: "HX-2", asp: 200_000, cogs: 154_200, marginPct: 22.9, trend: "-2.1pt from ECO-318" } });
+// Finance/Legal: AX-2 margin −2.1pt, Tier-1 Auto OEM net-60 + OEM-2 overdue, SLA obligation, IP matter
+await db.unitEconomic.create({ data: { product: "AX-2", asp: 200_000, cogs: 154_200, marginPct: 22.9, trend: "-2.1pt from ECO-318" } });
 await db.invoice.create({ data: { code: "INV-7741", account: "Tier-1 Auto OEM", source: "hardware", amount: 1_200_000, terms: "net-60", dueDate: d("+38d"), status: "OPEN" } });
 await db.invoice.create({ data: { code: "INV-7702", account: "OEM-2", source: "RaaS", amount: 96_000, terms: "net-30", dueDate: d("-9d"), status: "OVERDUE" } });
 await db.obligation.create({ data: { account: "Tier-1 Auto OEM", obligation: "99.5% fleet SLA", actual: "99.3% (autonomy regression)", state: "AT_RISK" } });
@@ -251,7 +251,7 @@ pnpm db:seed
 **Day 1** — constants + modules + users + the clear-then-seed scaffold; `seed.ts` orchestrator runs end-to-end empty.
 **Day 2** — agents (~6/module) + value-chain narrative (SERVO/NCR-118/SPC/Tier-1 Auto OEM deal/DLV-3312).
 **Day 3** — robotics narrative (SN-2196/Osei/ECO-318/firmware/compat/autonomy p-13/INC-201).
-**Day 4** — back-office (HX-2/invoices/obligations/export/legal) + 14 projects/files + 21 machines/signals + second org.
+**Day 4** — back-office (AX-2/invoices/obligations/export/legal) + 14 projects/files + 21 machines/signals + second org.
 **Day 5** — verify script + manual-checks + idempotency pass + commit/push.
 
 ## Verification Script
@@ -288,7 +288,7 @@ async function run() {
     await check("SN-2196 robot + field WO", async () => (await db.robot.count({ where: { serial: "SN-2196" } })) === 1 && (await db.workOrderField.count({ where: { robotSerial: "SN-2196" } })) >= 1);
     await check("M. Osei cert expiring", async () => { const t = await db.technician.findFirst({ where: { name: "M. Osei" } }); return !!t; });
     await check("p-13 autonomy canary + INC-201", async () => (await db.policyVersion.count({ where: { version: "p-13" } })) >= 1 && (await db.safetyIncident.count({ where: { code: "INC-201" } })) === 1);
-    await check("HX-2 margin -2.1pt + OEM-2 overdue invoice", async () => { const u = await db.unitEconomic.findFirst({ where: { product: "HX-2" } }); const inv = await db.invoice.findFirst({ where: { account: "OEM-2", status: "OVERDUE" } }); return !!u && /-2.1/.test(u.trend) && !!inv; });
+    await check("AX-2 margin -2.1pt + OEM-2 overdue invoice", async () => { const u = await db.unitEconomic.findFirst({ where: { product: "AX-2" } }); const inv = await db.invoice.findFirst({ where: { account: "OEM-2", status: "OVERDUE" } }); return !!u && /-2.1/.test(u.trend) && !!inv; });
     await check("every demo tenant row carries demo orgId (sample: suppliers)", async () => (await db.supplier.count()) > 0 && (await prisma.supplier.count({ where: { orgId: { not: DEMO_ORG_ID }, AND: { orgId: { not: SECOND_ORG_ID } } } })) === 0);
     await check("second org isolated (has its own, few rows)", async () => (await dbForOrg(SECOND_ORG_ID).supplier.count()) >= 0);
   }
@@ -304,7 +304,7 @@ run();
 ```
 ## FND.12 — Cross-module narrative seed
 **Automated**
-- `pnpm db:seed` then `pnpm verify:fnd-12` — counts + the SERVO/NCR-118/ECO-318/Tier-1 Auto OEM/DLV-3312/SN-2196/Osei/p-13/HX-2 chain.
+- `pnpm db:seed` then `pnpm verify:fnd-12` — counts + the SERVO/NCR-118/ECO-318/Tier-1 Auto OEM/DLV-3312/SN-2196/Osei/p-13/AX-2 chain.
 - Re-run `pnpm db:seed` and `pnpm verify:fnd-12` again — counts identical (idempotent).
 - `pnpm typecheck` clean.
 
@@ -330,7 +330,7 @@ run();
 
 - All tenant data seeded through `dbForOrg(DEMO_ORG_ID)`; stable demo org id in `constants.ts`.
 - Clear-then-seed, strictly scoped to the demo org; never a bare `deleteMany`.
-- Narrative codes are constants (NCR-118, ECO-318, DLV-3312, SN-2196, p-13, HX-2) and must cross-link.
+- Narrative codes are constants (NCR-118, ECO-318, DLV-3312, SN-2196, p-13, AX-2) and must cross-link.
 - Relative dates only for anything time-sensitive.
 - Tier-1 Auto OEM/OEM-2 are sample data in-app; do not anonymize here (that's the export gate).
 

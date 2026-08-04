@@ -81,8 +81,8 @@ async function run(): Promise<void> {
           );
         },
       );
-      await check("HX-2 unit economics — margin −2.1pt from ECO-318", () => {
-        const u = data.unitEconomics.find((x) => x.product === "HX-2");
+      await check("AX-2 unit economics — margin −2.1pt from ECO-318", () => {
+        const u = data.unitEconomics.find((x) => x.product === "AX-2");
         return (
           !!u &&
           u.marginPct > 0 &&

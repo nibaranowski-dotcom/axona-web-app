@@ -236,18 +236,36 @@ async function run(): Promise<void> {
 
   // ── 3: agent proposal + CONF.1 confidence + no auto-act (RCA) ──
   await check(
-    "RCA agent proposes with CONF.1 calibrated confidence, does NOT auto-classify",
+    "RCA agent proposes a cause with a real rationale, does NOT auto-classify",
     async () => {
       const workspace = await getRcaWorkspace(DEMO, "NCR-118");
       const s = workspace?.suggestion;
       return (
         !!s &&
-        typeof s.calibrated === "number" &&
-        s.calibrated !== s.rawConfidence && // CONF.1 calibration actually applied
-        (s.calibratedState === "calibrated" ||
-          s.calibratedState === "uncalibrated") &&
         // the proposal is assistance — a proposed `cause`, never auto-applied
-        typeof s.cause === "string"
+        typeof s.cause === "string" &&
+        // evidence-derived, not a canned string
+        typeof s.rationale === "string" &&
+        s.rationale.length > 0
+      );
+    },
+  );
+
+  // SEED.4 (demo integrity) — the proposal must carry NO fabricated confidence.
+  // It previously emitted a hardcoded 0.82 that rendered "0.82 (uncal)" on any org
+  // without a fitted CalibrationModel — i.e. on both prospect demo tenants. A
+  // confidence may return here only as a real calibratedConfidence() result.
+  await check(
+    "RCA proposal emits NO confidence field (no fabricated number)",
+    async () => {
+      const workspace = await getRcaWorkspace(DEMO, "NCR-118");
+      const s = workspace?.suggestion as Record<string, unknown> | null;
+      if (!s) return false;
+      return (
+        !("calibrated" in s) &&
+        !("rawConfidence" in s) &&
+        !("calibratedState" in s) &&
+        !("confidence" in s)
       );
     },
   );

@@ -23,12 +23,12 @@ const EXAMPLE_ORG_ID = "org_prospect_example";
 
 // Demo-narrative literals that must not be HARDCODED into the app's PRESENTATION
 // (executable code — comments documenting the narrative are stripped before this
-// runs). Covers product names (HX-2), customer names (Tier-1 Auto OEM), and record
-// codes (SN-2196 / NCR-118 / SERVO-204 / DLV-3312 / ECO-31x / HX2-0xxx). PROSPECT.2a:
-// broadened from `product: "HX-2"` — that literal missed `product === "HX-2"` in
-// FinanceView; now any `HX-2` product literal in executable code is caught.
+// runs). Covers product names (AX-2), customer names (Tier-1 Auto OEM), and record
+// codes (SN-2196 / NCR-118 / SERVO-204 / DLV-3312 / ECO-31x / AX2-0xxx). PROSPECT.2a:
+// broadened from `product: "AX-2"` — that literal missed `product === "AX-2"` in
+// FinanceView; now any `AX-2` product literal in executable code is caught.
 const DEMO_LITERALS =
-  /Tier-1 Auto OEM|SN-2196|NCR-118|SERVO-20[45]|DLV-3312|ECO-31[0-9]|HX2-0|HX-2|drive_torque_Nm|thermal anomaly|lot 88421|M\. Osei/;
+  /Tier-1 Auto OEM|SN-2196|NCR-118|SERVO-20[45]|DLV-3312|ECO-31[0-9]|AX2-0|AX-2|drive_torque_Nm|thermal anomaly|lot 88421|M\. Osei/;
 
 let passed = 0;
 let failed = 0;
@@ -121,7 +121,7 @@ async function run(): Promise<void> {
       const cs = codeOnly(read(`${L}/core-summary.ts`));
       return (
         !/thermal anomaly/.test(cs) &&
-        !/product: "HX-2"/.test(cs) &&
+        !/product: "AX-2"/.test(cs) &&
         // Derives the watch reason from the real field work order. VERIFY.3 moved
         // this from a per-robot `findFirst` to one ordered `findMany` over the open
         // work orders (the pick must be deterministic, not heap order) — so assert

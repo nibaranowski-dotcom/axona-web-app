@@ -138,7 +138,14 @@ async function run(): Promise<void> {
       has("Nomagic") &&
       has("MicrofluidX") &&
       has("Marcel Gordon") &&
-      has("Marcel")
+      has("Marcel") &&
+      // SEED.4 — the real product designation, both generations, both spellings.
+      // The "HX" prefix is the tell, so the previous-gen rev is banned alongside
+      // the flagship.
+      has("HX-2") &&
+      has("HX2") &&
+      has("HX-1") &&
+      has("HX1")
     );
   });
   await check("specs/ is free of every prospect + advisor marque", () => {

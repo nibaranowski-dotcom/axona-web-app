@@ -517,9 +517,10 @@ export function ConfigurationDetailView({
                   <div className="text-[12.5px] font-semibold text-ink">
                     Configuration agent
                   </div>
+                  {/* SEED.4 — no confidence: the prior "· 82% confidence" was a
+                      hardcoded literal, not a calibrated result. */}
                   <div className="font-mono text-[9px] uppercase tracking-[0.05em] text-ink-faint">
-                    Proposal · {Math.round(data.agent.confidence * 100)}%
-                    confidence
+                    Proposal
                   </div>
                 </div>
               </div>

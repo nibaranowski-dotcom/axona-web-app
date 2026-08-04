@@ -96,10 +96,10 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       leadDays: 42,
     },
   });
-  const battHx2 = await db.part.create({
+  const battAx2 = await db.part.create({
     data: {
-      sku: "BATT-HX2",
-      name: "HX-2 battery pack",
+      sku: "BATT-AX2",
+      name: "AX-2 battery pack",
       onHand: 14,
       reorderPoint: 10,
       leadDays: 21,
@@ -187,7 +187,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       {
         code: "PO-9010",
         supplierId: cellsPower.id,
-        partId: battHx2.id,
+        partId: battAx2.id,
         qty: 30,
         value: 96_000,
         status: "RECEIVED",
@@ -223,7 +223,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       {
         code: "PO-9014",
         supplierId: cellsPower.id,
-        partId: battHx2.id,
+        partId: battAx2.id,
         qty: 16,
         value: 51_200,
         status: "AWAITING_APPROVAL",
@@ -245,8 +245,8 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
   // Manufacturing — the MES line across 6 stations (MFG.2). Units flow Frame
   // Build → Drive Integration → Actuators → Firmware → Test → Pack-out. Two units
   // carry a MULTI-station as-built trace (the genealogy anchor = serial):
-  //   HX2-0221 — clean build on the SERVO-205 drive (post-ECO-318): full pass.
-  //   HX2-0208 — carries the SERVO-204 / lot-88421 defect → HOLD at Test (the
+  //   AX2-0221 — clean build on the SERVO-205 drive (post-ECO-318): full pass.
+  //   AX2-0208 — carries the SERVO-204 / lot-88421 defect → HOLD at Test (the
   //              NCR-118 source). The parts·serials·firmware graph is ONT.2.
   const STATIONS = [
     "Frame Build",
@@ -275,83 +275,83 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
   await db.workOrderMfg.createMany({
     data: [
       // Multi-station as-built traces (getGenealogy shows the full history)
-      ...buildTrace("HX2-0221", CODES.product, 6, "DONE"), // clean SERVO-205 unit
-      ...buildTrace("HX2-0208", CODES.product, 5, "HOLD"), // SERVO-204 / lot-88421 defect → HOLD at Test
+      ...buildTrace("AX2-0221", CODES.product, 6, "DONE"), // clean SERVO-205 unit
+      ...buildTrace("AX2-0208", CODES.product, 5, "HOLD"), // SERVO-204 / lot-88421 defect → HOLD at Test
       // Units currently in flow across the stations (one per current station)
       {
-        serial: "HX2-0230",
+        serial: "AX2-0230",
         product: CODES.product,
         station: "Frame Build",
         status: "WIP",
         startedAt: d("-1d"),
       },
       {
-        serial: "HX2-0228",
+        serial: "AX2-0228",
         product: CODES.product,
         station: "Drive Integration",
         status: "WIP",
         startedAt: d("-2d"),
       },
       {
-        serial: "HX2-0226",
+        serial: "AX2-0226",
         product: CODES.product,
         station: "Drive Integration",
         status: "WIP",
         startedAt: d("-3d"),
       },
       {
-        serial: "HX2-0224",
+        serial: "AX2-0224",
         product: CODES.product,
         station: "Actuators",
         status: "WIP",
         startedAt: d("-4d"),
       },
       {
-        serial: "HX2-0222",
+        serial: "AX2-0222",
         product: CODES.product,
         station: "Firmware",
         status: "WIP",
         startedAt: d("-5d"),
       },
       {
-        serial: "HX2-0219",
+        serial: "AX2-0219",
         product: CODES.product,
         station: "Test",
         status: "WIP",
         startedAt: d("-6d"),
       },
       {
-        serial: "HX2-0216",
+        serial: "AX2-0216",
         product: CODES.product,
         station: "Pack-out",
         status: "WIP",
         startedAt: d("-7d"),
       },
       {
-        serial: "HX2-0214",
+        serial: "AX2-0214",
         product: CODES.product,
         station: "Pack-out",
         status: "DONE",
         startedAt: d("-8d"),
       },
-      // HX-1 line units
+      // AX-1 line units
       {
-        serial: "HX1-0330",
-        product: "HX-1",
+        serial: "AX1-0330",
+        product: "AX-1",
         station: "Frame Build",
         status: "WIP",
         startedAt: d("-1d"),
       },
       {
-        serial: "HX1-0326",
-        product: "HX-1",
+        serial: "AX1-0326",
+        product: "AX-1",
         station: "Actuators",
         status: "WIP",
         startedAt: d("-3d"),
       },
       {
-        serial: "HX1-0322",
-        product: "HX-1",
+        serial: "AX1-0322",
+        product: "AX-1",
         station: "Test",
         status: "WIP",
         startedAt: d("-5d"),
@@ -379,12 +379,12 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
           {
             ts: d("-3h").toISOString(),
             kind: "test-fail",
-            text: "HX2-0208 station-5 payload test → fail (torque +4%)",
+            text: "AX2-0208 station-5 payload test → fail (torque +4%)",
           },
           {
             ts: d("-3h").toISOString(),
             kind: "halt",
-            text: `hold HX2-0208 · open ${CODES.ncr}`,
+            text: `hold AX2-0208 · open ${CODES.ncr}`,
           },
           {
             ts: d("-3h").toISOString(),
@@ -394,7 +394,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
           {
             ts: d("-3h").toISOString(),
             kind: "genealogy",
-            text: "log HX2-0221 as-built (SERVO-205)",
+            text: "log AX2-0221 as-built (SERVO-205)",
           },
         ],
       },
@@ -420,28 +420,28 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       {
         code: "NCR-114",
         defect: "Drive torque over UCL (stiff actuator)",
-        linkedTo: "HX2-0208; SERVO-204",
+        linkedTo: "AX2-0208; SERVO-204",
         severity: "MAJOR",
         status: "CONTAINED",
       },
       {
         code: "NCR-106",
         defect: "Drive torque over UCL (stiff actuator)",
-        linkedTo: "HX2-0181; SERVO-204",
+        linkedTo: "AX2-0181; SERVO-204",
         severity: "MINOR",
         status: "CLOSED",
       },
       {
         code: "NCR-097",
         defect: "Drive torque over UCL (stiff actuator)",
-        linkedTo: "HX2-0164; SERVO-204",
+        linkedTo: "AX2-0164; SERVO-204",
         severity: "MINOR",
         status: "CLOSED",
       },
       {
         code: "NCR-090",
         defect: "Drive torque over UCL (stiff actuator)",
-        linkedTo: "HX2-0150; SERVO-204",
+        linkedTo: "AX2-0150; SERVO-204",
         severity: "MINOR",
         status: "CLOSED",
       },
@@ -449,21 +449,21 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       {
         code: "NCR-116",
         defect: "Joint calibration drift",
-        linkedTo: "HX2-0205; joint-3",
+        linkedTo: "AX2-0205; joint-3",
         severity: "MAJOR",
         status: "OPEN",
       },
       {
         code: "NCR-109",
         defect: "Joint calibration drift",
-        linkedTo: "HX2-0188; joint-5",
+        linkedTo: "AX2-0188; joint-5",
         severity: "MINOR",
         status: "CLOSED",
       },
       {
         code: "NCR-101",
         defect: "Joint calibration drift",
-        linkedTo: "HX2-0170; joint-2",
+        linkedTo: "AX2-0170; joint-2",
         severity: "MINOR",
         status: "CLOSED",
       },
@@ -471,14 +471,14 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       {
         code: "NCR-112",
         defect: "Skin panel fit (cosmetic)",
-        linkedTo: "HX2-0199; front-shell",
+        linkedTo: "AX2-0199; front-shell",
         severity: "MINOR",
         status: "OPEN",
       },
       {
         code: "NCR-099",
         defect: "Skin panel fit (cosmetic)",
-        linkedTo: "HX2-0166; front-shell",
+        linkedTo: "AX2-0166; front-shell",
         severity: "MINOR",
         status: "CLOSED",
       },
@@ -486,14 +486,14 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       {
         code: "NCR-110",
         defect: "Wiring harness continuity",
-        linkedTo: "HX2-0190; HARN-220",
+        linkedTo: "AX2-0190; HARN-220",
         severity: "MAJOR",
         status: "REVIEW",
       },
       {
         code: "NCR-095",
         defect: "Wiring harness continuity",
-        linkedTo: "HX2-0158; HARN-220",
+        linkedTo: "AX2-0158; HARN-220",
         severity: "MINOR",
         status: "CLOSED",
       },
@@ -504,7 +504,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
   await db.cert.create({
     data: {
       name: "CE",
-      scope: "HX-2 line",
+      scope: "AX-2 line",
       validTo: d("+6m"),
       status: "VALID",
     },
@@ -512,7 +512,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
   await db.cert.create({
     data: {
       name: "UL",
-      scope: "HX-2 battery",
+      scope: "AX-2 battery",
       validTo: d("+2m"),
       status: "VALID",
     },
@@ -528,7 +528,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
 
   // Sales: the enterprise pipeline across all 5 stages (SALES.2). Tier-1 Auto OEM 24-unit deal
   // is AT_RISK +3w — its deliverability resolves through Fulfillment (DLV-3312
-  // EAR99 hold) + Manufacturing (HX2-0208 hold at Test, ECO-318/lot-88421), not a
+  // EAR99 hold) + Manufacturing (AX2-0208 hold at Test, ECO-318/lot-88421), not a
   // hardcoded flag. Feasibility mix across the rest.
   await db.deal.createMany({
     data: [
@@ -550,7 +550,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       },
       {
         account: "OEM-3",
-        config: "HX-1 ×30",
+        config: "AX-1 ×30",
         value: 1_740_000,
         stage: "NEGOTIATION",
         closeDate: d("+50d"),
@@ -582,7 +582,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       },
       {
         account: "OEM-7",
-        config: "HX-1 ×20",
+        config: "AX-1 ×20",
         value: 1_160_000,
         stage: "QUALIFY",
         closeDate: d("+120d"),
@@ -590,7 +590,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
       },
       {
         account: "Boeing",
-        config: "HX-1 ×15",
+        config: "AX-1 ×15",
         value: 870_000,
         stage: "QUALIFY",
         closeDate: d("+110d"),
@@ -631,7 +631,7 @@ export async function seedValueChain(db: OrgScopedDb): Promise<void> {
           {
             ts: d("-6h").toISOString(),
             kind: "at-risk",
-            text: `DLV-3312 hold + HX2-0208 line hold → Tier-1 Auto OEM slips +3w`,
+            text: `DLV-3312 hold + AX2-0208 line hold → Tier-1 Auto OEM slips +3w`,
           },
           {
             ts: d("-6h").toISOString(),

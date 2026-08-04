@@ -95,7 +95,7 @@ async function run(): Promise<void> {
       await check(
         "SERVO-205 clean unit — full multi-station as-built trace",
         async () => {
-          const g = await getGenealogy(org.id, "HX2-0221");
+          const g = await getGenealogy(org.id, "AX2-0221");
           return (
             g.steps.length >= 5 &&
             g.steps.every(
@@ -108,7 +108,7 @@ async function run(): Promise<void> {
       await check(
         "lot-88421 defect unit — trace ends HOLD at Test",
         async () => {
-          const g = await getGenealogy(org.id, "HX2-0208");
+          const g = await getGenealogy(org.id, "AX2-0208");
           const last = g.steps[g.steps.length - 1];
           return (
             g.steps.length >= 4 &&

@@ -15,10 +15,13 @@ import { Attachments } from "@/components/attachments/Attachments";
 import type { RecordAttachments } from "@/lib/attachments";
 
 // PLM.8 — the RCA workspace (`RCA.dc.html` 1:1 on DS.1 primitives). Evidence is
-// assembled by the system; the AGENT PROPOSES a candidate cause with calibrated
-// confidence (CONF.1); the HUMAN classifies (Confirm) — the agent never
-// auto-classifies. Fully usable with the suggestion hidden. DETAIL screen →
-// breadcrumbs. Classification reuses PLM.V2's RBAC-gated + audited action.
+// assembled by the system; the AGENT PROPOSES a candidate cause; the HUMAN
+// classifies (Confirm) — the agent never auto-classifies. Fully usable with the
+// suggestion hidden. DETAIL screen → breadcrumbs. Classification reuses PLM.V2's
+// RBAC-gated + audited action.
+// SEED.4 — the proposal renders NO confidence. It previously showed a hardcoded
+// 0.82 as "confidence 0.82 (uncal)"; a number returns only when CONF.1 calibrates
+// a real model-emitted value (DEMO.6 beat #4).
 
 const LABEL: Record<string, string> = {
   software: "Software",
@@ -206,16 +209,7 @@ export function RcaView({
                 <span className="text-[12px] text-ink">
                   <span className="font-semibold">Agent suggests:</span>{" "}
                   {LABEL[rca.suggestion.cause] ?? rca.suggestion.cause} —{" "}
-                  {rca.suggestion.rationale}{" "}
-                  <span className="font-mono text-ink-muted">
-                    confidence {rca.suggestion.calibrated.toFixed(2)}
-                    {rca.suggestion.calibratedState === "uncalibrated"
-                      ? " (uncal)"
-                      : rca.suggestion.calibrated !==
-                          rca.suggestion.rawConfidence
-                        ? ` · raw ${rca.suggestion.rawConfidence.toFixed(2)}`
-                        : ""}
-                  </span>
+                  {rca.suggestion.rationale}
                 </span>
               </div>
             )}

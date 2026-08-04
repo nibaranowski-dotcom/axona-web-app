@@ -93,7 +93,7 @@ async function run(): Promise<void> {
       const failStep = r.steps.find((s) => !s.passed);
       return (
         r.outcome === "fail" &&
-        r.snapshot?.configVersion?.name === "CFG-HX2-r4.2" &&
+        r.snapshot?.configVersion?.name === "CFG-AX2-r4.2" &&
         r.snapshot?.sw?.version === "v4.2.1" &&
         r.steps.length >= 2 &&
         !!failStep &&

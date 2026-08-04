@@ -142,7 +142,7 @@ async function run(): Promise<void> {
           panel,
         ) &&
         // no hardcoded demo narrative in the panel (PROSPECT.2 discipline)
-        !/Tier-1 Auto OEM|SN-2196|HX-2|SERVO-20|Nomagic/.test(panel)
+        !/Tier-1 Auto OEM|SN-2196|AX-2|SERVO-20|Nomagic/.test(panel)
       );
     },
   );

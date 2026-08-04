@@ -130,8 +130,8 @@ async function run(): Promise<void> {
       return (
         atNow.sw?.version === "v4.2.1" &&
         atPast.sw?.version === "v4.1.0" &&
-        atNow.configVersion?.name === "CFG-HX2-r4.2" &&
-        atPast.configVersion?.name === "CFG-HX2-r4.1" // distinct configs ⇒ time-resolution works
+        atNow.configVersion?.name === "CFG-AX2-r4.2" &&
+        atPast.configVersion?.name === "CFG-AX2-r4.1" // distinct configs ⇒ time-resolution works
       );
     },
   );
@@ -160,10 +160,10 @@ async function run(): Promise<void> {
       try {
         const csv = [
           "serial,model,status",
-          "SN-TEST-1,HX-2,active", // valid
-          "SN-TEST-2,HX-2,active", // valid
+          "SN-TEST-1,AX-2,active", // valid
+          "SN-TEST-2,AX-2,active", // valid
           "SN-TEST-3,NOPE,active", // malformed: unknown model
-          "SN-TEST-4,HX-2,not_a_status", // malformed: bad enum
+          "SN-TEST-4,AX-2,not_a_status", // malformed: bad enum
         ].join("\n");
         const first = await importUnits(db, csv);
         const afterFirst = await db.unit.count({

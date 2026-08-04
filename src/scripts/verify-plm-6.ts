@@ -3,8 +3,8 @@
  * scale. Run: pnpm verify:plm-6
  *
  *   1. Route + view exist; LIST screen → back-arrow to Quality + mono eyebrow.
- *   2. COMPARE MODE surfaces the config delta between TR-8841 (fail, CFG-HX2-r4.2)
- *      and TR-8802 (pass, CFG-HX2-r4.1) — the whole point: "how the builds differed"
+ *   2. COMPARE MODE surfaces the config delta between TR-8841 (fail, CFG-AX2-r4.2)
+ *      and TR-8802 (pass, CFG-AX2-r4.1) — the whole point: "how the builds differed"
  *      is visible (config version + software differ; the flag is set).
  *   3. Config-at-run comes from each run's FROZEN snapshot (not a live re-resolve).
  *   4. Filters compose + are URL-addressable; facets are populated.
@@ -93,8 +93,8 @@ async function run(): Promise<void> {
         cmp.runs.length === 2 &&
         !!cfg &&
         cfg.differs === true &&
-        cfg.values.includes("CFG-HX2-r4.2") &&
-        cfg.values.includes("CFG-HX2-r4.1") &&
+        cfg.values.includes("CFG-AX2-r4.2") &&
+        cfg.values.includes("CFG-AX2-r4.1") &&
         !!sw &&
         sw.differs === true &&
         sw.values.includes("v4.2.1") &&

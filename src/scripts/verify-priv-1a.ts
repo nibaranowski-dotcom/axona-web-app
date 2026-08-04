@@ -230,7 +230,7 @@ async function run(): Promise<void> {
 
   // ── P0: isolation ──
   // NOT by natural key: the prospect seeds deliberately replay the base narrative,
-  // so PO-9001 / ECO-305 / CFG-HX2-r4.2 legitimately exist on several tenants as
+  // so PO-9001 / ECO-305 / CFG-AX2-r4.2 legitimately exist on several tenants as
   // DIFFERENT rows. Comparing codes flags those and proves nothing. The real
   // property is "the bundle is exactly this org's rows", asserted against an
   // INDEPENDENT count taken with an explicit orgId predicate on the raw client.

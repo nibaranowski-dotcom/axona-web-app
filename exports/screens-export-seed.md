@@ -128,7 +128,7 @@ OEM / OEM-2 / role labels); every crop carries a sample-data chip.
     <div><div class="eyebrow">Manufacturing · as-built genealogy</div><div class="h1">Build genealogy · SN-0208</div></div>
     <span class="chip">sample data — illustrative</span>
   </div>
-  <div class="mono" style="font-size:12px;color:rgba(10,10,10,.55);margin-top:10px">Product HX-2 · 6-station line · captured at each station — never reconstructed</div>
+  <div class="mono" style="font-size:12px;color:rgba(10,10,10,.55);margin-top:10px">Product AX-2 · 6-station line · captured at each station — never reconstructed</div>
 
   <div style="margin-top:18px">
     <div class="station"><span class="node" style="background:#1f9e6f"></span><div style="flex:1"><div style="display:flex;justify-content:space-between"><span class="st-name">Frame build</span><span class="stat" style="background:rgba(31,158,111,.12);color:#1f9e6f">Done</span></div><div class="built">FRM-88 · s/n F88-0208 · 2026-06-27 09:12</div></div></div>

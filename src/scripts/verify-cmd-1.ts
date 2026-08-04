@@ -95,9 +95,9 @@ async function run(): Promise<void> {
           (e) => e.module === "people" && e.ripples.includes("field-service"),
         ),
       );
-      await check("HX-2 margin surfaces (Finance)", () =>
+      await check("AX-2 margin surfaces (Finance)", () =>
         s.exceptions.some(
-          (e) => e.module === "finance" && /HX-2/.test(e.title),
+          (e) => e.module === "finance" && /AX-2/.test(e.title),
         ),
       );
       await check(

@@ -13,7 +13,7 @@ export const CERT_META: Record<string, { label: string; order: number }> = {
   commissioning: { label: "Commission", order: 4 },
 };
 
-/** Humanize a cert key: "shoebox_picker" → "Shoebox picker"; "hx2Service" → "Hx2 service". */
+/** Humanize a cert key: "shoebox_picker" → "Shoebox picker"; "ax2Service" → "Ax2 service". */
 function humanizeCert(key: string): string {
   const words = key
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")

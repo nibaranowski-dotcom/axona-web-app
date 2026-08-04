@@ -175,10 +175,10 @@ async function run(): Promise<void> {
         const before = await db.unit.count();
         const csv = [
           "serial,model,status",
-          "SN-IO-U1,HX-2,in_build",
-          "SN-IO-U2,HX-2,in_build",
+          "SN-IO-U1,AX-2,in_build",
+          "SN-IO-U2,AX-2,in_build",
           "SN-IO-U3,NOPE,in_build", // unknown model
-          "SN-IO-U4,HX-2,teleporting", // bad enum
+          "SN-IO-U4,AX-2,teleporting", // bad enum
         ].join("\n");
         const dry = await importUnits(db, csv, { dryRun: true });
         const afterDry = await db.unit.count();

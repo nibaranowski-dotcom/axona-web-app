@@ -110,7 +110,7 @@ async function run(): Promise<void> {
     "rollout is per-unit (a unit carrying SERVO-204 is pending)",
     async () => {
       const c = await getChangeOrder(DEMO, "ECO-318");
-      // HX2-0208/HX2-0214 are in-effectivity units that still carry SERVO-204 (lot 88421).
+      // AX2-0208/AX2-0214 are in-effectivity units that still carry SERVO-204 (lot 88421).
       const inScopeCarriers = c?.affected.filter(
         (u) => u.inEffectivity && u.rollout === "pending",
       );

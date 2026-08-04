@@ -41,7 +41,7 @@ const check = async (
 
 const DEMO = "org_axona_demo";
 const SECOND = "org_isolation_test";
-const MODEL = "HX-2";
+const MODEL = "AX-2";
 
 function finish(): void {
   if (failed === 0) console.log(`\nPASSED — ${passed} checks\n`);

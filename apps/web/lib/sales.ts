@@ -11,7 +11,7 @@ import { getManufacturingData } from "./manufacturing";
 // Org-scoped via dbForOrg; the deal list paginated with the FND.11 helpers.
 //
 // Through-line: the Tier-1 Auto OEM deal resolves AT_RISK through the read models — a
-// Fulfillment hold (DLV-3312 EAR99) + a Manufacturing hold (HX2-0208 at Test,
+// Fulfillment hold (DLV-3312 EAR99) + a Manufacturing hold (AX2-0208 at Test,
 // ECO-318/lot-88421) → +3w slip. The badge is derived, never a hardcoded string.
 //
 // MOAT / gating: CPQ config, contracts, and forecast commits are agent-DRAFTED/
@@ -94,7 +94,7 @@ function countBy<T>(items: T[], key: (t: T) => string) {
  * Everything the Sales & CRM screen (SALES.2) needs, org-scoped and read-only:
  * the pipeline funnel + weighted Q3 forecast, and each deal's deliverability
  * badge derived over FUL.1 + MFG.1 (Tier-1 Auto OEM resolves AT_RISK through the DLV-3312
- * hold + the HX2-0208 line hold), plus a rollup.
+ * hold + the AX2-0208 line hold), plus a rollup.
  */
 export async function getSalesData(orgId: string): Promise<SalesData> {
   // Reuse the sibling read models rather than re-deriving ops feasibility.

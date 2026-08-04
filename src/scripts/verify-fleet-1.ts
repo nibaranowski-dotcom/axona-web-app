@@ -68,14 +68,14 @@ async function run(): Promise<void> {
       const data = await getFleetData(org.id);
 
       await check(
-        "SN-2196 present as WATCH (HX-2, Tier-1 Auto OEM, Site-3)",
+        "SN-2196 present as WATCH (AX-2, Tier-1 Auto OEM, Site-3)",
         () => {
           const r = data.robots.find((x) => x.serial === "SN-2196");
           return (
             !!r &&
             r.status === "WATCH" &&
             r.alert === true &&
-            r.model === "HX-2" &&
+            r.model === "AX-2" &&
             r.customer === "Tier-1 Auto OEM" &&
             r.site === "Site-3"
           );
