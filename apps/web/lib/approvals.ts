@@ -15,6 +15,7 @@ import {
 } from "@axona/db";
 import { resumeParkedRun } from "@axona/agents";
 import { requireRole } from "./rbac";
+import { ROOT_CAUSES } from "./quality";
 
 // RBAC.4 — the reusable approval primitive. "AI proposes; a human approves
 // money/safety/contract." One registry of gated action kinds; one `decide()` that
@@ -34,7 +35,8 @@ export type ApprovalKind =
   | "workflow.gate"
   | "config.lock" // PLM.10/11 — baseline/lock a ConfigurationVersion (dual-approver)
   | "config.unlock" // PLM.11 — unlock a baselined ConfigurationVersion (second approver)
-  | "field.mod"; // PLM.V5 — approve a recorded field modification (applies the delta)
+  | "field.mod" // PLM.V5 — approve a recorded field modification (applies the delta)
+  | "ncr.rootcause"; // DEMO.6 #4 — confirm/override the RCA agent's proposed cause
 
 export type Decision = "APPROVE" | "REJECT";
 
@@ -48,7 +50,30 @@ export type DecideUser = {
 } | null;
 
 type Approver = { id: string; label: string };
-type Effect = { output: Record<string, unknown>; summary: string };
+type Effect = {
+  output: Record<string, unknown>;
+  summary: string;
+  /** DEMO.6 #4 — optional AUDIT.1 `inputs` (what the decision was made ON). */
+  inputs?: Record<string, unknown>;
+};
+
+/**
+ * DEMO.6 #4 — optional per-call context. Additive: every existing caller omits it
+ * and behaves exactly as before.
+ *
+ * `proposal` is the agent output the human is deciding ON. decide() stamps its
+ * model + confidence onto the AUDIT.1 entry, so ONE entry carries
+ * input · output · model · confidence · approver. Without it a human decision
+ * records the approver only (the AUDIT.3 default), which is right for kinds where
+ * no agent proposed anything.
+ *
+ * `payload` is passed through to onApprove/onReject for kinds whose effect needs
+ * more than the target id (the RCA cause the human actually chose).
+ */
+export interface DecideContext {
+  proposal?: { model: string; confidence: number };
+  payload?: unknown;
+}
 
 interface ApprovalDef<T> {
   kind: ApprovalKind;
@@ -61,8 +86,15 @@ interface ApprovalDef<T> {
     orgId: string,
     t: T,
     by: Approver,
+    ctx?: DecideContext,
   ): Promise<Effect>;
-  onReject(db: OrgScopedDb, orgId: string, t: T, by: Approver): Promise<Effect>;
+  onReject(
+    db: OrgScopedDb,
+    orgId: string,
+    t: T,
+    by: Approver,
+    ctx?: DecideContext,
+  ): Promise<Effect>;
 }
 
 // TRUST.1 — the advisory consult decide() records on every decision. `rung` is the
@@ -426,6 +458,89 @@ const REGISTRY: { [K in ApprovalKind]: ApprovalDef<unknown> } = {
     },
   } as ApprovalDef<unknown>,
 
+  /**
+   * DEMO.6 #4 — the RCA agent's proposed root cause, confirmed or overridden by a
+   * human. `targetId` is the NCR CODE (what the route and the audit log use).
+   *
+   * APPROVE = the human accepted the agent's cause. REJECT = the human classified it
+   * as something ELSE — still a real classification (the NCR is updated either way),
+   * but recorded as a rejection of the PROPOSAL, because that is the label CONF.1
+   * needs: "the agent said component at 0.8 and the human disagreed" is exactly the
+   * signal that corrects the next score. Both paths fire LOOP.1 in decide().
+   *
+   * This supersedes the deliberate non-decide() path in quality/actions.ts, on that
+   * comment's own terms: it excluded decide() because classification was "a human
+   * recording a fact, not approving an agent proposal", and noted that when an agent
+   * proposes a cause, the proposal becomes decide()'s target. It now does. Where
+   * there is NO agent proposal, the original direct path still applies.
+   */
+  "ncr.rootcause": {
+    kind: "ncr.rootcause",
+    roles: ["ENGINEER", "OPS", "ADMIN"],
+    targetType: "NCR",
+    load: (db, _org, code) => db.nCR.findFirst({ where: { code } }),
+    // Re-classification is legitimate (an RCA can be revisited as evidence lands), so
+    // there is no terminal state to guard. decide()'s double-execute protection does
+    // not apply to this kind by design; the audit log carries the full sequence.
+    isPending: () => true,
+    onApprove: async (db, _org, t, by, ctx) => {
+      const ncr = t as { id: string; code: string; rootCause: string | null };
+      const cause = String(
+        (ctx?.payload as { cause?: string } | undefined)?.cause ?? "",
+      );
+      if (!(ROOT_CAUSES as readonly string[]).includes(cause)) {
+        throw new Error(`Invalid root cause: ${cause}`);
+      }
+      await db.nCR.updateMany({
+        where: { id: ncr.id },
+        data: { rootCause: cause as never },
+      });
+      return {
+        inputs: {
+          code: ncr.code,
+          previousRootCause: ncr.rootCause,
+          agentProposed: cause,
+          confidence: ctx?.proposal?.confidence ?? null,
+        },
+        output: {
+          status: "confirmed",
+          rootCause: cause,
+          agreedWithAgent: true,
+        },
+        summary: `${ncr.code} root cause CONFIRMED as ${cause} — agreed with the agent's proposal`,
+      };
+    },
+    onReject: async (db, _org, t, by, ctx) => {
+      const ncr = t as { id: string; code: string; rootCause: string | null };
+      const p = ctx?.payload as
+        | { cause?: string; proposedCause?: string }
+        | undefined;
+      const cause = String(p?.cause ?? "");
+      if (!(ROOT_CAUSES as readonly string[]).includes(cause)) {
+        throw new Error(`Invalid root cause: ${cause}`);
+      }
+      await db.nCR.updateMany({
+        where: { id: ncr.id },
+        data: { rootCause: cause as never },
+      });
+      return {
+        inputs: {
+          code: ncr.code,
+          previousRootCause: ncr.rootCause,
+          agentProposed: p?.proposedCause ?? null,
+          humanChose: cause,
+          confidence: ctx?.proposal?.confidence ?? null,
+        },
+        output: {
+          status: "overridden",
+          rootCause: cause,
+          agreedWithAgent: false,
+        },
+        summary: `${ncr.code} classified as ${cause} — OVERRODE the agent's proposed ${p?.proposedCause ?? "cause"}`,
+      };
+    },
+  } as ApprovalDef<unknown>,
+
   // Finance credit note — registered; UI later.
   "creditnote.issue": {
     kind: "creditnote.issue",
@@ -469,6 +584,7 @@ export async function decide(
   targetId: string,
   decision: Decision,
   user: DecideUser,
+  ctx?: DecideContext,
 ): Promise<DecideResult> {
   const def = REGISTRY[kind];
   requireRole(user, def.roles); // line 1 — insufficient role throws "forbidden"
@@ -499,8 +615,8 @@ export async function decide(
   const by: Approver = { id: user.id, label: user.name ?? user.email };
   const eff =
     decision === "APPROVE"
-      ? await def.onApprove(db, user.orgId, target, by)
-      : await def.onReject(db, user.orgId, target, by);
+      ? await def.onApprove(db, user.orgId, target, by, ctx)
+      : await def.onReject(db, user.orgId, target, by, ctx);
 
   const auditEntryId = await writeAudit(db, {
     orgId: user.orgId,
@@ -516,8 +632,15 @@ export async function decide(
       trustGated: trust.gated,
       frictionRelaxEligible: trust.frictionRelaxEligible,
     },
-    // AUDIT.3 — a human decision records the approver (model/confidence null).
+    // AUDIT.3 — a human decision records the approver. DEMO.6 #4: when the decision
+    // is ON an agent proposal, it ALSO carries that proposal's model + confidence, so
+    // a single entry shows input · output · model · confidence · approver. Absent a
+    // proposal these stay null, which is the correct record for a kind where no agent
+    // proposed anything.
+    model: ctx?.proposal?.model,
+    confidence: ctx?.proposal?.confidence,
     approver: { id: by.id, label: by.label },
+    inputs: eff.inputs,
   });
 
   // LOOP.1 — writeback: turn this verdict into an OUTCOME episode in the MEM.1 store so

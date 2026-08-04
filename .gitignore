@@ -25,3 +25,9 @@ design/prototypes/axona-v2/.thumbnail
 # the SEED.1 anonymization wall intact (no real marque in the tracked repo / investor
 # build). Seed via: pnpm db:seed:prospect prospects/<name>  (see docs/prospect-demo.md).
 prospects/
+
+# DEMO.6 — the demo-readiness PRD names the prospect tenants + an advisor by their real
+# marques (they are the audience, and the beats are written in their language), so it
+# would fail the SEED.1 wall the moment it entered specs/. It stays local, like the
+# prospect configs it describes. The build blocks derived from it are marque-free.
+specs/PRD-DEMO-AGENTIC.md

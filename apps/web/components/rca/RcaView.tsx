@@ -3,10 +3,13 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Lightbulb, Check, Radius } from "lucide-react";
+import { Lightbulb, Check, Radius, RefreshCw } from "lucide-react";
 import type { RcaWorkspace } from "@/lib/rca";
 import { ROOT_CAUSES } from "@/lib/quality";
-import { setNcrRootCauseAction } from "@/app/(shell)/quality/actions";
+import {
+  setNcrRootCauseAction,
+  type RootCauseResult,
+} from "@/app/(shell)/quality/actions";
 import { ConnectedObjects } from "@/components/ontology/ConnectedObjects";
 import type { ConnectedGroup } from "@/lib/connected-objects";
 import { RecordHistory } from "@/components/audit/RecordHistory";
@@ -52,14 +55,18 @@ export function RcaView({
   const [saved, setSaved] = useState<string | null>(rca.rootCause);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  // DEMO.6 #4 — the LOOP.1 result of the last confirmation, so the screen can SHOW
+  // the writeback happened rather than asserting it in prose.
+  const [loop, setLoop] = useState<RootCauseResult["loopWriteback"]>(null);
 
   const confirm = () => {
     if (!choice) return;
     setError(null);
     startTransition(async () => {
       try {
-        await setNcrRootCauseAction(rca.ncrCode, choice);
+        const res = await setNcrRootCauseAction(rca.ncrCode, choice);
         setSaved(choice);
+        setLoop(res.loopWriteback);
         router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Classification failed.");
@@ -200,17 +207,42 @@ export function RcaView({
 
             {/* the agent's proposal — assistance only, never auto-applied */}
             {rca.suggestion && (
-              <div className="my-3.5 flex items-center gap-2.5 rounded-[9px] border border-line bg-panel-2 px-3 py-2.5">
-                <Lightbulb
-                  className="h-[15px] w-[15px] flex-none text-ink-muted"
-                  strokeWidth={1.7}
-                  aria-hidden
-                />
-                <span className="text-[12px] text-ink">
-                  <span className="font-semibold">Agent suggests:</span>{" "}
-                  {LABEL[rca.suggestion.cause] ?? rca.suggestion.cause} —{" "}
-                  {rca.suggestion.rationale}
-                </span>
+              <div className="my-3.5 rounded-[9px] border border-line bg-panel-2 px-3 py-2.5">
+                <div className="flex items-center gap-2.5">
+                  <Lightbulb
+                    className="h-[15px] w-[15px] flex-none text-ink-muted"
+                    strokeWidth={1.7}
+                    aria-hidden
+                  />
+                  <span className="text-[12px] text-ink">
+                    <span className="font-semibold">Agent suggests:</span>{" "}
+                    {LABEL[rca.suggestion.cause] ?? rca.suggestion.cause} —{" "}
+                    {rca.suggestion.rationale}{" "}
+                    <span className="font-mono text-ink-muted">
+                      confidence {rca.suggestion.calibrated.toFixed(2)}
+                      {rca.suggestion.calibratedState === "calibrated"
+                        ? ` · calibrated from ${rca.suggestion.rawConfidence.toFixed(2)}`
+                        : " (uncalibrated — no fitted model yet)"}
+                    </span>
+                  </span>
+                </div>
+                {/* the score is inspectable: every signal is a fact found in the data,
+                    so the number can be argued with rather than taken on faith. */}
+                {rca.suggestion.signals.length > 0 && (
+                  <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 pl-[25px]">
+                    {rca.suggestion.signals.map((s) => (
+                      <li
+                        key={s.key}
+                        className="font-mono text-[10.5px] text-ink-faint"
+                      >
+                        {s.detail}{" "}
+                        <span className="text-ink-muted">
+                          +{s.weight.toFixed(2)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
 
@@ -290,6 +322,26 @@ export function RcaView({
                 </span>
               )}
             </div>
+
+            {/* DEMO.6 #4 — LOOP.1 made visible. The verdict on the agent's proposal
+                is written back as an OUTCOME episode, which is what makes the next
+                proposal better. Only rendered when recordOutcome actually fired. */}
+            {loop?.recorded && (
+              <div
+                role="status"
+                className="mt-3 flex items-start gap-2.5 rounded-[9px] border border-line bg-panel-2 px-3 py-2.5"
+              >
+                <RefreshCw
+                  className="mt-[1px] h-[15px] w-[15px] flex-none text-ink-muted"
+                  strokeWidth={1.7}
+                  aria-hidden
+                />
+                <span className="text-[12px] leading-[1.45] text-ink">
+                  <span className="font-semibold">Learning loop updated.</span>{" "}
+                  {loop.note}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col rounded-card border border-line bg-paper px-5 py-[18px]">

@@ -3722,3 +3722,96 @@ Live-row proof: 0 hits across 7,287 rows / 65 models on all three orgs.
 **Both generations are banned.** The previous-generation rev is on the list alongside the
 flagship: the shared PREFIX is the tell, so banning only the flagship would have left the
 older rev naming the same family. 33 banned marques.
+
+## DEMO.6 #4 — the RCA hero: agent proposes, human confirms, the loop learns
+
+The Phase-1 audit classified `/rca/:code` DATA-ONLY on three counts. All three are
+closed, on the live defense tenant.
+
+**1 · The confidence is real now — derived AND calibrated.** SEED.4 removed a hardcoded
+`0.82`; this does not put a literal back. The agent's raw score is COMPUTED from the
+corroborating evidence the failure actually carries, and every contributing signal is
+rendered next to it, so the number can be argued with instead of taken on faith:
+
+```
+COMPUTE-720 rev B from lot 88471            +0.45
+4 units carry lot 88471                     +0.20
+2 field(s) differ from the passing run      +0.10
+6 precedent memories recalled (MEM.1)       +0.10
+                                       raw = 0.85  →  calibrated 0.60
+```
+
+A failure with thinner evidence scores lower, by construction. The correction is a real
+CONF.1 fit: the tenant had ZERO `CalibrationModel` rows (which is why everything read
+"uncal"), so the prospect seed now seeds a decided-proposal history and fits it —
+**n=44, ECE 0.142, 6 isotonic bins**, over `MIN_SAMPLES` (20). It reuses the committed
+`seedCalibrationHistory` + `PROSPECT_CALIBRATION` bands; no parallel calibrator. The
+bands are deliberately weighted to the HIGH band because that is where this proposal
+lands — calibrating a region the demo never visits would be theatre.
+
+**2 · Confirm now fires the learning loop.** It routed around `decide()`, so LOOP.1
+never fired and the tenant had 0 OUTCOME episodes. It now goes through the
+propose→approve spine as a new `decide()` kind, `ncr.rootcause`.
+
+*This was a deliberate earlier choice, and it did not need overriding — its own
+precondition expired.* `quality/actions.ts` avoided `decide()` because classification was
+"a human recording a fact, not approving an agent proposal", and said: "when an agent
+PROPOSES a cause, that proposal becomes decide()'s target — a later story." This is that
+story. Both paths still exist and the original one still runs where it applies: **no agent
+proposal → the direct `requireRole` + AUDIT.1 path**, unchanged.
+
+The APPROVE/REJECT mapping is the useful part. Confirming the agent's cause is an
+APPROVE; choosing a DIFFERENT cause is a REJECT of the proposal — the NCR is classified
+either way, but that agree/disagree bit is exactly the label CONF.1 calibrates on. A
+screen that only ever recorded agreement would teach the model nothing.
+
+**3 · The audit entry carries all five fields.** `decide()` gained an optional
+`DecideContext`: `proposal` ({model, confidence}) is stamped onto the AUDIT.1 entry, and
+`payload` is passed to `onApprove`/`onReject` for kinds whose effect needs more than a
+target id. Additive — every existing caller omits it and is unchanged. Without a
+proposal the entry keeps model/confidence null, which is the correct record for a kind
+where no agent proposed anything (the AUDIT.3 default).
+
+Measured from a real UI click:
+```
+AGENT ncr.rootcause.propose   model=claude-sonnet-4-6 conf=0.6 inputs=yes output=yes
+HUMAN ncr.rootcause.approve   model=claude-sonnet-4-6 conf=0.6 approver=Lena Brandt
+                              inputs=yes output=yes
+LOOP.1 OUTCOME episodes: 0 → 1
+```
+
+**Why the proposal is written at decision time.** `recordOutcome` looks up the AGENT
+proposal for the target to recover its label/confidence/model, and the RCA read model
+cannot write (a GET must not mutate). So the proposal the human acted on is materialised
+into the log at Confirm, with the same values the screen rendered. That pairing —
+AGENT entry carrying a confidence + HUMAN entry ending `.approve`/`.reject` on the same
+target — is precisely what `calibrate()` reads, so each confirmation becomes a labelled
+sample for the next fit. That is the loop actually closing, not a metaphor.
+
+**The writeback is visible.** After Confirm the screen renders "Learning loop updated —
+outcome episode recorded; this labels the next RCA proposal." It is driven by
+`decide()`'s returned `loop` trace, so it appears only when `recordOutcome` really fired.
+
+**Checks:**
+```
+pnpm verify:demo-6-4    # 13 checks (in verify:all) — 5 static, 8 over live data
+```
+Static: the kind is registered, the action routes through `decide()`, the audit stamp
+exists, no confidence literal survives, the view renders confidence + signals + writeback.
+Live: a fitted model over MIN_SAMPLES, the proposal is `calibrated` (not raw), the raw
+score EQUALS the sum of its signals, the model is named, a real `decide()` round-trip
+writes all five audit fields, and an OUTCOME episode exists afterwards. **Self-cleans** —
+it restores the NCR's rootCause and deletes the rows it created (briefly disabling the
+AuditLog delete rule, the same admin path `clearOrgData` uses), so repeat runs do not
+accumulate history or drift the calibration.
+
+**Two earlier assertions were rewritten, not deleted.** `verify:plm-8` and `verify:agt-3`
+asserted the SEED.4 contract ("the proposal carries NO confidence field"). Beat #4
+supersedes that with a stronger form of the same invariant — never fabricated — so both
+now assert the number is RECOMPUTABLE from its evidence signals. Removing the field's
+absence-check without replacing it would have left the invariant unguarded.
+
+**Still open on this beat:** the RCA screen is the only surface wired this way. Beats
+#1/#2/#3 (as-built capture, drift flag, test-to-config) remain DATA-ONLY, and the second
+tenant's hero beat (#10, the fault-to-part-order loop) has no LINK.1 coverage at all.
+`DecideContext` is the seam both should reuse.

@@ -10,6 +10,7 @@ import {
   ensureBucket,
   ingestMemory,
   reindex,
+  calibrate,
   type ProspectConfig,
   type OrgScopedDb,
 } from "@axona/db";
@@ -31,6 +32,32 @@ async function loadSeedTenantModules(): Promise<SeedTenantModules> {
     seedTenantModules: SeedTenantModules;
   };
   return mod.seedTenantModules;
+}
+
+// DEMO.6 #4 — CONF.1 needs a decided-proposal history to fit from, and prospect
+// tenants had none (0 CalibrationModel rows → every confidence rendered "uncal").
+// Loaded through the same computed-specifier trick as the tenant seed, for the same
+// reason: keep the seed's deps out of src/scripts's tsc program.
+type SeedCalibrationHistory = (
+  db: OrgScopedDb,
+  orgId: string,
+  bands: { raw: number; approvalRate: number; count: number }[],
+  opts: { prefix: string; startDaysAgo?: number; nowMs: number },
+) => Promise<number>;
+const CALIBRATION_SEED_MODULE = "../../../packages/db/prisma/seed/calibration";
+async function loadCalibrationSeed(): Promise<{
+  seed: SeedCalibrationHistory;
+  bands: { raw: number; approvalRate: number; count: number }[];
+}> {
+  const mod = (await import(CALIBRATION_SEED_MODULE)) as {
+    seedCalibrationHistory: SeedCalibrationHistory;
+    PROSPECT_CALIBRATION: {
+      raw: number;
+      approvalRate: number;
+      count: number;
+    }[];
+  };
+  return { seed: mod.seedCalibrationHistory, bands: mod.PROSPECT_CALIBRATION };
 }
 
 // PROSPECT.1 — the generic prospect-seed runtime. Lives in src/scripts/ (NOT in
@@ -240,6 +267,26 @@ export async function seedProspectOrg(
   } catch (err) {
     console.error(
       `[prospect-seed] ingestMemory skipped for ${orgId}:`,
+      (err as Error).message,
+    );
+  }
+
+  // 7b. DEMO.6 #4 — CONF.1: a decided-proposal history for THIS org, then fit its
+  //     map. Seeded AFTER ingestMemory (as the base seed does) so the history stays
+  //     calibration fodder rather than narrative memory. Without it the org has no
+  //     fitted model and every agent confidence renders "uncalibrated" — which is
+  //     honest, but means the RCA hero beat shows a number it openly distrusts.
+  //     Org-scoped; each tenant's model is its own (isolation).
+  try {
+    const cal = await loadCalibrationSeed();
+    await cal.seed(db, orgId, cal.bands, {
+      prefix: `cal-${orgId.replace(/^org_/, "")}`,
+      nowMs: Date.now(),
+    });
+    await calibrate(db, orgId);
+  } catch (err) {
+    console.error(
+      `[prospect-seed] calibration skipped for ${orgId}:`,
       (err as Error).message,
     );
   }

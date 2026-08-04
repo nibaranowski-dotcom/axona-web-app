@@ -86,24 +86,27 @@ async function run(): Promise<void> {
 
   // ── 2: agent proposal with calibrated confidence, doesn't set rootCause ──
   await check(
-    "agent proposal is evidence-derived + carries NO fabricated confidence; does not classify",
+    "agent proposal is evidence-derived; its confidence is DERIVED + calibrated, never a literal",
     async () => {
       const rca = await getRcaWorkspace(DEMO, "NCR-118");
       if (!rca?.suggestion) return false;
-      const s = rca.suggestion as typeof rca.suggestion &
-        Record<string, unknown>;
-      // SEED.4 — this check previously asserted a CALIBRATED confidence, but the
-      // value it calibrated was a hardcoded 0.82 literal, so the number was
-      // fabricated (and rendered "(uncal)" on any org without a fitted model).
-      // The proposal must now carry no confidence at all until CONF.1 is wired to
-      // a real emitted value. The proposal itself still never writes rootCause.
+      const s = rca.suggestion;
+      // The invariant across all three revisions of this check is the same — the
+      // number must never be fabricated. SEED.4 enforced it by REMOVING the field
+      // (the raw input was a hardcoded 0.82). DEMO.6 #4 enforces it by making the
+      // raw score DERIVED: it is the sum of evidence signals actually found in this
+      // failure, then corrected by the org's fitted CONF.1 map. So the assertion is
+      // no longer "no number" but "a number you can recompute from the evidence".
+      const sum = s.signals.reduce((a, x) => a + x.weight, 0);
+      const derived = Math.round(Math.min(1, sum) * 100) / 100;
       return (
         s.cause === "component" &&
-        typeof s.rationale === "string" &&
         s.rationale.length > 0 &&
-        !("calibrated" in s) &&
-        !("rawConfidence" in s) &&
-        !("calibratedState" in s)
+        s.signals.length >= 2 &&
+        derived === s.rawConfidence && // recomputable from the evidence
+        typeof s.calibrated === "number" &&
+        (s.calibratedState === "calibrated" ||
+          s.calibratedState === "uncalibrated")
       );
     },
   );

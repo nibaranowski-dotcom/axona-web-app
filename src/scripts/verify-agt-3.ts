@@ -251,21 +251,22 @@ async function run(): Promise<void> {
     },
   );
 
-  // SEED.4 (demo integrity) — the proposal must carry NO fabricated confidence.
-  // It previously emitted a hardcoded 0.82 that rendered "0.82 (uncal)" on any org
-  // without a fitted CalibrationModel — i.e. on both prospect demo tenants. A
-  // confidence may return here only as a real calibratedConfidence() result.
+  // SEED.4 → DEMO.6 #4 — the confidence must never be FABRICATED. SEED.4 met that by
+  // removing the field (the raw input was a hardcoded 0.82). Beat #4 meets it by
+  // deriving the raw score from evidence signals found in the failure and calibrating
+  // it through CONF.1, so the number is recomputable rather than asserted.
   await check(
-    "RCA proposal emits NO confidence field (no fabricated number)",
+    "RCA proposal's confidence is recomputable from its evidence signals",
     async () => {
       const workspace = await getRcaWorkspace(DEMO, "NCR-118");
-      const s = workspace?.suggestion as Record<string, unknown> | null;
+      const s = workspace?.suggestion;
       if (!s) return false;
+      const sum = s.signals.reduce((a, x) => a + x.weight, 0);
+      const derived = Math.round(Math.min(1, sum) * 100) / 100;
       return (
-        !("calibrated" in s) &&
-        !("rawConfidence" in s) &&
-        !("calibratedState" in s) &&
-        !("confidence" in s)
+        s.signals.length >= 2 &&
+        derived === s.rawConfidence &&
+        typeof s.calibrated === "number"
       );
     },
   );

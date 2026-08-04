@@ -95,6 +95,24 @@ export const ISOLATION_CALIBRATION: CalBand[] = [
   { raw: 0.3, approvalRate: 0.55, count: 11 },
 ];
 
+/**
+ * DEMO.6 #4 — prospect demo tenants. Those orgs had ZERO CalibrationModel rows, so
+ * `calibratedConfidence()` returned raw with state "uncalibrated" and the RCA screen
+ * read "(uncal)" — the agent's headline number visibly untrusted.
+ *
+ * Mildly over-confident, and DELIBERATELY spread across the high band: the RCA
+ * proposal's evidence-derived score lands high (a substituted part on a quarantined
+ * lot, the lot spanning several units, a config delta, prior component failures and
+ * recalled precedent all corroborate), so the top bin is where the correction has to
+ * be real. 44 decided proposals — comfortably over MIN_SAMPLES (20), so the fit is a
+ * genuine model and not a floor-scraping one.
+ */
+export const PROSPECT_CALIBRATION: CalBand[] = [
+  { raw: 0.9, approvalRate: 0.7, count: 22 },
+  { raw: 0.7, approvalRate: 0.6, count: 12 },
+  { raw: 0.5, approvalRate: 0.45, count: 10 },
+];
+
 function clamp01(x: number): number {
   return Math.max(0, Math.min(1, x));
 }

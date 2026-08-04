@@ -186,6 +186,7 @@ const VERIFY_SEQUENCE: string[] = [
   "mfx-1",
   "prospect-plm",
   "demo-5",
+  "demo-6-4",
   "io-2",
   "ux-16",
   "verify-3",
