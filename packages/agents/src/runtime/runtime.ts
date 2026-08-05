@@ -13,7 +13,13 @@ import type {
 // input; try/catch per tool; gated tools propose (never execute). Every step is
 // a typed trace line.
 
-const MAX_TURNS = 8;
+// DEMO.7 §3 — raised from 8. A cross-module question the run-of-show actually asks
+// ("why is <part> short?") legitimately needs stock + reorder candidates + the covering
+// POs + the graph, and at 8 it hit the cap on roughly two runs in three, answering "Run
+// exceeded the turn limit." in the room. Still a hard bound against a runaway loop —
+// RUNTIME.1 context pruning already keeps per-turn payloads flat, so the extra headroom
+// costs turns, not context growth.
+const MAX_TURNS = 12;
 
 // RUNTIME.1 — context pruning. The loop appends the assistant turn + every tool
 // result each turn, so an 8-turn run would carry all prior (often large) tool

@@ -270,8 +270,22 @@ export async function resolveEntityId(
     case "ECO":
       return pick(await db.eCO.findFirst({ where: { code }, ...sel }));
     case "PART":
-    case "LOT":
-      return pick(await db.part.findFirst({ where: { sku: code }, ...sel }));
+    case "LOT": {
+      const exact = await db.part.findFirst({ where: { sku: code }, ...sel });
+      if (exact) return exact.id;
+      // DEMO.7 §3 — people say "lot 88471", not "LOT-88471". The blast-radius
+      // question in every run-of-show is phrased with the bare number, and an exact
+      // sku match answered "no record exists" about a lot that was right there.
+      // Try the prefixed form for a bare numeric; general, not a special case.
+      if (/^\d+$/.test(code)) {
+        const prefixed = await db.part.findFirst({
+          where: { sku: `LOT-${code}` },
+          ...sel,
+        });
+        if (prefixed) return prefixed.id;
+      }
+      return null;
+    }
     case "SUPPLIER":
       return pick(
         await db.supplier.findFirst({ where: { name: code }, ...sel }),

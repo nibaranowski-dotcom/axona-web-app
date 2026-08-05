@@ -178,6 +178,7 @@
     "verify:plm-13": "tsx src/scripts/verify-plm-13.ts",
     "verify:demo-6-6": "tsx src/scripts/verify-demo-6-6.ts",
     "verify:demo-6-10": "tsx src/scripts/verify-demo-6-10.ts",
+    "verify:demo-agent": "tsx src/scripts/verify-demo-agent.ts",
     "verify:demo-script": "tsx src/scripts/verify-demo-script.ts",
     "verify:demo-6-2": "tsx src/scripts/verify-demo-6-2.ts",
     "verify:demo-6-5": "tsx src/scripts/verify-demo-6-5.ts",

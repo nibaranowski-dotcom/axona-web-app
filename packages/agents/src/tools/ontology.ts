@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getEntityLinks, type OrgScopedDb } from "@axona/db";
+import { getEntityLinks, resolveEntityId, type OrgScopedDb } from "@axona/db";
 import type { Tool } from "../runtime/types";
 
 // ONT.1 — the entity-link graph traversal (the cross-module ripple). getBlastRadius
@@ -226,41 +226,23 @@ async function resolveByType(
 }
 
 // ── resolve a seed record's id from its human code (the traversal entry) ─────
+/**
+ * DEMO.7 §3 — resolve a blast-radius ROOT by human code.
+ *
+ * This used to be a second, hand-maintained code→id switch living beside the
+ * canonical `resolveEntityId` in @axona/db — despite ONT.1's own comment promising
+ * "one natural-key map, not a fork". They had already diverged: the shared resolver
+ * learned that people say "lot 88471" rather than "LOT-88471", and this one had not,
+ * so the blast-radius question every run-of-show asks answered "no record exists"
+ * about a lot sitting in the same database. Delegating removes the fork; the shared
+ * resolver also covers the PLM.1a types this switch returned null for.
+ */
 async function resolveSeedId(
   db: OrgScopedDb,
   type: EntityType,
   code: string,
 ): Promise<string | null> {
-  const first = <T extends { id: string }>(r: T | null) => r?.id ?? null;
-  switch (type) {
-    case "NCR":
-      return first(await db.nCR.findFirst({ where: { code } }));
-    case "ECO":
-      return first(await db.eCO.findFirst({ where: { code } }));
-    case "PART":
-    case "LOT":
-      return first(await db.part.findFirst({ where: { sku: code } }));
-    case "SUPPLIER":
-      return first(await db.supplier.findFirst({ where: { name: code } }));
-    case "PURCHASE_ORDER":
-      return first(await db.purchaseOrder.findFirst({ where: { code } }));
-    case "UNIT":
-      return first(await db.unit.findFirst({ where: { serial: code } }));
-    case "DELIVERY":
-      return first(await db.delivery.findFirst({ where: { code } }));
-    case "WORK_ORDER":
-      return first(await db.workOrderField.findFirst({ where: { code } }));
-    case "INVOICE":
-      return first(await db.invoice.findFirst({ where: { code } }));
-    case "SPC_SAMPLE":
-      return first(await db.spcSample.findFirst({ where: { serial: code } }));
-    case "TEST_RUN":
-      return first(await db.testRun.findFirst({ where: { code } }));
-    default:
-      // PLM.1a types (PRODUCT_MODEL/PART_REVISION/CONFIG_VERSION) are graph
-      // members but not yet seeded as blast-radius roots — resolve nothing.
-      return null;
-  }
+  return resolveEntityId(db, type, code);
 }
 
 interface Visited {

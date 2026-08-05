@@ -7,7 +7,10 @@ import { prisma } from "../client";
 // writes both global (orgId NULL) and per-tenant rows explicitly.
 //
 // Indexed set (build-spec §4.2): Modules (global), Agents, Workflows, Projects,
-// Files, Chats. Value-chain/robotics entities are a documented phase-2 extension.
+// Files, Chats — plus, since DEMO.7 §3, the operational entity classes (Units, Parts
+// and lots, Purchase Orders, Work Orders, NCRs, ECOs). Those were the "phase-2
+// extension" the comment used to promise; leaving them out meant the Axona agent
+// could not find a PO or a lot through its search tool at all.
 
 export interface DocInput {
   orgId: string | null;
@@ -179,6 +182,105 @@ export async function reindex(orgId?: string): Promise<void> {
       url: `/agents`,
     });
   }
+
+  // ── DEMO.7 §3 — the OPERATIONAL entity classes ────────────────────────────
+  // Previously unindexed ("phase-2"), which meant the Axona agent's search tool
+  // could not find a purchase order, a lot or a unit at all — it answered "no record
+  // exists" about seeded data. Indexed by HUMAN CODE (the thing a person says out
+  // loud) with the code repeated into `body`, so both an exact code and a bare
+  // fragment of one reach the right row through FTS.
+  const units = await prisma.unit.findMany({
+    where,
+    select: { id: true, orgId: true, serial: true, status: true },
+  });
+  for (const u of units)
+    await upsertDoc({
+      orgId: u.orgId,
+      type: "UNIT",
+      refId: u.id,
+      title: u.serial,
+      subtitle: `unit · ${u.status}`,
+      body: u.serial,
+      url: `/units/${encodeURIComponent(u.serial)}`,
+    });
+
+  // Parts AND lots: a lot is a Part row whose sku carries the LOT- prefix. The body
+  // holds the bare numeric too, so "88471" finds LOT-88471 without special-casing
+  // any particular lot.
+  const parts = await prisma.part.findMany({
+    where,
+    select: { id: true, orgId: true, sku: true, name: true },
+  });
+  for (const p of parts)
+    await upsertDoc({
+      orgId: p.orgId,
+      type: "PART",
+      refId: p.id,
+      title: p.sku,
+      subtitle: p.name,
+      body: [p.sku, p.sku.replace(/^LOT-/i, ""), p.name].join(" "),
+      url: `/inventory?focus=${encodeURIComponent(p.sku)}`,
+    });
+
+  const pos = await prisma.purchaseOrder.findMany({
+    where,
+    select: { id: true, orgId: true, code: true, status: true },
+  });
+  for (const po of pos)
+    await upsertDoc({
+      orgId: po.orgId,
+      type: "PURCHASE_ORDER",
+      refId: po.id,
+      title: po.code,
+      subtitle: `purchase order · ${po.status}`,
+      body: po.code,
+      url: `/procurement?focus=${encodeURIComponent(po.code)}`,
+    });
+
+  const wos = await prisma.workOrderField.findMany({
+    where,
+    select: { id: true, orgId: true, code: true, issue: true, status: true },
+  });
+  for (const w of wos)
+    await upsertDoc({
+      orgId: w.orgId,
+      type: "WORK_ORDER",
+      refId: w.id,
+      title: w.code,
+      subtitle: `work order · ${w.status}`,
+      body: [w.code, w.issue].join(" "),
+      url: `/field-service?focus=${encodeURIComponent(w.code)}`,
+    });
+
+  const ncrs = await prisma.nCR.findMany({
+    where,
+    select: { id: true, orgId: true, code: true, defect: true },
+  });
+  for (const n of ncrs)
+    await upsertDoc({
+      orgId: n.orgId,
+      type: "NCR",
+      refId: n.id,
+      title: n.code,
+      subtitle: "non-conformance",
+      body: [n.code, n.defect].join(" "),
+      url: `/rca/${encodeURIComponent(n.code)}`,
+    });
+
+  const ecos = await prisma.eCO.findMany({
+    where,
+    select: { id: true, orgId: true, code: true, title: true },
+  });
+  for (const e of ecos)
+    await upsertDoc({
+      orgId: e.orgId,
+      type: "ECO",
+      refId: e.id,
+      title: e.code,
+      subtitle: "change order",
+      body: [e.code, e.title].join(" "),
+      url: `/changes/${encodeURIComponent(e.code)}`,
+    });
 
   // Prune orphans for the tenant-owned types on a full reindex.
   if (!orgId) {

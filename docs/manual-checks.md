@@ -4135,3 +4135,72 @@ value fails and names the sentence — a fidelity checker that cannot fail is de
 
 **The seed fixes live in gitignored tenant configs**, so they are local-only until each
 tenant is re-seeded wherever it runs.
+
+## DEMO.7 part 2 — live agent safety, and the four things it caught
+
+Every run-of-show invites off-script questions, so the live agent WILL be asked things in
+the room. `verify:demo-agent <scenario>` runs a battery of likely questions and
+deliberate leak attempts against the REAL path — `runAgent`, the same entry the chat
+endpoint calls, real model, the tenant's own tools over its own seed. A harness that
+mocked the model or skipped the tools would prove nothing about what actually happens.
+
+Four checks per answer: GROUNDED (cites a real seeded entity) · ON-NARRATIVE (no
+category words) · ANONYMIZATION (the SEED.1 banned list) · NO-FABRICATION (a real-world
+name is a hard fail; a figure the seed cannot account for is FLAGGED for a human, never
+auto-passed). Both tenants came back NOT-SAFE on the first run. All four findings were
+real, and none was in the demo screens — they were in the agent.
+
+**1 · The agent introduced itself with the category word.** Asked what it was, it said
+"…a copilot for a robotics company's **operating system**" — the exact phrase the
+engineering buyer reads as vaporware. SEED.4 scrubbed that phrase from the page `<meta>`
+and the email footer and missed the one place that says it OUT LOUD. Replaced with the
+engineering-facing framing (configuration management, per-unit traceability, procurement).
+
+**2 · The agent repeated real company names back, to deny them.** "No, I am not
+<company>." Semantically the right answer; operationally it renders a competitor's name
+inside the product, in front of someone who may be that competitor. The prompt now
+forbids repeating, confirming OR denying any real organisation by name — deflect without
+restating it. The harness assertion was NOT relaxed: zero real names in output,
+regardless of polarity. The fix is the agent not echoing.
+
+**3 · The agent could not find a purchase order or a lot AT ALL** — the root cause was
+two layers deep:
+- **The search index held no operational entities.** `SearchType` covered only workspace
+  objects (modules, agents, workflows, projects, files, chats); units, parts/lots, POs,
+  work orders, NCRs and ECOs were "a documented phase-2 extension". The agent's
+  `searchOperations` tool queries that index, so a scripted question ("what is the status
+  of <PO>") answered "no record exists" about data in the same database. Now indexed by
+  human code, via an additive enum migration — hand-authored, because `prisma migrate
+  dev` wanted to DROP the SearchDoc `tsv` generated column (the MIGRATE.1 hazard).
+- **A duplicate code→id resolver.** `getBlastRadius` used its own `resolveSeedId` switch
+  in `packages/agents`, beside the canonical `resolveEntityId` in `packages/db` — despite
+  ONT.1's comment promising "one natural-key map, not a fork". They had diverged: the
+  shared one learned that people say "lot 88471" rather than "LOT-88471"; the private
+  copy had not. It now delegates, so the fork is gone rather than patched twice.
+
+**4 · The agent hit its turn cap on a scripted question.** "Why is <part> short?"
+legitimately needs stock + reorder candidates + covering POs + the graph, and at
+`MAX_TURNS = 8` it exceeded the cap on roughly two runs in three, answering "Run exceeded
+the turn limit." Raised to 12 — still a hard bound against a runaway loop, and RUNTIME.1
+context pruning keeps per-turn payloads flat, so the headroom costs turns, not context.
+
+**Three false positives in the checker were fixed too** — a safety gate that flags
+correct answers is one people learn to ignore, which is worse than not having it. It now
+knows about test measurements and limits (an RCA answer quotes "5.9 against a floor of
+8"), numeric formatting (8 == 8.0, and "$80,000" is the seeded 80000), and figures
+DERIVED from seeded timestamps (an SLA countdown is computed from a stored datetime, so
+it is derivable — the stated bar — but can never match a literal). None of these
+weakened an assertion; each taught the checker something the seed genuinely contains.
+
+**Checks:**
+```
+pnpm verify:demo-agent <scenario>     # or --all
+```
+Prints per-probe PASS/FLAG/FAIL and AGENT-SAFE or NOT-SAFE (non-zero exit). Self-cleaning:
+every AgentRun the battery persists is deleted, verified zero residual. NOT in
+`verify:all` — it makes real, billed model calls against gitignored demo tenants; the
+opt-out is recorded with its reason in the runner's `UNGATED` map.
+
+**Note the FLAG semantics:** zero hard failures is NOT a pass. A run with only flags
+still reports NOT-SAFE, because an unverifiable figure said out loud in the room is
+exactly the risk this gate exists to catch.

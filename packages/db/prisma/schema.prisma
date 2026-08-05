@@ -1234,6 +1234,18 @@ enum SearchType {
   PROJECT
   FILE
   CHAT
+  /// DEMO.7 §3 — the operational entity classes. Previously "a documented phase-2
+  /// extension", which meant the Axona agent's searchOperations tool could not find a
+  /// purchase order, a lot, or a unit AT ALL: it queries this index, and the index
+  /// held only workspace objects. Asking the agent a question from the run-of-show
+  /// ("what is the status of <PO>") returned "no record exists" about data that was
+  /// right there. Indexed by their human codes so a spoken code resolves.
+  UNIT
+  PART
+  PURCHASE_ORDER
+  WORK_ORDER
+  NCR
+  ECO
 }
 
 /// Unified FTS-over-objects index. One row per searchable object. `orgId` is

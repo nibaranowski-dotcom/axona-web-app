@@ -252,6 +252,8 @@ function arg(name: string): string | null {
 export const UNGATED: Record<string, string> = {
   "demo-script":
     "per-scenario; asserts gitignored demo-tenant seeds CI cannot have",
+  "demo-agent":
+    "per-scenario; makes REAL billed model calls against gitignored demo tenants",
 };
 
 /** Fail loudly if a `verify:*` script exists but is not gated by the sequence. */
