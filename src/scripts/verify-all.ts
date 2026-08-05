@@ -239,11 +239,27 @@ function arg(name: string): string | null {
   return hit ? hit.slice(name.length + 3) : null;
 }
 
+/**
+ * DEMO.7 — verify scripts deliberately NOT in the gate, each with the reason it can
+ * never run here. The parity check exists so a script cannot fall out of CI by
+ * accident; an opt-out therefore has to be explicit and justified, not silent.
+ *
+ * `demo-script` asserts SPOKEN run-of-show claims against gitignored, tenant-specific
+ * demo seeds that CI does not have — it would SKIP on every route in CI and assert
+ * nothing, which is worse than being absent because it would read as coverage. It is
+ * run per-scenario before a send, exactly like `verify:demo <scenario>`.
+ */
+export const UNGATED: Record<string, string> = {
+  "demo-script":
+    "per-scenario; asserts gitignored demo-tenant seeds CI cannot have",
+};
+
 /** Fail loudly if a `verify:*` script exists but is not gated by the sequence. */
 function checkParity(): void {
   const keys = Object.keys(scripts)
     .filter((k) => k.startsWith("verify:") && k !== "verify:all")
-    .map((k) => k.slice("verify:".length));
+    .map((k) => k.slice("verify:".length))
+    .filter((k) => !(k in UNGATED));
   const inSeq = new Set(VERIFY_SEQUENCE);
   const missing = keys.filter((k) => !inSeq.has(k));
   const stale = VERIFY_SEQUENCE.filter((k) => !scripts[`verify:${k}`]);

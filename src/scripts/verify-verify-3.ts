@@ -197,10 +197,24 @@ function run(): void {
     );
   });
 
-  check("B6. every verify:* script is actually gated by the sequence", () => {
+  check("B6. every verify:* script is gated, or explicitly opted out", () => {
+    // DEMO.7 — a script may be ungated ONLY via the runner's exported UNGATED map,
+    // which carries a reason per entry. Parsed from the runner source (this checker
+    // reads files, it does not import them) so there is ONE opt-out list, not a
+    // second copy here that could quietly disagree with the real gate.
+    const ungatedBlock =
+      /export const UNGATED: Record<string, string> = \{([\s\S]*?)\n\};/.exec(
+        runner,
+      )?.[1];
+    const ungated = new Set(
+      [...(ungatedBlock ?? "").matchAll(/"([^"]+)":/g)].map(
+        (m) => m[1] as string,
+      ),
+    );
     const keys = Object.keys(pkg.scripts)
       .filter((k) => k.startsWith("verify:") && k !== "verify:all")
-      .map((k) => k.slice("verify:".length));
+      .map((k) => k.slice("verify:".length))
+      .filter((k) => !ungated.has(k));
     const seq = /const VERIFY_SEQUENCE: string\[\] = \[([\s\S]*?)\n\];/.exec(
       runner,
     )?.[1];
@@ -210,7 +224,14 @@ function run(): void {
     );
     const missing = keys.filter((k) => !gated.has(k));
     if (missing.length) console.log(`       not gated: ${missing.join(", ")}`);
-    return missing.length === 0 && gated.size === keys.length;
+    // every opt-out must carry a REASON — an empty one is an oversight in disguise
+    const reasoned = [...(ungatedBlock ?? "").matchAll(/"[^"]+":\s*"([^"]+)"/g)]
+      .length;
+    return (
+      missing.length === 0 &&
+      gated.size === keys.length &&
+      reasoned === ungated.size
+    );
   });
 
   console.log(`\n  ${passed} passed, ${failed} failed\n`);

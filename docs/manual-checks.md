@@ -4087,3 +4087,51 @@ gated change-control transition, not a surfacing change, and batching it here wo
 put a demo-critical state machine behind four screens' worth of unrelated review. The
 AUDIT half of that beat IS done: releasing an agent-proposed ECO now carries model +
 confidence + approver via DecideContext.
+
+## DEMO.7 part 1 — script fidelity: does the SPOKEN number match the seed?
+
+`verify:demo` answers "does every link resolve and every screen render". This answers the
+question that costs most when it is wrong: **is the number the presenter says out loud
+still true of the seed?** A demo can be perfectly navigable and still fall apart the
+moment a spoken "seven days late" meets a screen reading six.
+
+It found two false lines immediately. Of 16 spoken claims across the two run-of-shows,
+**two had no seed backing**:
+- a part described as sitting in **five** named locations sat in **two** — the whole
+  "one number across five locations" beat had nothing behind it;
+- an order described as **seven days** past its promised date was **six**.
+
+Both were fixed in the SEED, not softened in the manifest: the assertions stay at the
+spoken number (`>= 5 locations`, `>= 7 days`), so drifting back under fails. The
+promised date now sits at 8 days — a day of slack either side of the sentence.
+Everything else the scripts claim (the three-way match's six-of-six, the bound invoice,
+the serial captured at goods-receipt, the dual-approver baseline, 85% blocked on two)
+was already real; all 16 were probed before anything was written, which is how the two
+gaps surfaced rather than being discovered live.
+
+**Shape.** A gitignored `prospects/<p>/script.manifest.ts` holds the claims — it MAY
+name its tenant because it is never committed, the same split `verify:demo`'s
+walkthrough manifest uses. Each entry pairs the presenter's actual sentence with that
+sentence turned into a question the seed can answer, so a failure reads as the spoken
+line plus what the data really says. The committed runner names no tenant, code or
+marque. Read-only, so there is nothing to clean up.
+
+**Not in `verify:all`, and that took work rather than omission.** Two parity checks
+(the runner's own and `verify-verify-3`'s B6) fail on any ungated `verify:*` script —
+by design, so a script cannot drop out of CI silently. There is now an explicit
+`UNGATED` map carrying a REASON per entry, exported so B6 reads that one list instead of
+keeping a second copy that could disagree; B6 also asserts every opt-out has a non-empty
+reason. This gate is ungated because it asserts gitignored, tenant-specific demo seeds
+CI does not have — it would SKIP on every claim there and read as coverage while
+asserting nothing.
+
+**Checks:**
+```
+pnpm verify:demo-script <scenario>     # or --all
+```
+Prints each spoken line with what the seed actually holds, then SCRIPT-TRUE or
+SCRIPT DRIFT (non-zero exit). Negative-controlled: inverting a claim to an impossible
+value fails and names the sentence — a fidelity checker that cannot fail is decoration.
+
+**The seed fixes live in gitignored tenant configs**, so they are local-only until each
+tenant is re-seeded wherever it runs.
