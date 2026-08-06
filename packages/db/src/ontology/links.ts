@@ -222,8 +222,10 @@ export function entityRoute(type: EntityType, code: string): string {
     // DEAD END — the chain "resolved" while the human arrived somewhere they still had
     // to hunt. Still ONE resolver: the focus param is part of this map, not a fork.
     // Screens without focus support keep their bare route until they grow one.
+    // LINK.2 — the last four module screens now honour ?focus= too, so EVERY hop
+    // lands on its record instead of a bare list. See the LINK.1 note above.
     case "SPC_SAMPLE":
-      return "/quality";
+      return `/quality?focus=${c}`;
     case "PART":
     case "LOT":
       return `/inventory?focus=${c}`;
@@ -231,15 +233,15 @@ export function entityRoute(type: EntityType, code: string): string {
     case "PURCHASE_ORDER":
       return `/procurement?focus=${c}`;
     case "DELIVERY":
-      return "/fulfillment";
+      return `/fulfillment?focus=${c}`;
     case "WORK_ORDER":
     case "FIELD_EVENT":
       return `/field-service?focus=${c}`;
     case "INVOICE":
-      return "/finance";
+      return `/finance?focus=${c}`;
     case "PRODUCT_MODEL":
     case "PART_REVISION":
-      return "/engineering";
+      return `/engineering?focus=${c}`;
   }
 }
 
@@ -319,7 +321,25 @@ export async function resolveEntityId(
       );
     case "PRODUCT_MODEL":
       return pick(await db.productModel.findFirst({ where: { code }, ...sel }));
-    case "PART_REVISION":
+    case "PART_REVISION": {
+      // LINK.2 — a part revision's human code is "<partNumber> <rev>" (the form
+      // resolveRefsByType emits). It used to resolve to nothing, so a hop to one
+      // could never land focused — the one remaining hop that was a dead end BY
+      // CONSTRUCTION rather than by a missing screen.
+      const m = /^(\S+)\s+(\S+)$/.exec(code);
+      if (!m) return null;
+      const master = await db.partMaster.findFirst({
+        where: { partNumber: m[1] },
+        select: { id: true },
+      });
+      if (!master) return null;
+      return pick(
+        await db.partRevision.findFirst({
+          where: { partMasterId: master.id, rev: m[2] },
+          ...sel,
+        }),
+      );
+    }
     case "FIELD_EVENT":
       // not addressed by a single human code — resolved only as reached neighbors.
       return null;

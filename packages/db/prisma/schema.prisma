@@ -1246,6 +1246,8 @@ enum SearchType {
   WORK_ORDER
   NCR
   ECO
+  CONFIG_VERSION
+  TEST_RUN
 }
 
 /// Unified FTS-over-objects index. One row per searchable object. `orgId` is

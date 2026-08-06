@@ -20,6 +20,12 @@ export const searchOperations: Tool<{ query: string }> = {
       results: res.hits.map((h) => ({
         type: h.type,
         title: h.title,
+        // DEMO.7 §3 — the index already carries a subtitle ("purchase order · SENT",
+        // "unit · deployed"); dropping it meant the agent could FIND a record and
+        // still not say what state it was in — it answered "the PO exists but I
+        // cannot determine the approval stage" about a status sitting one field away.
+        // Surfaced verbatim from the index, never inferred.
+        subtitle: h.subtitle,
         url: h.url,
       })),
       // Citation refs (GA.1): real object routes only — never fabricated. The

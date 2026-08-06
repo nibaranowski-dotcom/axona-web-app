@@ -1,5 +1,7 @@
 import { dbForOrg } from "@axona/db";
 import { getCurrentUser } from "@/lib/session";
+import { getFocusedRecord } from "@/lib/connected-objects";
+import { FocusedRecord } from "@/components/ontology/FocusedRecord";
 import { getFulfillmentData } from "@/lib/fulfillment";
 import {
   FulfillmentView,
@@ -18,7 +20,11 @@ const EMPTY: FulfillmentScreenData = {
   traceLines: [],
 };
 
-export default async function FulfillmentPage() {
+export default async function FulfillmentPage({
+  searchParams,
+}: {
+  searchParams?: { focus?: string | string[] };
+}) {
   const user = await getCurrentUser();
   if (!user) return <FulfillmentView data={EMPTY} />;
 
@@ -36,7 +42,42 @@ export default async function FulfillmentPage() {
       ? (latestRun.trace as { ts?: string; kind?: string; text?: string }[])
       : [];
 
-    return <FulfillmentView data={{ ...fulfillment, traceLines }} />;
+    // LINK.2 — a LINK.1 hop into this screen arrives with ?focus=<code>; resolve it
+
+    // so the row is surfaced instead of the visitor landing on a bare list.
+
+    const focused = await getFocusedRecord(
+      user.orgId,
+
+      "DELIVERY",
+
+      searchParams?.focus,
+
+      async (code) => {
+        const r = await db.delivery.findFirst({
+          where: { code },
+          select: { account: true, stage: true },
+        });
+
+        return r ? `${r.stage} · ${r.account}` : null;
+      },
+    );
+
+    return (
+      <>
+        {focused && (
+          <FocusedRecord
+            type={focused.type}
+            code={focused.code}
+            label={focused.label}
+            groups={focused.groups}
+            basePath="/fulfillment"
+          />
+        )}
+
+        <FulfillmentView data={{ ...fulfillment, traceLines }} />
+      </>
+    );
   } catch {
     return <FulfillmentView data={EMPTY} error />;
   }

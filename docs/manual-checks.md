@@ -4204,3 +4204,42 @@ opt-out is recorded with its reason in the runner's `UNGATED` map.
 **Note the FLAG semantics:** zero hard failures is NOT a pass. A run with only flags
 still reports NOT-SAFE, because an unverifiable figure said out loud in the room is
 exactly the risk this gate exists to catch.
+
+## DEMO.7 part 3 — `verify:demo-offpath` (off-path robustness)
+
+`verify:demo` proves the scripted walk resolves; `verify:demo-script` proves the spoken
+numbers are true. Neither covers the thing that actually happens in the room: someone
+**pokes**. They click a connected object nobody rehearsed, or open a module screen the
+script never visits. This gate asserts the three ways that goes wrong.
+
+**1 · EMPTY** — a reachable module screen whose read model returns zero rows. Renders as
+an empty state, reads as unfinished. All 14 sidebar-reachable screens must be populated.
+
+**2 · DEAD-END** — a LINK.1 hop that *resolves* but lands on a bare list instead of the
+record. The graph edge is real, so nothing errors; the visitor just arrives somewhere
+that does not answer the question they clicked. **LINK.2** closes these by teaching
+`entityRoute` to emit `?focus=` for the five types that previously fell back to a module
+route (`SPC_SAMPLE` → `/quality`, `DELIVERY` → `/fulfillment`, `INVOICE` → `/finance`,
+`PRODUCT_MODEL` / `PART_REVISION` → `/engineering`), with those pages resolving
+`searchParams.focus` through `getFocusedRecord`. `PART_REVISION` was additionally a
+dead-end *by construction* — it had no resolver at all until this change.
+
+**3 · MARQUE** — a real name in any rendered string, swept via the DMMF across every
+string/JSON column of every org-scoped model, so a marque cannot hide in a field no
+hand-written list thought to check.
+
+**The marque check is scoped to FOREIGN marques, and that distinction is deliberate.** A
+tailored demo is branded with the recipient's own name — that is what they are being
+shown, not a leak to itself. So the tenant's own identity (org name and slug) is excluded
+and every *other* banned name still fails. Confirmed with a negative control: injecting
+another company's name into a seeded row made the crawl fail as intended. This changes
+nothing about SEED.1 — `verify:seed-1` still keeps marques out of committed code,
+unchanged.
+
+**Checks:**
+```
+pnpm verify:demo-offpath <scenario>   # or --all
+```
+Read-only and org-scoped — it walks the tenant's own graph and read models, so there is
+nothing to clean up. NOT in `verify:all` (it asserts gitignored demo-tenant seeds); the
+opt-out is recorded with its reason in the runner's `UNGATED` map.

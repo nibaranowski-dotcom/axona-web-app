@@ -282,6 +282,44 @@ export async function reindex(orgId?: string): Promise<void> {
       url: `/changes/${encodeURIComponent(e.code)}`,
     });
 
+  const cfgs = await prisma.configurationVersion.findMany({
+    where,
+    select: { id: true, orgId: true, name: true, isBaseline: true },
+  });
+  for (const c of cfgs)
+    await upsertDoc({
+      orgId: c.orgId,
+      type: "CONFIG_VERSION",
+      refId: c.id,
+      title: c.name,
+      subtitle: c.isBaseline
+        ? "configuration · baseline"
+        : "configuration · draft",
+      body: c.name,
+      url: `/configurations/${encodeURIComponent(c.name)}`,
+    });
+
+  const runs = await prisma.testRun.findMany({
+    where,
+    select: {
+      id: true,
+      orgId: true,
+      code: true,
+      outcome: true,
+      procedure: true,
+    },
+  });
+  for (const r of runs)
+    await upsertDoc({
+      orgId: r.orgId,
+      type: "TEST_RUN",
+      refId: r.id,
+      title: r.code,
+      subtitle: `test run · ${r.outcome}`,
+      body: [r.code, r.procedure].join(" "),
+      url: `/tests/${encodeURIComponent(r.code)}`,
+    });
+
   // Prune orphans for the tenant-owned types on a full reindex.
   if (!orgId) {
     await prune(

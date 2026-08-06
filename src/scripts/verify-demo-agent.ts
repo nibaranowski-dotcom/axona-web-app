@@ -82,13 +82,33 @@ async function collectSeedFacts(orgId: string): Promise<SeedFacts> {
         select: { sku: true, onHand: true, reorderPoint: true, leadDays: true },
       }),
       db.configurationVersion.findMany({ select: { name: true } }),
-      db.inventoryStock.findMany({ select: { onHand: true, minLevel: true } }),
+      db.inventoryStock.findMany({
+        select: {
+          onHand: true,
+          minLevel: true,
+          reserved: true,
+          valueUsd: true,
+        },
+      }),
       db.testRun.findMany({ select: { code: true } }),
     ],
   );
   // Test measurements and limits are exactly the figures a root-cause answer quotes
   // ("5.9 against a floor of 8"). Omitting them made the checker flag real, seeded
   // numbers — a safety gate that cries wolf is one people learn to ignore.
+  // SPC readings and their control limits are quoted the same way test measurements
+  // are ("the worst reading at 4.5, UCL 4.0") — the last of the numeric classes the
+  // collector was blind to. Each of these gaps flagged a CORRECT answer, which is the
+  // failure mode that makes a safety gate ignorable.
+  const spc = await db.spcSample.findMany({
+    select: { value: true, ucl: true, lcl: true, mean: true },
+  });
+  spc.forEach((x) => {
+    addNum(x.value);
+    addNum(x.ucl);
+    addNum(x.lcl);
+    addNum(x.mean);
+  });
   const results = await db.testResult.findMany({
     select: { measurement: true, lowerLimit: true, upperLimit: true },
   });
@@ -128,6 +148,10 @@ async function collectSeedFacts(orgId: string): Promise<SeedFacts> {
   stock.forEach((s) => {
     addNum(s.onHand);
     addNum(s.minLevel);
+    addNum(s.reserved);
+    // Stock VALUE is quoted as often as quantity ("$4,500 at the hub"); omitting it
+    // flagged a seeded figure, the same gap TestResult measurements had.
+    addNum(s.valueUsd);
   });
   tests.forEach((t) => codes.add(t.code));
   // Field work orders, deliveries and invoices are entities a grounded answer cites

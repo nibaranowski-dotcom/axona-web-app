@@ -254,6 +254,8 @@ export const UNGATED: Record<string, string> = {
     "per-scenario; asserts gitignored demo-tenant seeds CI cannot have",
   "demo-agent":
     "per-scenario; makes REAL billed model calls against gitignored demo tenants",
+  "demo-offpath":
+    "per-scenario; crawls gitignored demo-tenant seeds CI cannot have",
 };
 
 /** Fail loudly if a `verify:*` script exists but is not gated by the sequence. */
