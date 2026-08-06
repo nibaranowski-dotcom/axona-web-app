@@ -198,7 +198,8 @@
     "verify:attach-1": "tsx src/scripts/verify-attach-1.ts",
     "verify:auth-sso": "tsx src/scripts/verify-auth-sso.ts",
     "db:add-user": "tsx src/scripts/add-user.ts",
-    "verify:admin-1": "tsx src/scripts/verify-admin-1.ts"
+    "verify:admin-1": "tsx src/scripts/verify-admin-1.ts",
+    "verify:seed-5": "tsx src/scripts/verify-seed-5.ts"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

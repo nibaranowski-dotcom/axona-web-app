@@ -15,24 +15,10 @@ import {
   type OrgScopedDb,
 } from "@axona/db";
 
-// PROSPECT.3 — the SAME cross-module generators the base/investor seed uses, run for
-// the prospect org so every non-PLM module screen renders as populated. The prisma
-// seed files (packages/db/prisma/seed/*) are tsx-run and intentionally NOT in any tsc
-// project (they omit orgId, relying on the org-scoped client's runtime injection), so
-// we load the wrapper via a computed specifier — tsc doesn't pull its un-typechecked
-// deps into src/scripts's program; the local type keeps the call site safe.
-type SeedTenantModules = (
-  db: OrgScopedDb,
-  orgId: string,
-  opts: { nowMs: number; adminUserId: string },
-) => Promise<unknown>;
-const TENANT_SEED_MODULE = "../../../packages/db/prisma/seed/tenant";
-async function loadSeedTenantModules(): Promise<SeedTenantModules> {
-  const mod = (await import(TENANT_SEED_MODULE)) as {
-    seedTenantModules: SeedTenantModules;
-  };
-  return mod.seedTenantModules;
-}
+// SEED.5 — the runner no longer loads any domain seed. A prospect config imports the
+// generator it wants directly (`packages/db/prisma/seed/domain` for the pack-driven
+// backdrop, or `…/seed/tenant` to opt into the old shared base) and calls it inside its
+// own seed(), so the industry vocabulary is the CONFIG's choice, never the runner's.
 
 // DEMO.6 #4 — CONF.1 needs a decided-proposal history to fit from, and prospect
 // tenants had none (0 CalibrationModel rows → every confidence rendered "uncal").
@@ -244,19 +230,20 @@ export async function seedProspectOrg(
     select: { id: true },
   });
 
-  // 5. PROSPECT.3 — the full cross-module narrative (procurement · quality · mfg · sales
-  //    · fleet · field service · finance · people · autonomy · legal · security ·
-  //    inventory · marketing · machines · projects · workflows · billing · notifications
-  //    · integrations · audit), reusing the base generators, org-scoped → isolated. This
-  //    is the FOUNDATION the config's identity + PLM + agents overlay sits on top of.
-  const seedTenantModules = await loadSeedTenantModules();
-  await seedTenantModules(db, orgId, {
-    nowMs: Date.now(),
-    adminUserId: demoUser.id,
-  });
-
-  // 6. tailored overlay (identity + PLM golden thread + agents), over existing models,
-  //    org-scoped by construction. Runs AFTER the base narrative so it layers on top.
+  // 5. SEED.5 — the config seeds ITS OWN data. The runner used to force ONE shared
+  //    cross-module narrative in here first, before every config's seed(). That
+  //    narrative is drone/humanoid (actuator drives, torque SPC, Frame Build stations):
+  //    on-narrative for a defense tenant, pollution on a warehouse-automation one,
+  //    which ended up carrying a competitor's product category on every screen — and
+  //    pushed its OWN hero PO to row 15 of 19, because /procurement orders by insertion.
+  //
+  //    So the runner is now domain-AGNOSTIC: it owns identity (org · branding · demo
+  //    login), memory, calibration and the search index, and nothing about any
+  //    industry. Each config owns its tenant's records — most call
+  //    `seedDomainModules(db, orgId, PACK, …)` for the cross-module backdrop in their
+  //    own vocabulary, AFTER writing their hero rows so those sort first.
+  //    `seedTenantModules` stays exported for a config that opts into the old shared
+  //    base deliberately.
   await config.seed({ db, orgId, configDir: opts.configDir });
 
   // 7. PROSPECT.3 — derive operational memory from the full substrate (base modules +

@@ -137,6 +137,10 @@ const VERIFY_SEQUENCE: string[] = [
   "prospect-1",
   "prospect-2",
   "prospect-3",
+  // SEED.5 — tenant data separation. Gated (not per-scenario like the demo checks):
+  // its structural + marque assertions hold with no demo tenant seeded, and its
+  // per-tenant checks self-SKIP when a tenant is absent from this database.
+  "seed-5",
   "conf-1",
   "login-1",
   "house-1",

@@ -284,7 +284,15 @@ export async function reindex(orgId?: string): Promise<void> {
 
   const cfgs = await prisma.configurationVersion.findMany({
     where,
-    select: { id: true, orgId: true, name: true, isBaseline: true },
+    select: {
+      id: true,
+      orgId: true,
+      name: true,
+      isBaseline: true,
+      hwSpec: true,
+      swSpec: true,
+      productModel: { select: { name: true } },
+    },
   });
   for (const c of cfgs)
     await upsertDoc({
@@ -295,7 +303,26 @@ export async function reindex(orgId?: string): Promise<void> {
       subtitle: c.isBaseline
         ? "configuration · baseline"
         : "configuration · draft",
-      body: c.name,
+      // The body was just the code, which made these docs reachable ONLY by an exact
+      // code match: "what changed between <code> and <code>?" and "config baseline"
+      // both retrieved nothing, so the agent could answer the config question only
+      // when it happened to search the bare code — which it did not do reliably.
+      // Index the words a person actually types (configuration · baseline · the
+      // product model · the spec contents) alongside the code.
+      body: [
+        c.name,
+        "configuration version",
+        c.isBaseline ? "baseline config" : "draft config",
+        c.productModel?.name ?? "",
+        typeof c.hwSpec === "string"
+          ? c.hwSpec
+          : JSON.stringify(c.hwSpec ?? ""),
+        typeof c.swSpec === "string"
+          ? c.swSpec
+          : JSON.stringify(c.swSpec ?? ""),
+      ]
+        .filter(Boolean)
+        .join(" "),
       url: `/configurations/${encodeURIComponent(c.name)}`,
     });
 

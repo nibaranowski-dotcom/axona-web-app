@@ -65,13 +65,22 @@ async function run(): Promise<void> {
       );
     },
   );
+  // SEED.5 re-pointed this. It used to assert the runner CALLS seedTenantModules —
+  // i.e. that one shared industry narrative is forced into every prospect before its
+  // own seed() runs. That is the bug SEED.5 fixed (a warehouse tenant rendering drone
+  // records), so the assertion now states the opposite contract: the runner delegates
+  // ALL domain data to the config and owns only identity + the derived layers.
+  // Per-tenant purity + population are asserted by `verify:seed-5`.
   await check(
-    "the prospect runner seeds the full narrative UNDER the config overlay + derives memory",
+    "the runner delegates domain data to the config and derives memory (SEED.5)",
     () => {
+      const code = runner
+        .replace(/\/\*[\s\S]*?\*\//g, " ")
+        .replace(/^\s*\/\/.*$/gm, " ");
       return (
-        /seedTenantModules\(/.test(runner) &&
-        /config\.seed\(/.test(runner) &&
-        /ingestMemory\(/.test(runner)
+        !/seedTenantModules\(/.test(code) &&
+        /config\.seed\(/.test(code) &&
+        /ingestMemory\(/.test(code)
       );
     },
   );
@@ -115,9 +124,39 @@ async function run(): Promise<void> {
       role: "ADMIN" as const,
       password: "verify-pw",
     },
-    // a minimal identity/PLM overlay would go here; the base narrative already ran.
-    async seed() {
-      /* no-op overlay for the test */
+    // SEED.5 — the config seeds its OWN cross-module data; the runner no longer
+    // supplies any. A no-op seed() would now (correctly) produce an empty tenant, so
+    // the throwaway config does what a real one does: pick a domain pack and generate
+    // its backdrop. That makes this test exercise the CURRENT contract rather than
+    // the removed one.
+    async seed({ db, orgId }: { db: unknown; orgId: string }) {
+      // Computed specifiers on purpose: packages/db/prisma/seed/* are tsx-run and
+      // intentionally OUTSIDE any tsc project (they omit orgId and rely on the
+      // org-scoped client injecting it). A literal import path would pull that whole
+      // tree into this program and light up ~40 phantom "orgId is missing" errors —
+      // the same reason prospect-seed.ts loads its seeds this way.
+      const DOMAIN = "../../packages/db/prisma/seed/domain";
+      const PACKS = "../../packages/db/prisma/seed/domain-pack";
+      const { seedDomainModules } = (await import(DOMAIN)) as {
+        seedDomainModules: (
+          db: unknown,
+          orgId: string,
+          pack: unknown,
+          opts: Record<string, unknown>,
+        ) => Promise<unknown>;
+      };
+      const { WAREHOUSE_PACK } = (await import(PACKS)) as {
+        WAREHOUSE_PACK: unknown;
+      };
+      const scoped = db as {
+        user: { findFirst: (a: unknown) => Promise<{ id: string } | null> };
+      };
+      const u = await scoped.user.findFirst({ select: { id: true } });
+      await seedDomainModules(db, orgId, WAREHOUSE_PACK, {
+        prefix: "VZ", // a prefix no real tenant uses
+        nowMs: Date.now(),
+        adminUserId: u!.id,
+      });
     },
   };
 
