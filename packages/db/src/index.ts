@@ -216,6 +216,11 @@ export {
   type ReadinessLineInput,
   type BlockingPart,
   type CoveringPo,
+  // SRCH/AGT — shared config comparison.
+  compareConfigVersions,
+  asSpecMap,
+  type ConfigDiff,
+  type ConfigDiffRow,
 } from "./plm";
 
 // PRIV.1a — the org data-export bundle (portability). Built ON exportEntity below.

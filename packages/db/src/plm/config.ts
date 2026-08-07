@@ -337,3 +337,79 @@ export async function asBuiltDiff(
     },
   };
 }
+
+// ── SRCH/AGT — the shared CONFIG COMPARISON ─────────────────────────────────────
+//
+// Lifted here from apps/web/lib/configurations.ts so the /configurations screen and
+// the agent's `compareConfigurations` tool run the SAME diff. It was web-only, and
+// packages/agents depends on @axona/db (not on apps/web), so the alternative was a
+// second implementation of the same delta — the way two surfaces start disagreeing
+// about what changed between two baselines.
+//
+// Why the agent needs it as a TOOL: asked "what changed between CFG-X and CFG-Y", it
+// had only full-text search, which ANDs its terms — "changed"/"between" match no
+// document, so the query returned nothing and the agent looped re-searching until it
+// hit the turn cap and answered nothing at all. A positional delta is a PLM primitive,
+// not a search result; giving it a tool is the fix, and it leaves global FTS alone.
+
+export interface ConfigDiffRow {
+  /** the HW position or SW item key. */
+  key: string;
+  a: string | null;
+  b: string | null;
+  differs: boolean;
+}
+export interface ConfigDiff {
+  a: string;
+  b: string;
+  hw: ConfigDiffRow[];
+  sw: ConfigDiffRow[];
+}
+
+/** Coerce a stored hw/sw spec (Json) into a flat key→value map. */
+export function asSpecMap(v: unknown): Record<string, string> {
+  if (!v || typeof v !== "object") return {};
+  return Object.fromEntries(
+    Object.entries(v as Record<string, unknown>).map(([k, val]) => [
+      k,
+      String(val),
+    ]),
+  );
+}
+
+function diffMaps(
+  ma: Record<string, string>,
+  mb: Record<string, string>,
+): ConfigDiffRow[] {
+  const keys = [...new Set([...Object.keys(ma), ...Object.keys(mb)])].sort();
+  return keys.map((key) => {
+    const va = ma[key] ?? null;
+    const vb = mb[key] ?? null;
+    return { key, a: va, b: vb, differs: va !== vb };
+  });
+}
+
+/**
+ * Diff two configuration versions by NAME — positional hw + sw deltas.
+ * Org-scoped via `dbForOrg`; returns null when either name is not this tenant's,
+ * so a caller can never read another org's baseline.
+ */
+export async function compareConfigVersions(
+  orgId: string,
+  nameA: string,
+  nameB: string,
+): Promise<ConfigDiff | null> {
+  const { dbForOrg } = await import("../client");
+  const db = dbForOrg(orgId);
+  const [a, b] = await Promise.all([
+    db.configurationVersion.findFirst({ where: { name: nameA } }),
+    db.configurationVersion.findFirst({ where: { name: nameB } }),
+  ]);
+  if (!a || !b) return null;
+  return {
+    a: a.name,
+    b: b.name,
+    hw: diffMaps(asSpecMap(a.hwSpec), asSpecMap(b.hwSpec)),
+    sw: diffMaps(asSpecMap(a.swSpec), asSpecMap(b.swSpec)),
+  };
+}

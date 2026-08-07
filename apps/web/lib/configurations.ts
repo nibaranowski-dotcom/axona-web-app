@@ -7,6 +7,12 @@ import {
   type ConfigManifest,
   type ConfigHwPosition,
   type ConfigSwItem,
+  // SRCH/AGT — the config diff now lives in @axona/db so the agent's
+  // compareConfigurations tool runs the SAME comparison this screen shows.
+  compareConfigVersions,
+  asSpecMap,
+  type ConfigDiff,
+  type ConfigDiffRow,
 } from "@axona/db";
 import { resolveConfigSummaries } from "./units";
 
@@ -28,28 +34,10 @@ export interface ConfigRow {
   matchingUnits: number;
   matchingHref: string;
 }
-export interface ConfigDiffRow {
-  key: string;
-  a: string | null;
-  b: string | null;
-  differs: boolean;
-}
-export interface ConfigDiff {
-  a: string;
-  b: string;
-  hw: ConfigDiffRow[];
-  sw: ConfigDiffRow[];
-}
+// Re-exported so existing importers of this module keep working unchanged.
+export type { ConfigDiff, ConfigDiffRow };
 
-function asMap(v: unknown): Record<string, string> {
-  if (!v || typeof v !== "object") return {};
-  return Object.fromEntries(
-    Object.entries(v as Record<string, unknown>).map(([k, val]) => [
-      k,
-      String(val),
-    ]),
-  );
-}
+const asMap = asSpecMap;
 
 export async function getConfigurations(orgId: string): Promise<ConfigRow[]> {
   const db = dbForOrg(orgId);
@@ -90,37 +78,17 @@ export async function getConfigurations(orgId: string): Promise<ConfigRow[]> {
   }));
 }
 
-/** Diff two configuration versions — hw + sw deltas (the flag drives the highlight). */
+/**
+ * Diff two configuration versions — hw + sw deltas (the flag drives the highlight).
+ * Delegates to the shared @axona/db implementation so this screen and the agent's
+ * compareConfigurations tool can never disagree about what changed.
+ */
 export async function compareConfigs(
   orgId: string,
   nameA: string,
   nameB: string,
 ): Promise<ConfigDiff | null> {
-  const db = dbForOrg(orgId);
-  const [a, b] = await Promise.all([
-    db.configurationVersion.findFirst({ where: { name: nameA } }),
-    db.configurationVersion.findFirst({ where: { name: nameB } }),
-  ]);
-  if (!a || !b) return null;
-
-  const diff = (
-    ma: Record<string, string>,
-    mb: Record<string, string>,
-  ): ConfigDiffRow[] => {
-    const keys = [...new Set([...Object.keys(ma), ...Object.keys(mb)])].sort();
-    return keys.map((key) => {
-      const va = ma[key] ?? null;
-      const vb = mb[key] ?? null;
-      return { key, a: va, b: vb, differs: va !== vb };
-    });
-  };
-
-  return {
-    a: a.name,
-    b: b.name,
-    hw: diff(asMap(a.hwSpec), asMap(b.hwSpec)),
-    sw: diff(asMap(a.swSpec), asMap(b.swSpec)),
-  };
+  return compareConfigVersions(orgId, nameA, nameB);
 }
 
 // ── PLM.11 · Configuration DETAIL (`Configuration.dc.html`) ─────────────────────

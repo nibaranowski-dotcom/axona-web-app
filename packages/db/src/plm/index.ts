@@ -18,6 +18,12 @@ export {
   type ConfigManifest,
   type ConfigHwPosition,
   type ConfigSwItem,
+  // SRCH/AGT — the shared config comparison (the /configurations screen AND the
+  // agent's compareConfigurations tool run this one diff).
+  compareConfigVersions,
+  asSpecMap,
+  type ConfigDiff,
+  type ConfigDiffRow,
 } from "./config";
 // BR.1 — build-readiness rollup (pure classify + org-scoped compute over the same
 // PO/stock reads the Procurement screen shows; no parallel readiness store).
