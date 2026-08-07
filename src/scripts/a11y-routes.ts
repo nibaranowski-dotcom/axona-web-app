@@ -22,6 +22,10 @@ export const A11Y_DETAIL_SERIAL = "SN-2208";
 export const A11Y_ROUTES: A11yRoute[] = [
   { path: "/login", label: "Login (public auth page)", auth: false },
   { path: "/core", label: "Command Center (dense shell)", auth: true },
+  // SRCH.4 — the full-page search fallback. The ⌘K palette is an overlay with no
+  // route of its own, so this is the scannable surface for the same components
+  // (field, scope tabs, grouped listbox rows).
+  { path: "/search", label: "Search (palette surface)", auth: true },
   {
     path: "/core",
     label: "Command Center — collapsed icon rail (UX.14)",

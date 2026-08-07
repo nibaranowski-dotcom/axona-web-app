@@ -104,6 +104,7 @@
     "verify:proj-1": "tsx src/scripts/verify-proj-1.ts",
     "verify:wf-1": "tsx src/scripts/verify-wf-1.ts",
     "verify:srch-4": "tsx src/scripts/verify-srch-4.ts",
+    "verify:srch-4b": "tsx src/scripts/verify-srch-4b.ts",
     "verify:srch-5": "tsx src/scripts/verify-srch-5.ts",
     "verify:srch-6": "tsx src/scripts/verify-srch-6.ts",
     "verify:ux-1": "tsx src/scripts/verify-ux-1.ts",

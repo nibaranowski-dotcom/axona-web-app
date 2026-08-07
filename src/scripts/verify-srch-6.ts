@@ -69,14 +69,33 @@ async function run(): Promise<void> {
         q.indexOf("export async function search"),
         q.indexOf("export async function moduleSearch"),
       );
+      // SRCH.4 renamed the single `tsq` to `strict` + `loose` (the ranked-fallback
+      // that stops one non-matching term returning zero rows). The PROPERTY SRCH.6
+      // guards is unchanged and is what is asserted: every tsquery is built inside
+      // the CTE from the PLAIN-VALUE bind `${term}`, and both the rank site and the
+      // `@@` site reference it through `q.<name>` rather than re-interpolating.
+      // Assert from the REFERENCE side: whatever the CTE columns are named, the rank
+      // site and the match site must both go through `q.<name>` (the CTE) rather than
+      // re-interpolating the user's text, and the CTE must be built from the
+      // plain-value bind. Matching on the CTE's alias NAMES is brittle — the loose
+      // query contains an inner `AS w` alias that swallows the outer one.
+      const buildsFromBoundTerm =
+        /websearch_to_tsquery\('english', \$\{term\}\)/.test(body);
+      const rankViaCte = /ts_rank\("tsv", q\.\w+\)/.test(body);
+      const matchViaCte = /"tsv" @@ q\.\w+/.test(body);
+      // and the query text must never be interpolated into the WHERE/rank directly
+      const noRawInterp = !/@@\s*websearch_to_tsquery\('english', \$\{q\b/.test(
+        body,
+      );
+      const tsqNames = [rankViaCte, matchViaCte, noRawInterp].filter(Boolean);
       return (
         /scope === "ALL" \? null : scope/.test(body) &&
         /\$\{scopeParam\}::text AS scope/.test(body) &&
         /q\.scope IS NULL OR "type" = q\.scope::"SearchType"/.test(body) &&
-        // tsquery evaluated once in the CTE, referenced by both sites
-        /websearch_to_tsquery\('english', \$\{term\}\) AS tsq/.test(body) &&
-        /ts_rank\("tsv", q\.tsq\)/.test(body) &&
-        /"tsv" @@ q\.tsq/.test(body)
+        tsqNames.length > 0 &&
+        buildsFromBoundTerm &&
+        rankViaCte &&
+        matchViaCte
       );
     },
   );
@@ -84,10 +103,20 @@ async function run(): Promise<void> {
     "countByType() inlines the tsquery (plain-value bind, no fragment)",
     () => {
       const body = q.slice(q.indexOf("export async function countByType"));
-      return (
-        /"tsv" @@ websearch_to_tsquery\('english', \$\{term\}\)/.test(body) &&
-        !/const tsquery = /.test(body)
-      );
+      // Same re-point as above: SRCH.4 moved countByType's tsquery into a CTE so it
+      // uses the IDENTICAL matching rule as search() (a tab must never advertise a
+      // count the list cannot produce). The SRCH.6 property — built from the
+      // plain-value bind, never assembled into a local string/fragment — is what is
+      // asserted, whether the query sits inline or in the CTE.
+      const usesBoundTerm =
+        /websearch_to_tsquery\('english', \$\{term\}\)/.test(body);
+      const matchesViaTsq =
+        /"tsv" @@ websearch_to_tsquery\('english', \$\{term\}\)/.test(body) ||
+        /"tsv" @@ q\.\w+/.test(body);
+      // (No Prisma-fragment clause here: check #1 already asserts that across the
+      // whole file, and repeating it on this slice matched the COMMENT that documents
+      // the rule — a checker that reads its own documentation as a violation.)
+      return usesBoundTerm && matchesViaTsq && !/const tsquery = /.test(body);
     },
   );
   await check(

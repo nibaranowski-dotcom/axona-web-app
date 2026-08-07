@@ -36,7 +36,14 @@ export const useCommandPalette: PaletteStore =
     scope: "ALL",
     openPalette: (seed = "") => set({ open: true, query: seed, scope: "ALL" }),
     close: () => set({ open: false }),
-    toggle: () => set((s) => ({ open: !s.open })),
+    // SRCH.4 — ⌘K OPENS CLEAN. The toggle used to flip `open` and leave the previous
+    // query and scope in place, so re-opening resumed the last search mid-narrowed.
+    // Opening resets to an empty query at scope ALL (Linear-class); closing leaves
+    // state alone, since nothing reads it while shut.
+    toggle: () =>
+      set((s) =>
+        s.open ? { open: false } : { open: true, query: "", scope: "ALL" },
+      ),
     setQuery: (q) => set({ query: q }),
     setScope: (s) => set({ scope: s }),
   })));

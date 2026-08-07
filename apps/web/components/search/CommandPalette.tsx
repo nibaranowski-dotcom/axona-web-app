@@ -9,13 +9,46 @@ import { useSearch } from "@/lib/use-search";
 import { ScopeTabs } from "./ScopeTabs";
 import { Results, type AnnotatedGroup } from "./Results";
 
-// The global ⌘K Search (SRCH.3) — a DARK full-screen surface matching
-// Search.dc.html (not a white modal). Mounted once at the root so ⌘K / the
-// sidebar bar / the Mission Control pill all open the SAME experience over any
-// screen. SRCH.2 data wiring is unchanged (useSearch → /api/search); only the
-// shell/skin is dark. Focus-trapped; ↑↓ move · ↵ open · Esc close.
+// SRCH.4 — the global ⌘K command palette: a centered LIGHT card on a dimmed,
+// blurred backdrop, opened OVER the current screen (never a route change), with
+// scope tabs + live counts, grouped results, full keyboard nav and deep links.
+// `/search` stays the full-page fallback. Mounted once at the root so ⌘K, the
+// sidebar field and the launcher all open the same surface.
+//
+// DESIGN NOTE (flagged, per the CLAUDE.md design-authority rule): the committed
+// `Search.dc.html` in this repo is the v8 export — a DARK, FULL-PAGE screen whose
+// ESC chip is an <a> to another page. SRCH.4's PRD says that copy has drifted and
+// the v10 export is the record ("refresh the committed copy … the two differ by
+// ~300 bytes"), and the PRD's own prose describes an overlay that "opens over the
+// current screen, not a route change". The v10 export is not reachable from here,
+// so the ANATOMY below is implemented 1:1 from the committed file (field + ESC
+// chip · scope tabs with counts · grouped rows: icon · title · tag · subtitle ·
+// right-aligned mono meta · footer hints + live count · uppercase empty state) and
+// only the CHROME follows the PRD/story (light card, dimmed backdrop, modal). The
+// committed .dc.html was NOT refreshed — that sync is still outstanding.
 
-const TYPE_ORDER = ["AGENT", "CHAT", "FILE", "MODULE", "WORKFLOW", "PROJECT"];
+// Every indexed type, in display order. This used to list only the six "workspace"
+// scopes, so operational hits the index genuinely returns — parts, units, POs, work
+// orders, NCRs, ECOs, configs, test runs — were fetched and then silently dropped
+// before render: searching a part number found nothing in the palette while /search
+// found it. Scope TABS stay the seven the design shows; groups render whatever the
+// query actually matched.
+const TYPE_ORDER = [
+  "AGENT",
+  "CHAT",
+  "FILE",
+  "MODULE",
+  "WORKFLOW",
+  "PROJECT",
+  "UNIT",
+  "PART",
+  "PURCHASE_ORDER",
+  "WORK_ORDER",
+  "NCR",
+  "ECO",
+  "CONFIG_VERSION",
+  "TEST_RUN",
+];
 
 export function CommandPalette() {
   const router = useRouter();
@@ -72,6 +105,22 @@ export function CommandPalette() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, toggle, close, openPalette]);
 
+  // Seed from the `#q=` hash on open (a deep link into a pre-filled palette), then
+  // clear it so a later ⌘K doesn't silently re-seed the old query.
+  useEffect(() => {
+    if (!open) return;
+    const hash = window.location.hash;
+    const m = /^#q=(.*)$/.exec(hash);
+    if (!m) return;
+    const seeded = decodeURIComponent(m[1] ?? "");
+    if (seeded) setQuery(seeded);
+    history.replaceState(
+      null,
+      "",
+      window.location.pathname + window.location.search,
+    );
+  }, [open, setQuery]);
+
   // Focus the field on open; restore prior focus on close.
   useEffect(() => {
     if (open) {
@@ -121,106 +170,116 @@ export function CommandPalette() {
 
   const trimmed = query.trim();
   const hintKey =
-    "inline-flex items-center rounded-[4px] border border-[var(--md-line-hover)] px-[5px] py-px";
+    "inline-flex items-center rounded-[4px] border border-line-strong px-[5px] py-px";
 
   return (
+    // The BACKDROP dims + blurs the screen underneath and is itself the click
+    // target that closes — the palette sits over the screen you came from, which is
+    // what "returns to the prior screen" means when there was never a navigation.
     <div
-      ref={dialogRef}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Search"
-      onKeyDown={onDialogKeyDown}
-      className="bg-mission fixed inset-0 z-50 flex flex-col items-center px-5 pb-10 pt-16 font-sans text-on-dark"
+      className="fixed inset-0 z-50 flex justify-center overflow-hidden bg-ink/40 px-5 pb-10 pt-[88px] backdrop-blur-[6px]"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) close();
+      }}
     >
       <div
-        role="search"
-        aria-label="Sitewide search"
-        className="flex min-h-0 w-full max-w-[680px] flex-1 flex-col"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search"
+        onKeyDown={onDialogKeyDown}
+        className="flex max-h-[620px] w-full max-w-[660px] flex-col overflow-hidden rounded-[18px] border border-line bg-paper font-sans text-ink shadow-[0_26px_60px_rgba(0,0,0,0.22)]"
       >
-        {/* search field */}
-        <div className="flex flex-none items-center gap-[13px] rounded-[15px] border border-[var(--md-glass-line)] bg-[var(--md-glass)] px-[18px] py-[15px] backdrop-blur-[12px] focus-within:border-accent">
-          <Search
-            className="h-5 w-5 flex-none text-on-dark-mut"
-            strokeWidth={2}
-            aria-hidden
-          />
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={onInputKeyDown}
-            type="text"
-            role="combobox"
-            aria-expanded
-            aria-controls="srch-listbox"
-            aria-activedescendant={
-              flat.length > 0 ? `srch-opt-${active}` : undefined
-            }
-            aria-label="Search across everything"
-            placeholder="Search agents, files, chats, modules…"
-            className="min-w-0 flex-1 bg-transparent text-[17px] text-on-dark outline-none placeholder:text-on-dark-mut"
-          />
-          <button
-            type="button"
-            onClick={close}
-            aria-label="Close search (Esc)"
-            className="flex-none rounded-[5px] border border-[var(--md-line-hover)] px-[7px] py-[3px] font-mono text-[10px] text-on-dark-mut transition-colors hover:text-on-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          >
-            ESC
-          </button>
-        </div>
-
-        <ScopeTabs scope={scope} counts={state.counts} onSelect={setScope} />
-
-        {/* states */}
-        {!trimmed ? (
-          <p className="mt-[18px] flex-1 py-12 text-center font-mono text-[12px] tracking-[0.05em] text-on-dark-mut">
-            Search agents, files, chats, modules — start typing.
-          </p>
-        ) : state.loading && flat.length === 0 ? (
-          <p className="mt-[18px] flex-1 py-12 text-center font-mono text-[12px] tracking-[0.05em] text-on-dark-mut">
-            Searching…
-          </p>
-        ) : state.error ? (
-          <p className="mt-[18px] flex-1 py-12 text-center font-mono text-[12px] tracking-[0.05em] text-on-dark-mut">
-            {state.error}.
-          </p>
-        ) : flat.length === 0 ? (
-          <p className="mt-[18px] flex-1 py-12 text-center font-mono text-[12px] uppercase tracking-[0.05em] text-on-dark-mut">
-            No matches for “{trimmed}”
-          </p>
-        ) : (
-          <>
-            {state.degraded && (
-              <p
-                role="status"
-                className="mt-[14px] flex-none rounded-[8px] border border-[var(--md-line)] bg-[var(--md-tile-hover)] px-3 py-2 font-mono text-[10.5px] tracking-[0.03em] text-on-dark-mut"
-              >
-                Showing available results — full-text search is temporarily
-                degraded.
-              </p>
-            )}
-            <Results
-              groups={groups}
-              activeIndex={active}
-              onActivate={setActive}
-              onSelect={navigate}
+        <div
+          role="search"
+          aria-label="Sitewide search"
+          className="flex min-h-0 w-full flex-1 flex-col"
+        >
+          {/* search field */}
+          <div className="flex flex-none items-center gap-[13px] rounded-[15px] border border-line bg-panel px-[18px] py-[15px] focus-within:border-ink-strong">
+            <Search
+              className="h-[19px] w-[19px] flex-none text-ink-muted"
+              strokeWidth={2}
+              aria-hidden
             />
-          </>
-        )}
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={onInputKeyDown}
+              type="text"
+              role="combobox"
+              aria-expanded
+              aria-controls="srch-listbox"
+              aria-activedescendant={
+                flat.length > 0 ? `srch-opt-${active}` : undefined
+              }
+              aria-label="Search across everything"
+              placeholder="Search agents, files, chats, modules…"
+              className="min-w-0 flex-1 bg-transparent text-[16px] text-ink outline-none placeholder:text-ink-muted"
+            />
+            <button
+              type="button"
+              onClick={close}
+              aria-label="Close search (Esc)"
+              className="flex-none rounded-[5px] border border-line-strong px-[7px] py-[3px] font-mono text-[10px] text-mono-faint transition-colors hover:border-ink-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              ESC
+            </button>
+          </div>
 
-        {/* footer hints */}
-        <div className="mt-[14px] flex flex-none items-center gap-[18px] border-t border-[var(--md-rule)] pt-[14px] font-mono text-[10px] text-on-dark-mut">
-          <span className="inline-flex items-center gap-[6px]">
-            <span className={hintKey}>↑↓</span>navigate
-          </span>
-          <span className="inline-flex items-center gap-[6px]">
-            <span className={hintKey}>↵</span>open
-          </span>
-          <span className="inline-flex items-center gap-[6px]">
-            <span className={hintKey}>esc</span>close
-          </span>
-          <span className="ml-auto">{flat.length} results</span>
+          <ScopeTabs scope={scope} counts={state.counts} onSelect={setScope} />
+
+          {/* states */}
+          {!trimmed ? (
+            <p className="flex-1 px-3 py-12 text-center font-mono text-[12px] tracking-[0.05em] text-mono-faint">
+              Search agents, files, chats, modules — start typing.
+            </p>
+          ) : state.loading && flat.length === 0 ? (
+            <p className="flex-1 px-3 py-12 text-center font-mono text-[12px] tracking-[0.05em] text-mono-faint">
+              Searching…
+            </p>
+          ) : state.error ? (
+            <p className="flex-1 px-3 py-12 text-center font-mono text-[12px] tracking-[0.05em] text-mono-faint">
+              {state.error}.
+            </p>
+          ) : flat.length === 0 ? (
+            <p className="flex-1 px-3 py-12 text-center font-mono text-[12px] uppercase tracking-[0.05em] text-mono-faint">
+              NO MATCHES FOR “{trimmed}”
+            </p>
+          ) : (
+            <>
+              {state.degraded && (
+                <p
+                  role="status"
+                  className="mx-3 mt-3 flex-none rounded-[8px] border border-line bg-panel px-3 py-2 font-mono text-[10.5px] tracking-[0.03em] text-ink-muted"
+                >
+                  Showing available results — full-text search is temporarily
+                  degraded.
+                </p>
+              )}
+              <Results
+                groups={groups}
+                activeIndex={active}
+                onActivate={setActive}
+                onSelect={navigate}
+              />
+            </>
+          )}
+
+          {/* footer hints */}
+          <div className="flex flex-none items-center gap-[18px] border-t border-line px-[18px] py-[12px] font-mono text-[10px] text-mono-faint">
+            <span className="inline-flex items-center gap-[6px]">
+              <span className={hintKey}>↑↓</span>navigate
+            </span>
+            <span className="inline-flex items-center gap-[6px]">
+              <span className={hintKey}>↵</span>open
+            </span>
+            <span className="inline-flex items-center gap-[6px]">
+              <span className={hintKey}>esc</span>close
+            </span>
+            <span className="ml-auto">{flat.length} results</span>
+          </div>
         </div>
       </div>
     </div>

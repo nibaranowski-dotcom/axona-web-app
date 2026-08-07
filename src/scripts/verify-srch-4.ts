@@ -56,7 +56,12 @@ async function run(): Promise<void> {
         /if\s*\(!r\.ok\)/.test(c) &&
         /Search unavailable/.test(c) &&
         // the no-match empty state lives in the palette, not masked as an error
-        /No matches/.test(read("apps/web/components/search/CommandPalette.tsx"))
+        // SRCH.4 (palette) renders the design's UPPERCASE "NO MATCHES FOR …";
+        // the property guarded here is that the no-match state lives in the
+        // palette rather than being masked as an error, so match either casing.
+        /No matches/i.test(
+          read("apps/web/components/search/CommandPalette.tsx"),
+        )
       );
     },
   );

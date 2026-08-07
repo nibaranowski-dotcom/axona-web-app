@@ -85,6 +85,7 @@ const VERIFY_SEQUENCE: string[] = [
   "mach-1",
   "proj-1",
   "srch-4",
+  "srch-4b",
   "srch-5",
   "srch-6",
   "wf-1",

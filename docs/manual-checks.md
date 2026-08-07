@@ -4243,3 +4243,42 @@ pnpm verify:demo-offpath <scenario>   # or --all
 Read-only and org-scoped — it walks the tenant's own graph and read models, so there is
 nothing to clean up. NOT in `verify:all` (it asserts gitignored demo-tenant seeds); the
 opt-out is recorded with its reason in the runner's `UNGATED` map.
+
+## SRCH.4 — the ⌘K command palette (v10)
+
+The palette is an **overlay, not a route**: ⌘K (or the sidebar search field) opens a
+centered light card on a dimmed, blurred backdrop over whatever screen you were on, and
+closing returns you to it because you never left. `/search` remains the full-page
+fallback and is what the a11y scan covers, since the overlay has no route of its own.
+
+**Two fixes worth knowing about, both found while building this:**
+
+The palette was dropping results it had already fetched. Its `TYPE_ORDER` listed only
+the six workspace scopes, so operational hits the index genuinely returns — parts,
+units, POs, work orders, NCRs, ECOs, configs, test runs — were retrieved and then
+discarded before render. Searching a part number found nothing in ⌘K while `/search`
+found it. Groups now render whatever the query matched; the scope TABS stay the seven
+the design shows.
+
+Search also ANDed every term. `websearch_to_tsquery` joins unquoted words with AND, so
+one non-matching token returned ZERO rows — which is how the live agent ended up
+looping on "what changed between CFG-X and CFG-Y" until it hit its turn cap. Both
+`search()` and `countByType()` now evaluate a strict (AND) and a loose (OR) query,
+match on either, and rank by the loose score plus a +1 boost when the strict one also
+hits — so an all-terms match still outranks every partial, and single-word behaviour
+is byte-identical. The OR string is assembled in SQL from the bound value, so no user
+text is ever concatenated into the statement (SRCH.6's rule holds).
+
+**Checks:**
+```
+pnpm verify:srch-4     # the universal-search BUGFIX gate (503 · r.ok · FTS self-heal)
+pnpm verify:srch-4b    # the PALETTE gate (modal · scopes · counts · ranking · isolation)
+```
+Two gates because `verify:srch-4` already existed for a different story that reused the
+ID; its assertions are still load-bearing and were left intact.
+
+**By hand:** ⌘K from any screen → field is focused → type → counts appear on each tab →
+↑↓ moves the highlight across groups → ↵ opens the active row's real screen → esc
+returns you to where you were with focus back on the opener. Click a scope tab and the
+counts stay put while the list narrows. Click the backdrop — it closes. Type gibberish
+— `NO MATCHES FOR "…"` in mono.

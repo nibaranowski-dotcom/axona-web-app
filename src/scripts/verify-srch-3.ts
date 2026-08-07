@@ -67,11 +67,24 @@ check(
     /role="combobox"/.test(palette) &&
     /role="listbox"/.test(read(join(base, "components/search/Results.tsx"))),
 );
+// SUPERSEDED BY SRCH.4 — and re-pointed rather than deleted.
+//
+// This asserted the OPPOSITE skin: "dark full-screen (bg-mission + on-dark; no white
+// modal)". SRCH.3 built that deliberately from the v8 `Search.dc.html`, which is a
+// dark, full-page screen. SRCH.4's design of record (the v10 export) makes the palette
+// a LIGHT MODAL CARD over a dimmed, blurred backdrop, opened over the current screen
+// — so the old assertion now fails BY DESIGN, and leaving it would force the next
+// person to choose between a green gate and the current design.
+//
+// What SRCH.3 actually cared about survives and is asserted here: the palette is one
+// OVERLAY surface (not a route change) that covers the screen it opened over. Only the
+// skin claim changed. The full palette contract is gated by `verify:srch-4b`.
 check(
-  "dark full-screen Search skin (bg-mission + on-dark; no white modal)",
-  /bg-mission/.test(palette) &&
-    /text-on-dark/.test(palette) &&
-    !/bg-paper/.test(palette),
+  "the palette is a full-viewport OVERLAY over the current screen (SRCH.4: light modal)",
+  /fixed inset-0/.test(palette) &&
+    /backdrop-blur/.test(palette) &&
+    /bg-paper/.test(palette) &&
+    !/bg-mission/.test(palette),
 );
 check(
   "focus restore on close (prevFocus)",

@@ -55,15 +55,37 @@ export async function search(
   // and both the rank + `@@` sites reference it. Keep `SearchScope` typing at the
   // boundary; cast the bound text to the enum in SQL.
   const scopeParam: string | null = scope === "ALL" ? null : scope;
+  // SRCH.4 — RANKED FALLBACK (closes the task-#8 gap on this path).
+  //
+  // `websearch_to_tsquery` ANDs unquoted words, so ONE non-matching token returned
+  // ZERO rows: "what changed between CFG-X and CFG-Y" matched nothing, and the agent
+  // looped re-searching until it hit its turn cap. A search that answers "nothing"
+  // to a well-formed question is worse than one that answers approximately.
+  //
+  // So two queries are evaluated: `strict` (the AND — an exact all-terms match) and
+  // `loose` (the same terms ORed). Rows match if EITHER hits, and rank is the loose
+  // ts_rank plus a +1 boost when the strict query also matches — so an all-terms hit
+  // still outranks every partial one and existing single-word behaviour is unchanged.
+  //
+  // The OR string is assembled IN SQL from the bound value (split on whitespace,
+  // re-joined with the websearch OR operator). Nothing is string-built in JS and the
+  // user's text is never concatenated into SQL — SRCH.6's rule holds: plain-value
+  // binds only, no Prisma.sql fragments.
   const rows = await prisma.$queryRaw<SearchHit[]>`
     WITH q AS (
-      SELECT websearch_to_tsquery('english', ${term}) AS tsq,
+      SELECT websearch_to_tsquery('english', ${term}) AS strict,
+             websearch_to_tsquery('english',
+               (SELECT string_agg(w, ' OR ')
+                  FROM unnest(regexp_split_to_array(btrim(${term}), '[[:space:]]+')) AS w
+                 WHERE w <> '')
+             ) AS loose,
              ${scopeParam}::text AS scope
     )
     SELECT "type", "refId", "title", "subtitle", "url", "orgId",
-           ts_rank("tsv", q.tsq) AS rank
+           (ts_rank("tsv", q.loose)
+              + CASE WHEN "tsv" @@ q.strict THEN 1 ELSE 0 END)::float8 AS rank
     FROM "SearchDoc", q
-    WHERE "tsv" @@ q.tsq
+    WHERE ("tsv" @@ q.strict OR "tsv" @@ q.loose)
       AND ("orgId" = ${orgId} OR "orgId" IS NULL)
       AND (q.scope IS NULL OR "type" = q.scope::"SearchType")
     ORDER BY rank DESC
@@ -145,10 +167,20 @@ export async function countByType(
 
   // SRCH.6 — inline the tsquery (plain-value bind); no `Prisma.sql` fragment (which
   // breaks under Next's duplicate @prisma/client — see search()).
+  // Must use the SAME matching rule as search(), or a tab would advertise a count the
+  // result list cannot produce (the SRCH.4 gate asserts counts == grouped totals).
   const rows = await prisma.$queryRaw<Array<{ type: string; n: bigint }>>`
+    WITH q AS (
+      SELECT websearch_to_tsquery('english', ${term}) AS strict,
+             websearch_to_tsquery('english',
+               (SELECT string_agg(w, ' OR ')
+                  FROM unnest(regexp_split_to_array(btrim(${term}), '[[:space:]]+')) AS w
+                 WHERE w <> '')
+             ) AS loose
+    )
     SELECT "type", count(*) AS n
-    FROM "SearchDoc"
-    WHERE "tsv" @@ websearch_to_tsquery('english', ${term})
+    FROM "SearchDoc", q
+    WHERE ("tsv" @@ q.strict OR "tsv" @@ q.loose)
       AND ("orgId" = ${orgId} OR "orgId" IS NULL)
     GROUP BY "type";
   `;
