@@ -1,9 +1,10 @@
 import { dbForOrg } from "@axona/db";
 import { getCurrentUser } from "@/lib/session";
-import { getProcurementQueue } from "@/lib/procurement";
+import { getProcurementQueue, getPoDetail } from "@/lib/procurement";
 import { hasRole } from "@/lib/rbac";
 import { getFocusedRecord } from "@/lib/connected-objects";
 import { FocusedRecord } from "@/components/ontology/FocusedRecord";
+import { PoDetail } from "@/components/procurement/PoDetail";
 import {
   ProcurementView,
   type ProcurementData,
@@ -62,8 +63,20 @@ export default async function ProcurementPage({
           : null;
       },
     );
+    // DEMO beats 2 & 3 — the focused PO's own detail (agent chase / 3-way match).
+    // Same `?focus=` param the LINK.2 arrival surface already uses, so a row click and
+    // a graph hop land identically. Org-scoped: getPoDetail returns null for a code
+    // that is not this tenant's.
+    const focusCode = Array.isArray(searchParams?.focus)
+      ? searchParams?.focus[0]
+      : searchParams?.focus;
+    const poDetail = focusCode
+      ? await getPoDetail(user.orgId, focusCode)
+      : null;
+
     return (
       <>
+        {poDetail && <PoDetail detail={poDetail} />}
         {focused && (
           <FocusedRecord
             type={focused.type}

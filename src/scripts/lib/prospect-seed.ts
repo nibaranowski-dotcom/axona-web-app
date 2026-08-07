@@ -74,7 +74,12 @@ export async function clearOrgData(orgId: string): Promise<void> {
   await prisma.workOrderField.deleteMany({ where: { orgId } });
   await prisma.inventoryStock.deleteMany({ where: { orgId } });
   await prisma.purchaseOrder.deleteMany({ where: { orgId } });
-  await prisma.file.deleteMany({ where: { project: { orgId } } });
+  // ATTACH.1 files carry File.orgId with NO projectId, so a project-scoped delete
+  // missed them and every re-seed appended another copy — the warehouse tenant had 13
+  // identical packing lists. Clear both shapes.
+  await prisma.file.deleteMany({
+    where: { OR: [{ project: { orgId } }, { orgId }] },
+  });
   await prisma.$executeRawUnsafe(
     `ALTER TABLE "AuditLog" DISABLE RULE audit_no_delete`,
   );

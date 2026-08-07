@@ -436,7 +436,9 @@ export async function seedDomainModules(
   const invStatuses = ["PAID", "OPEN", "OVERDUE", "OPEN"];
   await db.invoice.createMany({
     data: Array.from({ length: 6 }, (_, i) => ({
-      code: code("INV", 7700 + i),
+      // 8800+ deliberately: a config's own hero invoices live in the 77xx range and
+      // the backdrop collided with one the 3-way match cites by code.
+      code: code("INV", 8800 + i),
       account: pack.customers[i % pack.customers.length]!,
       source: i % 2 === 0 ? "Delivery" : "Service",
       amount: 48_000 + i * 27_500,

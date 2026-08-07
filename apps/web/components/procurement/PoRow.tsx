@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   advancePurchaseOrder,
   rejectPurchaseOrder,
@@ -135,10 +136,20 @@ export function PoRow({
     >
       {/* UX.16 — tabular-nums on every numeric/date cell so digit-width changes
           (1 vs 8, a 5- vs 7-figure value) can't jitter the column. */}
+      {/* DEMO beats 2 & 3 — the identifier opens the PO's detail surface
+          (`?focus=`), the same arrival point a LINK.1 graph hop uses. The row itself
+          is NOT the link: it already contains up to three action buttons, and nesting
+          interactive elements inside an anchor is invalid and unusable by keyboard or
+          screen reader. Typography is unchanged from the design — only a hover
+          underline and a focus ring are added, so the list renders as before. */}
       <span className={`${STICKY_PO} min-w-0`}>
-        <span className="truncate font-mono text-[12.5px] tabular-nums text-ink">
+        <Link
+          href={`/procurement?focus=${encodeURIComponent(po.code)}`}
+          aria-label={`Open detail for purchase order ${po.code}`}
+          className="truncate rounded-[3px] font-mono text-[12.5px] tabular-nums text-ink underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
           {po.code}
-        </span>
+        </Link>
       </span>
       <div className="min-w-0">
         {/* UX.16 — `overflow-hidden` + `shrink-0` tags: the Item track no longer

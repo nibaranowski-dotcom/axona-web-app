@@ -28,6 +28,17 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
+/**
+ * The class list of whatever element renders `{po.code}` — span or Link. Checks 6
+ * and 7 both assert properties of that cell, so they read it the same way instead of
+ * each hardcoding a markup shape.
+ */
+function poCodeClasses(flat: string): string[] {
+  const m =
+    /<(?:span|Link)\b[^>]*className="([^"]*)"[^>]*>\s*\{po\.code\}/.exec(flat);
+  return m?.[1]?.split(/\s+/).filter(Boolean) ?? [];
+}
+
 let passed = 0;
 let failed = 0;
 const check = (label: string, fn: () => boolean): void => {
@@ -107,7 +118,13 @@ function run(): void {
     return (
       // PO code · item line (qty) · promised/received line · value.
       (row.match(/tabular-nums/g) ?? []).length >= 4 &&
-      /tabular-nums[^"]*">\s*\{po\.code\}/.test(flat) &&
+      // Tag-agnostic: the DEMO beat-2/3 work made the PO code a Link to its detail
+      // surface, so this matches the PROPERTY (the element rendering po.code carries
+      // tabular-nums) rather than requiring a <span>. Read the class list off that
+      // element and test it directly — a looser regex here would let the match cross
+      // a quote and pick up a tabular-nums from a DIFFERENT attribute, which silently
+      // stops the check from biting at all.
+      poCodeClasses(flat).includes("tabular-nums") &&
       // the item line carries a `title` attribute between class and text
       /truncate text-\[13\.5px\] tabular-nums text-ink"[^>]*>\s*\{po\.partSku\} · qty \{po\.qty\}/.test(
         flat,
@@ -139,10 +156,23 @@ function run(): void {
         flatQueue,
       );
     // The PO code cell: same shape, and still mono + tabular-nums (UX.16 check 6).
+    // The PO code cell: same CHAIN (min-w-0 sticky wrapper > truncating child) and
+    // the same required classes. The child is a <Link> since the DEMO beat-2/3 work
+    // made the identifier open the PO's detail surface, so match on the properties
+    // — every class UX.15/UX.16 depends on is still asserted, in any order.
+    const poCellChain = /\$\{STICKY_PO\} min-w-0`\}>\s*<(span|Link)\b/.test(
+      flat,
+    );
+    const poClasses = poCodeClasses(flat);
     const poCell =
-      /\$\{STICKY_PO\} min-w-0`\}>\s*<span className="truncate font-mono text-\[12\.5px\] tabular-nums text-ink">\s*\{po\.code\}/.test(
-        flat,
-      );
+      poCellChain &&
+      [
+        "truncate",
+        "font-mono",
+        "text-[12.5px]",
+        "tabular-nums",
+        "text-ink",
+      ].every((c) => poClasses.includes(c));
     // Vendor + value cells still carry min-w-0 + truncate themselves.
     const vendorAndValue =
       /className="min-w-0 truncate text-\[13px\] text-ink-muted"/.test(flat) &&

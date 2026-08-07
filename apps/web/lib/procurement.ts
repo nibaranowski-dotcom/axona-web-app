@@ -239,3 +239,164 @@ export async function listParts(
   });
   return pageResult(rows, take);
 }
+
+// ── DEMO — the PO DETAIL surface (warehouse beats 2 & 3) ─────────────────────────
+//
+// The live dry-run caught the /procurement beats OVER-CLAIMING: the script says one PO
+// is "being chased automatically" and another was "3-way matched, 6 of 6, serial
+// captured", but clicking a row only highlighted it. The claims were true of the DATA
+// and invisible in the PRODUCT — the worst version, because it reads as vapour exactly
+// when someone leans in.
+//
+// Both are read from what already exists: the agent's action is the AUDIT.1 entry it
+// wrote (inputs · output · model · confidence · approver), and the receipt match is the
+// extraction the goods-receipt agent stored on the packing-list File. Nothing here
+// computes a new number — if a field is absent the surface says so rather than
+// inventing it, which is the whole point of showing the audit trail at all.
+
+/** One AUDIT.1 entry as the detail surface renders it. */
+export interface PoAuditEntry {
+  id: string;
+  at: Date;
+  actorType: string;
+  actorLabel: string;
+  action: string;
+  summary: string;
+  /** AUDIT.1's four accountability fields — null when the actor was human. */
+  model: string | null;
+  confidence: number | null;
+  approverLabel: string | null;
+}
+
+/** The goods-receipt 3-way match, as the receiving agent recorded it. */
+export interface ThreeWayMatch {
+  poQty: number;
+  packingListQty: number | null;
+  invoiceCode: string | null;
+  invoiceAmount: number | null;
+  matched: boolean;
+  /** serials captured into genealogy at receipt. */
+  serials: string[];
+  sku: string | null;
+  sourceFile: string | null;
+}
+
+export interface PoDetail {
+  code: string;
+  status: POStatus;
+  qty: number;
+  value: number;
+  supplier: string;
+  partSku: string;
+  eta: Date | null;
+  receivedAt: Date | null;
+  /** whole days past the promised date, when late and not yet received. */
+  daysLate: number | null;
+  audit: PoAuditEntry[];
+  threeWay: ThreeWayMatch | null;
+}
+
+/**
+ * Everything the PO detail surface shows, org-scoped. Read-only; returns null when the
+ * code is not this tenant's (so a focus param can never read across orgs).
+ */
+export async function getPoDetail(
+  orgId: string,
+  code: string,
+): Promise<PoDetail | null> {
+  const db = dbForOrg(orgId);
+  const po = await db.purchaseOrder.findFirst({
+    where: { code },
+    select: {
+      code: true,
+      status: true,
+      qty: true,
+      value: true,
+      eta: true,
+      receivedAt: true,
+      supplier: { select: { name: true } },
+      part: { select: { sku: true } },
+    },
+  });
+  if (!po) return null;
+
+  const entries = await db.auditLog.findMany({
+    where: { targetType: "PurchaseOrder", targetId: code },
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      createdAt: true,
+      actorType: true,
+      actorLabel: true,
+      action: true,
+      summary: true,
+      model: true,
+      confidence: true,
+      approverLabel: true,
+    },
+  });
+
+  const daysLate =
+    po.eta && !po.receivedAt && po.eta.getTime() < Date.now()
+      ? Math.floor((Date.now() - po.eta.getTime()) / 86_400_000)
+      : null;
+
+  // The 3-way match is only meaningful once goods are in. Read it from the packing
+  // list the receiving agent extracted — never recomputed here, so the screen shows
+  // what the agent actually recorded.
+  let threeWay: ThreeWayMatch | null = null;
+  if (po.status === "RECEIVED") {
+    const file = await db.file.findFirst({
+      where: { linkedTo: { contains: code } },
+      select: { name: true, extracted: true },
+    });
+    const ex = (file?.extracted ?? null) as {
+      invoice?: string;
+      threeWayMatch?: boolean;
+      lineItems?: { sku?: string; qty?: number; serials?: string[] }[];
+    } | null;
+    if (ex) {
+      const line = ex.lineItems?.[0] ?? null;
+      const invoice = ex.invoice
+        ? await db.invoice.findFirst({
+            where: { code: ex.invoice },
+            select: { code: true, amount: true },
+          })
+        : null;
+      threeWay = {
+        poQty: po.qty,
+        packingListQty: line?.qty ?? null,
+        invoiceCode: ex.invoice ?? null,
+        invoiceAmount: invoice?.amount ?? null,
+        matched: ex.threeWayMatch === true,
+        serials: line?.serials ?? [],
+        sku: line?.sku ?? null,
+        sourceFile: file?.name ?? null,
+      };
+    }
+  }
+
+  return {
+    code: po.code,
+    status: po.status,
+    qty: po.qty,
+    value: po.value,
+    supplier: po.supplier?.name ?? "—",
+    partSku: po.part?.sku ?? "—",
+    eta: po.eta,
+    receivedAt: po.receivedAt,
+    daysLate,
+    audit: entries.map((e) => ({
+      id: e.id,
+      at: e.createdAt,
+      actorType: e.actorType,
+      actorLabel: e.actorLabel,
+      action: e.action,
+      summary: e.summary,
+      model: e.model,
+      confidence: e.confidence,
+      approverLabel: e.approverLabel,
+    })),
+    threeWay,
+  };
+}
