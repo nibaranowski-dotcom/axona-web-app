@@ -202,6 +202,10 @@ export function CommandPalette() {
               strokeWidth={2}
               aria-hidden
             />
+            {/* The listbox only exists when there are results — the empty, loading
+                and no-match states render a <p> instead. Advertising aria-controls
+                unconditionally left the id dangling (axe aria-valid-attr-value,
+                critical); aria-expanded must say whether the popup is really there. */}
             <input
               ref={inputRef}
               value={query}
@@ -209,8 +213,8 @@ export function CommandPalette() {
               onKeyDown={onInputKeyDown}
               type="text"
               role="combobox"
-              aria-expanded
-              aria-controls="srch-listbox"
+              aria-expanded={flat.length > 0}
+              aria-controls={flat.length > 0 ? "srch-listbox" : undefined}
               aria-activedescendant={
                 flat.length > 0 ? `srch-opt-${active}` : undefined
               }
