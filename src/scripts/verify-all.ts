@@ -174,6 +174,7 @@ const VERIFY_SEQUENCE: string[] = [
   "agt-3",
   "ux-14",
   "sidebar-1",
+  "sidebar-2",
   "seams-1",
   "mem-2",
   "eval-1",

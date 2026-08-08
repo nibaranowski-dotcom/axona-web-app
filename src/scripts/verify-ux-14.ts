@@ -108,14 +108,25 @@ function run(): void {
     return usesCollapsedMenu && menuKeepsItems;
   });
 
-  check("expanded nav unchanged (still renders NavSection)", () => {
-    return (
-      /import \{ NavSection \}/.test(sidebar) &&
-      /<NavSection key=\{g\.group\}/.test(sidebar) &&
-      // the expanded 240px nav is still present after the collapsed branch
-      /w-\[240px\]/.test(sidebar)
-    );
-  });
+  // SIDEBAR.2 re-pointed the WIDTH and the markup shape, not the property.
+  // UX.14's concern is that adding the collapsed rail did not REPLACE the expanded
+  // nav — that both branches still exist and the expanded one still renders
+  // NavSection. It asserted that via `w-[240px]` and a one-line `<NavSection
+  // key={g.group}`; SIDEBAR.2 moved the sidebar to the design's 272px card and gave
+  // NavSection props (open/onToggle), so both literals changed while the property
+  // held. The width itself is now gated by `verify:sidebar-2`.
+  check(
+    "expanded nav still present alongside the rail (renders NavSection)",
+    () => {
+      return (
+        /import \{ NavSection \}/.test(sidebar) &&
+        /<NavSection\b/.test(sidebar) &&
+        /group=\{g\}/.test(sidebar) &&
+        // an expanded branch with a real pixel width still exists after the rail branch
+        /w-\[\d{3}px\]/.test(sidebar)
+      );
+    },
+  );
 
   check("Lucide thin stroke · no emoji in the rail", () => {
     return (

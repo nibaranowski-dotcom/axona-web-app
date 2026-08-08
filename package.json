@@ -194,6 +194,7 @@
     "verify:golive-1": "tsx src/scripts/verify-golive-1.ts",
     "verify:prospect-3": "tsx src/scripts/verify-prospect-3.ts",
     "verify:sidebar-1": "tsx src/scripts/verify-sidebar-1.ts",
+    "verify:sidebar-2": "tsx src/scripts/verify-sidebar-2.ts",
     "verify:io-1": "tsx src/scripts/verify-io-1.ts",
     "verify:link-1": "tsx src/scripts/verify-link-1.ts",
     "verify:hist-1": "tsx src/scripts/verify-hist-1.ts",

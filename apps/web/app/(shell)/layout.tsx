@@ -13,6 +13,7 @@ import { getModuleAlerts } from "@/lib/module-alerts";
 import { getCurrentUser } from "@/lib/session";
 import { getOrgOnboarding, isModuleEnabled } from "@/lib/onboarding";
 import { getUnreadCount } from "@/lib/notifications";
+import { getUiPrefs } from "@/lib/ui-prefs";
 
 // The app shell — left sidebar, content <main>, right agent pane. Every screen
 // from MC.1 onward renders into <main>.
@@ -100,19 +101,35 @@ export default async function ShellLayout({
     });
   }
 
+  // SIDEBAR.2 — read the user's saved shell shape on the SERVER so the sidebar renders
+  // collapsed/expanded on first paint. It used to come from a localStorage store, which
+  // meant every navigation painted expanded and then snapped.
+  const uiPrefs = user ? await getUiPrefs(user.orgId, user.id) : null;
+
   return (
-    <div className="grid h-dvh grid-cols-[auto_1fr_auto] bg-paper text-ink">
+    // SIDEBAR.2 — the shell frame follows Sidebar Nav.dc.html: the app background is
+    // --panel and the sidebar is a PAPER CARD floating on it (26px padding + gap),
+    // rather than a flush full-height rail on a paper page.
+    <div // grid-rows + overflow-hidden: with p-[26px] the ROW must be capped at the
+      // padded height, or a tall child sizes the row to the full viewport and the
+      // cards hang 26px past the bottom edge (the account row + collapse toggle
+      // were clipped).
+      className="grid h-dvh grid-cols-[auto_1fr_auto] grid-rows-[minmax(0,1fr)] gap-[26px] overflow-hidden bg-panel p-[26px] text-ink"
+    >
       <Sidebar
         groups={groups}
         alerts={alerts}
-        user={user ? { name: user.name, role: user.role } : null}
+        user={
+          user ? { name: user.name, role: user.role, email: user.email } : null
+        }
         org={org}
         unreadCount={unreadCount}
+        prefs={uiPrefs}
       />
       <main
         id="main"
         aria-label="Main content"
-        className="min-w-0 overflow-y-auto"
+        className="min-w-0 overflow-y-auto rounded-[16px] border border-line bg-paper"
       >
         {routeDisabled ? <ModuleNotEnabled /> : children}
       </main>

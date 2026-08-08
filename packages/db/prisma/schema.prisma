@@ -124,6 +124,13 @@ model User {
   /// AUTH.7: set when the user confirms their email (soft — non-blocking for now).
   emailVerifiedAt DateTime?
   createdAt       DateTime  @default(now())
+  /// SIDEBAR.2 — per-user shell UI preferences: the collapsed rail + which nav groups
+  /// are open. Additive and NULLABLE, so a user who has never touched the sidebar has
+  /// no stored state and renders the default shape (no backfill, no migration risk).
+  /// Org-scoped by construction — prefs hang off User, which carries orgId, so one
+  /// tenant can never read another's. Json rather than columns because this is
+  /// presentation state that keeps growing and is never queried or joined on.
+  uiPrefs         Json?
 
   @@index([orgId])
 }

@@ -1,0 +1,11 @@
+-- SIDEBAR.2 — per-user shell UI preferences (collapsed rail + which nav groups are
+-- open). Additive and NULLABLE: no backfill, and a user who has never touched the
+-- sidebar simply has no stored state. Org-scoped by construction (prefs hang off
+-- User, which carries orgId).
+--
+-- HAND-AUTHORED per MIGRATE.1. `prisma migrate dev` cannot author this: the shadow
+-- database diff wants to DROP "SearchDoc"."tsv" — the raw-SQL GENERATED column the
+-- FTS index depends on and which schema.prisma cannot model — so letting it write the
+-- migration would silently take search down. The trailing
+-- `…_migrate1_ensure_raw_sql_ddl` migration re-asserts those raw-SQL objects.
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "uiPrefs" JSONB;

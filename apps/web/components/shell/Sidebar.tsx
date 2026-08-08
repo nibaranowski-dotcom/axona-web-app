@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import {
   Bell,
   Contact,
@@ -20,11 +20,14 @@ import { isNavItemActive, type NavGroup } from "@/lib/nav";
 import { useMounted, useUi } from "@/lib/ui-store";
 import { NavSection } from "./NavSection";
 import { moduleIcon } from "./module-icons";
+import { saveShellUiPrefs } from "@/app/(shell)/ui-prefs-actions";
 import { resolveSidebarBrand, type ResolvedBrand } from "./sidebar-brand";
 
 export interface SidebarUser {
   name: string;
   role: string;
+  /** SIDEBAR.2 — the design's account row shows the email, truncated, not the role. */
+  email?: string;
 }
 
 // Modules that live only on Mission Control / as the palette — not in the left
@@ -51,6 +54,7 @@ export function Sidebar({
   user,
   org,
   unreadCount = 0,
+  prefs = null,
 }: {
   groups: NavGroup[];
   alerts: Record<string, number>;
@@ -64,14 +68,56 @@ export function Sidebar({
     showMicrolabel?: boolean;
   } | null;
   unreadCount?: number;
+  /**
+   * SIDEBAR.2 — the user's saved shell shape, read on the SERVER. Passing it in is
+   * what removes the expanded-then-snap flash: the first paint is already correct.
+   */
+  prefs?: { sidebarCollapsed: boolean; navGroupsClosed: string[] } | null;
 }) {
   // SIDEBAR.1 — the co-branding decision (two independent flags), resolved once.
   const brand = resolveSidebarBrand(org);
   const router = useRouter();
   const pathname = usePathname();
-  const collapsed = useUi((s) => s.sidebarCollapsed);
-  const toggleSidebar = useUi((s) => s.toggleSidebar);
+  const storeCollapsed = useUi((s) => s.sidebarCollapsed);
+  const setSidebarCollapsed = useUi((s) => s.setSidebarCollapsed);
   const mounted = useMounted();
+
+  // SIDEBAR.2 — the SERVER value is the source of truth for the first paint; the
+  // store takes over once mounted. Before mount we deliberately read `prefs`, not the
+  // store, so SSR and the first client render agree and nothing flashes.
+  const collapsed = mounted
+    ? storeCollapsed
+    : (prefs?.sidebarCollapsed ?? false);
+
+  // Adopt the persisted value into the store exactly once on mount, so a second tab
+  // or a stale localStorage value can never outrank what the server just told us.
+  const adopted = useRef(false);
+  useEffect(() => {
+    if (adopted.current || !prefs) return;
+    adopted.current = true;
+    setSidebarCollapsed(prefs.sidebarCollapsed);
+  }, [prefs, setSidebarCollapsed]);
+
+  // Which nav groups the user has collapsed (SSR-seeded, same rule as above).
+  const [closedGroups, setClosedGroups] = useState<string[]>(
+    prefs?.navGroupsClosed ?? [],
+  );
+  const toggleGroup = useCallback((label: string) => {
+    setClosedGroups((prev) => {
+      const next = prev.includes(label)
+        ? prev.filter((g) => g !== label)
+        : [...prev, label];
+      void saveShellUiPrefs({ navGroupsClosed: next });
+      return next;
+    });
+  }, []);
+
+  // The rail toggle persists per USER (not per browser) and applies optimistically.
+  const toggleSidebar = useCallback(() => {
+    const next = !collapsed;
+    setSidebarCollapsed(next);
+    void saveShellUiPrefs({ sidebarCollapsed: next });
+  }, [collapsed, setSidebarCollapsed]);
 
   // Clicking the search bar lands on Mission Control (pill autofocused there).
   const goToSearch = () => router.push("/launcher");
@@ -95,7 +141,8 @@ export function Sidebar({
     return (
       <nav
         aria-label="Primary"
-        className="flex h-dvh w-[60px] flex-none flex-col items-center border-r border-line bg-paper py-[18px]"
+        // SIDEBAR.2 — the collapsed rail is the same card at the design's 64px.
+        className="flex min-h-0 w-[64px] flex-none flex-col items-center overflow-hidden rounded-[16px] border border-line bg-paper py-[12px]"
       >
         {/* SIDEBAR.1 — co-branded rail: customer tile (28px) · short hairline · Axona
             square (13px). Axona-only: just the 28px square. Links to Mission Control. */}
@@ -149,12 +196,14 @@ export function Sidebar({
         </button>
 
         {/* Icon-only module nav — every visible module reachable (scrolls if tall) */}
-        <div className="mt-3 flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto border-t border-line pt-3">
+        <div className="mt-3 flex min-h-0 w-full flex-1 flex-col items-center gap-1 overflow-y-auto border-t border-line pt-3">
           {navGroups.map((g, gi) => (
-            <div
-              key={g.group}
-              className={`flex flex-col items-center gap-1 ${gi > 0 ? "mt-2 border-t border-line pt-2" : ""}`}
-            >
+            // SIDEBAR.2 — the design breaks rail sections with a SHORT 26px hairline
+            // centred in the 64px rail, not a full-width rule across the card.
+            <div key={g.group} className="flex flex-col items-center gap-1">
+              {gi > 0 && (
+                <span aria-hidden className="my-2 h-px w-[26px] bg-line" />
+              )}
               {g.modules.map((m) => {
                 const active = isNavItemActive(pathname, m.href);
                 const badge = alerts[m.key] ?? 0;
@@ -168,7 +217,7 @@ export function Sidebar({
                     }
                     aria-current={active ? "page" : undefined}
                     title={m.name}
-                    className={`relative flex h-9 w-9 flex-none items-center justify-center rounded-[8px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                    className={`relative flex h-10 w-10 flex-none items-center justify-center rounded-[10px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                       active
                         ? "bg-panel text-ink"
                         : "text-ink-muted hover:bg-panel hover:text-ink"
@@ -206,7 +255,10 @@ export function Sidebar({
   return (
     <nav
       aria-label="Primary"
-      className="flex h-dvh w-[240px] flex-none flex-col border-r border-line bg-paper px-[14px] py-[18px]"
+      // SIDEBAR.2 — the design's floating card: 272px, paper on the shell's --panel
+      // background, 1px hairline, 16px radius, its own scroll. Was a 240px flush
+      // rail with a right border (the CLAUDE.md invariant is updated to match).
+      className="flex min-h-0 w-[272px] flex-none flex-col overflow-hidden rounded-[16px] border border-line bg-paper"
     >
       {/* SIDEBAR.1 — co-brand switcher header (1:1 with Sidebar Header.dc.html). The
           workspace is the hero (customer logo + name, or the Axona square + "Axona");
@@ -272,7 +324,13 @@ export function Sidebar({
           </p>
         ) : (
           navGroups.map((g) => (
-            <NavSection key={g.group} group={g} alerts={alerts} />
+            <NavSection
+              key={g.group}
+              group={g}
+              alerts={alerts}
+              open={!closedGroups.includes(g.label)}
+              onToggle={toggleGroup}
+            />
           ))
         )}
       </div>

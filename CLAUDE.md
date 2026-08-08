@@ -56,8 +56,12 @@ part of the DoD, checked per story — never a later pass.
 - **Voice/copy:** numbers are **mono + specific** (read like a machine reported them); **sentence case**
   except **UPPERCASE mono eyebrows/labels**; "·" separators; lead with outcomes not module names.
 - **The v2 DS ships real components** (`components/core|surfaces|forms/*.jsx` + `.prompt.md`) — port/
-  reconcile our primitives to these, don't reinvent. Layout: **240px sidebar** · 60px topbar · 16–28px gaps
-  (the handoff prose said 232px but the actual `.dc.html` `<aside>` is 240px — the file wins).
+  reconcile our primitives to these, don't reinvent. Layout: **272px sidebar** (SIDEBAR.2) · 60px topbar ·
+  16–28px gaps. The rule that settled this has held twice: **the `.dc.html` wins.** It was 240px when
+  `Command Center.dc.html`'s `<aside>` said 240 (the handoff prose said 232); SIDEBAR.2's
+  `Sidebar Nav.dc.html` says **272px** expanded / **64px** collapsed rail, and the sidebar is now a
+  floating **paper card** (1px hairline, 16px radius) on a `--panel` app background with 26px padding
+  and gap — not a flush full-height rail. The collapsed rail is the same card at 64px.
 - Build gotcha: `Sales & CRM.dc.html` must be hand-edited (its `&` breaks the design's find/replace scripts).
 
 **Wire-up blocks DEFER to the design — don't re-specify visuals (learned on ENG.2).** A UI story's block adds

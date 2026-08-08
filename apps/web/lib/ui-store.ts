@@ -29,6 +29,9 @@ interface UiState {
   setAgentPaneCollapsed: (collapsed: boolean) => void;
   setAgentPaneForceOpen: (open: boolean) => void;
   toggleSidebar: () => void;
+  /** SIDEBAR.2 — set explicitly, so the SERVER's persisted value can be adopted
+   *  on mount rather than blindly toggled from whatever localStorage held. */
+  setSidebarCollapsed: (collapsed: boolean) => void;
   toggleNav: (group: string) => void;
 }
 
@@ -55,6 +58,7 @@ export const useUi = create<UiState>()(
         set({ agentPaneForceOpen }),
       toggleSidebar: () =>
         set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+      setSidebarCollapsed: (sidebarCollapsed) => set({ sidebarCollapsed }),
       toggleNav: (group) =>
         set((s) => ({ navOpen: { ...s.navOpen, [group]: !s.navOpen[group] } })),
     }),
