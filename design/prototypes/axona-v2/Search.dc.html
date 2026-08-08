@@ -12,72 +12,69 @@
 <style>
   body{margin:0}
   ::selection{background:var(--accent)}
-  .md-bg{
-    background-color:#101013;
-    background-image:
-      radial-gradient(1100px 560px at 50% -8%,rgba(198,242,79,.07),transparent 60%),
-      radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px),
-      linear-gradient(180deg,#1a1a1e 0%,#101013 55%,#0c0c0e 100%);
-    background-size:auto,24px 24px,auto;
+  .pal-bg{
+    background-color:rgba(20,20,22,.34);
+    -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
   }
   .sres{transition:background .12s,border-color .12s}
-  .sres:hover{background:rgba(255,255,255,.06)}
-  .sres.is-active{background:rgba(255,255,255,.08);border-color:rgba(198,242,79,.4)}
-  .ssearch::placeholder{color:var(--on-dark-faint)}
+  .sres:hover{background:var(--panel)}
+  .sres.is-active{background:var(--panel);border-color:var(--line-strong)}
+  .stab{transition:background .12s,border-color .12s,color .12s}
+  .ssearch::placeholder{color:var(--ink-faint)}
   .scol::-webkit-scrollbar{width:8px}
-  .scol::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:8px}
+  .scol::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
 </style>
 </helmet>
-<div class="md-bg" style="font-family:var(--font-sans);color:#fff;min-height:100vh;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;padding:64px 20px 40px">
+<div class="pal-bg" style="font-family:var(--font-sans);color:var(--ink);min-height:100vh;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;padding:88px 20px 40px">
 
-  <div style="width:100%;max-width:680px;display:flex;flex-direction:column;flex:1;min-height:0">
+  <div style="width:100%;max-width:660px;display:flex;flex-direction:column;flex:1;min-height:0;max-height:620px;background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:0 26px 60px rgba(0,0,0,.22);overflow:hidden">
 
     <!-- search field -->
-    <div style="display:flex;align-items:center;gap:13px;background:rgba(255,255,255,.07);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.14);border-radius:15px;padding:15px 18px;flex:none">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--on-dark-mut)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
-      <input class="ssearch" ref="{{ inputRef }}" value="{{ query }}" onInput="{{ onSearch }}" onKeyDown="{{ onKey }}" placeholder="Search agents, files, chats, modules…" style="flex:1;border:none;outline:none;background:transparent;font-size:17px;font-family:var(--font-sans);color:#fff">
-      <a href="Mission Control.dc.html" style="font-family:var(--font-mono);font-size:10px;color:var(--on-dark-faint);border:1px solid rgba(255,255,255,.16);border-radius:5px;padding:3px 7px;text-decoration:none;flex:none">ESC</a>
+    <div style="display:flex;align-items:center;gap:13px;padding:16px 18px;border-bottom:1px solid var(--line);flex:none">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <input class="ssearch" ref="{{ inputRef }}" value="{{ query }}" onInput="{{ onSearch }}" onKeyDown="{{ onKey }}" placeholder="Search agents, files, chats, modules…" style="flex:1;border:none;outline:none;background:transparent;font-size:16px;font-family:var(--font-sans);color:var(--ink)">
+      <a href="Mission Control.dc.html" style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:5px;padding:3px 7px;text-decoration:none;flex:none">ESC</a>
     </div>
 
     <!-- scope tabs -->
-    <div style="display:flex;gap:7px;margin-top:14px;flex-wrap:wrap;flex:none">
+    <div style="display:flex;gap:7px;padding:12px 18px;flex-wrap:wrap;flex:none;border-bottom:1px solid var(--line)">
       <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="6">
-        <span onClick="{{ t.pick }}" style="display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:500;padding:5px 11px;border-radius:999px;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }};border:1px solid {{ t.border }}">{{ t.label }}<sc-if value="{{ t.count }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:9.5px;opacity:.7">{{ t.count }}</span></sc-if></span>
+        <span class="stab" onClick="{{ t.pick }}" style="display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:500;padding:5px 11px;border-radius:999px;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }};border:1px solid {{ t.border }}">{{ t.label }}<sc-if value="{{ t.count }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:9.5px;opacity:.7">{{ t.count }}</span></sc-if></span>
       </sc-for>
     </div>
 
     <!-- results -->
-    <div class="scol" style="margin-top:18px;overflow-y:auto;flex:1;min-height:0;padding-right:4px">
+    <div class="scol" style="overflow-y:auto;flex:1;min-height:0;padding:12px 12px 4px">
       <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
         <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
-          <div style="margin-bottom:20px">
-            <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:.07em;color:var(--on-dark-faint);text-transform:uppercase;margin:0 4px 8px">{{ g.label }}</div>
+          <div style="margin-bottom:16px">
+            <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:.07em;color:var(--ink-faint);text-transform:uppercase;margin:0 8px 6px">{{ g.label }}</div>
             <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3">
-              <a href="{{ r.href }}" class="sres {{ r.activeClass }}" style="display:flex;align-items:center;gap:13px;padding:11px 13px;border-radius:11px;border:1px solid transparent;cursor:pointer;text-decoration:none;color:inherit">
-                <span style="width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);display:inline-flex;align-items:center;justify-content:center;flex:none;color:{{ r.iconColor }}">{{ r.icon }}</span>
+              <a href="{{ r.href }}" class="sres {{ r.activeClass }}" style="display:flex;align-items:center;gap:13px;padding:10px 12px;border-radius:11px;border:1px solid transparent;cursor:pointer;text-decoration:none;color:inherit">
+                <span style="width:34px;height:34px;border-radius:9px;background:var(--panel);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;flex:none;color:{{ r.iconColor }}">{{ r.icon }}</span>
                 <div style="flex:1;min-width:0">
                   <div style="display:flex;align-items:center;gap:8px">
-                    <span style="font-size:14px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.title }}</span>
-                    <sc-if value="{{ r.tag }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.03em;color:var(--on-dark-mut);border:1px solid rgba(255,255,255,.13);border-radius:5px;padding:1px 6px;flex:none;text-transform:uppercase">{{ r.tag }}</span></sc-if>
+                    <span style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.title }}</span>
+                    <sc-if value="{{ r.tag }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.03em;color:var(--ink-muted);border:1px solid var(--line-strong);border-radius:5px;padding:1px 6px;flex:none;text-transform:uppercase">{{ r.tag }}</span></sc-if>
                   </div>
-                  <div style="font-size:12px;color:var(--on-dark-mut);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.sub }}</div>
+                  <div style="font-size:12px;color:var(--ink-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.sub }}</div>
                 </div>
-                <span style="font-family:var(--font-mono);font-size:10px;color:var(--on-dark-faint);flex:none">{{ r.meta }}</span>
+                <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);flex:none">{{ r.meta }}</span>
               </a>
             </sc-for>
           </div>
         </sc-for>
       </sc-if>
       <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
-        <div style="text-align:center;padding:48px 0;font-family:var(--font-mono);font-size:12px;color:var(--on-dark-faint);letter-spacing:.05em">NO MATCHES FOR “{{ query }}”</div>
+        <div style="text-align:center;padding:48px 0;font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);letter-spacing:.05em">NO MATCHES FOR “{{ query }}”</div>
       </sc-if>
     </div>
 
     <!-- footer hints -->
-    <div style="display:flex;align-items:center;gap:18px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08);flex:none;font-family:var(--font-mono);font-size:10px;color:var(--on-dark-faint)">
-      <span style="display:inline-flex;align-items:center;gap:6px"><span style="border:1px solid rgba(255,255,255,.16);border-radius:4px;padding:1px 5px">↑↓</span>navigate</span>
-      <span style="display:inline-flex;align-items:center;gap:6px"><span style="border:1px solid rgba(255,255,255,.16);border-radius:4px;padding:1px 5px">↵</span>open</span>
-      <span style="display:inline-flex;align-items:center;gap:6px"><span style="border:1px solid rgba(255,255,255,.16);border-radius:4px;padding:1px 5px">esc</span>close</span>
+    <div style="display:flex;align-items:center;gap:18px;padding:12px 18px;border-top:1px solid var(--line);flex:none;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">
+      <span style="display:inline-flex;align-items:center;gap:6px"><span style="border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px">↑↓</span>navigate</span>
+      <span style="display:inline-flex;align-items:center;gap:6px"><span style="border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px">↵</span>open</span>
+      <span style="display:inline-flex;align-items:center;gap:6px"><span style="border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px">esc</span>close</span>
       <span style="margin-left:auto">{{ resultCount }} results</span>
     </div>
 
@@ -99,7 +96,7 @@ class Component extends DCLogic {
     const C = (cx,cy,r) => React.createElement('circle', { cx,cy,r });
     const Rt = (x,y,w,h,rx) => React.createElement('rect', { x,y,width:w,height:h,rx });
     const ico = (...k) => React.createElement('svg', { width:18, height:18, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:1.7, strokeLinecap:'round', strokeLinejoin:'round' }, ...k);
-    const glyph = () => React.createElement('svg', { width:18, height:18, viewBox:'0 0 24 24', fill:'#fff' },
+    const glyph = () => React.createElement('svg', { width:18, height:18, viewBox:'0 0 24 24', fill:'#1b1b1f' },
       [[12,4.6],[15.7,5.6],[18.4,8.3],[19.4,12],[18.4,15.7],[15.7,18.4],[12,19.4],[8.3,18.4],[5.6,15.7],[4.6,12],[5.6,8.3],[8.3,5.6]]
         .map((p,i)=>React.createElement('circle',{key:i,cx:p[0],cy:p[1],r:1.5})));
 
@@ -110,41 +107,34 @@ class Component extends DCLogic {
     const projIco = ico(P('M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z'));
     const actIco = ico(P('M5 12h14'), P('M12 5v14'));
 
-    // unified index
     const DATA = [
-      // agents
       { type:'agent', title:'Sourcing agent', sub:'Procurement · drafts the SERVO-204 reorder', meta:'proc-04', href:'Agents.dc.html', kw:'sourcing procurement reorder servo vendor' },
       { type:'agent', title:'SPC agent', sub:'Quality · monitors control charts vs spec', meta:'qa-04', href:'Agents.dc.html', kw:'spc quality control chart torque' },
-      { type:'agent', title:'Feasibility agent', sub:'Sales · checks build & deliver dates', meta:'crm-04', href:'Agents.dc.html', kw:'feasibility sales deliverability bmw' },
+      { type:'agent', title:'Feasibility agent', sub:'Sales · checks build & deliver dates', meta:'crm-04', href:'Agents.dc.html', kw:'feasibility sales deliverability oem' },
       { type:'agent', title:'Dispatch agent', sub:'Field Service · routes the right technician', meta:'fs-01', href:'Agents.dc.html', kw:'dispatch field service technician route' },
       { type:'agent', title:'Customs agent', sub:'Fulfillment · clears export license holds', meta:'ful-04', href:'Agents.dc.html', kw:'customs export license osaka ear99 fulfillment' },
       { type:'agent', title:'Policy agent', sub:'Autonomy · manages canary & rollback', meta:'auto-03', href:'Agents.dc.html', kw:'policy autonomy canary rollback p-13' },
-      // files
       { type:'file', title:'ECO-318 change order', sub:'Engineering · SERVO-205 · +$140/unit', meta:'PDF', href:'Project Files.dc.html', kw:'eco-318 change order servo engineering torque' },
       { type:'file', title:'NCR-118 report', sub:'Quality · lot 88421 · root cause', meta:'PDF', href:'Project Files.dc.html', kw:'ncr-118 quality torque defect lot' },
       { type:'file', title:'Torque test data — SN-2208', sub:'Quality · SPC · 2 of 8 > UCL', meta:'CSV', href:'Project Files.dc.html', kw:'torque test data sn-2208 spc' },
-      { type:'file', title:'BMW impact memo', sub:'Sales · INV-2208 · 2 of 24 affected', meta:'DOCX', href:'Project Files.dc.html', kw:'bmw impact memo sales contract' },
+      { type:'file', title:'Tier-1 Auto OEM impact memo', sub:'Sales · INV-2208 · 2 of 24 affected', meta:'DOCX', href:'Project Files.dc.html', kw:'oem impact memo sales contract' },
       { type:'file', title:'Vendor A quote — -205 drive', sub:'Procurement · $540/unit · 4wk lead', meta:'XLSX', href:'Project Files.dc.html', kw:'vendor quote drive procurement servo' },
-      // chats
       { type:'chat', title:'“Why did line 3 slow down?”', sub:'Manufacturing agent · 2h ago', meta:'CHAT', href:'Agents.dc.html', kw:'line 3 slow manufacturing throughput chat' },
       { type:'chat', title:'“Reorder SERVO-204 with a buffer”', sub:'Sourcing agent · 29m ago', meta:'CHAT', href:'Agents.dc.html', kw:'reorder servo buffer chat procurement' },
       { type:'chat', title:'“Which robots are at risk this week?”', sub:'Fleet agent · yesterday', meta:'CHAT', href:'Fleet.dc.html', kw:'robots risk fleet maintenance chat' },
-      // modules
       { type:'module', title:'Procurement', sub:'Value chain · 6 agents on shift', meta:'OPEN', href:'Procurement.dc.html', kw:'procurement sourcing supply' },
       { type:'module', title:'Quality & Testing', sub:'Value chain · SPC · NCRs', meta:'OPEN', href:'Quality.dc.html', kw:'quality testing spc ncr inspection' },
       { type:'module', title:'Fleet', sub:'Robotics · telemetry & uptime', meta:'OPEN', href:'Fleet.dc.html', kw:'fleet deployment telemetry uptime' },
       { type:'module', title:'Finance & Accounting', sub:'Back office · ARR · runway', meta:'OPEN', href:'Finance.dc.html', kw:'finance accounting revenue raas runway' },
       { type:'module', title:'Engineering & PLM', sub:'Robotics · ECOs · firmware', meta:'OPEN', href:'Engineering.dc.html', kw:'engineering plm eco firmware cad' },
-      // workflows
       { type:'workflow', title:'Defect → engineering change', sub:'Quality → Eng → Finance → Proc', meta:'WORKFLOW', href:'Workflow.dc.html', kw:'defect engineering change workflow eco' },
       { type:'workflow', title:'Predictive maintenance → dispatch', sub:'Fleet → Field Service → People', meta:'WORKFLOW', href:'Workflow.dc.html', kw:'predictive maintenance dispatch workflow' },
-      // projects
       { type:'project', title:'ECO-318 · SERVO-204 → -205', sub:'Engineering · 18 files · in review', meta:'PROJECT', href:'Project Files.dc.html', kw:'eco-318 project servo engineering' },
-      { type:'project', title:'BMW · 24-unit HX-2 rollout', sub:'Sales · 21 files · in review', meta:'PROJECT', href:'Projects.dc.html', kw:'bmw project rollout sales hx-2' },
+      { type:'project', title:'Tier-1 Auto OEM · 24-unit AX-2 rollout', sub:'Sales · 21 files · in review', meta:'PROJECT', href:'Projects.dc.html', kw:'oem project rollout sales ax-2' },
     ];
 
     const ICO = { agent:glyph(), file:fileIco, chat:chatIco, module:modIco, workflow:wfIco, project:projIco, action:actIco };
-    const ICOLOR = { agent:'#fff', file:'var(--on-dark-mut)', chat:'var(--accent)', module:'#fff', workflow:'var(--accent)', project:'var(--on-dark-mut)' };
+    const ICOLOR = { agent:'var(--ink)', file:'var(--ink-muted)', chat:'var(--ink)', module:'var(--ink)', workflow:'var(--ink)', project:'var(--ink-muted)' };
     const GROUPLABEL = { agent:'Agents', file:'Files', chat:'Chats', module:'Modules', workflow:'Workflows', project:'Projects' };
     const ORDER = ['agent','chat','file','module','workflow','project'];
     const TAG = { agent:'Agent', file:null, chat:null, module:'Module', workflow:null, project:null };
@@ -160,9 +150,9 @@ class Component extends DCLogic {
       const cnt = t.k==='all' ? DATA.filter(d=>(!q||d.title.toLowerCase().includes(q)||d.sub.toLowerCase().includes(q)||d.kw.includes(q))).length
         : DATA.filter(d=>d.type===t.k && (!q||d.title.toLowerCase().includes(q)||d.sub.toLowerCase().includes(q)||d.kw.includes(q))).length;
       return { label:t.label, count: cnt ? String(cnt) : null, pick:()=>this.setState({tab:i}),
-        bg: i===this.state.tab ? 'var(--accent)' : 'rgba(255,255,255,.05)',
-        fg: i===this.state.tab ? 'var(--accent-ink)' : 'var(--on-dark-mut)',
-        border: i===this.state.tab ? 'var(--accent)' : 'rgba(255,255,255,.12)' };
+        bg: i===this.state.tab ? 'var(--ink-strong)' : 'var(--panel)',
+        fg: i===this.state.tab ? '#fff' : 'var(--ink-muted)',
+        border: i===this.state.tab ? 'var(--ink-strong)' : 'var(--line-strong)' };
     });
 
     let first = true;
