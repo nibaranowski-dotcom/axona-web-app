@@ -15,7 +15,11 @@ import { extname, join, relative } from "node:path";
 
 /** Real companies / marques that must never appear in the repo. Distinctive
  *  tokens only — deliberately excludes collision-prone short forms (LG, ABB, GM,
- *  Ford, Audi) that would false-positive on Tailwind `lg:`, glyphs, or prose. */
+ *  Ford, Audi) that would false-positive on Tailwind `lg:`, glyphs, or prose.
+ *  SEED.6 adds "Harmonic Drive" to that carve-out: in this domain it is the
+ *  GENERIC mechanism (a strain-wave gear — "left actuator harmonic drive"), not a
+ *  vendor; every occurrence found was a component description. The vendor case is
+ *  already covered by the seed's anonymized "Strain-Wave Gear Co". */
 export const BANNED_MARQUES = [
   "BMW",
   "Kawasaki",
@@ -31,7 +35,6 @@ export const BANNED_MARQUES = [
   "Boston Dynamics",
   "Maersk",
   "Nvidia",
-  "Harmonic Drive",
   "Bosch",
   "Denso",
   "Fanuc",
@@ -62,8 +65,17 @@ export const BANNED_MARQUES = [
   // live on the prospect demo orgs — a designation identifies its maker as surely as a
   // company name. Renamed to the neutral fictional "AX-2"/"AX2" across the seed, app,
   // exports, docs, verifies and specs; both spellings banned so it cannot return.
-  // (design/ still carries it in the generated .dc.html mocks — out of the scan scope
-  // and regenerated from the design tool, so renaming there would desync it.)
+  // SEED.6 SUPERSEDES the parenthetical that used to sit here ("design/ still carries
+  // it in the generated mocks — out of scope, and renaming would desync from the design
+  // tool"). design/ is now BOTH scrubbed and inside the scan scope, because leaving a
+  // whole directory of committed mocks unguarded is the larger risk: the ⌘K refresh
+  // shipped a real marque and the scrubbed designation into a fresh export, caught only
+  // by a hand scan.
+  //
+  // THE TRADE-OFF IS REAL AND YOU WILL MEET IT: these files are GENERATED. A re-export
+  // from the design project reintroduces every marque and turns this gate red. That is
+  // the intended behaviour — the gate is telling the truth — but it means the scrub has
+  // to be re-run after a design sync, or the marques scrubbed at the source project.
   // BOTH generations are banned: the "HX" PREFIX is the tell, so banning only the
   // flagship would leave the previous-gen rev naming the same family. Renamed to the
   // neutral AX-1/AX-2 everywhere in scope.
@@ -105,6 +117,14 @@ const IGNORE_DIRS = new Set([
   // PROSPECT.1 — untracked prospect-demo configs (real prospect brands live here and
   // are gitignored); never scanned by the SEED.1 marque gate.
   "prospects",
+  // SEED.6 — gitignored design artifacts. The scanner walks the FILESYSTEM, not the
+  // index, so once design/ came into scope these local-only dirs would fail the gate
+  // on content that is not in the repo at all. Same rule as `prospects` above: the
+  // wall guards what is COMMITTED. (`.gitignore` excludes uploads/ — 40MB binaries
+  // plus their source notes — screenshots/ and .thumbnail.)
+  "uploads",
+  "screenshots",
+  ".thumbnail",
 ]);
 const TEXT_EXTS = new Set([
   ".ts",

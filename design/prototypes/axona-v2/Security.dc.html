@@ -199,7 +199,7 @@
           </div>
           <div><span style="color:var(--on-dark-faint)">11:30:01</span> <span style="color:var(--accent)">scan</span> 62 endpoints · firmware signatures</div>
           <div><span style="color:var(--on-dark-faint)">11:30:02</span> <span style="color:#fff">CVE-2026-3140</span> LIDAR-88 driver RCE → 12 units</div>
-          <div><span style="color:var(--on-dark-faint)">11:30:02</span> patch in <span style="color:#fff">v4.2.2</span> (Engineering) · awaiting HX-1 cert</div>
+          <div><span style="color:var(--on-dark-faint)">11:30:02</span> patch in <span style="color:#fff">v4.2.2</span> (Engineering) · awaiting AX-1 cert</div>
           <div><span style="color:var(--on-dark-faint)">11:30:03</span> access review · 1 stale agent token <span style="color:var(--accent)">revoked</span></div>
           <div><span style="color:var(--on-dark-faint)">11:30:03</span> segment OT vlan · 0 cross-talk → <span style="color:var(--success)">ok</span></div>
           <div><span style="color:var(--on-dark-faint)">11:30:04</span> <span style="color:var(--accent)">▍</span></div>
@@ -359,15 +359,15 @@ class Component extends DCLogic {
       { name:'Vulnerability agent', role:'CVE · sec-01', stateColor:CRIT, status:'CVE-2026-3140 — LIDAR RCE on 12 deployed units.' },
       { name:'Endpoint agent', role:'POSTURE · sec-04', stateColor:ACC, status:'3 device TLS certs expire inside 30 days.' },
       { name:'Identity agent', role:'ACCESS · sec-02', stateColor:SUC, status:'Revoked a 92-day-idle read-only agent token.' },
-      { name:'Patch agent', role:'OTA · sec-03', stateColor:ACC, status:'Fix ships in v4.2.2 — gated on HX-1 certification.' },
+      { name:'Patch agent', role:'OTA · sec-03', stateColor:ACC, status:'Fix ships in v4.2.2 — gated on AX-1 certification.' },
       { name:'Threat-detection agent', role:'ANOMALY · sec-06', stateColor:SUC, status:'No anomalous command traffic across the fleet.' },
       { name:'Audit agent', role:'COMPLIANCE · sec-09', stateColor:SUC, status:'SOC 2 access review due in 9 days · 92% complete.' },
     ];
     const intros = [
-      'CVE-2026-3140 is critical — a remote-code-execution flaw in the LIDAR-88 driver that affects 12 deployed units. On a robot that means an attacker could influence perception, so this is a safety issue, not just data. The fix is in firmware v4.2.2; until HX-1 certifies, I can isolate the 12 units to safe-stop. Want me to?',
+      'CVE-2026-3140 is critical — a remote-code-execution flaw in the LIDAR-88 driver that affects 12 deployed units. On a robot that means an attacker could influence perception, so this is a safety issue, not just data. The fix is in firmware v4.2.2; until AX-1 certifies, I can isolate the 12 units to safe-stop. Want me to?',
       '3 device TLS certificates expire within 30 days — SN-2150 and two Site-3 gateways. An expired device cert drops the unit off the secure command channel. I can auto-rotate them tonight during the maintenance window. Want me to schedule it?',
       'I found a read-only analytics agent token idle for 92 days and revoked it — stale credentials are the easiest way into the fleet. 4 humans, 2 agents, and 1 service account retain command scope, all MFA-backed. Want the full access list?',
-      'The CVE-2026-3140 fix is bundled into firmware v4.2.2, which Engineering has certified on HX-2 but not yet HX-1 r5. I can push it to the 9 HX-2 units now and hold the 3 HX-1 units on safe-stop until cert. Want the staged plan?',
+      'The CVE-2026-3140 fix is bundled into firmware v4.2.2, which Engineering has certified on AX-2 but not yet AX-1 r5. I can push it to the 9 AX-2 units now and hold the 3 AX-1 units on safe-stop until cert. Want the staged plan?',
       'No anomalous command traffic across the fleet in the last 24h — command rates, sources, and geofences all nominal. The one flag was the SN-2196 thermal safe-stop, which was a safety event, not a security one. Want the activity log?',
       'The SOC 2 access review is due in 9 days and I\u2019m 92% through it — every human and agent principal mapped to least-privilege scope. 2 items need your sign-off: the ops-engineer group and the OTA service account. Want to review them?',
     ];
@@ -383,7 +383,7 @@ class Component extends DCLogic {
       ['Isolate 12 units','Show the CVE','Patch plan'],
       ['Auto-rotate tonight','Show certs'],
       ['Show access list','Force re-auth'],
-      ['Push to HX-2','Show staged plan'],
+      ['Push to AX-2','Show staged plan'],
       ['Show activity log','Set an alert'],
       ['Review sign-offs','Export report'],
     ];

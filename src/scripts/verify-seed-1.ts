@@ -29,8 +29,9 @@ import { BANNED_MARQUES, BANNED_RE, scanForMarques } from "./lib/anonymization";
 
 // SEED.3 — the prospect/advisor marques the wall enforces across the WHOLE committed
 // tree (distinctive, non-collision-prone tokens). BMW/Kawasaki etc. stay in the full
-// BANNED_MARQUES list (scanned over apps/packages/exports/docs) but are NOT part of
-// this tree-wide grep — they have pre-existing design-mock usage out of this scope.
+// BANNED_MARQUES list, now scanned over apps/packages/exports/docs/design.
+// (Until SEED.6 this comment said they had "pre-existing design-mock usage out of this
+// scope" — that usage is scrubbed and design/ is in scope, so the exemption is gone.)
 // "MFX" is deliberately excluded (collision-prone story-ID/migration prefix).
 const PROSPECT_MARQUES = [
   "helsing",
@@ -89,7 +90,13 @@ const check = async (
 async function run(): Promise<void> {
   console.log("\nVerifying SEED.1 — anonymize the narrative at the source\n");
   const root = process.cwd();
-  const SCOPE = ["apps", "packages", "exports", "docs"];
+  // SEED.6 — design/ joins the scope. It holds 131 committed .dc.html mocks (plus the
+  // handoff docs and the DS bundle), and it was the one large body of committed content
+  // the wall did not guard: the ⌘K refresh shipped a real marque and the scrubbed
+  // designation into a fresh export, caught only because it was scanned by hand.
+  // Gitignored design artifacts (uploads/ · screenshots/ · .thumbnail) are excluded in
+  // the scanner's IGNORE_DIRS — the wall guards what is COMMITTED.
+  const SCOPE = ["apps", "packages", "exports", "docs", "design"];
 
   // 1. repo-wide anonymization gate
   const hits = scanForMarques(root, SCOPE);

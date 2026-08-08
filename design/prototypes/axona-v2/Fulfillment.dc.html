@@ -210,7 +210,7 @@
                 {{ c.name }}
               </div>
             </sc-for>
-            <div style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);margin-top:12px;padding-top:11px;border-top:1px solid var(--line)">TECH · J. RIVERA · ON-SITE BMW MUNICH</div>
+            <div style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);margin-top:12px;padding-top:11px;border-top:1px solid var(--line)">TECH · J. RIVERA · ON-SITE Tier-1 Auto OEM MUNICH</div>
           </div>
         </div>
 
@@ -364,13 +364,13 @@ class Component extends DCLogic {
       : t==='ontime' ? { badgeBg:'var(--success-tint)', badgeFg:'var(--success)' }
       : { badgeBg:'var(--panel)', badgeFg:'var(--ink-muted)' };
     const deliveriesRaw = [
-      { id:'DLV-3312', customer:'Kawasaki Robotics', dest:'Osaka, JP', units:'2 × HX-2 Humanoid', badge:'At risk · +2d', t:'atrisk', progFrac:'0.5', progColor:CRIT,
+      { id:'DLV-3312', customer:'OEM-2 Robotics', dest:'Osaka, JP', units:'2 × AX-2 Humanoid', badge:'At risk · +2d', t:'atrisk', progFrac:'0.5', progColor:CRIT,
         kinds:['passed','passed','passed','blocked','pending','pending','pending'], dates:'Commit Jun 28 · ETA Jun 30' },
-      { id:'DLV-3309', customer:'BMW Group', dest:'Munich, DE', units:'1 × HX-2 Humanoid', badge:'On time', t:'ontime', progFrac:'0.833', progColor:ACC,
+      { id:'DLV-3309', customer:'Tier-1 Auto OEM Group', dest:'Munich, DE', units:'1 × AX-2 Humanoid', badge:'On time', t:'ontime', progFrac:'0.833', progColor:ACC,
         kinds:['passed','passed','passed','passed','passed','current','pending'], dates:'Commit Jun 24 · ETA Jun 24' },
-      { id:'DLV-3305', customer:'Tesla', dest:'Austin, US', units:'3 × HX-1 Arm', badge:'On time', t:'ontime', progFrac:'0.333', progColor:ACC,
+      { id:'DLV-3305', customer:'OEM-3', dest:'Austin, US', units:'3 × AX-1 Arm', badge:'On time', t:'ontime', progFrac:'0.333', progColor:ACC,
         kinds:['passed','passed','current','pending','pending','pending','pending'], dates:'Commit Jul 2 · ETA Jul 1' },
-      { id:'DLV-3301', customer:'Maersk', dest:'Rotterdam, NL', units:'2 × HX-1 Arm', badge:'Delivered', t:'done', progFrac:'1', progColor:ACC,
+      { id:'DLV-3301', customer:'OEM-5', dest:'Rotterdam, NL', units:'2 × AX-1 Arm', badge:'Delivered', t:'done', progFrac:'1', progColor:ACC,
         kinds:['passed','passed','passed','passed','passed','passed','passed'], dates:'Activated Jun 20' },
     ];
     const deliveries = deliveriesRaw.map(d => ({ ...d, ...tone(d.t), stations: mkStations(d.kinds) }));
@@ -402,15 +402,15 @@ class Component extends DCLogic {
       { name:'Allocation agent', role:'ATP · ful-01', stateColor:SUC, status:'Matched 6 finished units to open customer orders.' },
       { name:'Freight agent', role:'CARRIER · ful-02', stateColor:ACC, status:'Holding an air slot for DLV-3312 · DB Schenker.' },
       { name:'Customs agent', role:'COMPLIANCE · ful-04', stateColor:CRIT, status:'DLV-3312 held — filing the missing export license.' },
-      { name:'Install-scheduling agent', role:'SCHEDULE · ful-03', stateColor:SUC, status:'Tech on-site at BMW Munich for DLV-3309.' },
+      { name:'Install-scheduling agent', role:'SCHEDULE · ful-03', stateColor:SUC, status:'Tech on-site at Tier-1 Auto OEM Munich for DLV-3309.' },
       { name:'Commissioning agent', role:'ACTIVATION · ful-06', stateColor:ACC, status:'DLV-3309 commissioning at 50% · 3 checks left.' },
       { name:'Delivery-SLA agent', role:'ON-TIME · ful-09', stateColor:ACC, status:'DLV-3312 at risk +2 days vs the commitment.' },
     ];
     const intros = [
-      '6 finished units cleared QC today. I matched them to open orders — 2 HX-2 to Kawasaki (DLV-3312), 1 to BMW (DLV-3309), 3 HX-1 to Tesla. Want me to confirm the allocations?',
+      '6 finished units cleared QC today. I matched them to open orders — 2 AX-2 to OEM-2 (DLV-3312), 1 to Tier-1 Auto OEM (DLV-3309), 3 AX-1 to OEM-3. Want me to confirm the allocations?',
       'DLV-3312 needs to recover 2 days. I\u2019m holding an air-freight slot with DB Schenker out of Rotterdam — adds $4,100 but lands it by the committed date. Book it?',
       'DLV-3312 is held at Osaka customs — the EAR99 export license wasn\u2019t attached. I\u2019ve prepared the filing; submitting it clears the hold and the air slot recovers the date. Want me to submit?',
-      'DLV-3309\u2019s site is ready and a commissioning tech is on-site at BMW Munich. Network sign-off is the last open dependency — it\u2019s on the customer\u2019s IT team. Want me to chase their contact?',
+      'DLV-3309\u2019s site is ready and a commissioning tech is on-site at Tier-1 Auto OEM Munich. Network sign-off is the last open dependency — it\u2019s on the customer\u2019s IT team. Want me to chase their contact?',
       'DLV-3309 commissioning is at 50% — power-on, anchoring, and calibration passed; network, payload, and safety sign-off remain. Want the live checklist?',
       'DLV-3312 is 2 days at risk against the Jun-28 commitment, entirely from the customs hold. Clearing customs plus the air slot recovers it. Want me to brief the customer?',
     ];

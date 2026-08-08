@@ -25,7 +25,7 @@ Brand invariants (do not drift): Archivo (UI/display) + JetBrains Mono (data/lab
 - **Robotics-specific:** Fleet, Field Service, Engineering & PLM, Autonomy.
 - **Back office:** Finance, People, Security, Legal.
 - **Multi-agent system:** every module runs ~6 specialized agents under a module orchestrator; a general **Axona agent** reads across modules. Agents draft, monitor, and act; humans approve. This is the product's moat.
-- **Cross-module narrative** (use as seed data — it makes demos coherent): a SERVO-204 actuator drive runs stiff → Quality SPC flags torque over UCL → **NCR-118** opened → root-caused to **lot 88421** → **ECO-318** supersedes the drive with -205 → firmware v4.2.2 torque-comp → affects the **BMW** 24-unit order → ripples into Procurement (re-source), Fulfillment (Osaka customs hold), Field Service (battery-cert dispatch), Fleet/Autonomy (policy canary), Finance (margin −2.1pt), Legal (SLA + export), People (cert expiry).
+- **Cross-module narrative** (use as seed data — it makes demos coherent): a SERVO-204 actuator drive runs stiff → Quality SPC flags torque over UCL → **NCR-118** opened → root-caused to **lot 88421** → **ECO-318** supersedes the drive with -205 → firmware v4.2.2 torque-comp → affects the **Tier-1 Auto OEM** 24-unit order → ripples into Procurement (re-source), Fulfillment (Osaka customs hold), Field Service (battery-cert dispatch), Fleet/Autonomy (policy canary), Finance (margin −2.1pt), Legal (SLA + export), People (cert expiry).
 
 ---
 
@@ -184,7 +184,7 @@ model LegalMatter   { id String @id @default(cuid()); orgId String; type String;
 ```
 
 ### 3.7 Seed data
-Seed the cross-module narrative end to end: NCR-118, ECO-318, SERVO-204/-205, lot 88421, BMW 24-unit deal (DLV-3312 Osaka customs hold), the p-13 autonomy canary on Site-3, M. Osei's expiring HV/battery cert, the HX-2 margin −2.1pt, etc. ~6 agents per module with real `code`/`role`/`description`. 14 projects across modules. 21 machines (8 fixed, 6+ mobile).
+Seed the cross-module narrative end to end: NCR-118, ECO-318, SERVO-204/-205, lot 88421, Tier-1 Auto OEM 24-unit deal (DLV-3312 Osaka customs hold), the p-13 autonomy canary on Site-3, M. Osei's expiring HV/battery cert, the AX-2 margin −2.1pt, etc. ~6 agents per module with real `code`/`role`/`description`. 14 projects across modules. 21 machines (8 fixed, 6+ mobile).
 
 ---
 
@@ -314,7 +314,7 @@ Seed the cross-module narrative end to end: NCR-118, ECO-318, SERVO-204/-205, lo
 #### 4.14 Sales & CRM — `/sales`
 - **Purpose:** enterprise capital-equipment selling with ops feasibility.
 - **Data:** Deals.
-- **Stories:** As an AE, I work the pipeline funnel + Q3 forecast; each deal shows an agent-checked **deliverability** badge (can ops build+deliver by the date — BMW flagged at-risk +3w); CPQ configures complex SKUs.
+- **Stories:** As an AE, I work the pipeline funnel + Q3 forecast; each deal shows an agent-checked **deliverability** badge (can ops build+deliver by the date — Tier-1 Auto OEM flagged at-risk +3w); CPQ configures complex SKUs.
 - **Agents:** lead-qualification, CPQ, feasibility, forecast, contract, renewal.
 
 #### 4.15 Marketing — `/marketing`
@@ -339,7 +339,7 @@ Seed the cross-module narrative end to end: NCR-118, ECO-318, SERVO-204/-205, lo
 #### 4.18 Engineering & PLM — `/engineering`
 - **Purpose:** product definition + change control.
 - **Data:** ECO, FirmwareRelease, CompatCell.
-- **Stories:** As an engineer, I move ECOs through Draft→Review→Approved→Released (ECO-318 from NCR-118); read the HW↔firmware compatibility matrix; manage firmware releases (v4.2.2-rc awaiting HX-1 cert before Fleet OTA).
+- **Stories:** As an engineer, I move ECOs through Draft→Review→Approved→Released (ECO-318 from NCR-118); read the HW↔firmware compatibility matrix; manage firmware releases (v4.2.2-rc awaiting AX-1 cert before Fleet OTA).
 - **Agents:** change, compatibility, firmware-release, impact, requirements, CAD/config.
 
 #### 4.19 Autonomy (Robotics Ops) — `/autonomy`
@@ -353,7 +353,7 @@ Seed the cross-module narrative end to end: NCR-118, ECO-318, SERVO-204/-205, lo
 #### 4.20 Finance — `/finance`
 - **Purpose:** two revenue engines on one P&L.
 - **Data:** LedgerEntry, Invoice, UnitEconomic.
-- **Stories:** As a controller, I see recognized revenue split into lumpy hardware (at commissioning) vs ratable RaaS; per-unit economics (HX-2 margin −2.1pt from ECO-318); cash/runway; AR aging (BMW net-60, overdue Kawasaki).
+- **Stories:** As a controller, I see recognized revenue split into lumpy hardware (at commissioning) vs ratable RaaS; per-unit economics (AX-2 margin −2.1pt from ECO-318); cash/runway; AR aging (Tier-1 Auto OEM net-60, overdue OEM-2).
 - **Agents:** revenue-recognition, unit-economics, collections, payables, FP&A, close.
 
 #### 4.21 People — `/people`
@@ -371,7 +371,7 @@ Seed the cross-module narrative end to end: NCR-118, ECO-318, SERVO-204/-205, lo
 #### 4.23 Legal — `/legal`
 - **Purpose:** contract obligations vs live ops, export control, liability.
 - **Data:** Obligation, ExportLicense, LegalMatter.
-- **Stories:** As counsel, I track contract obligations against live ops (BMW 99.5% SLA at-risk from the autonomy regression), export licensing (DLV-3312 EAR99 holding the shipment — robots are dual-use), and liability/IP matters (INC-201, ECO-318 patent) linked to their source modules.
+- **Stories:** As counsel, I track contract obligations against live ops (Tier-1 Auto OEM 99.5% SLA at-risk from the autonomy regression), export licensing (DLV-3312 EAR99 holding the shipment — robots are dual-use), and liability/IP matters (INC-201, ECO-318 patent) linked to their source modules.
 - **Agents:** obligations, contract, export-control, compliance, liability, IP.
 
 ---

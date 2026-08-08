@@ -272,8 +272,8 @@ class Component extends DCLogic {
       { name:'Vendor A quote — -205 drive', ext:'XLSX', size:'88 KB', type:'Quote', linked:'Procurement · PO draft', impact:'$540 / unit · 4wk lead', flag:'Best ETA', t:'ok', modified:'3h ago' },
       { name:'NCR-118 report', ext:'PDF', size:'410 KB', type:'Report', linked:'Quality · lot 88421', impact:'Root cause: stiff drive', flag:'Linked', t:'neutral', modified:'1d ago' },
       { name:'Torque test data — SN-2208', ext:'CSV', size:'56 KB', type:'Data', linked:'Quality · SPC', impact:'2 of 8 > UCL (+4%)', flag:'Evidence', t:'neutral', modified:'2d ago' },
-      { name:'Compatibility matrix v4.2.2', ext:'PDF', size:'320 KB', type:'Doc', linked:'Engineering · firmware', impact:'HX-1 r5 cert pending', flag:'Blocked', t:'block', modified:'5h ago' },
-      { name:'BMW impact memo', ext:'DOCX', size:'72 KB', type:'Memo', linked:'Sales · INV-2208', impact:'2 of 24 units affected', flag:'Draft', t:'neutral', modified:'4h ago' },
+      { name:'Compatibility matrix v4.2.2', ext:'PDF', size:'320 KB', type:'Doc', linked:'Engineering · firmware', impact:'AX-1 r5 cert pending', flag:'Blocked', t:'block', modified:'5h ago' },
+      { name:'Tier-1 Auto OEM impact memo', ext:'DOCX', size:'72 KB', type:'Memo', linked:'Sales · INV-2208', impact:'2 of 24 units affected', flag:'Draft', t:'neutral', modified:'4h ago' },
       { name:'CAPA-8D plan', ext:'PDF', size:'180 KB', type:'Plan', linked:'Quality', impact:'Supplier 8D + incoming check', flag:'Open', t:'approve', modified:'6h ago' },
     ];
     const asked = this.state.asked;
@@ -284,7 +284,7 @@ class Component extends DCLogic {
 
     // agent scopes
     const scopesRaw = [
-      { name:'ECO-318 project agent', role:'PROJECT · 8 FILES', intro:'I\u2019ve read all 8 files in this project. The change is gated on two things: the +$140/unit cost (HX-2 margin \u22122.1pt, awaiting approval) and the v4.2.2 firmware certification on HX-1 r5, which is still pending. Two BMW units are affected. Want a one-page brief?' },
+      { name:'ECO-318 project agent', role:'PROJECT · 8 FILES', intro:'I\u2019ve read all 8 files in this project. The change is gated on two things: the +$140/unit cost (AX-2 margin \u22122.1pt, awaiting approval) and the v4.2.2 firmware certification on AX-1 r5, which is still pending. Two Tier-1 Auto OEM units are affected. Want a one-page brief?' },
       { name:'Axona agent', role:'GENERAL · CROSS-MODULE', intro:'I can pull beyond this project too — into the live Quality, Engineering, Procurement, and Sales modules. Ask me anything about how this change ripples across the operation, and I\u2019ll cite the files and the module data.' },
     ];
     const scope = this.state.scope;

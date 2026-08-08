@@ -118,7 +118,7 @@
           <h1 style="margin:2px 0 0;font-size:19px;font-weight:600;letter-spacing:-.02em">Finance &amp; Accounting</h1>
         </div>
         <div style="display:flex;align-items:center;gap:14px">
-          <span style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--ink);background:var(--panel);border:1px solid var(--line-strong);border-radius:999px;padding:5px 12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--accent)"></span>HX-2 margin −2.1pt</span>
+          <span style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--ink);background:var(--panel);border:1px solid var(--line-strong);border-radius:999px;padding:5px 12px"><span style="width:7px;height:7px;border-radius:50%;background:var(--accent)"></span>AX-2 margin −2.1pt</span>
           <button style="font-family:var(--font-sans);font-weight:600;border-radius:8px;cursor:pointer;line-height:1;padding:9px 16px;font-size:13.5px;background:var(--ink-strong);color:#fff;border:1px solid var(--ink-strong)">Run month-end close</button>
         </div>
       </div>
@@ -226,10 +226,10 @@
             <span style="color:var(--on-dark-faint);letter-spacing:.06em">AGENT TRACE</span>
             <span style="color:var(--on-dark-faint);letter-spacing:.06em">fin-orchestrator</span>
           </div>
-          <div><span style="color:var(--on-dark-faint)">09:15:01</span> <span style="color:var(--accent)">recognize</span> DLV-3301 Maersk commissioned → $1.9M hardware</div>
+          <div><span style="color:var(--on-dark-faint)">09:15:01</span> <span style="color:var(--accent)">recognize</span> DLV-3301 OEM-5 commissioned → $1.9M hardware</div>
           <div><span style="color:var(--on-dark-faint)">09:15:02</span> RaaS schedule 44 active subs → <span style="color:#fff">$1.23M</span> ratable Jun</div>
-          <div><span style="color:var(--on-dark-faint)">09:15:02</span> cost roll ECO-318 +$140/unit → <span style="color:#fff">HX-2 margin −2.1pt</span></div>
-          <div><span style="color:var(--on-dark-faint)">09:15:03</span> AR BMW INV-2208 net-60 · not yet due · $8.4M</div>
+          <div><span style="color:var(--on-dark-faint)">09:15:02</span> cost roll ECO-318 +$140/unit → <span style="color:#fff">AX-2 margin −2.1pt</span></div>
+          <div><span style="color:var(--on-dark-faint)">09:15:03</span> AR Tier-1 Auto OEM INV-2208 net-60 · not yet due · $8.4M</div>
           <div><span style="color:var(--on-dark-faint)">09:15:03</span> close 312 JEs · 3-way matched → <span style="color:var(--success)">98% auto</span></div>
           <div><span style="color:var(--on-dark-faint)">09:15:04</span> <span style="color:var(--accent)">▍</span></div>
         </div>
@@ -372,8 +372,8 @@ class Component extends DCLogic {
 
     const mtrend = (t) => t==='down' ? 'var(--ink-strong)' : t==='up' ? 'var(--success)' : 'var(--ink-muted)';
     const unitsRaw = [
-      { name:'HX-2 Humanoid', sub:'flagship · capital', asp:'$210k', cogs:'$132k', margin:'37.1%', mpct:'37%', t:'down', trend:'▼ 2.1pt · ECO-318' },
-      { name:'HX-1 Arm', sub:'high-volume · capital', asp:'$58k', cogs:'$31k', margin:'46.6%', mpct:'47%', t:'up', trend:'▲ 1.3pt' },
+      { name:'AX-2 Humanoid', sub:'flagship · capital', asp:'$210k', cogs:'$132k', margin:'37.1%', mpct:'37%', t:'down', trend:'▼ 2.1pt · ECO-318' },
+      { name:'AX-1 Arm', sub:'high-volume · capital', asp:'$58k', cogs:'$31k', margin:'46.6%', mpct:'47%', t:'up', trend:'▲ 1.3pt' },
       { name:'RaaS subscription', sub:'per unit · / yr', asp:'$36k', cogs:'$12k', margin:'66.7%', mpct:'67%', t:'flat', trend:'— flat' },
       { name:'Spares & service', sub:'aftermarket', asp:'—', cogs:'—', margin:'58.0%', mpct:'58%', t:'up', trend:'▲ 0.6pt' },
     ];
@@ -384,32 +384,32 @@ class Component extends DCLogic {
       : t==='current' ? { badgeBg:'var(--success-tint)', badgeFg:'var(--success)' }
       : { badgeBg:'var(--panel)', badgeFg:'var(--ink-muted)' };
     const invoicesRaw = [
-      { id:'INV-2208', account:'BMW Group', source:'DLV · 24× HX-2 + RaaS', amount:'$8.4M', terms:'Net-60', aging:'Not due', t:'current', closed:false },
-      { id:'INV-2196', account:'Maersk', source:'DLV-3301 · commissioned', amount:'$1.9M', terms:'Net-30', aging:'Due 8d', t:'soon', closed:false },
-      { id:'INV-2184', account:'Tesla', source:'RaaS · Q2 ratable', amount:'$0.6M', terms:'Net-30', aging:'Current', t:'current', closed:false },
-      { id:'INV-2170', account:'Kawasaki', source:'Spares · RMA-441', amount:'$0.5M', terms:'Net-45', aging:'62d overdue', t:'over', closed:false },
+      { id:'INV-2208', account:'Tier-1 Auto OEM Group', source:'DLV · 24× AX-2 + RaaS', amount:'$8.4M', terms:'Net-60', aging:'Not due', t:'current', closed:false },
+      { id:'INV-2196', account:'OEM-5', source:'DLV-3301 · commissioned', amount:'$1.9M', terms:'Net-30', aging:'Due 8d', t:'soon', closed:false },
+      { id:'INV-2184', account:'OEM-3', source:'RaaS · Q2 ratable', amount:'$0.6M', terms:'Net-30', aging:'Current', t:'current', closed:false },
+      { id:'INV-2170', account:'OEM-2', source:'Spares · RMA-441', amount:'$0.5M', terms:'Net-45', aging:'62d overdue', t:'over', closed:false },
     ];
     const invoices = invoicesRaw.map(iv => ({ ...iv, ...age(iv.t), op: iv.closed ? '0.55' : '1' }));
 
     const agentsRaw = [
       { name:'Revenue-recognition agent', role:'ASC 606 · fin-01', stateColor:SUC, status:'Splitting hardware (at commissioning) from ratable RaaS.' },
-      { name:'Unit-economics agent', role:'COSTING · fin-04', stateColor:ACC, status:'HX-2 margin down 2.1pt — the ECO-318 drive cost roll.' },
-      { name:'Collections agent', role:'AR · fin-02', stateColor:CRIT, status:'Kawasaki INV-2170 is 62 days overdue ($0.5M).' },
+      { name:'Unit-economics agent', role:'COSTING · fin-04', stateColor:ACC, status:'AX-2 margin down 2.1pt — the ECO-318 drive cost roll.' },
+      { name:'Collections agent', role:'AR · fin-02', stateColor:CRIT, status:'OEM-2 INV-2170 is 62 days overdue ($0.5M).' },
       { name:'Payables agent', role:'AP · fin-03', stateColor:SUC, status:'312 POs three-way matched · 98% auto-cleared.' },
       { name:'FP&A agent', role:'FORECAST · fin-06', stateColor:SUC, status:'19 months runway at the current $3.3M monthly burn.' },
       { name:'Close agent', role:'MONTH-END · fin-09', stateColor:ACC, status:'FY26 close in 4 days · 6 journal entries need review.' },
     ];
     const intros = [
-      'June revenue is $6.1M — $4.9M hardware (recognized as DLV-3301 and two others commissioned) plus $1.23M ratable RaaS across 44 active subscriptions. The BMW capital portion stays deferred until commissioning. Want the recognition schedule?',
-      'HX-2 gross margin slipped 2.1 points to 37.1% this quarter — it traces entirely to ECO-318, the SERVO-204 → -205 drive swap that added $140 per unit. At 24 units on the BMW order that\u2019s $3.4k of margin. Want the cost-bridge?',
-      'Kawasaki\u2019s INV-2170 ($0.5M, spares) is 62 days overdue on net-45 terms — our only seriously aged receivable. I drafted a dunning note and can place a soft hold on their next RMA. Want me to send it?',
+      'June revenue is $6.1M — $4.9M hardware (recognized as DLV-3301 and two others commissioned) plus $1.23M ratable RaaS across 44 active subscriptions. The Tier-1 Auto OEM capital portion stays deferred until commissioning. Want the recognition schedule?',
+      'AX-2 gross margin slipped 2.1 points to 37.1% this quarter — it traces entirely to ECO-318, the SERVO-204 → -205 drive swap that added $140 per unit. At 24 units on the Tier-1 Auto OEM order that\u2019s $3.4k of margin. Want the cost-bridge?',
+      'OEM-2\u2019s INV-2170 ($0.5M, spares) is 62 days overdue on net-45 terms — our only seriously aged receivable. I drafted a dunning note and can place a soft hold on their next RMA. Want me to send it?',
       '312 supplier invoices cleared this month, 98% auto-matched three-way against POs and receipts. 6 exceptions remain — all price variances under $2k, mostly Vendor D. Want the exception list?',
-      'At the current $3.3M monthly net burn you have 19 months of runway on $62.4M cash. Note $8.1M is tied up in WIP and finished units awaiting delivery — collecting the BMW milestone earlier extends runway ~2 months. Want the scenario?',
+      'At the current $3.3M monthly net burn you have 19 months of runway on $62.4M cash. Note $8.1M is tied up in WIP and finished units awaiting delivery — collecting the Tier-1 Auto OEM milestone earlier extends runway ~2 months. Want the scenario?',
       'FY26 month-end close is in 4 days. 98% of entries are posted automatically; 6 need your review — the ECO-318 cost reclass and 5 RaaS cutoffs. Want to step through them?',
     ];
     const contexts = [
       ['FINANCE','REV REC','RAAS'],
-      ['FINANCE','HX-2','ECO-318'],
+      ['FINANCE','AX-2','ECO-318'],
       ['FINANCE','INV-2170','OVERDUE'],
       ['FINANCE','312 POS','AP'],
       ['FINANCE','RUNWAY','BURN'],
@@ -417,7 +417,7 @@ class Component extends DCLogic {
     ];
     const suggs = [
       ['Recognition schedule','Show deferred'],
-      ['Show cost-bridge','Reprice HX-2'],
+      ['Show cost-bridge','Reprice AX-2'],
       ['Send dunning note','Place RMA hold'],
       ['Show exceptions','Approve batch'],
       ['Show scenario','Model raise'],

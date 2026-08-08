@@ -106,7 +106,7 @@
             <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:.03em;padding:3px 10px;border-radius:999px;background:var(--success-tint);color:var(--success)"><span style="width:6px;height:6px;border-radius:50%;background:var(--success)"></span>Deployed</span>
           </div>
           <div style="display:flex;align-items:center;gap:10px;margin-top:6px;font-size:13px;color:var(--ink-muted)">
-            <span>HX-2 Humanoid</span><span style="color:var(--line-strong)">·</span><span>Built <span style="font-family:var(--font-mono);font-size:12px">2026-05-14</span></span><span style="color:var(--line-strong)">·</span><span>BMW Group · Munich</span>
+            <span>AX-2 Humanoid</span><span style="color:var(--line-strong)">·</span><span>Built <span style="font-family:var(--font-mono);font-size:12px">2026-05-14</span></span><span style="color:var(--line-strong)">·</span><span>Tier-1 Auto OEM Group · Munich</span>
           </div>
         </div>
         <div style="display:flex;gap:10px">
@@ -132,12 +132,12 @@
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0">
             <div style="padding:16px 20px;border-right:1px solid var(--line)">
               <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Config version</div>
-              <div style="font-family:var(--font-mono);font-size:16px;font-weight:600;margin-top:6px">CFG-HX2-r4.2</div>
+              <div style="font-family:var(--font-mono);font-size:16px;font-weight:600;margin-top:6px">CFG-AX2-r4.2</div>
               <div style="font-size:11.5px;color:var(--ink-muted);margin-top:3px">Baselined 2026-06-18</div>
             </div>
             <div style="padding:16px 20px;border-right:1px solid var(--line)">
               <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase">Hardware rev</div>
-              <div style="font-family:var(--font-mono);font-size:16px;font-weight:600;margin-top:6px">HX-2 · rev 4</div>
+              <div style="font-family:var(--font-mono);font-size:16px;font-weight:600;margin-top:6px">AX-2 · rev 4</div>
               <div style="font-size:11.5px;color:var(--ink-muted);margin-top:3px">142 components · 3 substitutions</div>
             </div>
             <div style="padding:16px 20px">
@@ -270,12 +270,12 @@ class Component extends DCLogic {
 
     const B='var(--ink-strong)', A='var(--accent)';
     const timeline = [
-      { date:'2026-05-14', title:'Build completed', detail:'Line 2 · Detroit · as-built captured against BOM rev C — 3 substitutions flagged.', config:'CFG-HX2-r4.0', dotBg:B, dotRadius:'50%' },
-      { date:'2026-05-16', title:'Acceptance test · passed', detail:'142 checks · torque within spec at build time.', config:'CFG-HX2-r4.0', dotBg:A, dotRadius:'50%' },
-      { date:'2026-05-28', title:'Firmware v4.2.1', detail:'OTA update · torque compensation + autonomy p-12.4.', config:'CFG-HX2-r4.1', dotBg:B, dotRadius:'50%' },
-      { date:'2026-06-18', title:'Baseline CFG-HX2-r4.2', detail:'Configuration locked for the BMW deployment.', config:'CFG-HX2-r4.2', dotBg:B, dotRadius:'50%' },
-      { date:'2026-06-24', title:'Deployed · BMW Munich', detail:'Commissioned on-site · commissioning checklist 6/6.', config:'CFG-HX2-r4.2', dotBg:B, dotRadius:'2px' },
-      { date:'2026-07-02', title:'Field test · torque drift', detail:'Re-test flagged 2 of 8 readings above UCL → NCR-118 opened.', config:'CFG-HX2-r4.2', dotBg:A, dotRadius:'50%' },
+      { date:'2026-05-14', title:'Build completed', detail:'Line 2 · Detroit · as-built captured against BOM rev C — 3 substitutions flagged.', config:'CFG-AX2-r4.0', dotBg:B, dotRadius:'50%' },
+      { date:'2026-05-16', title:'Acceptance test · passed', detail:'142 checks · torque within spec at build time.', config:'CFG-AX2-r4.0', dotBg:A, dotRadius:'50%' },
+      { date:'2026-05-28', title:'Firmware v4.2.1', detail:'OTA update · torque compensation + autonomy p-12.4.', config:'CFG-AX2-r4.1', dotBg:B, dotRadius:'50%' },
+      { date:'2026-06-18', title:'Baseline CFG-AX2-r4.2', detail:'Configuration locked for the Tier-1 Auto OEM deployment.', config:'CFG-AX2-r4.2', dotBg:B, dotRadius:'50%' },
+      { date:'2026-06-24', title:'Deployed · Tier-1 Auto OEM Munich', detail:'Commissioned on-site · commissioning checklist 6/6.', config:'CFG-AX2-r4.2', dotBg:B, dotRadius:'2px' },
+      { date:'2026-07-02', title:'Field test · torque drift', detail:'Re-test flagged 2 of 8 readings above UCL → NCR-118 opened.', config:'CFG-AX2-r4.2', dotBg:A, dotRadius:'50%' },
     ];
 
     const runs = [

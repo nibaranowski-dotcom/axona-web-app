@@ -391,11 +391,11 @@ class Component extends DCLogic {
     const mkStations = (kinds, unitAt, unit) => kinds.map((k, i) => ({ label:['Frame','Drive','Actuators','Firmware','Test','Pack'][i], unit: (i===unitAt ? unit : null), ...stStyle(k) }));
 
     const linesRaw = [
-      { name:'Line 1', sub:'HX-2', units:'18 in flow', state:'Running', t:'success', progFrac:'0.2', progColor:ACC,
+      { name:'Line 1', sub:'AX-2', units:'18 in flow', state:'Running', t:'success', progFrac:'0.2', progColor:ACC,
         stations: mkStations(['passed','current','pending','pending','pending','pending'], 1, 'SN-2214') },
-      { name:'Line 2', sub:'HX-2', units:'16 in flow', state:'Halted · payload test', t:'crit', progFrac:'0.8', progColor:CRIT,
+      { name:'Line 2', sub:'AX-2', units:'16 in flow', state:'Halted · payload test', t:'crit', progFrac:'0.8', progColor:CRIT,
         stations: mkStations(['passed','passed','passed','passed','blocked','pending'], 4, 'SN-2208') },
-      { name:'Line 3', sub:'HX-1', units:'14 in flow', state:'Running', t:'success', progFrac:'1', progColor:ACC,
+      { name:'Line 3', sub:'AX-1', units:'14 in flow', state:'Running', t:'success', progFrac:'1', progColor:ACC,
         stations: mkStations(['passed','passed','passed','passed','passed','current'], 5, 'SN-2205') },
     ];
     const lines = linesRaw.map(l => ({ ...l, ...tone(l.t) }));

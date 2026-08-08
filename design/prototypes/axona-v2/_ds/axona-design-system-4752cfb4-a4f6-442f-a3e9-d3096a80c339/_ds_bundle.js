@@ -1381,7 +1381,7 @@
       }
       function UnitSpec() {
         const rows = [
-          ["Model", "HX-2 Humanoid"],
+          ["Model", "AX-2 Humanoid"],
           ["Line", "Site-3 · L2"],
           ["Started", "2026-06-18"],
           ["Parts traced", "142"],

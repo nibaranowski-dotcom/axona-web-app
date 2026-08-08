@@ -204,7 +204,7 @@ class Component extends DCLogic {
     const roll = (t) => t==='done' ? SUC : t==='prog' ? ACC : INK;
     const u = (serial, site, eff, rollout, t) => ({ serial, site, eff, rollout, color:roll(t) });
     const units = [
-      u('SN-2208','BMW · Munich','retrofit','Planned','plan'),
+      u('SN-2208','Tier-1 Auto OEM · Munich','retrofit','Planned','plan'),
       u('SN-2196','Site-2 · Rotterdam','retrofit','Planned','plan'),
       u('SN-2231','Line 2 · Detroit','at build','In progress','prog'),
       u('SN-2232','Line 2 · Detroit','at build','In progress','prog'),

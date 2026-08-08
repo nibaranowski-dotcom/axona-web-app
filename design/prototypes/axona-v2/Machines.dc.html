@@ -280,8 +280,8 @@ class Component extends DCLogic {
     const mobile = [
       { name:'AMR-07 · internal logistics', id:'AMR-07', loc:'Warehouse', t:'run', util:67, health:'Battery 84%', hl:'ok', tele:true },
       { name:'AMR-04 · internal logistics', id:'AMR-04', loc:'Dock', t:'charge', util:0, health:'Battery 22%', hl:'watch', tele:true },
-      { name:'HX-1 test unit T-12', id:'HX1-T12', loc:'QA lab', t:'fault', util:0, health:'Joint calib fault', hl:'bad', tele:true },
-      { name:'HX-2 demo unit D-1', id:'HX2-D1', loc:'Demo bay', t:'run', util:54, health:'Healthy', hl:'ok', tele:true },
+      { name:'AX-1 test unit T-12', id:'AX1-T12', loc:'QA lab', t:'fault', util:0, health:'Joint calib fault', hl:'bad', tele:true },
+      { name:'AX-2 demo unit D-1', id:'AX2-D1', loc:'Demo bay', t:'run', util:54, health:'Healthy', hl:'ok', tele:true },
       { name:'Forklift FL-2', id:'FL-02', loc:'Dock', t:'idle', util:0, health:'Healthy', hl:'ok', tele:false },
       { name:'AGV tow tractor', id:'AGV-01', loc:'Yard', t:'run', util:48, health:'Healthy', hl:'ok', tele:true },
     ];
@@ -291,8 +291,8 @@ class Component extends DCLogic {
     ];
 
     const scopesRaw = [
-      { label:'All machines', role:'AXONA · ASSET HEALTH', intro:'21 machines on the floor — 15 running, 3 in maintenance, and 3 idle. Aggregate utilization is 78%. Three need attention: test rig R-3 (re-cal overdue), HX-1 test unit T-12 (joint calibration fault), and SMT-01 (service due in 4 days). Want a maintenance plan?' },
-      { label:'Needs service', role:'AXONA · MAINTENANCE', intro:'3 machines need service: R-3 actuator rig is past its re-cal date and is blocking torque checks; HX-1 T-12 threw a joint-calibration fault; SMT-01 is due in 4 days. I can bundle R-3 and the SMT job into tonight\u2019s off-shift window. Want me to schedule it?' },
+      { label:'All machines', role:'AXONA · ASSET HEALTH', intro:'21 machines on the floor — 15 running, 3 in maintenance, and 3 idle. Aggregate utilization is 78%. Three need attention: test rig R-3 (re-cal overdue), AX-1 test unit T-12 (joint calibration fault), and SMT-01 (service due in 4 days). Want a maintenance plan?' },
+      { label:'Needs service', role:'AXONA · MAINTENANCE', intro:'3 machines need service: R-3 actuator rig is past its re-cal date and is blocking torque checks; AX-1 T-12 threw a joint-calibration fault; SMT-01 is due in 4 days. I can bundle R-3 and the SMT job into tonight\u2019s off-shift window. Want me to schedule it?' },
     ];
     const scope = this.state.scope;
     const scopes = scopesRaw.map((s, i) => ({

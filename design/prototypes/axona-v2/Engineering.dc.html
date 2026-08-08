@@ -223,9 +223,9 @@
           </div>
           <div><span style="color:var(--on-dark-faint)">15:10:01</span> <span style="color:var(--accent)">ingest</span> NCR-118 (Quality) · SERVO-204 torque</div>
           <div><span style="color:var(--on-dark-faint)">15:10:02</span> draft <span style="color:#fff">ECO-318</span> supersede -204 → -205</div>
-          <div><span style="color:var(--on-dark-faint)">15:10:02</span> impact 3 units · lot 88421 · 2 BOMs · <span style="color:#fff">BMW order</span></div>
+          <div><span style="color:var(--on-dark-faint)">15:10:02</span> impact 3 units · lot 88421 · 2 BOMs · <span style="color:#fff">Tier-1 Auto OEM order</span></div>
           <div><span style="color:var(--on-dark-faint)">15:10:03</span> firmware ECO-316 v4.2.2 torque-comp · RC</div>
-          <div><span style="color:var(--on-dark-faint)">15:10:03</span> compatibility certify HX-2 r4,r3 · HX-1 <span style="color:var(--accent)">in test</span></div>
+          <div><span style="color:var(--on-dark-faint)">15:10:03</span> compatibility certify AX-2 r4,r3 · AX-1 <span style="color:var(--accent)">in test</span></div>
           <div><span style="color:var(--on-dark-faint)">15:10:04</span> <span style="color:var(--accent)">▍</span></div>
         </div>
 
@@ -356,7 +356,7 @@ class Component extends DCLogic {
     const statsRaw = [
       { v:'5', l:'Open ECOs' },
       { v:'6d', l:'Avg change cycle' },
-      { v:'HX-2 r4', l:'Current HW rev' },
+      { v:'AX-2 r4', l:'Current HW rev' },
       { v:'v4.2.1', l:'Released firmware' },
     ];
     const stats = statsRaw.map((s, i) => ({ ...s, divider: i ? '1px solid var(--line)' : 'none' }));
@@ -381,10 +381,10 @@ class Component extends DCLogic {
       : s==='ok' ? { color:'var(--ink-faint)', label:'OK' }
       : { color:'var(--skeleton)', label:'—' };
     const matrixRaw = [
-      { hw:'HX-2 r4', cells:['ok','ok','cert','test'] },
-      { hw:'HX-2 r3', cells:['ok','cert','cert','test'] },
-      { hw:'HX-1 r5', cells:['ok','ok','cert','test'] },
-      { hw:'HX-1 r4', cells:['cert','ok','na','na'] },
+      { hw:'AX-2 r4', cells:['ok','ok','cert','test'] },
+      { hw:'AX-2 r3', cells:['ok','cert','cert','test'] },
+      { hw:'AX-1 r5', cells:['ok','ok','cert','test'] },
+      { hw:'AX-1 r4', cells:['cert','ok','na','na'] },
     ];
     const matrix = matrixRaw.map(r => ({ hw:r.hw, cells:r.cells.map(cell) }));
 
@@ -400,17 +400,17 @@ class Component extends DCLogic {
 
     const agentsRaw = [
       { name:'Change agent', role:'ECO · eng-01', stateColor:ACC, status:'ECO-318 in review — supersede SERVO-204 from NCR-118.' },
-      { name:'Compatibility agent', role:'MATRIX · eng-04', stateColor:ACC, status:'v4.2.2 certified on HX-2 · HX-1 r5 still in test.' },
-      { name:'Firmware-release agent', role:'RELEASE · eng-02', stateColor:SUC, status:'v4.2.2-rc carries the torque fix · awaiting HX-1 cert.' },
-      { name:'Impact agent', role:'TRACEABILITY · eng-06', stateColor:ACC, status:'ECO-318 touches 3 units, 2 BOMs, and the BMW order.' },
+      { name:'Compatibility agent', role:'MATRIX · eng-04', stateColor:ACC, status:'v4.2.2 certified on AX-2 · AX-1 r5 still in test.' },
+      { name:'Firmware-release agent', role:'RELEASE · eng-02', stateColor:SUC, status:'v4.2.2-rc carries the torque fix · awaiting AX-1 cert.' },
+      { name:'Impact agent', role:'TRACEABILITY · eng-06', stateColor:ACC, status:'ECO-318 touches 3 units, 2 BOMs, and the Tier-1 Auto OEM order.' },
       { name:'Requirements agent', role:'VERIFY · eng-03', stateColor:SUC, status:'Tightening REQ-114 torque spec from ±4% to ±2.5%.' },
       { name:'CAD / config agent', role:'DESIGN · eng-07', stateColor:SUC, status:'Branched config for the -205 drive · BRK-12 r3.' },
     ];
     const intros = [
       'ECO-318 supersedes SERVO-204 with the tighter-tolerance -205 drive, triggered by Quality\u2019s NCR-118. Impact: lot 88421 plus 3 in-field units need rework, unit cost +$140. It\u2019s in review — want the impact summary?',
-      'v4.2.2-rc adds torque compensation. I\u2019ve certified it on HX-2 r4 and r3; HX-1 r5 is still in test with 2 checks left. Until it passes, OTA should hold HX-1 units. Want the matrix?',
-      'v4.2.2 is a release candidate carrying the torque-compensation fix for the SERVO-204 issue. Once HX-1 r5 certifies, I can promote it to Fleet for a staged rollout. Want the changelog?',
-      'ECO-318 touches 3 in-field units (Site-2 and Site-3), lot 88421, and 2 open BOMs. Two of the affected units are on the BMW order — Sales should know. Want the full impact map?',
+      'v4.2.2-rc adds torque compensation. I\u2019ve certified it on AX-2 r4 and r3; AX-1 r5 is still in test with 2 checks left. Until it passes, OTA should hold AX-1 units. Want the matrix?',
+      'v4.2.2 is a release candidate carrying the torque-compensation fix for the SERVO-204 issue. Once AX-1 r5 certifies, I can promote it to Fleet for a staged rollout. Want the changelog?',
+      'ECO-318 touches 3 in-field units (Site-2 and Site-3), lot 88421, and 2 open BOMs. Two of the affected units are on the Tier-1 Auto OEM order — Sales should know. Want the full impact map?',
       'The payload-torque requirement REQ-114 is tightening from ±4% to ±2.5% under ECO-318. I regenerated the verification tests — one needs a new fixture. Want the requirement diff?',
       'The -205 drive needs a new bracket revision, BRK-12 r3. I branched the CAD config and flagged the 2 assemblies that reference it. Want to review the change set?',
     ];
@@ -424,7 +424,7 @@ class Component extends DCLogic {
     ];
     const suggs = [
       ['Impact summary','Route for approval','Show diff'],
-      ['Show matrix','Hold HX-1 OTA'],
+      ['Show matrix','Hold AX-1 OTA'],
       ['Show changelog','Promote to Fleet'],
       ['Full impact map','Notify Sales'],
       ['Show req diff','Open tests'],

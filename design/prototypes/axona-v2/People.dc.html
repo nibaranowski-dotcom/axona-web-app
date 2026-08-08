@@ -338,7 +338,7 @@ class Component extends DCLogic {
     ];
     const stats = statsRaw.map((s, i) => ({ ...s, divider: i ? '1px solid var(--line)' : 'none' }));
 
-    const certCols = ['HX-2 svc', 'HX-1 svc', 'HV / batt', 'Safety LOTO', 'Commission'];
+    const certCols = ['AX-2 svc', 'AX-1 svc', 'HV / batt', 'Safety LOTO', 'Commission'];
     const cell = (s) => s==='cert' ? { color:'var(--success)', label:'OK' }
       : s==='exp' ? { color:'var(--ink-strong)', label:'12d' }
       : s==='train' ? { color:'var(--accent)', label:'Trng' }
@@ -381,9 +381,9 @@ class Component extends DCLogic {
     const intros = [
       'M. Osei\u2019s high-voltage / battery certification expires in 12 days — and he\u2019s the tech currently dispatched to the SN-2196 battery swap. If it lapses, Field Service loses its only battery-certified tech at Site-2. I can book a recert slot before the job and flag it to Field Service. Want me to?',
       '3 field-service tech requisitions are open with 14 candidates in the pipeline — 5 already hold an HV/battery cert, which cuts ramp time in half. Want me to prioritize the pre-certified ones?',
-      '2 new technicians start their week-1 certification track Monday — safety/LOTO and HX-1 service first. Both reach dispatch-ready in ~3 weeks. Want the onboarding plan?',
+      '2 new technicians start their week-1 certification track Monday — safety/LOTO and AX-1 service first. Both reach dispatch-ready in ~3 weeks. Want the onboarding plan?',
       'Field techs to deployed units is at 1:2.7 (18 techs : 48 units) — ahead of the 1:4 target, but fleet is growing ~8 units/quarter. To stay ahead through Q4 you need 3 more certified techs. Want the hiring plan?',
-      'Commissioning is the thinnest competency — only 3 techs are certified, and one (Rivera) is fully booked on the BMW install. I\u2019d cross-train Brandt next; he\u2019s already in the training queue. Want me to enroll him?',
+      'Commissioning is the thinnest competency — only 3 techs are certified, and one (Rivera) is fully booked on the Tier-1 Auto OEM install. I\u2019d cross-train Brandt next; he\u2019s already in the training queue. Want me to enroll him?',
       'Shift coverage is solid across all 3 sites this week, with one gap: Site-2 night shift drops to a single tech Thursday. I can offer the open slot to Cruz. Want me to send it?',
     ];
     const contexts = [

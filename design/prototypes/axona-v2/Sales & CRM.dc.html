@@ -170,7 +170,7 @@
             </div>
             <div style="display:flex;gap:8px;align-items:flex-start;margin-top:auto;padding-top:14px;border-top:1px solid var(--line)">
               <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:5px;flex:none"></span>
-              <span style="font-size:12px;color:var(--ink-muted);line-height:1.4">BMW ($8.4M) is the swing — slipping it a quarter misses commit.</span>
+              <span style="font-size:12px;color:var(--ink-muted);line-height:1.4">Tier-1 Auto OEM ($8.4M) is the swing — slipping it a quarter misses commit.</span>
             </div>
           </div>
         </div>
@@ -202,9 +202,9 @@
             <span style="color:var(--on-dark-faint);letter-spacing:.06em">crm-orchestrator</span>
           </div>
           <div><span style="color:var(--on-dark-faint)">11:20:01</span> <span style="color:var(--accent)">score</span> 14 leads → 9 SQL</div>
-          <div><span style="color:var(--on-dark-faint)">11:20:02</span> CPQ configure <span style="color:#fff">BMW</span> · 24× HX-2 + RaaS → $8.4M</div>
+          <div><span style="color:var(--on-dark-faint)">11:20:02</span> CPQ configure <span style="color:#fff">Tier-1 Auto OEM</span> · 24× AX-2 + RaaS → $8.4M</div>
           <div><span style="color:var(--on-dark-faint)">11:20:02</span> feasibility check build+deliver · <span style="color:#fff">18/24 by date</span> → slip 3w</div>
-          <div><span style="color:var(--on-dark-faint)">11:20:03</span> forecast Q3 commit $14.2M · BMW is the swing</div>
+          <div><span style="color:var(--on-dark-faint)">11:20:03</span> forecast Q3 commit $14.2M · Tier-1 Auto OEM is the swing</div>
           <div><span style="color:var(--on-dark-faint)">11:20:03</span> contract redline net-60 · within policy → <span style="color:var(--success)">Legal</span></div>
           <div><span style="color:var(--on-dark-faint)">11:20:04</span> <span style="color:var(--accent)">▍</span></div>
         </div>
@@ -346,37 +346,37 @@ class Component extends DCLogic {
       : t==='atrisk' ? { feasible:'At risk · +3w', felColor:'var(--ink-strong)' }
       : { feasible:'Not checked', felColor:'var(--line-strong)' };
     const dealsRaw = [
-      { account:'BMW Group', close:'Jul 15', config:'24× HX-2 + RaaS (3yr)', value:'$8.4M', stage:'Negotiation', t:'atrisk' },
-      { account:'Tesla', close:'Aug 2', config:'60× HX-1 Arm', value:'$14.2M', stage:'Proposal', t:'ontime' },
-      { account:'Kawasaki', close:'Jun 30', config:'12× HX-2 Humanoid', value:'$4.1M', stage:'Negotiation', t:'ontime' },
-      { account:'Maersk', close:'Aug 20', config:'RaaS expansion · +8 units', value:'$1.9M', stage:'Demo', t:'ontime' },
-      { account:'Siemens', close:'Q4', config:'30× HX-2 Humanoid', value:'$10.5M', stage:'Qualify', t:'tbd' },
+      { account:'Tier-1 Auto OEM Group', close:'Jul 15', config:'24× AX-2 + RaaS (3yr)', value:'$8.4M', stage:'Negotiation', t:'atrisk' },
+      { account:'OEM-3', close:'Aug 2', config:'60× AX-1 Arm', value:'$14.2M', stage:'Proposal', t:'ontime' },
+      { account:'OEM-2', close:'Jun 30', config:'12× AX-2 Humanoid', value:'$4.1M', stage:'Negotiation', t:'ontime' },
+      { account:'OEM-5', close:'Aug 20', config:'RaaS expansion · +8 units', value:'$1.9M', stage:'Demo', t:'ontime' },
+      { account:'OEM-4', close:'Q4', config:'30× AX-2 Humanoid', value:'$10.5M', stage:'Qualify', t:'tbd' },
     ];
     const deals = dealsRaw.map(d => ({ ...d, ...feas(d.t) }));
 
     const agentsRaw = [
-      { name:'Lead-qualification agent', role:'INBOUND · crm-01', stateColor:SUC, status:'Qualified 9 of 14 new leads · top is Siemens (~$10.5M).' },
-      { name:'CPQ agent', role:'CONFIGURE · crm-02', stateColor:SUC, status:'Configured the BMW quote — 24× HX-2 + RaaS → $8.4M.' },
-      { name:'Feasibility agent', role:'CAPACITY · crm-04', stateColor:ACC, status:'BMW: build+deliver covers 18/24 by date — 24 slips 3w.' },
-      { name:'Forecast agent', role:'PIPELINE · crm-06', stateColor:SUC, status:'92% to the $15.5M quarter target · BMW is the swing.' },
-      { name:'Contract agent', role:'TERMS · crm-03', stateColor:ACC, status:'BMW redline: net-60 + 99.5% SLA · within policy.' },
-      { name:'Renewal agent', role:'EXPANSION · crm-09', stateColor:SUC, status:'Maersk RaaS renews in 60d · usage +22%, expansion ready.' },
+      { name:'Lead-qualification agent', role:'INBOUND · crm-01', stateColor:SUC, status:'Qualified 9 of 14 new leads · top is OEM-4 (~$10.5M).' },
+      { name:'CPQ agent', role:'CONFIGURE · crm-02', stateColor:SUC, status:'Configured the Tier-1 Auto OEM quote — 24× AX-2 + RaaS → $8.4M.' },
+      { name:'Feasibility agent', role:'CAPACITY · crm-04', stateColor:ACC, status:'Tier-1 Auto OEM: build+deliver covers 18/24 by date — 24 slips 3w.' },
+      { name:'Forecast agent', role:'PIPELINE · crm-06', stateColor:SUC, status:'92% to the $15.5M quarter target · Tier-1 Auto OEM is the swing.' },
+      { name:'Contract agent', role:'TERMS · crm-03', stateColor:ACC, status:'Tier-1 Auto OEM redline: net-60 + 99.5% SLA · within policy.' },
+      { name:'Renewal agent', role:'EXPANSION · crm-09', stateColor:SUC, status:'OEM-5 RaaS renews in 60d · usage +22%, expansion ready.' },
     ];
     const intros = [
-      '14 new leads came in this week — I qualified 9 as SQLs. The strongest is Siemens (30× HX-2, ~$10.5M); 5 were disqualified on budget or timeline. Want the qualified list?',
-      'I configured the BMW quote — 24× HX-2 Humanoid + a 3-year RaaS subscription. List is $9.1M; at the approved 8% volume discount that\u2019s $8.4M. Want to review the line items?',
-      'BMW wants all 24 units live in 10 weeks. Build + delivery capacity covers 18 by that date — 24 slips about 3 weeks. I\u2019d propose a phased delivery (18 now, 6 in week 13) or moving the date. Want me to model both?',
-      'You\u2019re at 92% of the $15.5M quarter target — commit $14.2M, best case $19.6M. The BMW deal ($8.4M) is the swing; if it slips a quarter you miss commit. Want the deal-by-deal forecast?',
-      'BMW\u2019s redline is net-60 payment terms (we offer net-45) and a 99.5% uptime SLA. Both are inside policy with VP sign-off. Want me to route it to Legal?',
-      'Maersk\u2019s RaaS contract renews in 60 days and usage is up 22% — a strong expansion signal. I drafted a +8-unit expansion at $1.9M. Want me to tee up the conversation?',
+      '14 new leads came in this week — I qualified 9 as SQLs. The strongest is OEM-4 (30× AX-2, ~$10.5M); 5 were disqualified on budget or timeline. Want the qualified list?',
+      'I configured the Tier-1 Auto OEM quote — 24× AX-2 Humanoid + a 3-year RaaS subscription. List is $9.1M; at the approved 8% volume discount that\u2019s $8.4M. Want to review the line items?',
+      'Tier-1 Auto OEM wants all 24 units live in 10 weeks. Build + delivery capacity covers 18 by that date — 24 slips about 3 weeks. I\u2019d propose a phased delivery (18 now, 6 in week 13) or moving the date. Want me to model both?',
+      'You\u2019re at 92% of the $15.5M quarter target — commit $14.2M, best case $19.6M. The Tier-1 Auto OEM deal ($8.4M) is the swing; if it slips a quarter you miss commit. Want the deal-by-deal forecast?',
+      'Tier-1 Auto OEM\u2019s redline is net-60 payment terms (we offer net-45) and a 99.5% uptime SLA. Both are inside policy with VP sign-off. Want me to route it to Legal?',
+      'OEM-5\u2019s RaaS contract renews in 60 days and usage is up 22% — a strong expansion signal. I drafted a +8-unit expansion at $1.9M. Want me to tee up the conversation?',
     ];
     const contexts = [
       ['SALES','14 LEADS','SQL'],
-      ['SALES','BMW','QUOTE'],
-      ['SALES','BMW','CAPACITY'],
+      ['SALES','Tier-1 Auto OEM','QUOTE'],
+      ['SALES','Tier-1 Auto OEM','CAPACITY'],
       ['SALES','Q3','FORECAST'],
-      ['SALES','BMW','TERMS'],
-      ['SALES','MAERSK','RAAS'],
+      ['SALES','Tier-1 Auto OEM','TERMS'],
+      ['SALES','OEM-5','RAAS'],
     ];
     const suggs = [
       ['Show qualified','Route top SQL'],

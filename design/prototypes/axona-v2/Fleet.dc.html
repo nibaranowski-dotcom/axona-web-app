@@ -368,13 +368,13 @@ class Component extends DCLogic {
       : tone==='success' ? { badgeBg:'var(--success-tint)', badgeFg:'var(--success)', dot:SUC }
       : { badgeBg:'var(--panel)', badgeFg:'var(--ink-muted)', dot:OFF };
     const unitsRaw = [
-      { sn:'SN-2208', model:'HX-2 Humanoid', site:'Site-2', batt:'82%', battC:SUC, fw:'v4.2.1', behind:false, status:'Nominal', tone:'success', spark:'0,17 14,15 28,16 42,12 56,13 70,10 84,11 100,8', sparkColor:'var(--ink-faint)' },
-      { sn:'SN-2196', model:'HX-2 Humanoid', site:'Site-2', batt:'14%', battC:CRIT, fw:'v4.2.1', behind:false, status:'Critical · cell', tone:'crit', spark:'0,7 14,9 28,8 42,12 56,14 70,17 84,20 100,22', sparkColor:'var(--ink-strong)' },
-      { sn:'SN-2184', model:'HX-1 Arm', site:'Site-1', batt:'67%', battC:SUC, fw:'v4.2.1', behind:false, status:'Nominal', tone:'success', spark:'0,13 14,12 28,13 42,11 56,12 70,12 84,11 100,12', sparkColor:'var(--ink-faint)' },
-      { sn:'SN-2150', model:'HX-2 Humanoid', site:'Site-3', batt:'58%', battC:ACC, fw:'v4.0.2', behind:true, status:'Attention · fw', tone:'accent', spark:'0,14 14,13 28,15 42,14 56,16 70,15 84,17 100,16', sparkColor:'var(--accent)' },
-      { sn:'SN-2133', model:'HX-1 Arm', site:'Site-1', batt:'0%', battLabel:'—', battC:OFF, fw:'v4.2.1', behind:false, status:'Offline · 3h', tone:'neutral', spark:'0,22 100,22', sparkColor:'var(--line-strong)' },
+      { sn:'SN-2208', model:'AX-2 Humanoid', site:'Site-2', batt:'82%', battC:SUC, fw:'v4.2.1', behind:false, status:'Nominal', tone:'success', spark:'0,17 14,15 28,16 42,12 56,13 70,10 84,11 100,8', sparkColor:'var(--ink-faint)' },
+      { sn:'SN-2196', model:'AX-2 Humanoid', site:'Site-2', batt:'14%', battC:CRIT, fw:'v4.2.1', behind:false, status:'Critical · cell', tone:'crit', spark:'0,7 14,9 28,8 42,12 56,14 70,17 84,20 100,22', sparkColor:'var(--ink-strong)' },
+      { sn:'SN-2184', model:'AX-1 Arm', site:'Site-1', batt:'67%', battC:SUC, fw:'v4.2.1', behind:false, status:'Nominal', tone:'success', spark:'0,13 14,12 28,13 42,11 56,12 70,12 84,11 100,12', sparkColor:'var(--ink-faint)' },
+      { sn:'SN-2150', model:'AX-2 Humanoid', site:'Site-3', batt:'58%', battC:ACC, fw:'v4.0.2', behind:true, status:'Attention · fw', tone:'accent', spark:'0,14 14,13 28,15 42,14 56,16 70,15 84,17 100,16', sparkColor:'var(--accent)' },
+      { sn:'SN-2133', model:'AX-1 Arm', site:'Site-1', batt:'0%', battLabel:'—', battC:OFF, fw:'v4.2.1', behind:false, status:'Offline · 3h', tone:'neutral', spark:'0,22 100,22', sparkColor:'var(--line-strong)' },
     ];
-    const cfgFor = (r) => r.model.indexOf('HX-1') === 0 ? 'CFG-HX1-r5.0' : (r.fw === 'v4.0.2' ? 'CFG-HX2-r4.0' : 'CFG-HX2-r4.2');
+    const cfgFor = (r) => r.model.indexOf('AX-1') === 0 ? 'CFG-AX1-r5.0' : (r.fw === 'v4.0.2' ? 'CFG-AX2-r4.0' : 'CFG-AX2-r4.2');
     const units = unitsRaw.map(r => ({ ...r, ...stateBadge(r.tone), battLabel: r.battLabel || r.batt, config: cfgFor(r) }));
 
     const agentsRaw = [

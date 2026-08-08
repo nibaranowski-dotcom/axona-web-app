@@ -37,7 +37,7 @@ AI-native **operating system for robotics companies** (never "ERP"). Light app s
 
 ## Module screens (designed function-first, not generic)
 
-Each was designed by first asking "what must this module do for a robotics company," then building the signature artifact. All share the shell + agent pane + trace, and reference a continuous cross-module story (SERVO-204 torque defect → NCR-118 → ECO-318 → BMW order → fleet/field/legal ripples).
+Each was designed by first asking "what must this module do for a robotics company," then building the signature artifact. All share the shell + agent pane + trace, and reference a continuous cross-module story (SERVO-204 torque defect → NCR-118 → ECO-318 → Tier-1 Auto OEM order → fleet/field/legal ripples).
 
 - **Procurement** — PO queue; agents draft reorders (sourcing, RFQ, negotiation, reorder, reconciliation, supply-risk).
 - **Manufacturing** — line-flow / MES, build genealogy per serial.
@@ -52,7 +52,7 @@ Each was designed by first asking "what must this module do for a robotics compa
 - **Finance** — two revenue engines (lumpy hardware at commissioning + ratable RaaS), per-unit economics, cash/runway, AR aging.
 - **People** — **certification matrix** gating field dispatch, field-team-vs-fleet growth, headcount.
 - **Security** — CVE triage, device posture, access, signed-firmware patching.
-- **Legal** — contract obligations tracked vs live ops (BMW SLA), export control (dual-use), liability/IP matters.
+- **Legal** — contract obligations tracked vs live ops (Tier-1 Auto OEM SLA), export control (dual-use), liability/IP matters.
 
 ---
 

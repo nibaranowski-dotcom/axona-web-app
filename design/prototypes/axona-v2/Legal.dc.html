@@ -197,7 +197,7 @@
             <span style="color:var(--on-dark-faint);letter-spacing:.06em">legal-orchestrator</span>
           </div>
           <div><span style="color:var(--on-dark-faint)">12:15:01</span> <span style="color:var(--accent)">watch</span> 47 contracts · SLA + warranty terms</div>
-          <div><span style="color:var(--on-dark-faint)">12:15:02</span> <span style="color:#fff">BMW</span> 99.5% SLA vs Site-3 actual <span style="color:#fff">98.1%</span> → breach risk</div>
+          <div><span style="color:var(--on-dark-faint)">12:15:02</span> <span style="color:#fff">Tier-1 Auto OEM</span> 99.5% SLA vs Site-3 actual <span style="color:#fff">98.1%</span> → breach risk</div>
           <div><span style="color:var(--on-dark-faint)">12:15:02</span> export <span style="color:#fff">DLV-3312</span> EAR99 license → file (Fulfillment hold)</div>
           <div><span style="color:var(--on-dark-faint)">12:15:03</span> liability INC-201 near-miss → log · monitor exposure</div>
           <div><span style="color:var(--on-dark-faint)">12:15:03</span> EU Machinery Reg 2027 conformity → on track</div>
@@ -331,18 +331,18 @@ class Component extends DCLogic {
       : t==='review' ? { badgeBg:'var(--accent)', badgeFg:'var(--accent-ink)' }
       : { badgeBg:'var(--success-tint)', badgeFg:'var(--success)' };
     const obligationsRaw = [
-      { account:'BMW Group', obligation:'MSA · 99.5% uptime SLA', actual:'Site-3 at 98.1%', state:'At risk', t:'risk' },
-      { account:'Maersk', obligation:'RaaS · 30-day delivery warranty', actual:'On track', state:'On track', t:'ok' },
-      { account:'Tesla', obligation:'MSA · $14M liability cap', actual:'Within cap', state:'On track', t:'ok' },
-      { account:'Kawasaki', obligation:'Supply · spares SLA 5 days', actual:'RMA-441 aging', state:'Review', t:'review' },
+      { account:'Tier-1 Auto OEM Group', obligation:'MSA · 99.5% uptime SLA', actual:'Site-3 at 98.1%', state:'At risk', t:'risk' },
+      { account:'OEM-5', obligation:'RaaS · 30-day delivery warranty', actual:'On track', state:'On track', t:'ok' },
+      { account:'OEM-3', obligation:'MSA · $14M liability cap', actual:'Within cap', state:'On track', t:'ok' },
+      { account:'OEM-2', obligation:'Supply · spares SLA 5 days', actual:'RMA-441 aging', state:'Review', t:'review' },
     ];
     const obligations = obligationsRaw.map(o => ({ ...o, ...ostate(o.t) }));
 
     const exportsRaw = [
-      { dest:'Kawasaki · Osaka, JP', code:'DLV-3312 · EAR99', state:'Filing', t:'pending' },
-      { dest:'Tesla · Austin, US', code:'DLV-3305 · no license', state:'Clear', t:'ok' },
-      { dest:'Siemens · Munich, DE', code:'Dual-use review', state:'Pending', t:'pending' },
-      { dest:'Maersk · Rotterdam, NL', code:'EU intra · exempt', state:'Clear', t:'ok' },
+      { dest:'OEM-2 · Osaka, JP', code:'DLV-3312 · EAR99', state:'Filing', t:'pending' },
+      { dest:'OEM-3 · Austin, US', code:'DLV-3305 · no license', state:'Clear', t:'ok' },
+      { dest:'OEM-4 · Munich, DE', code:'Dual-use review', state:'Pending', t:'pending' },
+      { dest:'OEM-5 · Rotterdam, NL', code:'EU intra · exempt', state:'Clear', t:'ok' },
     ];
     const exportsList = exportsRaw.map(e => ({ ...e, color: e.t==='pending' ? 'var(--ink-strong)' : 'var(--success)' }));
 
@@ -353,32 +353,32 @@ class Component extends DCLogic {
       : { badgeBg:'var(--panel)', badgeFg:'var(--ink-muted)' };
     const mattersRaw = [
       { type:'Liability', title:'INC-201 proximity near-miss — exposure review', link:'Autonomy · SN-2150', status:'Monitoring', t:'monitor', closed:false },
-      { type:'Reg', title:'EU Machinery Regulation 2027 conformity', link:'Quality · HX-2 platform', status:'In progress', t:'progress', closed:false },
-      { type:'Contract', title:'BMW MSA redline — net-60 + SLA terms', link:'Sales · INV-2208', status:'Executing', t:'progress', closed:false },
+      { type:'Reg', title:'EU Machinery Regulation 2027 conformity', link:'Quality · AX-2 platform', status:'In progress', t:'progress', closed:false },
+      { type:'Contract', title:'Tier-1 Auto OEM MSA redline — net-60 + SLA terms', link:'Sales · INV-2208', status:'Executing', t:'progress', closed:false },
       { type:'Export', title:'DLV-3312 EAR99 license application', link:'Fulfillment · Osaka', status:'Filed', t:'progress', closed:false },
       { type:'IP', title:'Harmonic-drive tolerance patent (ECO-318)', link:'Engineering · SERVO-205', status:'Filed', t:'done', closed:true },
     ];
     const matters = mattersRaw.map(m => ({ ...m, typeColor: mtype(m.type), ...mstatus(m.t), op: m.closed ? '0.55' : '1' }));
 
     const agentsRaw = [
-      { name:'Obligations agent', role:'SLA · legal-01', stateColor:CRIT, status:'BMW 99.5% SLA vs Site-3\u2019s 98.1% actual — breach risk.' },
-      { name:'Contract agent', role:'LIFECYCLE · legal-02', stateColor:ACC, status:'BMW MSA redline executing — net-60 + SLA clause.' },
+      { name:'Obligations agent', role:'SLA · legal-01', stateColor:CRIT, status:'Tier-1 Auto OEM 99.5% SLA vs Site-3\u2019s 98.1% actual — breach risk.' },
+      { name:'Contract agent', role:'LIFECYCLE · legal-02', stateColor:ACC, status:'Tier-1 Auto OEM MSA redline executing — net-60 + SLA clause.' },
       { name:'Export-control agent', role:'TRADE · legal-04', stateColor:CRIT, status:'DLV-3312 needs an EAR99 license before it clears Osaka.' },
       { name:'Compliance agent', role:'REGULATORY · legal-03', stateColor:ACC, status:'EU Machinery Reg 2027 conformity dossier in progress.' },
       { name:'Liability agent', role:'RISK · legal-06', stateColor:SUC, status:'Logged INC-201; exposure within the insured limit.' },
       { name:'IP agent', role:'PATENTS · legal-09', stateColor:SUC, status:'Filed the harmonic-drive tolerance patent from ECO-318.' },
     ];
     const intros = [
-      'The BMW MSA commits to a 99.5% uptime SLA, but Autonomy shows Site-3 running 98.1% since the p-13 canary — below the threshold. If it persists to month-end it triggers a service-credit clause (~$210k). Rolling Site-3 back to p-12.4 brings it back into compliance. Want me to brief the account team and draft the credit-risk note?',
-      'The BMW MSA redline is executing — net-60 payment terms and the 99.5% SLA with a service-credit schedule, both inside policy with VP sign-off. One open point: the liability cap, which they want at 2× fees. Want my recommendation?',
-      'DLV-3312 (2 HX-2 to Kawasaki, Osaka) is held at customs because the EAR99 export license wasn\u2019t filed — robots are dual-use, so this gate is mandatory. I\u2019ve prepared the application; filing it clears the Fulfillment hold. Want me to submit it?',
-      'The EU Machinery Regulation 2027 takes effect next year and the HX-2 needs a conformity dossier — it reuses the CE/UL evidence Quality already holds, so we\u2019re ~70% there. Want the gap list?',
+      'The Tier-1 Auto OEM MSA commits to a 99.5% uptime SLA, but Autonomy shows Site-3 running 98.1% since the p-13 canary — below the threshold. If it persists to month-end it triggers a service-credit clause (~$210k). Rolling Site-3 back to p-12.4 brings it back into compliance. Want me to brief the account team and draft the credit-risk note?',
+      'The Tier-1 Auto OEM MSA redline is executing — net-60 payment terms and the 99.5% SLA with a service-credit schedule, both inside policy with VP sign-off. One open point: the liability cap, which they want at 2× fees. Want my recommendation?',
+      'DLV-3312 (2 AX-2 to OEM-2, Osaka) is held at customs because the EAR99 export license wasn\u2019t filed — robots are dual-use, so this gate is mandatory. I\u2019ve prepared the application; filing it clears the Fulfillment hold. Want me to submit it?',
+      'The EU Machinery Regulation 2027 takes effect next year and the AX-2 needs a conformity dossier — it reuses the CE/UL evidence Quality already holds, so we\u2019re ~70% there. Want the gap list?',
       'I logged INC-201 (the Site-3 proximity near-miss) as a liability matter. No injury, robot stopped within tolerance, and exposure sits inside our product-liability cover — but it\u2019s worth retaining the event replay as evidence. Want me to preserve the record?',
       'I filed a patent on the SERVO-205 harmonic-drive tolerance method that came out of ECO-318 — it\u2019s a genuine improvement worth protecting before the design ships. Want the filing summary?',
     ];
     const contexts = [
-      ['LEGAL','BMW','SLA 99.5%'],
-      ['LEGAL','BMW MSA','REDLINE'],
+      ['LEGAL','Tier-1 Auto OEM','SLA 99.5%'],
+      ['LEGAL','Tier-1 Auto OEM MSA','REDLINE'],
       ['LEGAL','DLV-3312','EAR99'],
       ['LEGAL','EU MACHINERY','2027'],
       ['LEGAL','INC-201','LIABILITY'],

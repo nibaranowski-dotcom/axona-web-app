@@ -159,18 +159,18 @@ class Component extends DCLogic {
 
     const groups = [
       { procedure:'Actuator torque test', code:'TP-114', stat:'86 runs · 7 fail', runs:[
-        run('TR-8841','SN-2208','CFG-HX2-r4.2','148.1 N·m · +4.3%',true,'FAIL',false,true),
-        run('TR-8720','SN-2208','CFG-HX2-r4.0','142.6 N·m · in spec',false,'PASS',true,true),
-        run('TR-8402','SN-2196','CFG-HX2-r4.1','147.9 N·m · +4.1%',true,'FAIL',false,false),
-        run('TR-8390','SN-2205','CFG-HX1-r5.0','58.2 N·m · in spec',false,'PASS',true,false),
+        run('TR-8841','SN-2208','CFG-AX2-r4.2','148.1 N·m · +4.3%',true,'FAIL',false,true),
+        run('TR-8720','SN-2208','CFG-AX2-r4.0','142.6 N·m · in spec',false,'PASS',true,true),
+        run('TR-8402','SN-2196','CFG-AX2-r4.1','147.9 N·m · +4.1%',true,'FAIL',false,false),
+        run('TR-8390','SN-2205','CFG-AX1-r5.0','58.2 N·m · in spec',false,'PASS',true,false),
       ] },
       { procedure:'Acceptance · full', code:'TP-001', stat:'92 runs · 2 fail', runs:[
-        run('TR-8722','SN-2210','CFG-HX2-r4.2','142/142 checks',false,'PASS',true,false),
-        run('TR-8712','SN-2208','CFG-HX2-r4.0','142/142 checks',false,'PASS',true,false),
+        run('TR-8722','SN-2210','CFG-AX2-r4.2','142/142 checks',false,'PASS',true,false),
+        run('TR-8712','SN-2208','CFG-AX2-r4.0','142/142 checks',false,'PASS',true,false),
       ] },
       { procedure:'Payload load test', code:'TP-207', stat:'70 runs · 3 fail', runs:[
-        run('TR-8615','SN-2214','CFG-HX2-r4.2','24.0 kg · nominal',false,'PASS',true,false),
-        run('TR-8541','SN-2196','CFG-HX2-r4.1','24.0 kg · drift at hold',true,'FAIL',false,false),
+        run('TR-8615','SN-2214','CFG-AX2-r4.2','24.0 kg · nominal',false,'PASS',true,false),
+        run('TR-8541','SN-2196','CFG-AX2-r4.1','24.0 kg · drift at hold',true,'FAIL',false,false),
       ] },
     ];
 

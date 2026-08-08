@@ -261,12 +261,12 @@ class Component extends DCLogic {
         { name:'Battery cell dual-source', desc:'Qualify a second 48V cell vendor to de-risk DLV lead times.', files:9, members:['a','h'], status:'Active', t:'active', updated:'4h ago' } ] },
       { module:'Quality', projects:[
         { name:'NCR-118 torque containment', desc:'Contain the out-of-spec actuator torque; 8D, evidence, lot quarantine.', files:14, members:['a','a','h'], status:'Blocked', t:'blocked', updated:'1h ago' },
-        { name:'CE / UL 2027 recertification', desc:'EU Machinery Regulation conformity dossier for the HX-2 platform.', files:27, members:['a','h','h'], status:'Active', t:'active', updated:'3d ago' } ] },
+        { name:'CE / UL 2027 recertification', desc:'EU Machinery Regulation conformity dossier for the AX-2 platform.', files:27, members:['a','h','h'], status:'Active', t:'active', updated:'3d ago' } ] },
       { module:'Sales & CRM', projects:[
-        { name:'BMW · 24-unit HX-2 rollout', desc:'Quote, feasibility, contract, and phased-delivery plan for the BMW deal.', files:21, members:['a','a','h','h'], status:'In review', t:'review', updated:'1h ago' },
-        { name:'Siemens RFP response', desc:'30× HX-2 proposal — pricing, deliverability, and reference build.', files:16, members:['a','h'], status:'Active', t:'active', updated:'6h ago' } ] },
+        { name:'Tier-1 Auto OEM · 24-unit AX-2 rollout', desc:'Quote, feasibility, contract, and phased-delivery plan for the Tier-1 Auto OEM deal.', files:21, members:['a','a','h','h'], status:'In review', t:'review', updated:'1h ago' },
+        { name:'OEM-4 RFP response', desc:'30× AX-2 proposal — pricing, deliverability, and reference build.', files:16, members:['a','h'], status:'Active', t:'active', updated:'6h ago' } ] },
       { module:'Fulfillment', projects:[
-        { name:'Osaka export clearance', desc:'EAR99 license and customs file to release DLV-3312 to Kawasaki.', files:7, members:['a','h'], status:'Blocked', t:'blocked', updated:'8h ago' } ] },
+        { name:'Osaka export clearance', desc:'EAR99 license and customs file to release DLV-3312 to OEM-2.', files:7, members:['a','h'], status:'Blocked', t:'blocked', updated:'8h ago' } ] },
       { module:'Autonomy', projects:[
         { name:'p-13 policy rollback review', desc:'Site-3 intervention regression — incident replays, sim validation, rollback.', files:12, members:['a','a','h'], status:'In review', t:'review', updated:'5h ago' } ] },
     ];
@@ -277,7 +277,7 @@ class Component extends DCLogic {
 
     // axona agent scopes
     const scopesRaw = [
-      { label:'All projects', role:'AXONA · CROSS-PROJECT', intro:'I can see all 14 projects across 9 modules. 6 need attention right now — NCR-118 containment and the Osaka export clearance are both blocked, and the BMW rollout is in review pending feasibility. Want a portfolio status?' },
+      { label:'All projects', role:'AXONA · CROSS-PROJECT', intro:'I can see all 14 projects across 9 modules. 6 need attention right now — NCR-118 containment and the Osaka export clearance are both blocked, and the Tier-1 Auto OEM rollout is in review pending feasibility. Want a portfolio status?' },
       { label:'Blocked only', role:'AXONA · BLOCKED', intro:'2 projects are blocked: NCR-118 torque containment (waiting on the ECO-318 drive change) and Osaka export clearance (waiting on the EAR99 license). Both have a clear next action — want me to draft them?' },
     ];
     const scope = this.state.scope;
