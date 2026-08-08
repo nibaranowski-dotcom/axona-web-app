@@ -652,6 +652,12 @@ function UserMenu({
           aria-haspopup="menu"
           aria-expanded={open}
           aria-controls={open ? menuId : undefined}
+          aria-label={
+            user?.name
+              ? `Account menu — ${user.name}${user.email ? ` (${user.email})` : ""}`
+              : "Account menu"
+          }
+          title={user?.email ?? user?.name ?? "Account"}
           className="flex w-full items-center gap-[10px] border-t border-line px-2 pb-0.5 pt-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <span
@@ -660,13 +666,14 @@ function UserMenu({
           >
             {initials(user?.name)}
           </span>
-          <span className="min-w-0 flex-1 text-[12.5px] leading-[1.3]">
-            <span className="block truncate font-semibold text-ink">
-              {user?.name ?? "Signed in"}
-            </span>
-            <span className="block truncate text-ink-muted">
-              {roleLabel(user?.role)}
-            </span>
+          {/* SIDEBAR.2 — the design's account row is ONE truncated line: the email,
+              12.5px / weight 500, ellipsised. It was a two-line name + role block.
+              The name still reaches assistive tech and hover through the button's
+              aria-label/title below, so nothing is lost by showing the address —
+              which is the thing that actually disambiguates WHICH account you are in
+              when the same person has a demo tenant and a real one. */}
+          <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium leading-[1.3] text-ink">
+            {user?.email ?? user?.name ?? "Signed in"}
           </span>
           {open ? (
             <ChevronDown
